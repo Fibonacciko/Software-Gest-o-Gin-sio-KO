@@ -737,6 +737,104 @@ class GymManagementAPITester:
         
         return success_count == total_tests, {}
 
+    def run_premium_features_final_test(self):
+        """Run FINAL comprehensive test of ALL premium features after bug fixes"""
+        print("🚀 FINAL PREMIUM FEATURES TEST - POST BUG FIXES")
+        print("=" * 60)
+        print("Testing 5 critical premium features:")
+        print("1. Premium Dashboard Analytics (date serialization fix)")
+        print("2. Member Analytics (datetime parsing fix)")
+        print("3. Premium Login (request handling fix)")
+        print("4. System Status (verify still working)")
+        print("5. Churn Analysis (verify still working)")
+        print("=" * 60)
+        
+        # Authentication first
+        login_success, _ = self.test_login()
+        if not login_success:
+            print("❌ Authentication failed - stopping tests")
+            return False
+        
+        # Create a test member for analytics if needed
+        member_created = False
+        if not self.created_member_id:
+            success, _ = self.test_create_member()
+            if success:
+                member_created = True
+        
+        # CRITICAL PREMIUM FEATURES TESTING
+        print("\n🔥 TESTING CRITICAL PREMIUM FEATURES")
+        print("-" * 50)
+        
+        # Test 1: Premium Dashboard Analytics (was failing with date serialization)
+        print("\n1️⃣ PREMIUM DASHBOARD ANALYTICS TEST")
+        dashboard_success, dashboard_response = self.test_premium_dashboard_analytics()
+        
+        # Test 2: Member Analytics (was failing with datetime parsing)
+        print("\n2️⃣ MEMBER ANALYTICS TEST")
+        member_analytics_success, member_analytics_response = self.test_member_analytics()
+        
+        # Test 3: Premium Login (was failing with request handling)
+        print("\n3️⃣ PREMIUM LOGIN TEST")
+        premium_login_success, premium_login_response = self.test_premium_login()
+        
+        # Test 4: System Status (verify still working)
+        print("\n4️⃣ SYSTEM STATUS TEST")
+        system_status_success, system_status_response = self.test_system_status()
+        
+        # Test 5: Churn Analysis (verify still working)
+        print("\n5️⃣ CHURN ANALYSIS TEST")
+        churn_analysis_success, churn_analysis_response = self.test_churn_analysis()
+        
+        # Cleanup test member if we created one
+        if member_created and self.created_member_id:
+            self.run_test("Cleanup Test Member", "DELETE", f"members/{self.created_member_id}", 200)
+        
+        # FINAL SUMMARY
+        print("\n" + "=" * 60)
+        print("📊 FINAL PREMIUM FEATURES TEST SUMMARY")
+        print("=" * 60)
+        
+        critical_tests = [
+            ("Premium Dashboard Analytics", dashboard_success),
+            ("Member Analytics", member_analytics_success),
+            ("Premium Login", premium_login_success),
+            ("System Status", system_status_success),
+            ("Churn Analysis", churn_analysis_success)
+        ]
+        
+        passed_critical = sum(1 for _, success in critical_tests if success)
+        total_critical = len(critical_tests)
+        
+        print(f"Critical Premium Features: {passed_critical}/{total_critical} PASSED")
+        print(f"Overall tests run: {self.tests_run}")
+        print(f"Overall tests passed: {self.tests_passed}")
+        print(f"Overall success rate: {(self.tests_passed/self.tests_run*100):.1f}%")
+        
+        # Detailed results for critical features
+        print("\n🎯 CRITICAL FEATURES STATUS:")
+        for test_name, success in critical_tests:
+            status = "✅ WORKING" if success else "❌ FAILED"
+            print(f"  {test_name}: {status}")
+        
+        # Print failed tests
+        failed_tests = [test for test in self.test_results if not test['success']]
+        if failed_tests:
+            print("\n❌ FAILED TESTS DETAILS:")
+            for test in failed_tests:
+                print(f"  - {test['test_name']}: {test['details']}")
+        
+        # Final verdict
+        all_critical_passed = passed_critical == total_critical
+        if all_critical_passed:
+            print("\n🎉 ALL CRITICAL PREMIUM FEATURES ARE WORKING!")
+            print("✅ Ready to proceed to next phase")
+        else:
+            print(f"\n⚠️  {total_critical - passed_critical} CRITICAL FEATURES STILL FAILING")
+            print("❌ Requires additional fixes before proceeding")
+        
+        return all_critical_passed
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Gym Management API Tests")
