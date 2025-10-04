@@ -931,7 +931,8 @@ def parse_from_mongo(item):
 @api_rate_limit()
 async def create_member(
     member_data: MemberCreate,
-    current_user: User = Depends(require_admin_or_staff)
+    current_user: User = Depends(require_admin_or_staff),
+    request: Request = None
 ):
     """Create a new member with premium logging and cache invalidation"""
     try:
