@@ -126,9 +126,9 @@ class InventoryItemCreate(BaseModel):
     description: Optional[str] = None
 
 # API Routes
-@api_router.get(\"/\")
+@api_router.get("/")
 async def root():
-    return {\"message\": \"Gym Management API is running\", \"version\": \"1.0.0\"}
+    return {"message": "Gym Management API is running", "version": "1.0.0"}
 
 # Helper functions
 def generate_qr_code(member_id: str) -> str:
