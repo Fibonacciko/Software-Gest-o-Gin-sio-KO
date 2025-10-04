@@ -435,7 +435,8 @@ async def create_member(
 async def get_members(
     status: Optional[MemberStatus] = None,
     membership_type: Optional[MembershipType] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    current_user: User = Depends(require_admin_or_staff)
 ):
     filter_dict = {}
     if status:
