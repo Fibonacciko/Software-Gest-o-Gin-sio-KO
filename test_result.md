@@ -266,15 +266,18 @@ backend:
 
   - task: "Premium Dashboard Analytics"
     implemented: true
-    working: "NA"
+    working: false
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Premium dashboard analytics endpoint (GET /api/dashboard) implemented with enhanced analytics including premium_analytics section with members, attendance, activities, growth, and financial data for comprehensive business insights."
+        - working: false
+          agent: "testing"
+          comment: "CRITICAL: Dashboard endpoint failing with 500 error. MongoDB InvalidDocument error: 'cannot encode object: datetime.date(2025, 10, 4), of type: <class 'datetime.date'>'. Analytics engine has date serialization issues when storing/retrieving data from MongoDB. Needs date object conversion to ISO strings."
 
   - task: "System Status Monitoring"
     implemented: true
