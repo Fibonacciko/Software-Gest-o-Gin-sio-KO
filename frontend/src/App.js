@@ -14,6 +14,7 @@ import Reports from './pages/Reports';
 import Inventory from './pages/Inventory';
 import UserManagement from './pages/UserManagement';
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
+import useDarkMode from './hooks/useDarkMode';
 import { Toaster } from './components/ui/sonner';
 import './App.css';
 
