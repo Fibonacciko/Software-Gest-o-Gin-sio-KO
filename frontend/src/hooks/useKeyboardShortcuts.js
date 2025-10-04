@@ -35,6 +35,9 @@ const useKeyboardShortcuts = () => {
     'ctrl+shift+c': () => clearCache(),
     'ctrl+shift+r': () => forceRefresh(),
     
+    // Dark Mode
+    'ctrl+shift+t': () => toggleTheme(),
+    
     // PWA
     'ctrl+shift+i': () => showInstallPrompt(),
     'ctrl+shift+o': () => toggleOfflineMode(),
