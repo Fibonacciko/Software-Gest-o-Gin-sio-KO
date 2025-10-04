@@ -482,7 +482,10 @@ async def update_member(
     return Member(**parse_from_mongo(updated_member))
 
 @api_router.delete("/members/{member_id}")
-async def delete_member(member_id: str):
+async def delete_member(
+    member_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
     result = await db.members.delete_one({"id": member_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Member not found")
