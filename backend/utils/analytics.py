@@ -329,7 +329,7 @@ class AnalyticsEngine:
         # Distribuição por atividade
         total_sessions = sum(item["count"] for item in popular_activities)
         
-        return {
+        return serialize_mongo_data({
             "most_popular": popular_activities[:5],
             "total_sessions": total_sessions,
             "distribution": {
@@ -339,7 +339,7 @@ class AnalyticsEngine:
                     "color": item.get("color", "#6B7280")
                 } for item in popular_activities
             }
-        }
+        })
     
     async def _get_growth_metrics(self) -> Dict[str, Any]:
         """Métricas de crescimento e tendências"""
