@@ -515,7 +515,8 @@ async def create_attendance(
 async def get_attendance(
     member_id: Optional[str] = None,
     start_date: Optional[date] = None,
-    end_date: Optional[date] = None
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin_or_staff)
 ):
     filter_dict = {}
     if member_id:
