@@ -705,8 +705,10 @@ async def get_detailed_attendance(
     for record in attendance_records:
         # Get member data
         member = await db.members.find_one({"id": record["member_id"]})
-        # Get activity data
-        activity = await db.activities.find_one({"id": record["activity_id"]})
+        # Get activity data (handle legacy records without activity_id)
+        activity = None
+        if "activity_id" in record and record["activity_id"]:
+            activity = await db.activities.find_one({"id": record["activity_id"]})
         
         detailed_record = {
             **parse_from_mongo(record),
