@@ -16,7 +16,6 @@ from io import BytesIO
 import base64
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from passlib.hash import bcrypt
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
