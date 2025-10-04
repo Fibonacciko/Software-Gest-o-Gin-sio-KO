@@ -82,10 +82,10 @@ background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
 
 ## 🎭 **Personalidade Visual**
 
-### **Tonalidade**: Quente, Energética, Profissional
-- **Vermelho**: Força, determinação, energia
-- **Dourado**: Qualidade, sucesso, conquista  
-- **Neutros Quentes**: Acolhimento, profissionalismo
+### **Tonalidade**: Quente, Suave, Acolhedora
+- **Laranja Suave**: Energia equilibrada, calor humano, dinamismo sem agressividade
+- **Âmbar/Dourado**: Qualidade, sucesso, sofisticação natural  
+- **Neutros Quentes**: Acolhimento, profissionalismo, estabilidade
 
 ### **Contraste & Legibilidade**
 - Alto contraste entre vermelho e branco
