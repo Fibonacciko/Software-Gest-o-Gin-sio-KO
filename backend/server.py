@@ -929,6 +929,7 @@ def parse_from_mongo(item):
 
 # Member Routes
 @api_router.post("/members", response_model=Member)
+@api_rate_limit()
 async def create_member(
     member_data: MemberCreate,
     current_user: User = Depends(require_admin_or_staff)
