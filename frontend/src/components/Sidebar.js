@@ -23,6 +23,9 @@ import useDarkMode from '../hooks/useDarkMode';
 const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations }) => {
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
+  
+  // Dark mode premium
+  const { darkMode, toggleDarkMode } = useDarkMode();
 
   const menuItems = [
     { path: '/', icon: Home, label: translations.dashboard },
