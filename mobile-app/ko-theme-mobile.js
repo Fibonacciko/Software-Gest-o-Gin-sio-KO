@@ -130,7 +130,7 @@ export const KOStyles = {
 
   // Headers
   header: {
-    backgroundColor: KOTheme.primary.red,
+    backgroundColor: KOTheme.primary.orange,
     paddingVertical: 16,
   },
 
