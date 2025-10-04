@@ -101,3 +101,161 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the newly expanded backend APIs for mobile functionality including mobile activities endpoint, motivational notes management, message creation, and dashboard stats verification"
+
+backend:
+  - task: "Mobile Activities Endpoint"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/mobile/activities endpoint tested successfully. Returns 11 active activities for mobile check-in selection. All activities have proper structure with id, name, color, description, and is_active fields."
+
+  - task: "Motivational Notes Management"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/motivational-notes endpoint tested successfully. Returns 5 default motivational notes with proper structure including workout count ranges, level names, and multilingual support (PT/EN)."
+
+  - task: "Message Creation"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "POST /api/messages endpoint tested successfully. Created general message for all members with proper message_type, push notification support, and unique message ID generation."
+
+  - task: "Dashboard Stats"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/dashboard endpoint tested successfully after new backend changes. Returns proper stats: total_members: 3, active_members: 3, today_attendance: 4, monthly_revenue: €321.0. All existing functionality preserved."
+
+  - task: "Authentication System"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Admin authentication working correctly with username 'fabio.guerreiro' and password 'admin123'. JWT token generation and Bearer authentication functioning properly."
+
+  - task: "Activities Management"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Activities CRUD operations working correctly. Can create, read, update activities. Default activities properly seeded including Boxe, Kickboxing, Jiu-Jitsu, CrossFit, Musculação, Pilates, Yoga, Dança."
+
+  - task: "Member Management"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Member CRUD operations working correctly. Automatic member number generation, QR code generation, search and filtering functionality all working properly."
+
+  - task: "Attendance System"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Attendance system working correctly. Mandatory activity_id validation working (properly rejects check-ins without activity). Manual check-in with activity selection functioning properly."
+
+  - task: "Payment System"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Payment CRUD operations working correctly. Can create payments, retrieve by member, proper amount and payment method handling."
+
+  - task: "Inventory Management"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Inventory CRUD operations working correctly. Can create, read, update, delete inventory items with proper category filtering."
+
+  - task: "Reports System"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Reporting endpoints working correctly. Attendance reports, activity reports, and top members reports all functioning with proper data aggregation."
+
+frontend:
+  # No frontend testing performed as per instructions
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Mobile Activities Endpoint"
+    - "Motivational Notes Management"
+    - "Message Creation"
+    - "Dashboard Stats"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "testing"
+      message: "Completed comprehensive testing of new mobile functionality backend APIs. All 4 priority endpoints tested successfully: Mobile Activities (11 activities returned), Motivational Notes (5 default notes), Message Creation (general message created), and Dashboard Stats (working with new changes). All existing functionality verified to be working correctly. Total test suite: 35/35 tests passed (100% success rate)."
