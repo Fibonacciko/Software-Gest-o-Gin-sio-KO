@@ -43,9 +43,9 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
       )}
       
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-all duration-300 z-50 ${
+      <div className={`fixed left-0 top-0 h-full bg-white shadow-xl transition-all duration-300 z-50 ${
         isOpen ? 'w-64' : 'w-16'
-      }`}>
+      }`} style={{ background: 'var(--background-elevated)', boxShadow: 'var(--shadow-lg)' }}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           {isOpen && (
