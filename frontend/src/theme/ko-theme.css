@@ -1,0 +1,124 @@
+/* 
+ * KO Gym Theme - Baseado no logo oficial
+ * Cores harmoniosas derivadas do logo vermelho/dourado
+ */
+
+:root {
+  /* Cores principais do logo (versões sutis) */
+  --ko-primary-red: #8B0000;      /* Vermelho principal do logo */
+  --ko-primary-yellow: #DAA520;    /* Dourado do logo */
+  
+  /* Paleta de cores harmoniosas */
+  --ko-red-50: #FEF2F2;          /* Vermelho muito claro */
+  --ko-red-100: #FEE2E2;         /* Vermelho claro */
+  --ko-red-200: #FECACA;         /* Vermelho suave */
+  --ko-red-300: #FCA5A5;         /* Vermelho médio claro */
+  --ko-red-500: #DC2626;         /* Vermelho médio */
+  --ko-red-600: #B91C1C;         /* Vermelho escuro */
+  --ko-red-700: #991B1B;         /* Vermelho mais escuro */
+  --ko-red-800: #7F1D1D;         /* Vermelho muito escuro */
+  --ko-red-900: #6B1515;         /* Vermelho profundo */
+  
+  /* Tons dourados/amarelos suaves */
+  --ko-gold-50: #FFFBF0;         /* Dourado muito claro */
+  --ko-gold-100: #FEF3C7;        /* Dourado claro */
+  --ko-gold-200: #FDE68A;        /* Dourado suave */
+  --ko-gold-300: #FCD34D;        /* Dourado médio */
+  --ko-gold-400: #FBBF24;        /* Dourado vibrante */
+  --ko-gold-500: #F59E0B;        /* Dourado forte */
+  --ko-gold-600: #D97706;        /* Dourado escuro */
+  --ko-gold-700: #B45309;        /* Dourado mais escuro */
+  --ko-gold-800: #92400E;        /* Dourado profundo */
+  
+  /* Tons neutros quentes (harmonizam com vermelho/dourado) */
+  --ko-neutral-50: #FAF9F7;      /* Bege muito claro */
+  --ko-neutral-100: #F5F3F0;     /* Bege claro */
+  --ko-neutral-200: #E7E5E4;     /* Bege suave */
+  --ko-neutral-300: #D6D3D1;     /* Bege médio */
+  --ko-neutral-400: #A8A29E;     /* Cinza quente */
+  --ko-neutral-500: #78716C;     /* Cinza médio */
+  --ko-neutral-600: #57534E;     /* Cinza escuro */
+  --ko-neutral-700: #44403C;     /* Cinza mais escuro */
+  --ko-neutral-800: #292524;     /* Cinza muito escuro */
+  --ko-neutral-900: #1C1917;     /* Quase preto quente */
+  
+  /* Cores de sistema (baseadas na paleta) */
+  --ko-success: #059669;         /* Verde harmonioso */
+  --ko-warning: #D97706;         /* Laranja (do dourado) */
+  --ko-error: #DC2626;           /* Vermelho de erro */
+  --ko-info: #0EA5E9;           /* Azul complementar */
+  
+  /* Variáveis de aplicação */
+  --background-primary: var(--ko-neutral-50);
+  --background-secondary: var(--ko-neutral-100);
+  --background-elevated: #FFFFFF;
+  
+  --text-primary: var(--ko-neutral-900);
+  --text-secondary: var(--ko-neutral-700);
+  --text-muted: var(--ko-neutral-500);
+  
+  --border-light: var(--ko-neutral-200);
+  --border-medium: var(--ko-neutral-300);
+  --border-strong: var(--ko-neutral-400);
+  
+  /* Botões e elementos interativos */
+  --button-primary-bg: var(--ko-primary-red);
+  --button-primary-hover: var(--ko-red-700);
+  --button-secondary-bg: var(--ko-gold-500);
+  --button-secondary-hover: var(--ko-gold-600);
+  
+  /* Gradientes sutis */
+  --gradient-warm: linear-gradient(135deg, var(--ko-gold-50) 0%, var(--ko-neutral-50) 100%);
+  --gradient-primary: linear-gradient(135deg, var(--ko-red-600) 0%, var(--ko-red-800) 100%);
+  --gradient-gold: linear-gradient(135deg, var(--ko-gold-400) 0%, var(--ko-gold-600) 100%);
+  
+  /* Sombras com tons quentes */
+  --shadow-sm: 0 1px 2px 0 rgba(120, 113, 108, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(120, 113, 108, 0.1), 0 2px 4px -1px rgba(120, 113, 108, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(120, 113, 108, 0.1), 0 4px 6px -2px rgba(120, 113, 108, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(120, 113, 108, 0.1), 0 10px 10px -5px rgba(120, 113, 108, 0.04);
+}
+
+/* Classes de utilidade para cores KO */
+.ko-bg-primary { background-color: var(--ko-primary-red); }
+.ko-bg-gold { background-color: var(--ko-primary-yellow); }
+.ko-bg-warm { background: var(--gradient-warm); }
+
+.ko-text-primary { color: var(--ko-primary-red); }
+.ko-text-gold { color: var(--ko-primary-yellow); }
+.ko-text-neutral { color: var(--text-primary); }
+
+.ko-border-primary { border-color: var(--ko-primary-red); }
+.ko-border-gold { border-color: var(--ko-primary-yellow); }
+
+/* Efeitos hover com cores KO */
+.ko-hover-primary:hover {
+  background-color: var(--ko-red-700);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.ko-hover-gold:hover {
+  background-color: var(--ko-gold-600);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+/* Badges e indicadores */
+.ko-badge-red {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.ko-badge-gold {
+  background: var(--gradient-gold);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
