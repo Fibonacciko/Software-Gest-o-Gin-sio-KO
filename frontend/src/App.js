@@ -130,7 +130,7 @@ function App() {
               
               <main className={`flex-1 overflow-auto transition-all duration-300 ${
                 sidebarOpen ? 'ml-64' : 'ml-16'
-              }`}>
+              }`} style={{ paddingTop: !isOnline ? '40px' : '0' }}>
                 <Routes>
                   <Route path="/" element={
                     <Dashboard language={language} translations={translations[language]} />
