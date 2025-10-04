@@ -503,6 +503,9 @@ const Members = ({ language, translations }) => {
                   {members.map((member) => (
                     <tr key={member.id} className="border-b hover:bg-gray-50">
                       <td className="p-4">
+                        <span className="font-mono text-sm">{member.id}</span>
+                      </td>
+                      <td className="p-4">
                         <div className="flex items-center space-x-3">
                           {member.photo_url ? (
                             <img 
