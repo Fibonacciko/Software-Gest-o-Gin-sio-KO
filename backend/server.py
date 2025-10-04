@@ -636,7 +636,10 @@ async def update_inventory_item(
     return InventoryItem(**parse_from_mongo(updated_item))
 
 @api_router.delete("/inventory/{item_id}")
-async def delete_inventory_item(item_id: str):
+async def delete_inventory_item(
+    item_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
     result = await db.inventory.delete_one({"id": item_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
