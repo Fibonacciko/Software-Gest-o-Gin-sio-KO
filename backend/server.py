@@ -848,12 +848,12 @@ def parse_from_mongo(item):
             elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date'] and isinstance(value, str):
                 try:
                     item[key] = datetime.fromisoformat(value).date()
-                except:
+                except (ValueError, TypeError):
                     pass
             elif key in ['created_at', 'check_in_time'] and isinstance(value, str):
                 try:
                     item[key] = datetime.fromisoformat(value)
-                except:
+                except (ValueError, TypeError):
                     pass
     return item
 
