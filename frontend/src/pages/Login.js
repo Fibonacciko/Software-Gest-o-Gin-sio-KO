@@ -117,8 +117,8 @@ const Login = () => {
               </Button>
             </form>
             
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Credenciais:</h4>
+            <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--ko-neutral-100)' }}>
+              <h4 className="text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Credenciais:</h4>
               <div className="text-xs text-gray-600 space-y-1">
                 <div><strong>Username:</strong> fabio.guerreiro</div>
                 <div><strong>Password:</strong> admin123</div>
