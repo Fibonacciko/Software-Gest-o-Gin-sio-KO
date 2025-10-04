@@ -1,0 +1,116 @@
+{
+  "name": "KO Gym Manager - Sistema de Gestão Premium",
+  "short_name": "KO Gym",
+  "description": "Sistema completo de gestão de ginásio com funcionalidades premium",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF9F7",
+  "theme_color": "#B8651B",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-PT",
+  "categories": ["business", "productivity", "fitness"],
+  "screenshots": [
+    {
+      "src": "/icons/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard do KO Gym"
+    },
+    {
+      "src": "/icons/screenshot-narrow.png", 
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Interface Mobile do KO Gym"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96", 
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Check-in Rápido",
+      "short_name": "Check-in", 
+      "description": "Acesso rápido ao check-in de membros",
+      "url": "/?shortcut=checkin",
+      "icons": [{"src": "/icons/shortcut-checkin.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "Membros",
+      "short_name": "Membros",
+      "description": "Gestão de membros do ginásio", 
+      "url": "/members?shortcut=members",
+      "icons": [{"src": "/icons/shortcut-members.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Stats",
+      "description": "Estatísticas e analytics premium",
+      "url": "/dashboard?shortcut=dashboard", 
+      "icons": [{"src": "/icons/shortcut-dashboard.png", "sizes": "192x192"}]
+    }
+  ],
+  "share_target": {
+    "action": "/share-member",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "files": [{
+        "name": "member_photo",
+        "accept": ["image/*"]
+      }]
+    }
+  },
+  "prefer_related_applications": false
+}
