@@ -68,10 +68,11 @@
   --button-secondary-bg: var(--ko-amber-500);
   --button-secondary-hover: var(--ko-amber-600);
   
-  /* Gradientes sutis */
-  --gradient-warm: linear-gradient(135deg, var(--ko-gold-50) 0%, var(--ko-neutral-50) 100%);
-  --gradient-primary: linear-gradient(135deg, var(--ko-red-600) 0%, var(--ko-red-800) 100%);
-  --gradient-gold: linear-gradient(135deg, var(--ko-gold-400) 0%, var(--ko-gold-600) 100%);
+  /* Gradientes sutis (inspirados no logo) */
+  --gradient-warm: linear-gradient(135deg, var(--ko-amber-50) 0%, var(--ko-neutral-50) 100%);
+  --gradient-primary: linear-gradient(135deg, var(--ko-orange-600) 0%, var(--ko-orange-800) 100%);
+  --gradient-golden: linear-gradient(135deg, var(--ko-amber-400) 0%, var(--ko-amber-600) 100%);
+  --gradient-logo: radial-gradient(circle, var(--ko-primary-golden) 0%, var(--ko-amber-600) 100%);
   
   /* Sombras com tons quentes */
   --shadow-sm: 0 1px 2px 0 rgba(120, 113, 108, 0.1);
