@@ -168,6 +168,18 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
               </select>
             </div>
             
+            {/* Dark Mode Toggle */}
+            <div className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--background-secondary)' }}>
+              <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Tema
+              </span>
+              <DarkModeToggle 
+                darkMode={darkMode}
+                toggleDarkMode={toggleDarkMode}
+                size="sm"
+              />
+            </div>
+            
             {/* Logout Button */}
             <Button
               onClick={logout}
