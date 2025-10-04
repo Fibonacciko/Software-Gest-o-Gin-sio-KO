@@ -361,6 +361,7 @@ const Payments = ({ language, translations }) => {
                     <SelectItem value="cash">{t[language].cash}</SelectItem>
                     <SelectItem value="card">{t[language].card}</SelectItem>
                     <SelectItem value="transfer">{t[language].transfer}</SelectItem>
+                    <SelectItem value="mbway">{t[language].mbway}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
