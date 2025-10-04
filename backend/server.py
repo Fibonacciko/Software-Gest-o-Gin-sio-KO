@@ -265,7 +265,12 @@ async def root():
 # Authentication Routes
 @api_router.post("/auth/login", response_model=Token)
 async def login(user_credentials: UserLogin):
+    print(f"Login attempt for username: {user_credentials.username}")
     user = await db.users.find_one({"username": user_credentials.username})
+    print(f"User found: {user is not None}")
+    if user:
+        print(f"Password check: {verify_password(user_credentials.password, user['password_hash'])}")
+    
     if not user or not verify_password(user_credentials.password, user["password_hash"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
