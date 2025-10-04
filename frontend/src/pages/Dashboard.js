@@ -213,7 +213,7 @@ const Dashboard = ({ language, translations }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin() ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
         <StatCard
           title={t[language].totalMembers}
           value={stats.total_members}
@@ -232,12 +232,14 @@ const Dashboard = ({ language, translations }) => {
           icon={Calendar}
           color="bg-purple-500"
         />
-        <StatCard
-          title={t[language].monthlyRevenue}
-          value={`€${stats.monthly_revenue.toFixed(2)}`}
-          icon={DollarSign}
-          color="bg-orange-500"
-        />
+        {isAdmin() && (
+          <StatCard
+            title={t[language].monthlyRevenue}
+            value={`€${(stats.monthly_revenue || 0).toFixed(2)}`}
+            icon={DollarSign}
+            color="bg-orange-500"
+          />
+        )}
       </div>
 
       {/* Quick Check-in Section */}
