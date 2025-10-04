@@ -357,6 +357,10 @@ class GymManagementAPITester:
         # Basic API tests
         self.test_api_health()
         
+        # Activities/Modalidades tests (PRIORITY)
+        self.test_get_activities()
+        self.test_create_activity()
+        
         # Member management tests
         self.test_create_member()
         self.test_get_members()
@@ -364,9 +368,11 @@ class GymManagementAPITester:
         self.test_search_members()
         self.test_filter_members()
         
-        # Attendance tests
-        self.test_create_attendance()
+        # Attendance tests with modalidades
+        self.test_attendance_without_activity()  # Should fail
+        self.test_create_attendance()  # With activity
         self.test_get_attendance()
+        self.test_detailed_attendance()
         
         # Payment tests
         self.test_create_payment()
@@ -379,6 +385,8 @@ class GymManagementAPITester:
         # Dashboard and reports
         self.test_dashboard_stats()
         self.test_attendance_report()
+        self.test_activity_report()
+        self.test_top_members_report()
         
         # Update operations
         self.test_update_operations()
