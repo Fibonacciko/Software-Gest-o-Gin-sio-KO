@@ -20,16 +20,16 @@
   --ko-orange-800: #9A3412;       /* Laranja muito escuro */
   --ko-orange-900: #7C2D12;       /* Laranja profundo */
   
-  /* Tons dourados/amarelos suaves */
-  --ko-gold-50: #FFFBF0;         /* Dourado muito claro */
-  --ko-gold-100: #FEF3C7;        /* Dourado claro */
-  --ko-gold-200: #FDE68A;        /* Dourado suave */
-  --ko-gold-300: #FCD34D;        /* Dourado médio */
-  --ko-gold-400: #FBBF24;        /* Dourado vibrante */
-  --ko-gold-500: #F59E0B;        /* Dourado forte */
-  --ko-gold-600: #D97706;        /* Dourado escuro */
-  --ko-gold-700: #B45309;        /* Dourado mais escuro */
-  --ko-gold-800: #92400E;        /* Dourado profundo */
+  /* Tons dourados/âmbar suaves (baseados no gradiente do logo) */
+  --ko-amber-50: #FFFBEB;         /* Âmbar muito claro */
+  --ko-amber-100: #FEF3C7;        /* Âmbar claro */
+  --ko-amber-200: #FDE68A;        /* Âmbar suave */
+  --ko-amber-300: #FCD34D;        /* Âmbar médio */
+  --ko-amber-400: #FBBF24;        /* Âmbar vibrante */
+  --ko-amber-500: #F59E0B;        /* Âmbar forte */
+  --ko-amber-600: #D97706;        /* Âmbar escuro */
+  --ko-amber-700: #B45309;        /* Âmbar mais escuro */
+  --ko-amber-800: #92400E;        /* Âmbar profundo */
   
   /* Tons neutros quentes (harmonizam com vermelho/dourado) */
   --ko-neutral-50: #FAF9F7;      /* Bege muito claro */
