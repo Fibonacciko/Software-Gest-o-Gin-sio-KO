@@ -23,6 +23,14 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
+  // Premium dark mode
+  const { 
+    darkMode, 
+    toggleDarkMode, 
+    resetToSystemPreference, 
+    isSystemDark 
+  } = useDarkMode();
+  
   // Premium keyboard shortcuts and command palette
   const {
     commandPaletteOpen,
