@@ -273,6 +273,33 @@ async def create_admin_user():
     except Exception as e:
         print(f"Error creating admin user: {e}")
 
+async def create_default_activities():
+    try:
+        # Check if activities already exist
+        activity_count = await db.activities.count_documents({})
+        if activity_count > 0:
+            return
+        
+        default_activities = [
+            {"name": "Boxe", "color": "#ef4444", "description": "Treino de boxe"},
+            {"name": "Kickboxing", "color": "#f97316", "description": "Treino de kickboxing"},
+            {"name": "Jiu-Jitsu", "color": "#8b5cf6", "description": "Arte marcial brasileira"},
+            {"name": "CrossFit", "color": "#10b981", "description": "Treino funcional de alta intensidade"},
+            {"name": "Musculação", "color": "#3b82f6", "description": "Treino com pesos"},
+            {"name": "Pilates", "color": "#ec4899", "description": "Exercícios de fortalecimento e flexibilidade"},
+            {"name": "Yoga", "color": "#06b6d4", "description": "Prática de yoga e meditação"},
+            {"name": "Dança", "color": "#f59e0b", "description": "Aulas de dança e movimento"}
+        ]
+        
+        for activity_data in default_activities:
+            activity = Activity(**activity_data)
+            activity_dict = prepare_for_mongo(activity.dict())
+            await db.activities.insert_one(activity_dict)
+        
+        print("Default activities created successfully")
+    except Exception as e:
+        print(f"Error creating default activities: {e}")
+
 # API Routes
 @api_router.get("/")
 async def root():
