@@ -2,23 +2,24 @@
 // Baseado no logo oficial do ginásio KO
 
 export const KOTheme = {
-  // Cores principais do logo
+  // Cores principais do logo (tons de laranja suaves)
   primary: {
-    red: '#8B0000',        // Vermelho principal do logo
-    yellow: '#DAA520',     // Dourado do logo
+    orange: '#B8651B',     // Laranja/âmbar principal do logo (texto KO)
+    golden: '#F4B942',     // Dourado vibrante do logo (fundo central)
   },
 
-  // Paleta de vermelhos (derivados do logo)
-  red: {
-    50: '#FEF2F2',   // Muito claro
-    100: '#FEE2E2',  // Claro
-    200: '#FECACA',  // Suave
-    300: '#FCA5A5',  // Médio claro
-    500: '#DC2626',  // Médio
-    600: '#B91C1C',  // Escuro
-    700: '#991B1B',  // Mais escuro
-    800: '#7F1D1D',  // Muito escuro
-    900: '#6B1515',  // Profundo
+  // Paleta de laranjas suaves (derivados do logo)
+  orange: {
+    50: '#FFF8F1',   // Muito claro
+    100: '#FEECDC',  // Claro
+    200: '#FED7AA',  // Suave
+    300: '#FDBA74',  // Médio claro
+    400: '#FB923C',  // Vibrante
+    500: '#F97316',  // Forte
+    600: '#EA580C',  // Escuro
+    700: '#C2410C',  // Mais escuro
+    800: '#9A3412',  // Muito escuro
+    900: '#7C2D12',  // Profundo
   },
 
   // Paleta de dourados (derivados do logo)
