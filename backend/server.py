@@ -514,10 +514,17 @@ def prepare_for_mongo(data):
     return data
 
 def parse_from_mongo(item):
-    """Parse date strings back to date objects from MongoDB"""
+    """Parse date strings back to date objects from MongoDB and handle ObjectIds"""
     if isinstance(item, dict):
+        # Remove MongoDB's _id field if present
+        if '_id' in item:
+            del item['_id']
+        
         for key, value in item.items():
-            if key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date'] and isinstance(value, str):
+            # Handle ObjectId conversion to string
+            if hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
+                item[key] = str(value)
+            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date'] and isinstance(value, str):
                 try:
                     item[key] = datetime.fromisoformat(value).date()
                 except:
