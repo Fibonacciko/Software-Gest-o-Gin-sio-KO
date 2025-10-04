@@ -137,9 +137,15 @@ const Dashboard = ({ language, translations }) => {
   };
 
   const handleQuickCheckin = async (memberId) => {
+    if (!selectedActivity) {
+      toast.error('Por favor seleciona uma modalidade');
+      return;
+    }
+    
     try {
       await axios.post(`${API}/attendance`, {
         member_id: memberId,
+        activity_id: selectedActivity,
         method: 'manual'
       });
       
@@ -147,6 +153,7 @@ const Dashboard = ({ language, translations }) => {
       setCheckinMemberId('');
       setSearchTerm('');
       setFilteredMembers([]);
+      setSelectedActivity('');
       fetchDashboardData(); // Refresh data
     } catch (error) {
       console.error('Error during check-in:', error);
