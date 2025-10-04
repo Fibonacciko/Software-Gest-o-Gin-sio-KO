@@ -616,6 +616,11 @@ async def create_attendance(
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     
+    # Check if activity exists
+    activity = await db.activities.find_one({"id": attendance_data.activity_id, "is_active": True})
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    
     # Set check_in_date to today if not provided
     if not attendance_data.check_in_date:
         attendance_data.check_in_date = date.today()
