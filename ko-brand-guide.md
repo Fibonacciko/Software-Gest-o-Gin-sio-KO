@@ -148,4 +148,4 @@ backgroundColor: KOTheme.primary.orange
 color: KOTheme.neutral[700]
 ```
 
-**O resultado é uma identidade visual coesa que mantém a energia e força do logo KO, mas de forma elegante e profissional em toda a aplicação! 🔥**
+**O resultado é uma identidade visual coesa que captura perfeitamente a suavidade e calor dos tons de laranja do logo KO, criando uma experiência acolhedora mas energética em toda a aplicação! 🧡**
