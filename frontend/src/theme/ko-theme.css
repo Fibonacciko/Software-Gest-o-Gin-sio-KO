@@ -63,10 +63,10 @@
   --border-strong: var(--ko-neutral-400);
   
   /* Botões e elementos interativos */
-  --button-primary-bg: var(--ko-primary-red);
-  --button-primary-hover: var(--ko-red-700);
-  --button-secondary-bg: var(--ko-gold-500);
-  --button-secondary-hover: var(--ko-gold-600);
+  --button-primary-bg: var(--ko-primary-orange);
+  --button-primary-hover: var(--ko-orange-700);
+  --button-secondary-bg: var(--ko-amber-500);
+  --button-secondary-hover: var(--ko-amber-600);
   
   /* Gradientes sutis */
   --gradient-warm: linear-gradient(135deg, var(--ko-gold-50) 0%, var(--ko-neutral-50) 100%);
