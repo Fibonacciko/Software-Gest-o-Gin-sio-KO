@@ -728,7 +728,10 @@ async def get_attendance_report(
 
 # QR Code check-in
 @api_router.post("/checkin/qr")
-async def qr_checkin(qr_data: str):
+async def qr_checkin(
+    qr_data: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
     # Extract member ID from QR code
     if not qr_data.startswith("MEMBER:"):
         raise HTTPException(status_code=400, detail="Invalid QR code")
