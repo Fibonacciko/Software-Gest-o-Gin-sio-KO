@@ -429,7 +429,7 @@ const Members = ({ language, translations }) => {
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder={t[language].searchMembers}
+                placeholder="Procurar por nome, telefone, email ou nº sócio..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
