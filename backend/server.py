@@ -786,6 +786,44 @@ def get_motivational_note_for_member(workout_count: int, language: str = "pt") -
     
     return None
 
+async def send_push_notification(fcm_token: str, title: str, body: str, data: dict = None):
+    """Send push notification via FCM"""
+    if not firebase_enabled or not fcm_token:
+        print("Firebase not enabled or no FCM token provided")
+        return False
+    
+    try:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            data=data or {},
+            token=fcm_token,
+            android=messaging.AndroidConfig(
+                priority='high',
+                notification=messaging.AndroidNotification(
+                    sound='default',
+                    channel_id='gym_notifications'
+                )
+            ),
+            apns=messaging.APNSConfig(
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(
+                        sound='default',
+                        badge=1
+                    )
+                )
+            )
+        )
+        
+        response = messaging.send(message)
+        print(f'Successfully sent message: {response}')
+        return True
+    except Exception as e:
+        print(f'Failed to send push notification: {e}')
+        return False
+
 def prepare_for_mongo(data):
     """Convert date objects to ISO strings for MongoDB"""
     if isinstance(data, dict):
