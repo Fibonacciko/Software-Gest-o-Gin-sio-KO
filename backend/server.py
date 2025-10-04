@@ -1813,6 +1813,162 @@ async def get_motivational_notes(current_user: User = Depends(require_admin)):
     notes = await db.motivational_notes.find({"is_active": True}).sort("workout_count_min", 1).to_list(100)
     return [MotivationalNote(**parse_from_mongo(note)) for note in notes]
 
+# Premium Analytics Endpoints
+@api_router.get("/analytics/member/{member_id}")
+@api_rate_limit()
+async def get_member_analytics(
+    member_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Get detailed analytics for a specific member"""
+    try:
+        if not analytics_engine:
+            raise HTTPException(status_code=503, detail="Analytics engine not available")
+        
+        analytics = await analytics_engine.get_member_analytics(member_id)
+        
+        gym_logger.business_metric("member_analytics_accessed", True,
+                                 user_id=current_user.id, target_member_id=member_id)
+        
+        return analytics.__dict__
+        
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        gym_logger.error("Member analytics generation failed", error=e, 
+                        user_id=current_user.id, member_id=member_id)
+        raise HTTPException(status_code=500, detail="Failed to generate member analytics")
+
+@api_router.get("/analytics/churn")
+@dashboard_rate_limit()
+async def get_churn_analysis(current_user: User = Depends(require_admin)):
+    """Get churn analysis and member retention data (Admin only)"""
+    try:
+        if not analytics_engine:
+            raise HTTPException(status_code=503, detail="Analytics engine not available")
+        
+        churn_data = await analytics_engine.get_churn_prediction()
+        
+        gym_logger.business_metric("churn_analysis_accessed", True, user_id=current_user.id)
+        
+        return churn_data
+        
+    except Exception as e:
+        gym_logger.error("Churn analysis generation failed", error=e, user_id=current_user.id)
+        raise HTTPException(status_code=500, detail="Failed to generate churn analysis")
+
+@api_router.get("/system/status")
+@api_rate_limit()
+async def get_system_status(current_user: User = Depends(require_admin)):
+    """Get system health and performance status (Admin only)"""
+    try:
+        # Cache status
+        cache_stats = gym_cache.get_stats()
+        
+        # Database status
+        db_stats = {
+            "connected": True,
+            "collections": await db.list_collection_names()
+        }
+        
+        # Analytics engine status
+        analytics_status = {
+            "available": analytics_engine is not None,
+            "version": "2.0.0"
+        }
+        
+        # Firebase status
+        firebase_status = {
+            "enabled": firebase_enabled,
+            "messaging_available": firebase_enabled
+        }
+        
+        system_status = {
+            "status": "healthy",
+            "version": "2.0.0 Premium",
+            "cache": cache_stats,
+            "database": db_stats,
+            "analytics": analytics_status,
+            "firebase": firebase_status,
+            "uptime_info": "Available in production monitoring"
+        }
+        
+        gym_logger.business_metric("system_status_checked", True, user_id=current_user.id)
+        
+        return system_status
+        
+    except Exception as e:
+        gym_logger.error("System status check failed", error=e, user_id=current_user.id)
+        return {
+            "status": "degraded",
+            "error": str(e),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+@api_router.post("/cache/clear")
+@api_rate_limit()
+async def clear_cache(
+    pattern: Optional[str] = None,
+    current_user: User = Depends(require_admin)
+):
+    """Clear cache (Admin only)"""
+    try:
+        if pattern:
+            cleared = gym_cache.clear_pattern(pattern)
+            message = f"Cleared {cleared} keys matching pattern '{pattern}'"
+        else:
+            # Clear all business cache
+            BusinessCache.invalidate_member_cache()
+            gym_cache.clear_pattern("analytics")
+            gym_cache.clear_pattern("func:")
+            message = "Cleared all business cache"
+        
+        gym_logger.business_metric("cache_cleared", True, 
+                                 user_id=current_user.id, pattern=pattern)
+        
+        return {"message": message, "success": True}
+        
+    except Exception as e:
+        gym_logger.error("Cache clear failed", error=e, user_id=current_user.id)
+        raise HTTPException(status_code=500, detail="Failed to clear cache")
+
+# Rate limit endpoints
+@api_router.post("/auth/login")
+@auth_rate_limit()
+async def login_with_rate_limit(user_data: UserLogin):
+    """Login with rate limiting"""
+    
+    # Log login attempt
+    gym_logger.security_event("login_attempt", user_id=user_data.username)
+    
+    try:
+        user = await authenticate_user(user_data.username, user_data.password)
+        if not user:
+            # Record failed attempt
+            gym_logger.security_event("login_failed", user_id=user_data.username)
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        # Success
+        gym_logger.security_event("login_success", user_id=user.id)
+        
+        # Generate token
+        access_token = create_access_token(data={"sub": user.id, "role": user.role})
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": user
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        gym_logger.error("Login system error", error=e, user_id=user_data.username)
+        raise HTTPException(status_code=500, detail="Authentication system error")
+
+# Apply rate limiting to existing endpoints
+original_create_member = api_router.routes[0]  # Will be properly applied after all routes
+
 # Include router
 app.include_router(api_router)
 
