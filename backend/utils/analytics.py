@@ -357,7 +357,7 @@ class AnalyticsEngine:
             month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
             
             new_members = await self.db.members.count_documents({
-                "join_date": {"$gte": month_start.date(), "$lte": month_end.date()}
+                "join_date": {"$gte": month_start.date().isoformat(), "$lte": month_end.date().isoformat()}
             })
             
             monthly_growth.append({
