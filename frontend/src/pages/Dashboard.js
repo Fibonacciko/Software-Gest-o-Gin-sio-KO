@@ -216,23 +216,24 @@ const Dashboard = ({ language, translations }) => {
   }
 
   return (
-    <div className="p-6 space-y-6 fade-in">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {t[language].dashboard}
-          </h1>
-          <p className="text-gray-600">
-            {new Date().toLocaleDateString('pt-PT', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
+    <div className="min-h-screen" style={{ background: 'var(--background-primary)' }}>
+      <div className="p-6 space-y-6 fade-in">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 ko-text-primary">
+              {t[language].dashboard}
+            </h1>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              {new Date().toLocaleDateString('pt-PT', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
         </div>
-      </div>
 
       {/* Stats Cards */}
       <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin() ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
