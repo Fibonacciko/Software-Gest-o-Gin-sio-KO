@@ -935,20 +935,43 @@ async def create_member(
     current_user: User = Depends(require_admin_or_staff)
 ):
     """Create a new member with premium logging and cache invalidation"""
-    member_dict = member_data.dict()
-    
-    # Generate automatic member number
-    member_number = await generate_next_member_number()
-    member_dict["member_number"] = member_number
-    
-    member = Member(**member_dict)
-    
-    # Generate QR code with member number
-    member.qr_code = generate_qr_code(f"{member.member_number}-{member.id}")
-    
-    member_dict = prepare_for_mongo(member.dict())
-    await db.members.insert_one(member_dict)
-    return member
+    try:
+        gym_logger.info("Creating new member", 
+                       user_id=current_user.id, member_name=member_data.name)
+        
+        member_dict = member_data.dict()
+        
+        # Generate automatic member number
+        member_number = await generate_next_member_number()
+        member_dict["member_number"] = member_number
+        
+        member = Member(**member_dict)
+        
+        # Generate QR code with member number
+        member.qr_code = generate_qr_code(f"{member.member_number}-{member.id}")
+        
+        member_dict = prepare_for_mongo(member.dict())
+        await db.members.insert_one(member_dict)
+        
+        # Invalidate related cache
+        BusinessCache.invalidate_member_cache()
+        
+        # Log business metric
+        gym_logger.business_metric("member_created", 1,
+                                 user_id=current_user.id, 
+                                 member_id=member.id,
+                                 membership_type=member_data.membership_type)
+        
+        gym_logger.info("Member created successfully", 
+                       member_id=member.id, 
+                       member_number=member_number)
+        
+        return member
+        
+    except Exception as e:
+        gym_logger.error("Member creation failed", error=e, 
+                        user_id=current_user.id, member_name=member_data.name)
+        raise HTTPException(status_code=500, detail="Failed to create member")
 
 @api_router.get("/members", response_model=List[Member])
 @api_rate_limit()
