@@ -41,7 +41,7 @@ class GymManagementAPITester:
         """Run a single API test"""
         url = f"{self.api_url}/{endpoint}"
         if headers is None:
-            headers = {'Content-Type': 'application/json'}
+            headers = self.auth_headers.copy()
 
         try:
             print(f"\n🔍 Testing {name}...")
