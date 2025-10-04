@@ -26,9 +26,10 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
     { path: '/', icon: Home, label: translations.dashboard },
     { path: '/members', icon: Users, label: translations.members },
     { path: '/attendance', icon: Calendar, label: translations.attendance },
-    { path: '/payments', icon: CreditCard, label: translations.payments },
+    ...(isAdmin() ? [{ path: '/payments', icon: CreditCard, label: translations.payments }] : []),
     { path: '/inventory', icon: Package, label: translations.inventory },
-    { path: '/reports', icon: BarChart, label: translations.reports },
+    ...(isAdmin() ? [{ path: '/reports', icon: BarChart, label: translations.reports }] : []),
+    ...(isAdmin() ? [{ path: '/users', icon: Shield, label: 'Utilizadores' }] : []),
   ];
 
   return (
