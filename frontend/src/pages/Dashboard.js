@@ -273,7 +273,7 @@ const Dashboard = ({ language, translations }) => {
             title={t[language].monthlyRevenue}
             value={`€${(stats.monthly_revenue || 0).toFixed(2)}`}
             icon={DollarSign}
-            color="bg-orange-500"
+            color="ko-amber"
           />
         )}
       </div>
