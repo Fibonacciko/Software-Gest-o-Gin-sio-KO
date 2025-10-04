@@ -183,10 +183,27 @@ function App() {
               </main>
             </div>
           </ProtectedRoute>
-          <Toaster position="top-right" />
-        </AuthProvider>
-      </BrowserRouter>
-    </div>
+          
+          {/* Premium Components */}
+          <CommandPalette
+            isOpen={commandPaletteOpen}
+            onClose={() => setCommandPaletteOpen(false)}
+            commands={commands}
+          />
+          
+          <PWAInstallPrompt />
+          
+          {/* Debug Mode Indicator */}
+          {localStorage.getItem('ko-gym-debug') === 'true' && (
+            <div className="fixed bottom-4 left-4 px-3 py-1 rounded-full text-xs font-bold ko-bg-primary text-white z-40">
+              🐛 DEBUG MODE
+            </div>
+          )}
+          
+          <Toaster />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
