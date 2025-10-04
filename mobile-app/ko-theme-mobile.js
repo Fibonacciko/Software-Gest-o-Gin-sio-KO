@@ -158,7 +158,7 @@ export const KOStyles = {
 
   // Badges
   badge: {
-    backgroundColor: KOTheme.primary.red,
+    backgroundColor: KOTheme.primary.orange,
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
