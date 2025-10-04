@@ -201,9 +201,10 @@ const Dashboard = ({ language, translations }) => {
           </div>
           <div 
             className="p-3 rounded-full"
-            style={{ background: color === 'bg-blue-500' ? 'var(--gradient-primary)' : 
-                      color === 'bg-green-500' ? 'var(--ko-success)' :
-                      color === 'bg-purple-500' ? 'var(--gradient-golden)' : 
+            style={{ background: color === 'ko-primary' ? 'var(--gradient-primary)' : 
+                      color === 'ko-success' ? 'var(--ko-success)' :
+                      color === 'ko-golden' ? 'var(--gradient-golden)' :
+                      color === 'ko-amber' ? 'var(--gradient-golden)' :
                       'var(--gradient-primary)' }}
           >
             <Icon size={24} className="text-white" />
