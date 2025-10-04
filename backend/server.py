@@ -61,6 +61,19 @@ class ItemCategory(str, Enum):
 class UserRole(str, Enum):
     ADMIN = "admin"
     STAFF = "staff"
+    MEMBER = "member"  # For mobile app users
+
+class MessageType(str, Enum):
+    GENERAL = "general"     # Broadcast to all
+    INDIVIDUAL = "individual"  # To specific member
+    EVENT = "event"         # Event notification
+    REMINDER = "reminder"   # Subscription reminders
+
+class NotificationStatus(str, Enum):
+    SENT = "sent"
+    DELIVERED = "delivered" 
+    READ = "read"
+    FAILED = "failed"
 
 # Modalidades (Activities) Model
 class Activity(BaseModel):
