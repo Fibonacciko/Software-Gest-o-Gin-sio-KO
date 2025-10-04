@@ -194,14 +194,14 @@ class AnalyticsEngine:
             {"$sort": {"_id": 1}}
         ]).to_list(None)
         
-        return {
+        return serialize_mongo_data({
             "today": today_attendance,
             "monthly_total": monthly_attendance,
             "daily_average": round(avg_daily, 1),
             "peak_hours": peak_hours,
             "weekly_distribution": {item["_id"]: item["count"] for item in weekly_distribution},
             "capacity_utilization": min(round((avg_daily / 100) * 100, 1), 100)  # Assumindo capacidade de 100
-        }
+        })
     
     async def _get_financial_metrics(self) -> Dict[str, Any]:
         """Métricas financeiras completas (admin only)"""
