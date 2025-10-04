@@ -355,11 +355,20 @@ const Dashboard = ({ language, translations }) => {
               </div>
               
               {filteredMembers.length > 0 && (
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <div 
+                  className="rounded-lg max-h-64 overflow-y-auto"
+                  style={{ 
+                    border: '1px solid var(--border-medium)',
+                    background: 'var(--background-elevated)'
+                  }}
+                >
                   {filteredMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center justify-between p-3 hover:bg-gray-50 border-b last:border-b-0"
+                      className="flex items-center justify-between p-3 border-b last:border-b-0 transition-all duration-200 cursor-pointer"
+                      style={{ borderColor: 'var(--border-light)' }}
+                      onMouseEnter={(e) => e.target.style.background = 'var(--gradient-hover)'}
+                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
                     >
                       <div>
                         <div className="flex items-center space-x-2">
