@@ -751,40 +751,96 @@ def generate_member_qr_code(member_number: str, member_id: str) -> str:
 
 def get_motivational_note_for_member(workout_count: int, language: str = "pt") -> Optional[str]:
     """Get appropriate motivational note based on workout count"""
-    # Default motivational notes - these will be configurable via admin panel
-    default_notes = [
+    # Sarcastic motivational notes - gym humor with edge
+    sarcastic_notes = [
+        # Iniciantes (1-5 treinos) 🐣
         {
-            "min": 1, "max": 10, "level": "beginner",
-            "note_pt": "Põr luvas conta como exercício? 🥊",
-            "note_en": "Does putting on gloves count as exercise? 🥊"
+            "min": 1, "max": 5, "level": "iniciantes",
+            "notes_pt": [
+                "Uau. Um treino. Já te achas lutador, não?",
+                "Calçar as luvas já conta como exercício?", 
+                "Cuidado, essa motivação toda pode durar... até amanhã.",
+                "Já fizeste mais que a maioria. Pena que isso não diga muito.",
+                "Duas sessões? A Netflix está a perder um atleta de sofá."
+            ],
+            "notes_en": [
+                "Wow. One workout. Think you're a fighter now?",
+                "Does putting on gloves count as exercise?",
+                "Be careful, all that motivation might last... until tomorrow.",
+                "You've done more than most. Too bad that's not saying much.",
+                "Two sessions? Netflix is losing a couch athlete."
+            ]
         },
+        # Intermédios (6-20 treinos) 🤷‍♂️
         {
-            "min": 11, "max": 30, "level": "getting_started", 
-            "note_pt": "Cuidado, essa motivação toda pode durar... até amanhã! 💪",
-            "note_en": "Be careful, all that motivation might last... until tomorrow! 💪"
+            "min": 6, "max": 20, "level": "intermedios", 
+            "notes_pt": [
+                "Já dás uns murros decentes... no ar.",
+                "O saco ainda não tem medo de ti. Mas já te respeita.",
+                "Quase a meio caminho de impressionar a tua avó.",
+                "Já transpiraste mais que num verão no Alentejo.",
+                "A tua consistência surpreende... pela raridade."
+            ],
+            "notes_en": [
+                "You throw decent punches... at the air.",
+                "The bag isn't afraid of you yet. But it respects you.",
+                "Halfway to impressing your grandmother.",
+                "You've sweated more than in an Alentejo summer.",
+                "Your consistency is surprising... for its rarity."
+            ]
         },
+        # Avançados (21-50 treinos) 😈
         {
-            "min": 31, "max": 60, "level": "building_habit",
-            "note_pt": "Agora já és um regular! O sofá já se sente abandonado. 🛋️",
-            "note_en": "Now you're a regular! Your couch is feeling abandoned. 🛋️"
+            "min": 21, "max": 50, "level": "avançados",
+            "notes_pt": [
+                "A tua frequência de treinos é inversamente proporcional à tua vida social.",
+                "Estás a treinar tanto que já achas que és invencível. Spoiler: não és.",
+                "És o motivo pelo qual o saco está a pensar em mudar de ginásio.",
+                "Parabéns! Já fazes sombra... ao espelho.",
+                "Isto começa a parecer compromisso. Estás bem?"
+            ],
+            "notes_en": [
+                "Your workout frequency is inversely proportional to your social life.",
+                "You're training so much you think you're invincible. Spoiler: you're not.",
+                "You're the reason the bag is thinking about changing gyms.",
+                "Congratulations! You're throwing shade... at the mirror.",
+                "This is starting to look like commitment. Are you okay?"
+            ]
         },
+        # Hardcore (51+ treinos) 🥵
         {
-            "min": 61, "max": 90, "level": "committed",
-            "note_pt": "Wow! A tua dedição está a inspirar outros membros! 🔥",
-            "note_en": "Wow! Your dedication is inspiring other members! 🔥"
-        },
-        {
-            "min": 91, "max": 999, "level": "champion",
-            "note_pt": "És oficialmente um viciado no ginásio! E isso é bom! 🏆",
-            "note_en": "You're officially a gym addict! And that's a good thing! 🏆"
+            "min": 51, "max": 999, "level": "hardcore",
+            "notes_pt": [
+                "Estás aqui outra vez? Queres uma cama no balneário?",
+                "Estás a treinar tanto que o teu corpo pediu divórcio.",
+                "Até o Rocky diria: 'calma, campeão'.",
+                "Se os treinos dessem dinheiro... ainda estavas pobre.",
+                "Neste ponto, o saco já devia ter plano de saúde.",
+                "O teu suor devia pagar renda.",
+                "És o pesadelo dos sacos de boxe.",
+                "A app tem medo de ti."
+            ],
+            "notes_en": [
+                "Here again? Want a bed in the locker room?", 
+                "You're training so much your body filed for divorce.",
+                "Even Rocky would say: 'calm down, champ'.",
+                "If workouts paid money... you'd still be poor.",
+                "At this point, the bag should have health insurance.",
+                "Your sweat should pay rent.",
+                "You're the nightmare of punching bags.",
+                "The app is afraid of you."
+            ]
         }
     ]
     
-    for note in default_notes:
-        if note["min"] <= workout_count <= note["max"]:
-            return note["note_pt"] if language == "pt" else note["note_en"]
+    import random
     
-    return None
+    for note_group in sarcastic_notes:
+        if note_group["min"] <= workout_count <= note_group["max"]:
+            notes = note_group["notes_pt"] if language == "pt" else note_group["notes_en"]
+            return random.choice(notes)
+    
+    return "Estás oficialmente fora da escala. Procura ajuda profissional... ou não. 🔥" if language == "pt" else "You're officially off the charts. Seek professional help... or don't. 🔥"
 
 async def send_push_notification(fcm_token: str, title: str, body: str, data: dict = None):
     """Send push notification via FCM"""
