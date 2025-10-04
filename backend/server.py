@@ -1887,7 +1887,7 @@ async def get_churn_analysis(current_user: User = Depends(require_admin)):
 
 @api_router.get("/system/status")
 @api_rate_limit()
-async def get_system_status(current_user: User = Depends(require_admin)):
+async def get_system_status(current_user: User = Depends(require_admin), request: Request = None):
     """Get system health and performance status (Admin only)"""
     try:
         # Cache status
