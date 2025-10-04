@@ -17,6 +17,7 @@ class GymManagementAPITester:
         self.created_payment_id = None
         self.created_item_id = None
         self.created_attendance_id = None
+        self.created_activity_id = None
 
     def log_test(self, name: str, success: bool, details: str = "", response_data: Any = None):
         """Log test result"""
