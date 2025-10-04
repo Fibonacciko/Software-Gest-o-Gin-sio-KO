@@ -372,9 +372,7 @@ metadata:
 test_plan:
   current_focus: []
   stuck_tasks:
-    - "Premium Dashboard Analytics"
-    - "Member Analytics" 
-    - "Premium Login with Enhanced Security"
+    - "Member Analytics"
   test_all: false
   test_priority: "high_first"
 
