@@ -347,10 +347,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Mobile Activities Endpoint"
-    - "Motivational Notes Management"
-    - "Message Creation"
-    - "Dashboard Stats"
+    - "Premium Dashboard Analytics"
+    - "System Status Monitoring"
+    - "Member Analytics"
+    - "Churn Analysis"
+    - "Premium Login with Enhanced Security"
+    - "Cache Operations"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
