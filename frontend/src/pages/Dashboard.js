@@ -36,6 +36,7 @@ const Dashboard = ({ language, translations }) => {
   const [qrMode, setQrMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMembers, setFilteredMembers] = useState([]);
+  const [selectedActivity, setSelectedActivity] = useState('');
 
   const t = {
     pt: {
