@@ -341,15 +341,18 @@ backend:
 
   - task: "Cache Operations"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Cache operations endpoint (POST /api/cache/clear) implemented to clear cache systems with memory fallback expected for development environment."
+        - working: true
+          agent: "testing"
+          comment: "Cache operations endpoint working correctly (200 OK). Returns success message 'Cleared all business cache' with success: true. Redis not available (expected in dev environment), using memory cache fallback as designed. Core functionality working."
 
 frontend:
   # No frontend testing performed as per instructions
