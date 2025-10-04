@@ -53,8 +53,8 @@ const KOButton = React.forwardRef(({ className, variant, size, asChild = false, 
         }
       case 'outline':
         return {
-          borderColor: 'var(--ko-primary-red)',
-          color: 'var(--ko-primary-red)',
+          borderColor: 'var(--ko-primary-orange)',
+          color: 'var(--ko-primary-orange)',
           backgroundColor: 'transparent',
           ...style
         }
