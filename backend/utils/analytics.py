@@ -213,11 +213,12 @@ class AnalyticsEngine:
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
         
-        # Receita do mês atual
+        # Receita do mês atual - usar payment_date como string ISO
+        current_month_date_str = current_month_start.date().isoformat()
         current_revenue = await self.db.payments.aggregate([
             {
                 "$match": {
-                    "payment_date": {"$gte": current_month_start.date().isoformat()},
+                    "payment_date": {"$gte": current_month_date_str},
                     "status": "paid"
                 }
             },
