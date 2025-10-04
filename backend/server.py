@@ -61,6 +61,20 @@ class UserRole(str, Enum):
     ADMIN = "admin"
     STAFF = "staff"
 
+# Modalidades (Activities) Model
+class Activity(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    color: str  # Hex color code
+    description: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ActivityCreate(BaseModel):
+    name: str
+    color: str
+    description: Optional[str] = None
+
 # Pydantic Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
