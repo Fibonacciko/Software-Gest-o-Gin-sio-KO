@@ -128,7 +128,7 @@ class AnalyticsEngine:
         # Taxa de crescimento
         sixty_days_ago = now - timedelta(days=60)
         members_last_month = await self.db.members.count_documents({
-            "join_date": {"$gte": sixty_days_ago, "$lt": thirty_days_ago}
+            "join_date": {"$gte": sixty_days_ago.date().isoformat(), "$lt": thirty_days_ago.date().isoformat()}
         })
         
         growth_rate = 0
