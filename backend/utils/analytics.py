@@ -542,11 +542,11 @@ class AnalyticsEngine:
             }
         ]).to_list(None)
         
-        return {
+        return serialize_mongo_data({
             "at_risk_count": len(at_risk_members),
             "at_risk_members": at_risk_members[:10],  # Top 10
             "churn_risk_percentage": round(len(at_risk_members) / max(1, await self.db.members.count_documents({"status": "active"})) * 100, 1)
-        }
+        })
 
 # Instância global do analytics engine
 async def get_analytics_engine(db):
