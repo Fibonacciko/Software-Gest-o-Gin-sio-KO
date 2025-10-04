@@ -1335,6 +1335,300 @@ async def qr_checkin(
         "attendance": attendance
     }
 
+# Mobile API Endpoints
+@api_router.post("/mobile/auth/login")
+async def mobile_login(credentials: MobileMemberLogin):
+    """Mobile app login using member number and phone"""
+    member = await db.members.find_one({
+        "member_number": credentials.member_number,
+        "phone": credentials.phone,
+        "status": "active"
+    })
+    
+    if not member:
+        raise HTTPException(status_code=401, detail="Invalid credentials or inactive member")
+    
+    # Get workout count for motivational note
+    workout_count = await db.attendance.count_documents({"member_id": member["id"]})
+    
+    # Generate token for member (using member role)
+    token_data = {"sub": member["id"], "role": "member"}
+    access_token = create_access_token(data=token_data)
+    
+    # Get current motivational note
+    motivational_note = get_motivational_note_for_member(workout_count, "pt")
+    
+    # Prepare mobile member response
+    mobile_member = MobileMember(
+        **parse_from_mongo(member),
+        workout_count=workout_count,
+        current_motivational_note=motivational_note,
+        qr_code=member.get("qr_code", "")
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "member": mobile_member
+    }
+
+@api_router.get("/mobile/profile", response_model=MobileMember)
+async def get_mobile_profile(member_id: str):
+    """Get mobile member profile with workout count and motivational note"""
+    member = await db.members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    # Get workout count
+    workout_count = await db.attendance.count_documents({"member_id": member_id})
+    
+    # Get motivational note
+    motivational_note = get_motivational_note_for_member(workout_count, "pt")
+    
+    mobile_member = MobileMember(
+        **parse_from_mongo(member),
+        workout_count=workout_count,
+        current_motivational_note=motivational_note,
+        qr_code=member.get("qr_code", "")
+    )
+    
+    return mobile_member
+
+@api_router.put("/mobile/profile/{member_id}")
+async def update_mobile_profile(member_id: str, profile_data: dict):
+    """Update mobile member profile (limited fields)"""
+    # Only allow updating certain fields from mobile
+    allowed_fields = ["email", "phone", "address", "photo_url"]
+    update_data = {k: v for k, v in profile_data.items() if k in allowed_fields}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    result = await db.members.update_one(
+        {"id": member_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    return {"message": "Profile updated successfully"}
+
+@api_router.post("/mobile/fcm-token/{member_id}")
+async def update_fcm_token(member_id: str, token_data: FCMTokenUpdate):
+    """Update FCM token for push notifications"""
+    result = await db.members.update_one(
+        {"id": member_id},
+        {"$set": {"fcm_token": token_data.fcm_token}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    return {"message": "FCM token updated successfully"}
+
+@api_router.get("/mobile/activities", response_model=List[Activity])
+async def get_mobile_activities():
+    """Get active activities for mobile check-in"""
+    activities = await db.activities.find({"is_active": True}).to_list(100)
+    return [Activity(**parse_from_mongo(activity)) for activity in activities]
+
+@api_router.post("/mobile/checkin")
+async def mobile_qr_checkin(member_id: str, activity_id: str):
+    """Mobile QR check-in"""
+    # Verify member exists and is active
+    member = await db.members.find_one({"id": member_id, "status": "active"})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found or inactive")
+    
+    # Verify activity exists and is active
+    activity = await db.activities.find_one({"id": activity_id, "is_active": True})
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found or inactive")
+    
+    # Create attendance record
+    attendance_data = AttendanceCreate(
+        member_id=member_id,
+        activity_id=activity_id,
+        method="mobile_qr"
+    )
+    attendance = Attendance(**attendance_data.dict())
+    attendance_dict = prepare_for_mongo(attendance.dict())
+    await db.attendance.insert_one(attendance_dict)
+    
+    # Get updated workout count and motivational note
+    workout_count = await db.attendance.count_documents({"member_id": member_id})
+    motivational_note = get_motivational_note_for_member(workout_count, "pt")
+    
+    return {
+        "message": "Check-in successful",
+        "workout_count": workout_count,
+        "motivational_note": motivational_note,
+        "attendance": attendance
+    }
+
+@api_router.get("/mobile/attendance/{member_id}")
+async def get_mobile_attendance_history(
+    member_id: str,
+    limit: int = 20,
+    offset: int = 0
+):
+    """Get member attendance history for mobile"""
+    # Get attendance with activity details
+    attendance_records = await db.attendance.find(
+        {"member_id": member_id}
+    ).sort("check_in_date", -1).skip(offset).limit(limit).to_list(limit)
+    
+    # Enrich with activity data
+    detailed_records = []
+    for record in attendance_records:
+        activity = None
+        if record.get("activity_id"):
+            activity = await db.activities.find_one({"id": record["activity_id"]})
+        
+        detailed_record = {
+            **parse_from_mongo(record),
+            "activity": parse_from_mongo(activity) if activity else None
+        }
+        detailed_records.append(detailed_record)
+    
+    return detailed_records
+
+@api_router.get("/mobile/messages/{member_id}")
+async def get_mobile_messages(member_id: str, unread_only: bool = False):
+    """Get messages for member"""
+    filter_dict = {
+        "$or": [
+            {"target_member_id": member_id},  # Individual messages
+            {"message_type": "general"},      # General broadcasts
+            {"target_role": "member"}         # Member role messages
+        ]
+    }
+    
+    messages = await db.messages.find(filter_dict).sort("created_at", -1).limit(50).to_list(50)
+    
+    # Get notification status for each message
+    detailed_messages = []
+    for message in messages:
+        notification_log = await db.notification_logs.find_one({
+            "message_id": message["id"],
+            "member_id": member_id
+        })
+        
+        message_data = {
+            **parse_from_mongo(message),
+            "is_read": notification_log.get("status") == "read" if notification_log else False,
+            "read_at": notification_log.get("read_at") if notification_log else None
+        }
+        
+        if not unread_only or not message_data["is_read"]:
+            detailed_messages.append(message_data)
+    
+    return detailed_messages
+
+@api_router.post("/mobile/messages/{message_id}/read/{member_id}")
+async def mark_message_as_read(message_id: str, member_id: str):
+    """Mark message as read"""
+    # Update or create notification log
+    await db.notification_logs.update_one(
+        {"message_id": message_id, "member_id": member_id},
+        {
+            "$set": {
+                "status": "read",
+                "read_at": datetime.now(timezone.utc)
+            }
+        },
+        upsert=True
+    )
+    
+    return {"message": "Message marked as read"}
+
+@api_router.post("/mobile/payments/mock")
+async def mock_mobile_payment(member_id: str, payment_data: MobilePaymentRequest):
+    """Mock payment endpoint for mobile app (not operational)"""
+    # Verify member exists
+    member = await db.members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    # Return mock response
+    return {
+        "success": False,
+        "message": "Payment system is not yet operational. Please pay at the gym reception.",
+        "payment_methods_available": ["Cash", "Card", "Transfer", "MBWay"],
+        "contact_info": "Please contact gym staff for payment assistance."
+    }
+
+# Message/Notification Management (Admin/Staff only)
+@api_router.post("/messages", response_model=Message)
+async def create_message(
+    message_data: MessageCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Create and send message/notification"""
+    message = Message(
+        **message_data.dict(),
+        created_by=current_user.id
+    )
+    message_dict = prepare_for_mongo(message.dict())
+    await db.messages.insert_one(message_dict)
+    
+    # If it's a push notification, create notification logs for target members
+    if message.is_push_notification:
+        target_members = []
+        
+        if message.message_type == MessageType.INDIVIDUAL and message.target_member_id:
+            # Single member
+            target_members = [{"id": message.target_member_id}]
+        elif message.message_type == MessageType.GENERAL:
+            # All active members
+            target_members = await db.members.find({"status": "active"}).to_list(1000)
+        elif message.target_role == UserRole.MEMBER:
+            # All members with member role
+            target_members = await db.members.find({"status": "active"}).to_list(1000)
+        
+        # Create notification logs
+        for member in target_members:
+            notification_log = NotificationLog(
+                message_id=message.id,
+                member_id=member["id"],
+                fcm_token=member.get("fcm_token")
+            )
+            await db.notification_logs.insert_one(prepare_for_mongo(notification_log.dict()))
+    
+    return message
+
+@api_router.get("/messages", response_model=List[Message])
+async def get_messages(
+    message_type: Optional[MessageType] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Get messages (admin/staff view)"""
+    filter_dict = {}
+    if message_type:
+        filter_dict["message_type"] = message_type
+    
+    messages = await db.messages.find(filter_dict).sort("created_at", -1).limit(100).to_list(100)
+    return [Message(**parse_from_mongo(message)) for message in messages]
+
+# Motivational Notes Management (Admin only)
+@api_router.post("/motivational-notes", response_model=MotivationalNote)
+async def create_motivational_note(
+    note_data: MotivationalNoteCreate,
+    current_user: User = Depends(require_admin)
+):
+    """Create custom motivational note"""
+    note = MotivationalNote(**note_data.dict())
+    note_dict = prepare_for_mongo(note.dict())
+    await db.motivational_notes.insert_one(note_dict)
+    return note
+
+@api_router.get("/motivational-notes", response_model=List[MotivationalNote])
+async def get_motivational_notes(current_user: User = Depends(require_admin)):
+    """Get all motivational notes"""
+    notes = await db.motivational_notes.find({"is_active": True}).sort("workout_count_min", 1).to_list(100)
+    return [MotivationalNote(**parse_from_mongo(note)) for note in notes]
+
 # Include router
 app.include_router(api_router)
 
