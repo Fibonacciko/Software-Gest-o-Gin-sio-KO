@@ -152,7 +152,7 @@ class AnalyticsEngine:
         
         # Presenças hoje
         today_attendance = await self.db.attendance.count_documents({
-            "check_in_date": today
+            "check_in_date": today.isoformat()
         })
         
         # Presenças nos últimos 30 dias
