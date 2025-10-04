@@ -103,6 +103,7 @@ const Payments = ({ language, translations }) => {
       cash: 'Cash',
       card: 'Card',
       transfer: 'Transfer',
+      mbway: 'MBWay',
       description: 'Description',
       paymentDate: 'Payment Date',
       status: 'Status',
