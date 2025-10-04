@@ -398,6 +398,9 @@ const Attendance = ({ language, translations }) => {
                         {t[language].checkInTime}
                       </th>
                       <th className="text-left p-4 font-medium text-gray-600">
+                        {t[language].activity}
+                      </th>
+                      <th className="text-left p-4 font-medium text-gray-600">
                         {t[language].method}
                       </th>
                     </tr>
