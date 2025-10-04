@@ -690,7 +690,11 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
     return response
 
 @api_router.get("/reports/attendance")
-async def get_attendance_report(month: Optional[int] = None, year: Optional[int] = None):
+async def get_attendance_report(
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
     if not month or not year:
         current_date = date.today()
         month = month or current_date.month
