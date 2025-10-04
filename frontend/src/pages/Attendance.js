@@ -133,7 +133,7 @@ const Attendance = ({ language, translations }) => {
         params.append('activity_id', activityFilter);
       }
       
-      const response = await axios.get(`${API}/attendance?${params}`);
+      const response = await axios.get(`${API}/attendance/detailed?${params}`);
       let attendanceData = response.data;
       
       // Get member details for each attendance
