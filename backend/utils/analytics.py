@@ -261,14 +261,14 @@ class AnalyticsEngine:
         active_members = await self.db.members.count_documents({"status": "active"})
         revenue_per_member = current_revenue / max(active_members, 1)
         
-        return {
+        return serialize_mongo_data({
             "current_month": round(current_revenue, 2),
             "last_month": round(last_revenue, 2),
             "growth_rate": round(revenue_growth, 2),
             "revenue_per_member": round(revenue_per_member, 2),
             "payment_methods": {item["_id"]: {"total": round(item["total"], 2), "count": item["count"]} 
                              for item in payment_methods}
-        }
+        })
     
     async def _get_basic_financial_metrics(self) -> Dict[str, Any]:
         """Métricas financeiras básicas (staff)"""
