@@ -2,7 +2,7 @@
 KO Gym - Sistema de Analytics Premium
 Business Intelligence e métricas avançadas
 """
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 import asyncio
