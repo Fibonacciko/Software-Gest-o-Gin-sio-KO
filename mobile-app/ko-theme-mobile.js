@@ -209,10 +209,10 @@ export const KOUtils = {
   
   // Cores para atividades (baseadas na paleta KO)
   activityColors: [
-    KOTheme.primary.red,
-    KOTheme.primary.yellow,
-    KOTheme.red[600],
-    KOTheme.gold[600],
+    KOTheme.primary.orange,
+    KOTheme.primary.golden,
+    KOTheme.orange[600],
+    KOTheme.amber[600],
     KOTheme.neutral[600],
     KOTheme.system.success,
   ],
