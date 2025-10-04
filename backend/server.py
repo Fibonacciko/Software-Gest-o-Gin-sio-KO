@@ -246,6 +246,135 @@ async def create_admin_user():
 async def root():
     return {"message": "Gym Management API is running", "version": "1.0.0"}
 
+# Authentication Routes
+@api_router.post("/auth/login", response_model=Token)
+async def login(user_credentials: UserLogin):
+    user = await db.users.find_one({"username": user_credentials.username})
+    if not user or not verify_password(user_credentials.password, user["password_hash"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not user["is_active"]:
+        raise HTTPException(status_code=400, detail="User account is disabled")
+    
+    access_token = create_access_token(data={"sub": user["username"]})
+    user_obj = User(**parse_from_mongo(user))
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=user_obj
+    )
+
+@api_router.get("/auth/me", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
+    return current_user
+
+# User Management Routes (Admin only)
+@api_router.post("/users", response_model=User)
+async def create_user(
+    user_data: UserCreate,
+    current_user: User = Depends(require_admin)
+):
+    # Check if username already exists
+    existing_user = await db.users.find_one({"username": user_data.username})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    # Check if email already exists
+    existing_email = await db.users.find_one({"email": user_data.email})
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user = User(
+        username=user_data.username,
+        email=user_data.email,
+        full_name=user_data.full_name,
+        role=user_data.role,
+        created_by=current_user.id
+    )
+    
+    user_dict = prepare_for_mongo(user.dict())
+    user_dict["password_hash"] = get_password_hash(user_data.password)
+    
+    await db.users.insert_one(user_dict)
+    return user
+
+@api_router.get("/users", response_model=List[User])
+async def get_users(current_user: User = Depends(require_admin)):
+    users = await db.users.find({}).to_list(1000)
+    return [User(**parse_from_mongo(user)) for user in users]
+
+@api_router.put("/users/{user_id}", response_model=User)
+async def update_user(
+    user_id: str,
+    user_data: UserCreate,
+    current_user: User = Depends(require_admin)
+):
+    user_dict = prepare_for_mongo(user_data.dict(exclude={"password"}))
+    
+    # Update password if provided
+    if user_data.password:
+        user_dict["password_hash"] = get_password_hash(user_data.password)
+    
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": user_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    updated_user = await db.users.find_one({"id": user_id})
+    return User(**parse_from_mongo(updated_user))
+
+@api_router.put("/users/{user_id}/toggle-status")
+async def toggle_user_status(
+    user_id: str,
+    current_user: User = Depends(require_admin)
+):
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent admin from deactivating themselves
+    if user["id"] == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
+    
+    new_status = not user["is_active"]
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"is_active": new_status}}
+    )
+    
+    return {"message": f"User {'activated' if new_status else 'deactivated'} successfully"}
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    current_user: User = Depends(require_admin)
+):
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent admin from deleting themselves
+    if user["id"] == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    # Prevent deleting other admins
+    if user["role"] == "admin":
+        raise HTTPException(status_code=400, detail="Cannot delete admin accounts")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User deleted successfully"}
+
 # Helper functions
 def generate_qr_code(member_id: str) -> str:
     """Generate QR code for member"""
