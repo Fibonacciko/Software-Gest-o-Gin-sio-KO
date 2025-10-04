@@ -244,13 +244,13 @@ class AnalyticsEngine:
         payment_methods = await self.db.payments.aggregate([
             {
                 "$match": {
-                    "date": {"$gte": current_month_start.date()},
-                    "type": "income"
+                    "payment_date": {"$gte": current_month_start.date()},
+                    "status": "paid"
                 }
             },
             {
                 "$group": {
-                    "_id": "$method",
+                    "_id": "$payment_method",
                     "total": {"$sum": "$amount"},
                     "count": {"$sum": 1}
                 }
