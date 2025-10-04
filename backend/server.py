@@ -1976,7 +1976,7 @@ async def authenticate_user(username: str, password: str) -> Optional[User]:
 # Enhanced login endpoint with rate limiting
 @api_router.post("/auth/login-premium")
 @auth_rate_limit()
-async def login_with_premium_features(user_data: UserLogin):
+async def login_with_premium_features(user_data: UserLogin, request: Request = None):
     """Premium login with advanced security and logging"""
     
     # Log login attempt
