@@ -128,6 +128,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "GET /api/motivational-notes endpoint tested successfully. Returns 5 default motivational notes with proper structure including workout count ranges, level names, and multilingual support (PT/EN)."
+        - working: true
+          agent: "testing"
+          comment: "SARCASTIC MOTIVATIONAL NOTES SYSTEM FULLY TESTED: ✅ Old boring notes replaced with sarcastic Portuguese humor (🥊😈🥵🤷‍♂️). ✅ 4 workout levels working (iniciantes 1-5, intermedios 6-20, avançados 21-50, hardcore 51+). ✅ Random selection working (3+ different notes per level). ✅ Mobile profile endpoint fixed and working. ✅ Mobile check-in updates workout count and provides new sarcastic notes. ✅ Portuguese humor properly implemented with emojis and attitude. System working perfectly!"
 
   - task: "Message Creation"
     implemented: true
