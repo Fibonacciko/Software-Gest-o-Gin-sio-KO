@@ -1073,21 +1073,36 @@ async def get_top_members_report(
 @api_router.post("/checkin/qr")
 async def qr_checkin(
     qr_data: str,
+    activity_id: str,
     current_user: User = Depends(require_admin_or_staff)
 ):
-    # Extract member ID from QR code
-    if not qr_data.startswith("MEMBER:"):
+    # Extract member number and ID from QR code
+    if not qr_data or "-" not in qr_data:
         raise HTTPException(status_code=400, detail="Invalid QR code")
     
-    member_id = qr_data.replace("MEMBER:", "")
+    try:
+        parts = qr_data.split("-")
+        member_number = parts[0]
+        member_id = parts[1]
+    except:
+        raise HTTPException(status_code=400, detail="Invalid QR code format")
     
-    # Check if member exists
-    member = await db.members.find_one({"id": member_id})
+    # Check if member exists (try both member number and ID)
+    member = await db.members.find_one({
+        "$or": [
+            {"member_number": member_number, "id": member_id},
+            {"id": member_id}
+        ]
+    })
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     
     # Create attendance record
-    attendance_data = AttendanceCreate(member_id=member_id, method="qr_code")
+    attendance_data = AttendanceCreate(
+        member_id=member["id"], 
+        activity_id=activity_id,
+        method="qr_code"
+    )
     attendance = await create_attendance(attendance_data)
     
     return {
