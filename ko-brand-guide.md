@@ -13,16 +13,16 @@
 
 ## 🌈 Paleta de Cores Harmoniosa
 
-### 🔴 **Família Vermelhos** (Baseada no logo)
+### 🧡 **Família Laranjas Suaves** (Baseada no logo)
 ```css
---ko-red-50: #FEF2F2    /* Muito claro - backgrounds sutis */
---ko-red-100: #FEE2E2   /* Claro - hover states */
---ko-red-200: #FECACA   /* Suave - borders */
---ko-red-300: #FCA5A5   /* Médio claro - elementos secundários */
---ko-red-600: #B91C1C   /* Principal - botões primários */
---ko-red-700: #991B1B   /* Escuro - hover de botões */
---ko-red-800: #7F1D1D   /* Muito escuro - texto importante */
---ko-red-900: #6B1515   /* Profundo - headers */
+--ko-orange-50: #FFF8F1    /* Muito claro - backgrounds sutis */
+--ko-orange-100: #FEECDC   /* Claro - hover states */
+--ko-orange-200: #FED7AA   /* Suave - borders */
+--ko-orange-300: #FDBA74   /* Médio claro - elementos secundários */
+--ko-orange-600: #EA580C   /* Principal - botões primários */
+--ko-orange-700: #C2410C   /* Escuro - hover de botões */
+--ko-orange-800: #9A3412   /* Muito escuro - texto importante */
+--ko-orange-900: #7C2D12   /* Profundo - headers */
 ```
 
 ### 🟡 **Família Dourados** (Baseada no logo)
