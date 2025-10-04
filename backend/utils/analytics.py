@@ -19,7 +19,7 @@ def serialize_mongo_data(data):
         return str(data)
     elif isinstance(data, datetime):
         return data.isoformat()
-    elif hasattr(data, 'date') and callable(getattr(data, 'date')):  # datetime.date
+    elif isinstance(data, date):
         return data.isoformat()
     else:
         return data
