@@ -1,12 +1,13 @@
 # KO Gym - Brand Identity & Color Guide
 
 ## 🎨 Logo Analysis
-**Logo Principal**: Círculo dourado com texto "KO" em vermelho escuro
+**Logo Principal**: Círculo com gradiente dourado/âmbar e texto "KO" em laranja suave
 
-### Cores Principais Extraídas:
-- **Vermelho Escuro/Bordô**: `#8B0000` (texto "KO")
-- **Amarelo Dourado**: `#DAA520` (fundo circular)
-- **Gradiente Dourado**: Do centro claro (`#FFBF00`) às bordas mais escuras
+### Cores Principais Extraídas (Corrigidas):
+- **Laranja/Âmbar Suave**: `#B8651B` (texto "KO") 
+- **Dourado Vibrante**: `#F4B942` (centro do fundo circular)
+- **Gradiente Dourado**: Do centro claro dourado às bordas âmbar mais escuras
+- **Filosofia**: Tons quentes com suavidade, sem contrastes agressivos
 
 ---
 
