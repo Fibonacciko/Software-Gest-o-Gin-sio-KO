@@ -20,6 +20,14 @@ import './App.css';
 function App() {
   const [language, setLanguage] = useState('pt');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  // Premium keyboard shortcuts and command palette
+  const {
+    commandPaletteOpen,
+    setCommandPaletteOpen,
+    commands
+  } = useKeyboardShortcuts();
 
   const translations = {
     pt: {
