@@ -555,9 +555,12 @@ async def get_member_attendance(
     attendance_records = await db.attendance.find(filter_dict).to_list(1000)
     return [Attendance(**parse_from_mongo(record)) for record in attendance_records]
 
-# Payment Routes
+# Payment Routes (Admin only)
 @api_router.post("/payments", response_model=Payment)
-async def create_payment(payment_data: PaymentCreate):
+async def create_payment(
+    payment_data: PaymentCreate,
+    current_user: User = Depends(require_admin)
+):
     # Check if member exists
     member = await db.members.find_one({"id": payment_data.member_id})
     if not member:
