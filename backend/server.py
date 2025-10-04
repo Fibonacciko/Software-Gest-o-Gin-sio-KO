@@ -21,6 +21,12 @@ import random
 import firebase_admin
 from firebase_admin import credentials, messaging
 
+# Sistemas Premium KO Gym
+from utils.logger import gym_logger, LoggingMiddleware
+from utils.cache import gym_cache, BusinessCache, cache_result
+from utils.rate_limiter import gym_rate_limiter, auth_rate_limit, api_rate_limit, dashboard_rate_limit, RateLimitMiddleware
+from utils.analytics import AnalyticsEngine
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
