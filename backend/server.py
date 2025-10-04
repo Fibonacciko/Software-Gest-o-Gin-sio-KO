@@ -464,7 +464,11 @@ async def get_member(
     return Member(**parse_from_mongo(member))
 
 @api_router.put("/members/{member_id}", response_model=Member)
-async def update_member(member_id: str, member_data: MemberCreate):
+async def update_member(
+    member_id: str,
+    member_data: MemberCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
     member_dict = prepare_for_mongo(member_data.dict())
     result = await db.members.update_one(
         {"id": member_id},
