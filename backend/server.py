@@ -855,8 +855,50 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
 async def get_attendance_report(
     month: Optional[int] = None,
     year: Optional[int] = None,
+    activity_id: Optional[str] = None,
     current_user: User = Depends(require_admin_or_staff)
 ):
+    if not month or not year:
+        current_date = date.today()
+        month = month or current_date.month
+        year = year or current_date.year
+    
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1)
+    else:
+        end_date = date(year, month + 1, 1)
+    
+    match_filter = {
+        "check_in_date": {
+            "$gte": start_date.isoformat(),
+            "$lt": end_date.isoformat()
+        }
+    }
+    
+    if activity_id:
+        match_filter["activity_id"] = activity_id
+    
+    pipeline = [
+        {"$match": match_filter},
+        {
+            "$group": {
+                "_id": "$member_id",
+                "count": {"$sum": 1}
+            }
+        }
+    ]
+    
+    attendance_stats = await db.attendance.aggregate(pipeline).to_list(1000)
+    return attendance_stats
+
+@api_router.get("/reports/activities")
+async def get_activity_report(
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Report of attendance by activity/modalidade"""
     if not month or not year:
         current_date = date.today()
         month = month or current_date.month
@@ -879,14 +921,86 @@ async def get_attendance_report(
         },
         {
             "$group": {
-                "_id": "$member_id",
-                "count": {"$sum": 1}
+                "_id": "$activity_id",
+                "total_sessions": {"$sum": 1},
+                "unique_members": {"$addToSet": "$member_id"}
+            }
+        },
+        {
+            "$project": {
+                "activity_id": "$_id",
+                "total_sessions": 1,
+                "unique_members_count": {"$size": "$unique_members"}
             }
         }
     ]
     
-    attendance_stats = await db.attendance.aggregate(pipeline).to_list(1000)
-    return attendance_stats
+    activity_stats = await db.attendance.aggregate(pipeline).to_list(1000)
+    
+    # Enrich with activity names
+    enriched_stats = []
+    for stat in activity_stats:
+        activity = await db.activities.find_one({"id": stat["activity_id"]})
+        stat["activity_name"] = activity["name"] if activity else "Unknown"
+        stat["activity_color"] = activity["color"] if activity else "#gray"
+        enriched_stats.append(stat)
+    
+    return enriched_stats
+
+@api_router.get("/reports/top-members")
+async def get_top_members_report(
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    activity_id: Optional[str] = None,
+    limit: int = 10,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Report of most active members (optionally by activity)"""
+    if not month or not year:
+        current_date = date.today()
+        month = month or current_date.month
+        year = year or current_date.year
+    
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1)
+    else:
+        end_date = date(year, month + 1, 1)
+    
+    match_filter = {
+        "check_in_date": {
+            "$gte": start_date.isoformat(),
+            "$lt": end_date.isoformat()
+        }
+    }
+    
+    if activity_id:
+        match_filter["activity_id"] = activity_id
+    
+    pipeline = [
+        {"$match": match_filter},
+        {
+            "$group": {
+                "_id": "$member_id",
+                "total_sessions": {"$sum": 1},
+                "activities": {"$addToSet": "$activity_id"}
+            }
+        },
+        {"$sort": {"total_sessions": -1}},
+        {"$limit": limit}
+    ]
+    
+    top_members = await db.attendance.aggregate(pipeline).to_list(limit)
+    
+    # Enrich with member names
+    enriched_members = []
+    for member_stat in top_members:
+        member = await db.members.find_one({"id": member_stat["_id"]})
+        member_stat["member_name"] = member["name"] if member else "Unknown"
+        member_stat["member_id"] = member_stat["_id"]
+        enriched_members.append(member_stat)
+    
+    return enriched_members
 
 # QR Code check-in
 @api_router.post("/checkin/qr")
