@@ -76,7 +76,7 @@ const KOButton = React.forwardRef(({ className, variant, size, asChild = false, 
       ref={ref}
       onMouseEnter={(e) => {
         if (variant === 'outline') {
-          e.target.style.backgroundColor = 'var(--ko-red-50)';
+          e.target.style.backgroundColor = 'var(--ko-orange-50)';
         } else if (variant === 'ghost') {
           e.target.style.backgroundColor = 'var(--ko-neutral-100)';
         }
