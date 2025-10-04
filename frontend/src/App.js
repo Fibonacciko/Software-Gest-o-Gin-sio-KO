@@ -106,9 +106,18 @@ function App() {
   };
 
   return (
-    <div className="App min-h-screen bg-slate-50">
-      <BrowserRouter>
-        <AuthProvider>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen" style={{ background: 'var(--background-primary)' }}>
+          {/* Offline Indicator */}
+          {!isOnline && (
+            <div 
+              className="fixed top-0 left-0 right-0 z-50 bg-yellow-500 text-white text-center py-2 text-sm font-medium"
+              style={{ backgroundColor: 'var(--ko-warning)' }}
+            >
+              📴 Modo Offline - Algumas funcionalidades podem estar limitadas
+            </div>
+          )}
           <ProtectedRoute>
             <div className="flex h-screen">
               <Sidebar 
