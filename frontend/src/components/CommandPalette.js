@@ -89,6 +89,7 @@ const CommandPalette = ({ isOpen, onClose, commands }) => {
       install: '📱',
       analytics: '🎯',
       status: '🔧',
+      theme: '🎨',
       debug: '🐛',
       clear: '🗑️',
       refresh: '🔄'
