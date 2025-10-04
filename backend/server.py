@@ -104,6 +104,7 @@ class Token(BaseModel):
 
 class Member(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_number: str  # Automatic sequential number (001, 002, etc.)
     name: str
     email: Optional[EmailStr] = None
     phone: str
