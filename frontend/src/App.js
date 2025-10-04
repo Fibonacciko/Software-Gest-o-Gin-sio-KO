@@ -29,6 +29,61 @@ function App() {
     commands
   } = useKeyboardShortcuts();
 
+  // PWA Service Worker Registration
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          console.log('✅ KO Gym SW registered successfully:', registration.scope);
+          
+          // Handle updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('🔄 New content available, reload to update');
+                  // Optionally show update notification
+                }
+              });
+            }
+          });
+          
+        } catch (error) {
+          console.error('❌ KO Gym SW registration failed:', error);
+        }
+      });
+    }
+
+    // Online/Offline detection
+    const handleOnline = () => {
+      setIsOnline(true);
+      console.log('📶 KO Gym: Back online');
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      console.log('📴 KO Gym: Gone offline');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // PWA Install Prompt handling
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      window.deferredPrompt = e;
+    });
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const translations = {
     pt: {
       dashboard: 'Painel',
