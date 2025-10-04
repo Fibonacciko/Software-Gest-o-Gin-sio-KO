@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import '@/App.css';
 
-// Import components
+// Import components and contexts
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Members from './pages/Members';
@@ -10,6 +12,7 @@ import Attendance from './pages/Attendance';
 import Payments from './pages/Payments';
 import Inventory from './pages/Inventory';
 import Reports from './pages/Reports';
+import UserManagement from './pages/UserManagement';
 import { Toaster } from './components/ui/sonner';
 
 function App() {
