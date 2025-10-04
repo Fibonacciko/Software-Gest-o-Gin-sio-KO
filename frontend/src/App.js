@@ -169,10 +169,8 @@ function App() {
                       <Dashboard language={language} analytics={true} />
                     </ProtectedRoute>
                   } />
-                </Routes>
-              </main>
-            </div>
-          </ProtectedRoute>
+            </Routes>
+          </div>
           
           {/* Premium Components */}
           <CommandPalette
