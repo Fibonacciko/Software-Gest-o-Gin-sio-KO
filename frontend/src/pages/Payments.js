@@ -1,0 +1,619 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Textarea } from '../components/ui/textarea';
+import { 
+  CreditCard, 
+  Plus, 
+  Search, 
+  Filter,
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  Download,
+  Edit,
+  Eye,
+  Users
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const Payments = ({ language, translations }) => {
+  const [payments, setPayments] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [selectedMember, setSelectedMember] = useState('all');
+
+  const [formData, setFormData] = useState({
+    member_id: '',
+    amount: '',
+    payment_method: 'cash',
+    description: ''
+  });
+
+  const t = {
+    pt: {
+      payments: 'Gestão de Pagamentos',
+      addPayment: 'Registar Pagamento',
+      searchPayments: 'Procurar pagamentos...',
+      allStatuses: 'Todos os Status',
+      paid: 'Pago',
+      pending: 'Pendente',
+      overdue: 'Em Atraso',
+      allMembers: 'Todos os Membros',
+      allDates: 'Todas as Datas',
+      thisMonth: 'Este Mês',
+      lastMonth: 'Mês Passado',
+      thisYear: 'Este Ano',
+      member: 'Membro',
+      amount: 'Valor',
+      paymentMethod: 'Método de Pagamento',
+      cash: 'Numerário',
+      card: 'Cartão',
+      transfer: 'Transferência',
+      description: 'Descrição',
+      paymentDate: 'Data do Pagamento',
+      status: 'Status',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      view: 'Ver',
+      edit: 'Editar',
+      totalRevenue: 'Receita Total',
+      monthlyRevenue: 'Receita Mensal',
+      pendingPayments: 'Pagamentos Pendentes',
+      recentPayments: 'Pagamentos Recentes',
+      noPayments: 'Nenhum pagamento encontrado',
+      paymentAdded: 'Pagamento registado com sucesso!',
+      export: 'Exportar',
+      paymentDetails: 'Detalhes do Pagamento',
+      membershipPayment: 'Pagamento de Membership',
+      selectMember: 'Selecionar membro...',
+      enterAmount: 'Inserir valor...',
+      paymentDescription: 'Descrição do pagamento...'
+    },
+    en: {
+      payments: 'Payment Management',
+      addPayment: 'Add Payment',
+      searchPayments: 'Search payments...',
+      allStatuses: 'All Statuses',
+      paid: 'Paid',
+      pending: 'Pending',
+      overdue: 'Overdue',
+      allMembers: 'All Members',
+      allDates: 'All Dates',
+      thisMonth: 'This Month',
+      lastMonth: 'Last Month',
+      thisYear: 'This Year',
+      member: 'Member',
+      amount: 'Amount',
+      paymentMethod: 'Payment Method',
+      cash: 'Cash',
+      card: 'Card',
+      transfer: 'Transfer',
+      description: 'Description',
+      paymentDate: 'Payment Date',
+      status: 'Status',
+      save: 'Save',
+      cancel: 'Cancel',
+      view: 'View',
+      edit: 'Edit',
+      totalRevenue: 'Total Revenue',
+      monthlyRevenue: 'Monthly Revenue',
+      pendingPayments: 'Pending Payments',
+      recentPayments: 'Recent Payments',
+      noPayments: 'No payments found',
+      paymentAdded: 'Payment added successfully!',
+      export: 'Export',
+      paymentDetails: 'Payment Details',
+      membershipPayment: 'Membership Payment',
+      selectMember: 'Select member...',
+      enterAmount: 'Enter amount...',
+      paymentDescription: 'Payment description...'
+    }
+  };
+
+  useEffect(() => {
+    fetchMembers();
+    fetchPayments();
+  }, []);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [statusFilter, dateFilter, selectedMember, searchTerm]);
+
+  const fetchMembers = async () => {
+    try {
+      const response = await axios.get(`${API}/members`);
+      setMembers(response.data);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (selectedMember !== 'all') params.append('member_id', selectedMember);
+      
+      // Date filters
+      const now = new Date();
+      if (dateFilter === 'thisMonth') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        params.append('start_date', startOfMonth.toISOString().split('T')[0]);
+      } else if (dateFilter === 'lastMonth') {
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        params.append('start_date', startOfLastMonth.toISOString().split('T')[0]);
+        params.append('end_date', endOfLastMonth.toISOString().split('T')[0]);
+      } else if (dateFilter === 'thisYear') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        params.append('start_date', startOfYear.toISOString().split('T')[0]);
+      }
+      
+      const response = await axios.get(`${API}/payments?${params}`);
+      let paymentsData = response.data;
+      
+      // Get member details for each payment
+      const paymentsWithMembers = await Promise.all(
+        paymentsData.map(async (payment) => {
+          try {
+            const memberResponse = await axios.get(`${API}/members/${payment.member_id}`);
+            return {
+              ...payment,
+              member: memberResponse.data
+            };
+          } catch (error) {
+            return {
+              ...payment,
+              member: { name: 'Membro não encontrado', id: payment.member_id }
+            };
+          }
+        })
+      );
+      
+      // Filter by search term if provided
+      if (searchTerm) {
+        paymentsWithMembers = paymentsWithMembers.filter(payment => 
+          payment.member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          payment.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
+      setPayments(paymentsWithMembers);
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      toast.error('Erro ao carregar pagamentos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API}/payments`, {
+        ...formData,
+        amount: parseFloat(formData.amount)
+      });
+      
+      toast.success(t[language].paymentAdded);
+      setShowAddDialog(false);
+      resetForm();
+      fetchPayments();
+    } catch (error) {
+      console.error('Error adding payment:', error);
+      toast.error('Erro ao registar pagamento');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      member_id: '',
+      amount: '',
+      payment_method: 'cash',
+      description: ''
+    });
+  };
+
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case 'paid': return 'default';
+      case 'pending': return 'secondary';
+      case 'overdue': return 'destructive';
+      default: return 'secondary';
+    }
+  };
+
+  const getPaymentMethodColor = (method) => {
+    switch (method) {
+      case 'cash': return 'bg-green-100 text-green-800';
+      case 'card': return 'bg-blue-100 text-blue-800';
+      case 'transfer': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPaymentStats = () => {
+    const totalRevenue = payments
+      .filter(p => p.status === 'paid')
+      .reduce((sum, p) => sum + p.amount, 0);
+    
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthlyRevenue = payments
+      .filter(p => p.status === 'paid' && new Date(p.payment_date) >= startOfMonth)
+      .reduce((sum, p) => sum + p.amount, 0);
+    
+    const pendingCount = payments.filter(p => p.status === 'pending').length;
+    
+    return { totalRevenue, monthlyRevenue, pendingCount };
+  };
+
+  const exportPayments = () => {
+    const csvContent = [
+      ['Data', 'Membro', 'Valor', 'Método', 'Status', 'Descrição'],
+      ...payments.map(payment => [
+        payment.payment_date,
+        payment.member.name,
+        payment.amount,
+        payment.payment_method,
+        payment.status,
+        payment.description || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pagamentos_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
+
+  const stats = getPaymentStats();
+
+  return (
+    <div className="p-6 space-y-6 fade-in">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
+          {t[language].payments}
+        </h1>
+        
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <DialogTrigger asChild>
+            <Button 
+              className="btn-hover"
+              onClick={resetForm}
+              data-testid="add-payment-btn"
+            >
+              <Plus className="mr-2" size={16} />
+              {t[language].addPayment}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t[language].addPayment}</DialogTitle>
+            </DialogHeader>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="member_id">{t[language].member} *</Label>
+                <Select 
+                  value={formData.member_id} 
+                  onValueChange={(value) => setFormData({...formData, member_id: value})}
+                >
+                  <SelectTrigger data-testid="payment-member">
+                    <SelectValue placeholder={t[language].selectMember} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name} - {member.membership_type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="amount">{t[language].amount} (€) *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                  required
+                  placeholder={t[language].enterAmount}
+                  data-testid="payment-amount"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="payment_method">{t[language].paymentMethod} *</Label>
+                <Select 
+                  value={formData.payment_method} 
+                  onValueChange={(value) => setFormData({...formData, payment_method: value})}
+                >
+                  <SelectTrigger data-testid="payment-method">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">{t[language].cash}</SelectItem>
+                    <SelectItem value="card">{t[language].card}</SelectItem>
+                    <SelectItem value="transfer">{t[language].transfer}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="description">{t[language].description}</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  rows={3}
+                  placeholder={t[language].paymentDescription}
+                  data-testid="payment-description"
+                />
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowAddDialog(false)}
+                >
+                  {t[language].cancel}
+                </Button>
+                <Button type="submit" data-testid="save-payment-btn">
+                  {t[language].save}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="card-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  {t[language].totalRevenue}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  €{stats.totalRevenue.toFixed(2)}
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-green-500">
+                <DollarSign size={24} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="card-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  {t[language].monthlyRevenue}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  €{stats.monthlyRevenue.toFixed(2)}
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-blue-500">
+                <TrendingUp size={24} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="card-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  {t[language].pendingPayments}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">{stats.pendingCount}</p>
+              </div>
+              <div className="p-3 rounded-full bg-orange-500">
+                <CreditCard size={24} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder={t[language].searchPayments}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                data-testid="payments-search"
+              />
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t[language].allStatuses} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t[language].allStatuses}</SelectItem>
+                <SelectItem value="paid">{t[language].paid}</SelectItem>
+                <SelectItem value="pending">{t[language].pending}</SelectItem>
+                <SelectItem value="overdue">{t[language].overdue}</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t[language].allDates} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t[language].allDates}</SelectItem>
+                <SelectItem value="thisMonth">{t[language].thisMonth}</SelectItem>
+                <SelectItem value="lastMonth">{t[language].lastMonth}</SelectItem>
+                <SelectItem value="thisYear">{t[language].thisYear}</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={selectedMember} onValueChange={setSelectedMember}>
+              <SelectTrigger>
+                <SelectValue placeholder={t[language].allMembers} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t[language].allMembers}</SelectItem>
+                {members.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payments List */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center">
+            <CreditCard className="mr-2" />
+            {t[language].recentPayments} ({payments.length})
+          </CardTitle>
+          <Button 
+            variant="outline" 
+            onClick={exportPayments}
+            className="btn-hover"
+            data-testid="export-payments-btn"
+          >
+            <Download className="mr-2" size={16} />
+            {t[language].export}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="animate-pulse flex items-center space-x-4 p-4">
+                  <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : payments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].member}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].amount}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].paymentMethod}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].paymentDate}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].status}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].description}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment) => (
+                    <tr key={payment.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Users size={16} className="text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{payment.member.name}</p>
+                            <p className="text-sm text-gray-500">{payment.member.membership_type}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <DollarSign size={16} className="text-gray-400 mr-1" />
+                          <span className="font-semibold">€{payment.amount.toFixed(2)}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge className={getPaymentMethodColor(payment.payment_method)}>
+                          {t[language][payment.payment_method]}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Calendar size={16} className="text-gray-400 mr-2" />
+                          {new Date(payment.payment_date).toLocaleDateString('pt-PT')}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge variant={getStatusVariant(payment.status)}>
+                          {t[language][payment.status]}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm text-gray-600 truncate max-w-xs">
+                          {payment.description || '-'}
+                        </p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <CreditCard size={48} className="mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-600">{t[language].noPayments}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Payments;
