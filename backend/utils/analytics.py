@@ -153,12 +153,12 @@ class AnalyticsEngine:
         hourly_distribution = await self.db.attendance.aggregate([
             {
                 "$match": {
-                    "check_in_datetime": {"$gte": seven_days_ago}
+                    "check_in_time": {"$gte": seven_days_ago}
                 }
             },
             {
                 "$group": {
-                    "_id": {"$hour": "$check_in_datetime"},
+                    "_id": {"$hour": "$check_in_time"},
                     "count": {"$sum": 1}
                 }
             },
@@ -171,12 +171,12 @@ class AnalyticsEngine:
         weekly_distribution = await self.db.attendance.aggregate([
             {
                 "$match": {
-                    "check_in_datetime": {"$gte": thirty_days_ago}
+                    "check_in_time": {"$gte": thirty_days_ago}
                 }
             },
             {
                 "$group": {
-                    "_id": {"$dayOfWeek": "$check_in_datetime"},
+                    "_id": {"$dayOfWeek": "$check_in_time"},
                     "count": {"$sum": 1}
                 }
             },
@@ -291,7 +291,7 @@ class AnalyticsEngine:
         popular_activities = await self.db.attendance.aggregate([
             {
                 "$match": {
-                    "check_in_datetime": {"$gte": thirty_days_ago},
+                    "check_in_time": {"$gte": thirty_days_ago},
                     "activity_id": {"$exists": True}
                 }
             },
@@ -377,7 +377,7 @@ class AnalyticsEngine:
         # Treinos
         workouts = await self.db.attendance.find(
             {"member_id": member_id}
-        ).sort("check_in_datetime", 1).to_list(None)
+        ).sort("check_in_time", 1).to_list(None)
         
         total_workouts = len(workouts)
         
@@ -396,8 +396,8 @@ class AnalyticsEngine:
             )
         
         # Datas
-        first_workout = workouts[0]["check_in_datetime"]
-        last_workout = workouts[-1]["check_in_datetime"]
+        first_workout = workouts[0]["check_in_time"]
+        last_workout = workouts[-1]["check_in_time"]
         
         # Média semanal
         weeks_since_first = max((datetime.now(timezone.utc) - first_workout).days / 7, 1)
@@ -463,7 +463,7 @@ class AnalyticsEngine:
         
         # Converter para datas únicas
         workout_dates = list(set(
-            workout["check_in_datetime"].date() for workout in workouts
+            workout["check_in_time"].date() for workout in workouts
         ))
         workout_dates.sort()
         
@@ -510,7 +510,7 @@ class AnalyticsEngine:
                     "foreignField": "member_id",
                     "as": "recent_attendance",
                     "pipeline": [
-                        {"$match": {"check_in_datetime": {"$gte": fourteen_days_ago}}},
+                        {"$match": {"check_in_time": {"$gte": fourteen_days_ago}}},
                         {"$limit": 1}
                     ]
                 }
