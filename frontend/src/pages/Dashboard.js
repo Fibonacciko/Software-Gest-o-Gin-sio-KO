@@ -280,10 +280,16 @@ const Dashboard = ({ language, translations }) => {
       </div>
 
       {/* Quick Check-in Section */}
-      <Card className="card-shadow">
+      <Card 
+        style={{ 
+          background: 'var(--gradient-card-bg)',
+          boxShadow: 'var(--shadow-md)',
+          border: '1px solid var(--border-light)'
+        }}
+      >
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <UserCheck className="mr-2" />
+          <CardTitle className="flex items-center" style={{ color: 'var(--text-primary)' }}>
+            <UserCheck className="mr-2 ko-text-primary" />
             {t[language].quickCheckin}
           </CardTitle>
         </CardHeader>
