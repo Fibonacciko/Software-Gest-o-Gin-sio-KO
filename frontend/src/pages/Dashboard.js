@@ -107,14 +107,27 @@ const Dashboard = ({ language, translations }) => {
       const today = new Date().toISOString().split('T')[0];
       const attendanceResponse = await axios.get(`${API}/attendance?start_date=${today}&end_date=${today}`);
       
-      // Get member details for attendance
+      // Get member details for each attendance with better error handling
       const attendanceWithMembers = await Promise.all(
-        attendanceResponse.data.map(async (attendance) => {
-          const memberResponse = await axios.get(`${API}/members/${attendance.member_id}`);
-          return {
-            ...attendance,
-            member: memberResponse.data
-          };
+        attendanceResponse.data.map(async (att) => {
+          try {
+            const memberResponse = await axios.get(`${API}/members/${att.member_id}`);
+            return {
+              ...att,
+              member: memberResponse.data
+            };
+          } catch (error) {
+            console.warn(`Member ${att.member_id} not found, likely deleted`);
+            return {
+              ...att,
+              member: { 
+                name: 'Membro eliminado', 
+                id: att.member_id,
+                member_number: 'N/A',
+                phone: 'N/A'
+              }
+            };
+          }
         })
       );
       
