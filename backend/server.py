@@ -1169,6 +1169,7 @@ logger = logging.getLogger(__name__)
 async def startup_db():
     await create_admin_user()
     await create_default_activities()
+    await update_existing_members_with_numbers()
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
