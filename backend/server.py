@@ -681,6 +681,61 @@ def generate_qr_code(member_id: str) -> str:
     img_str = base64.b64encode(buffer.getvalue()).decode()
     return f"data:image/png;base64,{img_str}"
 
+def generate_member_qr_code(member_number: str, member_id: str) -> str:
+    """Generate QR code for member check-in"""
+    qr_data = f"{member_number}-{member_id}"
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    return f"data:image/png;base64,{img_str}"
+
+def get_motivational_note_for_member(workout_count: int, language: str = "pt") -> Optional[str]:
+    """Get appropriate motivational note based on workout count"""
+    # Default motivational notes - these will be configurable via admin panel
+    default_notes = [
+        {
+            "min": 1, "max": 10, "level": "beginner",
+            "note_pt": "Põr luvas conta como exercício? 🥊",
+            "note_en": "Does putting on gloves count as exercise? 🥊"
+        },
+        {
+            "min": 11, "max": 30, "level": "getting_started", 
+            "note_pt": "Cuidado, essa motivação toda pode durar... até amanhã! 💪",
+            "note_en": "Be careful, all that motivation might last... until tomorrow! 💪"
+        },
+        {
+            "min": 31, "max": 60, "level": "building_habit",
+            "note_pt": "Agora já és um regular! O sofá já se sente abandonado. 🛋️",
+            "note_en": "Now you're a regular! Your couch is feeling abandoned. 🛋️"
+        },
+        {
+            "min": 61, "max": 90, "level": "committed",
+            "note_pt": "Wow! A tua dedição está a inspirar outros membros! 🔥",
+            "note_en": "Wow! Your dedication is inspiring other members! 🔥"
+        },
+        {
+            "min": 91, "max": 999, "level": "champion",
+            "note_pt": "És oficialmente um viciado no ginásio! E isso é bom! 🏆",
+            "note_en": "You're officially a gym addict! And that's a good thing! 🏆"
+        }
+    ]
+    
+    for note in default_notes:
+        if note["min"] <= workout_count <= note["max"]:
+            return note["note_pt"] if language == "pt" else note["note_en"]
+    
+    return None
+
 def prepare_for_mongo(data):
     """Convert date objects to ISO strings for MongoDB"""
     if isinstance(data, dict):
