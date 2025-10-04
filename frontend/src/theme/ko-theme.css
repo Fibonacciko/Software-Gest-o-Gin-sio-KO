@@ -43,9 +43,9 @@
   --ko-neutral-800: #292524;     /* Cinza muito escuro */
   --ko-neutral-900: #1C1917;     /* Quase preto quente */
   
-  /* Cores de sistema (baseadas na paleta) */
+  /* Cores de sistema (baseadas na paleta laranja) */
   --ko-success: #059669;         /* Verde harmonioso */
-  --ko-warning: #D97706;         /* Laranja (do dourado) */
+  --ko-warning: #F97316;         /* Laranja de aviso */
   --ko-error: #DC2626;           /* Vermelho de erro */
   --ko-info: #0EA5E9;           /* Azul complementar */
   
