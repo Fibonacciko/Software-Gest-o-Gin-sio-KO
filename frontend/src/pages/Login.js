@@ -101,7 +101,8 @@ const Login = () => {
               
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-medium"
+                className="w-full text-white py-6 text-lg font-medium ko-hover-primary transition-all duration-200"
+                style={{ backgroundColor: 'var(--button-primary-bg)' }}
                 disabled={loading}
                 data-testid="login-submit"
               >
