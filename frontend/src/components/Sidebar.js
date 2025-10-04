@@ -84,9 +84,25 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                     to={item.path}
                     className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group ${
                       isActive 
-                        ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'ko-text-primary border-r-2 ko-border-primary' 
+                        : 'hover:bg-opacity-50'
                     }`}
+                    style={{
+                      backgroundColor: isActive ? 'var(--ko-red-50)' : 'transparent',
+                      color: isActive ? 'var(--ko-primary-red)' : 'var(--text-secondary)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.target.style.backgroundColor = 'var(--ko-neutral-100)';
+                        e.target.style.color = 'var(--text-primary)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.target.style.backgroundColor = 'transparent';
+                        e.target.style.color = 'var(--text-secondary)';
+                      }
+                    }}
                     data-testid={`nav-${item.path.replace('/', '') || 'dashboard'}`}
                   >
                     <Icon 
