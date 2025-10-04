@@ -283,6 +283,7 @@ const useKeyboardShortcuts = () => {
     { id: 'install', name: 'Instalar App', key: 'Ctrl+Shift+I', action: showInstallPrompt },
     { id: 'analytics', name: 'Analytics', key: 'Ctrl+Shift+A', action: showAnalytics },
     { id: 'status', name: 'Status do Sistema', key: 'Ctrl+Shift+S', action: showSystemStatus },
+    { id: 'theme', name: 'Alternar Tema', key: 'Ctrl+Shift+T', action: toggleTheme },
     { id: 'debug', name: 'Toggle Debug', key: 'Ctrl+Shift+D', action: toggleDebugMode },
     { id: 'clear', name: 'Limpar Cache', key: 'Ctrl+Shift+C', action: clearCache },
     { id: 'refresh', name: 'Refresh Forçado', key: 'Ctrl+Shift+R', action: forceRefresh }
