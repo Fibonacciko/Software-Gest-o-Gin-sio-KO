@@ -10,13 +10,17 @@ from .logger import gym_logger
 from .cache import gym_cache, BusinessCache
 
 def serialize_mongo_data(data):
-    """Convert MongoDB ObjectIds to strings for JSON serialization"""
+    """Convert MongoDB ObjectIds and dates to strings for JSON serialization"""
     if isinstance(data, dict):
         return {k: serialize_mongo_data(v) for k, v in data.items()}
     elif isinstance(data, list):
         return [serialize_mongo_data(item) for item in data]
     elif hasattr(data, '__class__') and data.__class__.__name__ == 'ObjectId':
         return str(data)
+    elif isinstance(data, datetime):
+        return data.isoformat()
+    elif hasattr(data, 'date') and callable(getattr(data, 'date')):  # datetime.date
+        return data.isoformat()
     else:
         return data
 
