@@ -417,39 +417,66 @@ async def generate_next_member_number():
         return f"{member_count + 1:03d}"
 
 async def update_existing_members_with_numbers():
-    """Add member numbers to existing members who don't have them"""
-    try:
-        # Find members without member_number
-        members_without_numbers = await db.members.find({"member_number": {"$exists": False}}).to_list(1000)
-        
-        if not members_without_numbers:
-            return
-        
-        print(f"Updating {len(members_without_numbers)} members with numbers...")
-        
-        # Sort by creation date to maintain order
-        members_without_numbers.sort(key=lambda x: x.get('created_at', ''))
-        
-        for i, member in enumerate(members_without_numbers, 1):
-            member_number = f"{i:03d}"
-            
-            # Update member with number
-            await db.members.update_one(
-                {"id": member["id"]},
-                {"$set": {"member_number": member_number}}
-            )
-            
-            # Regenerate QR code with member number
-            new_qr_code = generate_qr_code(f"{member_number}-{member['id']}")
-            await db.members.update_one(
-                {"id": member["id"]},
-                {"$set": {"qr_code": new_qr_code}}
-            )
-        
-        print(f"Successfully updated {len(members_without_numbers)} members with numbers")
+    """Update existing members with sequential numbers if they don't have them"""
+    members_without_numbers = await db.members.find({"member_number": {"$exists": False}}).to_list(None)
     
-    except Exception as e:
-        print(f"Error updating existing members: {e}")
+    for i, member in enumerate(members_without_numbers, 1):
+        # Get the next number
+        next_number = await generate_next_member_number()
+        
+        # Update member with number and improved QR code
+        qr_code_data = generate_member_qr_code(next_number, member["id"])
+        await db.members.update_one(
+            {"_id": member["_id"]},
+            {
+                "$set": {
+                    "member_number": next_number,
+                    "qr_code": qr_code_data
+                }
+            }
+        )
+        print(f"Updated member {member['name']} with number {next_number}")
+
+async def create_default_motivational_notes():
+    """Create default motivational notes if they don't exist"""
+    existing_notes = await db.motivational_notes.count_documents({})
+    if existing_notes > 0:
+        return
+    
+    default_notes = [
+        {
+            "workout_count_min": 1, "workout_count_max": 10, "level_name": "beginner",
+            "note_pt": "Põr luvas conta como exercício? 🥊",
+            "note_en": "Does putting on gloves count as exercise? 🥊"
+        },
+        {
+            "workout_count_min": 11, "workout_count_max": 30, "level_name": "getting_started",
+            "note_pt": "Cuidado, essa motivação toda pode durar... até amanhã! 💪", 
+            "note_en": "Be careful, all that motivation might last... until tomorrow! 💪"
+        },
+        {
+            "workout_count_min": 31, "workout_count_max": 60, "level_name": "building_habit",
+            "note_pt": "Agora já és um regular! O sofá já se sente abandonado. 🛋️",
+            "note_en": "Now you're a regular! Your couch is feeling abandoned. 🛋️"
+        },
+        {
+            "workout_count_min": 61, "workout_count_max": 90, "level_name": "committed", 
+            "note_pt": "Wow! A tua dedição está a inspirar outros membros! 🔥",
+            "note_en": "Wow! Your dedication is inspiring other members! 🔥"
+        },
+        {
+            "workout_count_min": 91, "workout_count_max": 999, "level_name": "champion",
+            "note_pt": "És oficialmente um viciado no ginásio! E isso é bom! 🏆",
+            "note_en": "You're officially a gym addict! And that's a good thing! 🏆"
+        }
+    ]
+    
+    for note_data in default_notes:
+        note = MotivationalNote(**note_data)
+        note_dict = prepare_for_mongo(note.dict())
+        await db.motivational_notes.insert_one(note_dict)
+    
+    print("Default motivational notes created")
 
 async def create_default_activities():
     try:
