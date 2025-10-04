@@ -606,7 +606,10 @@ async def create_inventory_item(
     return item
 
 @api_router.get("/inventory", response_model=List[InventoryItem])
-async def get_inventory(category: Optional[ItemCategory] = None):
+async def get_inventory(
+    category: Optional[ItemCategory] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
     filter_dict = {}
     if category:
         filter_dict['category'] = category
