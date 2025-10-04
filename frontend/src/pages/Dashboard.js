@@ -479,6 +479,7 @@ const Dashboard = ({ language, translations }) => {
           </CardContent>
         </Card>
       </div>
+      </div>
     </div>
   );
 };
