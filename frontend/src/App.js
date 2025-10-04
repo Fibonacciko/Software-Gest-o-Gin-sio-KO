@@ -1,51 +1,80 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import '@/App.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Import components
+import Sidebar from './components/Sidebar';
+import Dashboard from './pages/Dashboard';
+import Members from './pages/Members';
+import Attendance from './pages/Attendance';
+import Payments from './pages/Payments';
+import Inventory from './pages/Inventory';
+import Reports from './pages/Reports';
+import { Toaster } from './components/ui/sonner';
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+function App() {
+  const [language, setLanguage] = useState('pt');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const translations = {
+    pt: {
+      dashboard: 'Painel',
+      members: 'Membros',
+      attendance: 'Presenças',
+      payments: 'Pagamentos',
+      inventory: 'Stock',
+      reports: 'Relatórios',
+      settings: 'Configurações'
+    },
+    en: {
+      dashboard: 'Dashboard',
+      members: 'Members',
+      attendance: 'Attendance',
+      payments: 'Payments',
+      inventory: 'Inventory',
+      reports: 'Reports',
+      settings: 'Settings'
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
+    <div className="App min-h-screen bg-slate-50">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
+        <div className="flex h-screen">
+          <Sidebar 
+            isOpen={sidebarOpen}
+            toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            language={language}
+            setLanguage={setLanguage}
+            translations={translations[language]}
+          />
+          
+          <main className={`flex-1 overflow-auto transition-all duration-300 ${
+            sidebarOpen ? 'ml-64' : 'ml-16'
+          }`}>
+            <Routes>
+              <Route path="/" element={
+                <Dashboard language={language} translations={translations[language]} />
+              } />
+              <Route path="/members" element={
+                <Members language={language} translations={translations[language]} />
+              } />
+              <Route path="/attendance" element={
+                <Attendance language={language} translations={translations[language]} />
+              } />
+              <Route path="/payments" element={
+                <Payments language={language} translations={translations[language]} />
+              } />
+              <Route path="/inventory" element={
+                <Inventory language={language} translations={translations[language]} />
+              } />
+              <Route path="/reports" element={
+                <Reports language={language} translations={translations[language]} />
+              } />
+            </Routes>
+          </main>
+        </div>
+        <Toaster position="top-right" />
       </BrowserRouter>
     </div>
   );
