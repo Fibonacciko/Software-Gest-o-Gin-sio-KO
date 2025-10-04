@@ -532,7 +532,12 @@ async def get_attendance(
     return [Attendance(**parse_from_mongo(record)) for record in attendance_records]
 
 @api_router.get("/members/{member_id}/attendance", response_model=List[Attendance])
-async def get_member_attendance(member_id: str, month: Optional[int] = None, year: Optional[int] = None):
+async def get_member_attendance(
+    member_id: str,
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
     filter_dict = {'member_id': member_id}
     
     if month and year:
