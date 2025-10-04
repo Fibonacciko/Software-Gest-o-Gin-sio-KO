@@ -1474,12 +1474,11 @@ async def mobile_login(credentials: MobileMemberLogin):
     motivational_note = get_motivational_note_for_member(workout_count, "pt")
     
     # Prepare mobile member response
-    mobile_member = MobileMember(
-        **parse_from_mongo(member),
-        workout_count=workout_count,
-        current_motivational_note=motivational_note,
-        qr_code=member.get("qr_code", "")
-    )
+    member_data = parse_from_mongo(member)
+    member_data["workout_count"] = workout_count
+    member_data["current_motivational_note"] = motivational_note
+    
+    mobile_member = MobileMember(**member_data)
     
     return {
         "access_token": access_token,
