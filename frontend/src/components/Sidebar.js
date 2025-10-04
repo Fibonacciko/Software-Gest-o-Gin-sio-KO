@@ -10,8 +10,13 @@ import {
   Settings,
   Menu,
   X,
-  Globe
+  Globe,
+  LogOut,
+  Shield,
+  User
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from './ui/button';
 
 const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations }) => {
   const location = useLocation();
