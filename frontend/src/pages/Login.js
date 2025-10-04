@@ -34,16 +34,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--gradient-warm)' }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="p-3 bg-blue-600 rounded-full">
-              <Dumbbell className="h-8 w-8 text-white" />
+            <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
+              <span className="text-white font-bold text-2xl">KO</span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestão Fitness</h1>
-          <p className="text-gray-600">Sistema de Gestão de Membership</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Gestão Fitness</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Sistema de Gestão de Membership</p>
         </div>
 
         <Card className="shadow-xl border-0">
