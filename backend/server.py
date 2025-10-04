@@ -1869,7 +1869,7 @@ async def get_member_analytics(
 
 @api_router.get("/analytics/churn")
 @dashboard_rate_limit()
-async def get_churn_analysis(current_user: User = Depends(require_admin)):
+async def get_churn_analysis(current_user: User = Depends(require_admin), request: Request = None):
     """Get churn analysis and member retention data (Admin only)"""
     try:
         if not analytics_engine:
