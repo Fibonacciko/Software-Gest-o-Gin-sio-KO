@@ -29,7 +29,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
     ...(isAdmin() ? [{ path: '/payments', icon: CreditCard, label: translations.payments }] : []),
     { path: '/inventory', icon: Package, label: translations.inventory },
     ...(isAdmin() ? [{ path: '/reports', icon: BarChart, label: translations.reports }] : []),
-    ...(isAdmin() ? [{ path: '/users', icon: Shield, label: 'Utilizadores' }] : []),
+    // ...(isAdmin() ? [{ path: '/users', icon: Shield, label: 'Utilizadores' }] : []),
   ];
 
   return (
