@@ -219,6 +219,14 @@ const useKeyboardShortcuts = () => {
     }
   }, []);
 
+  const toggleTheme = useCallback(() => {
+    // Trigger dark mode toggle via custom event
+    const toggleEvent = new CustomEvent('ko-gym-toggle-theme');
+    window.dispatchEvent(toggleEvent);
+    
+    console.log('🎨 Theme toggled via keyboard shortcut');
+  }, []);
+
   // Handler principal de teclado
   const handleKeyDown = useCallback((event) => {
     // Ignorar se estiver em input/textarea (exceto atalhos específicos)
