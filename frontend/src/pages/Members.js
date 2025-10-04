@@ -425,7 +425,11 @@ const Members = ({ language, translations }) => {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card style={{ 
+        background: 'var(--gradient-card-bg)',
+        boxShadow: 'var(--shadow-md)',
+        border: '1px solid var(--border-light)'
+      }}>
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
