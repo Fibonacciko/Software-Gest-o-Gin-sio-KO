@@ -1989,7 +1989,7 @@ async def authenticate_user(username: str, password: str) -> Optional[User]:
     if not user:
         return None
     
-    if not verify_password(password, user["password"]):
+    if not verify_password(password, user["password_hash"]):
         return None
     
     return User(**parse_from_mongo(user))
