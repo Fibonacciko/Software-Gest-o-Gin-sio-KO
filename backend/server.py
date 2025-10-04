@@ -135,7 +135,7 @@ class MemberCreate(BaseModel):
 class Attendance(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     member_id: str
-    activity_id: str  # Required modalidade
+    activity_id: Optional[str] = None  # Required for new records, optional for legacy
     check_in_date: date
     check_in_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     method: str = "manual"  # manual or qr_code
