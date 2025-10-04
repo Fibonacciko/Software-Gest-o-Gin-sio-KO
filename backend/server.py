@@ -1500,12 +1500,12 @@ async def get_mobile_profile(member_id: str):
     # Get motivational note
     motivational_note = get_motivational_note_for_member(workout_count, "pt")
     
-    mobile_member = MobileMember(
-        **parse_from_mongo(member),
-        workout_count=workout_count,
-        current_motivational_note=motivational_note,
-        qr_code=member.get("qr_code", "")
-    )
+    # Parse member data and add mobile-specific fields
+    member_data = parse_from_mongo(member)
+    member_data["workout_count"] = workout_count
+    member_data["current_motivational_note"] = motivational_note
+    
+    mobile_member = MobileMember(**member_data)
     
     return mobile_member
 
