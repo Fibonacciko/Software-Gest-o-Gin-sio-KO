@@ -134,25 +134,7 @@ const Attendance = ({ language, translations }) => {
       }
       
       const response = await axios.get(`${API}/attendance/detailed?${params}`);
-      let attendanceData = response.data;
-      
-      // Get member details for each attendance
-      const attendanceWithMembers = await Promise.all(
-        attendanceData.map(async (att) => {
-          try {
-            const memberResponse = await axios.get(`${API}/members/${att.member_id}`);
-            return {
-              ...att,
-              member: memberResponse.data
-            };
-          } catch (error) {
-            return {
-              ...att,
-              member: { name: 'Membro não encontrado', id: att.member_id }
-            };
-          }
-        })
-      );
+      let attendanceWithMembers = response.data;
       
       // Filter by search term if provided
       if (searchTerm) {
