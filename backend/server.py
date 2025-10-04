@@ -454,7 +454,10 @@ async def get_members(
     return [Member(**parse_from_mongo(member)) for member in members]
 
 @api_router.get("/members/{member_id}", response_model=Member)
-async def get_member(member_id: str):
+async def get_member(
+    member_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
     member = await db.members.find_one({"id": member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
