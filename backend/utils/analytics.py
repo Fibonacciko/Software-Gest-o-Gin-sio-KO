@@ -447,8 +447,23 @@ class AnalyticsEngine:
         
         # Lifetime value (estimativa baseada em tempo de membro)
         join_date = member["join_date"]
+        
+        # Handle different date formats from MongoDB
         if isinstance(join_date, str):
-            join_date = datetime.fromisoformat(join_date).date()
+            try:
+                # Try parsing ISO format first
+                if 'T' in join_date:
+                    join_date = datetime.fromisoformat(join_date.replace('Z', '+00:00')).date()
+                else:
+                    join_date = datetime.fromisoformat(join_date).date()
+            except ValueError:
+                # Fallback - use current date if parsing fails
+                join_date = datetime.now().date()
+        elif isinstance(join_date, datetime):
+            join_date = join_date.date()
+        elif not isinstance(join_date, date):
+            # Fallback for any other type
+            join_date = datetime.now().date()
         
         months_member = max((datetime.now().date() - join_date).days / 30, 1)
         estimated_monthly_value = 50  # Valor estimado baseado no membership type
