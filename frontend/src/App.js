@@ -80,11 +80,11 @@ function App() {
                       <Reports language={language} translations={translations[language]} />
                     </ProtectedRoute>
                   } />
-                  <Route path="/users" element={
+                  {/* <Route path="/users" element={
                     <ProtectedRoute requiredRole="admin">
                       <UserManagement language={language} />
                     </ProtectedRoute>
-                  } />
+                  } /> */}
                 </Routes>
               </main>
             </div>
