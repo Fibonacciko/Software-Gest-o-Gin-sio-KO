@@ -57,8 +57,15 @@ def initialize_firebase():
         firebase_enabled = False
 
 # Create the main app
-app = FastAPI()
+app = FastAPI(title="KO Gym Management API - Premium Edition", version="2.0.0")
 api_router = APIRouter(prefix="/api")
+
+# Adicionar middlewares premium
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(RateLimitMiddleware)
+
+# Configurar rate limiter no FastAPI
+app.state.limiter = gym_rate_limiter.limiter
 
 # Security
 SECRET_KEY = "your-secret-key-change-in-production-2024-gym-management"
