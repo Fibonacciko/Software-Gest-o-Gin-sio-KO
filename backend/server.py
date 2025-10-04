@@ -579,10 +579,15 @@ async def create_member(
     current_user: User = Depends(require_admin_or_staff)
 ):
     member_dict = member_data.dict()
+    
+    # Generate automatic member number
+    member_number = await generate_next_member_number()
+    member_dict["member_number"] = member_number
+    
     member = Member(**member_dict)
     
-    # Generate QR code
-    member.qr_code = generate_qr_code(member.id)
+    # Generate QR code with member number
+    member.qr_code = generate_qr_code(f"{member.member_number}-{member.id}")
     
     member_dict = prepare_for_mongo(member.dict())
     await db.members.insert_one(member_dict)
