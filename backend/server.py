@@ -30,6 +30,14 @@ db = client[os.environ['DB_NAME']]
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# Security
+SECRET_KEY = "your-secret-key-change-in-production-2024-gym-management"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
+
 # Enums
 class MembershipType(str, Enum):
     BASIC = "basic"
