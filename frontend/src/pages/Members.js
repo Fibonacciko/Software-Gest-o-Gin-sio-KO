@@ -589,15 +589,16 @@ const Members = ({ language, translations }) => {
 
       {/* Member Details Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t[language].memberDetails}</DialogTitle>
           </DialogHeader>
           
           {selectedMember && (
-            <div className="space-y-6">
-              {/* Member Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - Member Info */}
+              <div className="space-y-6">
+                {/* Member Basic Info */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     {selectedMember.photo_url ? (
@@ -649,6 +650,7 @@ const Members = ({ language, translations }) => {
                   </div>
                 </div>
                 
+                {/* Membership Info */}
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-medium mb-2">{t[language].membershipType}</h4>
@@ -669,18 +671,26 @@ const Members = ({ language, translations }) => {
                     </div>
                   )}
                 </div>
-              </div>
-              
-              {/* QR Code */}
-              {selectedMember.qr_code && (
-                <div className="text-center p-6 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium mb-4">{t[language].qrCode}</h4>
-                  <div className="qr-code-container inline-block">
-                    <img src={selectedMember.qr_code} alt="QR Code" className="w-32 h-32" />
+                
+                {/* QR Code */}
+                {selectedMember.qr_code && (
+                  <div className="text-center p-6 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium mb-4">{t[language].qrCode}</h4>
+                    <div className="qr-code-container inline-block">
+                      <img src={selectedMember.qr_code} alt="QR Code" className="w-32 h-32" />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">Para check-in na app móvel</p>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">Para check-in na app móvel</p>
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* Right Column - Attendance Calendar */}
+              <div className="space-y-6">
+                <MemberAttendanceCalendar 
+                  memberId={selectedMember.id}
+                  language={language}
+                />
+              </div>
             </div>
           )}
         </DialogContent>
