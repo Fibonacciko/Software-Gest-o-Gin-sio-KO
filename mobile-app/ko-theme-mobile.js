@@ -22,9 +22,9 @@ export const KOTheme = {
     900: '#7C2D12',  // Profundo
   },
 
-  // Paleta de dourados (derivados do logo)
-  gold: {
-    50: '#FFFBF0',   // Muito claro
+  // Paleta de âmbar/dourados (derivados do logo)
+  amber: {
+    50: '#FFFBEB',   // Muito claro
     100: '#FEF3C7',  // Claro
     200: '#FDE68A',  // Suave
     300: '#FCD34D',  // Médio
