@@ -658,32 +658,36 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
         "check_in_date": today.isoformat()
     })
     
-    # Get this month's revenue
-    start_of_month = date(today.year, today.month, 1)
-    monthly_revenue_pipeline = [
-        {
-            "$match": {
-                "payment_date": {"$gte": start_of_month.isoformat()},
-                "status": "paid"
-            }
-        },
-        {
-            "$group": {
-                "_id": None,
-                "total": {"$sum": "$amount"}
-            }
-        }
-    ]
-    
-    monthly_revenue_result = await db.payments.aggregate(monthly_revenue_pipeline).to_list(1)
-    monthly_revenue = monthly_revenue_result[0]["total"] if monthly_revenue_result else 0
-    
-    return {
+    response = {
         "total_members": total_members,
         "active_members": active_members,
         "today_attendance": today_attendance,
-        "monthly_revenue": monthly_revenue
     }
+    
+    # Only show financial data to admins
+    if current_user.role == UserRole.ADMIN:
+        # Get this month's revenue
+        start_of_month = date(today.year, today.month, 1)
+        monthly_revenue_pipeline = [
+            {
+                "$match": {
+                    "payment_date": {"$gte": start_of_month.isoformat()},
+                    "status": "paid"
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "total": {"$sum": "$amount"}
+                }
+            }
+        ]
+        
+        monthly_revenue_result = await db.payments.aggregate(monthly_revenue_pipeline).to_list(1)
+        monthly_revenue = monthly_revenue_result[0]["total"] if monthly_revenue_result else 0
+        response["monthly_revenue"] = monthly_revenue
+    
+    return response
 
 @api_router.get("/reports/attendance")
 async def get_attendance_report(month: Optional[int] = None, year: Optional[int] = None):
