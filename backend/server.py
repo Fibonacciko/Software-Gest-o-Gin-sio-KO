@@ -894,13 +894,32 @@ async def send_push_notification(fcm_token: str, title: str, body: str, data: di
         return False
 
 def prepare_for_mongo(data):
-    """Convert date objects to ISO strings for MongoDB"""
+    """Convert date/time objects to ISO strings for MongoDB"""
     if isinstance(data, dict):
+        result = {}
         for key, value in data.items():
-            if isinstance(value, date):
-                data[key] = value.isoformat()
-            elif isinstance(value, datetime):
-                data[key] = value.isoformat()
+            if isinstance(value, datetime):
+                result[key] = value.isoformat()
+            elif isinstance(value, date):
+                # Convert date to midnight datetime for MongoDB compatibility
+                midnight_dt = datetime.combine(value, datetime.min.time()).replace(tzinfo=timezone.utc)
+                result[key] = midnight_dt.isoformat()
+            elif isinstance(value, time):
+                result[key] = value.strftime('%H:%M:%S')
+            elif isinstance(value, dict):
+                result[key] = prepare_for_mongo(value)
+            elif isinstance(value, list):
+                result[key] = [prepare_for_mongo(item) if isinstance(item, dict) else item for item in value]
+            else:
+                result[key] = value
+        return result
+    elif isinstance(data, date):
+        # Handle standalone date objects
+        midnight_dt = datetime.combine(data, datetime.min.time()).replace(tzinfo=timezone.utc)
+        return midnight_dt.isoformat()
+    elif isinstance(data, datetime):
+        # Handle standalone datetime objects
+        return data.isoformat()
     return data
 
 def parse_from_mongo(item):
