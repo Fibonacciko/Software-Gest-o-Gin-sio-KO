@@ -305,6 +305,56 @@ async def create_default_activities():
 async def root():
     return {"message": "Gym Management API is running", "version": "1.0.0"}
 
+# Activities/Modalidades Routes
+@api_router.get("/activities", response_model=List[Activity])
+async def get_activities(current_user: User = Depends(require_admin_or_staff)):
+    activities = await db.activities.find({"is_active": True}).to_list(1000)
+    return [Activity(**parse_from_mongo(activity)) for activity in activities]
+
+@api_router.post("/activities", response_model=Activity)
+async def create_activity(
+    activity_data: ActivityCreate,
+    current_user: User = Depends(require_admin)
+):
+    activity = Activity(**activity_data.dict())
+    activity_dict = prepare_for_mongo(activity.dict())
+    await db.activities.insert_one(activity_dict)
+    return activity
+
+@api_router.put("/activities/{activity_id}", response_model=Activity)
+async def update_activity(
+    activity_id: str,
+    activity_data: ActivityCreate,
+    current_user: User = Depends(require_admin)
+):
+    activity_dict = prepare_for_mongo(activity_data.dict())
+    result = await db.activities.update_one(
+        {"id": activity_id},
+        {"$set": activity_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    
+    updated_activity = await db.activities.find_one({"id": activity_id})
+    return Activity(**parse_from_mongo(updated_activity))
+
+@api_router.delete("/activities/{activity_id}")
+async def delete_activity(
+    activity_id: str,
+    current_user: User = Depends(require_admin)
+):
+    # Soft delete - mark as inactive instead of deleting
+    result = await db.activities.update_one(
+        {"id": activity_id},
+        {"$set": {"is_active": False}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    
+    return {"message": "Activity deactivated successfully"}
+
 # Authentication Routes
 @api_router.post("/auth/login", response_model=Token)
 async def login(user_credentials: UserLogin):
