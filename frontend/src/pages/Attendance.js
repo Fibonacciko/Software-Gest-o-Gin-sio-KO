@@ -47,6 +47,7 @@ const Attendance = ({ language, translations }) => {
       searchMembers: 'Procurar membros...',
       memberName: 'Nome do Membro',
       checkInTime: 'Hora de Check-in',
+      activity: 'Modalidade',
       method: 'Método',
       date: 'Data',
       noAttendance: 'Nenhuma presença registada',
