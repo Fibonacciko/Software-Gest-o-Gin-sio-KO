@@ -677,6 +677,46 @@ async def get_member_attendance(
     attendance_records = await db.attendance.find(filter_dict).to_list(1000)
     return [Attendance(**parse_from_mongo(record)) for record in attendance_records]
 
+@api_router.get("/attendance/detailed")
+async def get_detailed_attendance(
+    member_id: Optional[str] = None,
+    activity_id: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Get attendance records with member and activity details"""
+    filter_dict = {}
+    if member_id:
+        filter_dict['member_id'] = member_id
+    if activity_id:
+        filter_dict['activity_id'] = activity_id
+    if start_date:
+        filter_dict['check_in_date'] = filter_dict.get('check_in_date', {})
+        filter_dict['check_in_date']['$gte'] = start_date.isoformat()
+    if end_date:
+        filter_dict['check_in_date'] = filter_dict.get('check_in_date', {})
+        filter_dict['check_in_date']['$lte'] = end_date.isoformat()
+    
+    attendance_records = await db.attendance.find(filter_dict).to_list(1000)
+    
+    # Enrich with member and activity data
+    detailed_records = []
+    for record in attendance_records:
+        # Get member data
+        member = await db.members.find_one({"id": record["member_id"]})
+        # Get activity data
+        activity = await db.activities.find_one({"id": record["activity_id"]})
+        
+        detailed_record = {
+            **parse_from_mongo(record),
+            "member": parse_from_mongo(member) if member else None,
+            "activity": parse_from_mongo(activity) if activity else None
+        }
+        detailed_records.append(detailed_record)
+    
+    return detailed_records
+
 # Payment Routes (Admin only)
 @api_router.post("/payments", response_model=Payment)
 async def create_payment(
