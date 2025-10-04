@@ -283,6 +283,17 @@ const Dashboard = ({ language, translations }) => {
 
           {!qrMode ? (
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Modalidade *
+                </label>
+                <ActivitySelector
+                  value={selectedActivity}
+                  onChange={setSelectedActivity}
+                  placeholder="Selecionar modalidade"
+                />
+              </div>
+              
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -316,6 +327,7 @@ const Dashboard = ({ language, translations }) => {
                           onClick={() => handleQuickCheckin(member.id)}
                           className="btn-hover"
                           data-testid={`checkin-${member.id}`}
+                          disabled={!selectedActivity}
                         >
                           {t[language].checkin}
                         </Button>
