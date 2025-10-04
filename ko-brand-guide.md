@@ -25,15 +25,15 @@
 --ko-orange-900: #7C2D12   /* Profundo - headers */
 ```
 
-### 🟡 **Família Dourados** (Baseada no logo)
+### 🟨 **Família Âmbar/Dourados** (Baseada no gradiente do logo)
 ```css
---ko-gold-50: #FFFBF0    /* Muito claro - backgrounds quentes */
---ko-gold-100: #FEF3C7   /* Claro - cards especiais */
---ko-gold-200: #FDE68A   /* Suave - dividers */
---ko-gold-400: #FBBF24   /* Vibrante - CTAs secundários */
---ko-gold-500: #F59E0B   /* Forte - botões secundários */
---ko-gold-600: #D97706   /* Escuro - hover dourado */
---ko-gold-700: #B45309   /* Muito escuro - texto em dourado */
+--ko-amber-50: #FFFBEB    /* Muito claro - backgrounds quentes */
+--ko-amber-100: #FEF3C7   /* Claro - cards especiais */
+--ko-amber-200: #FDE68A   /* Suave - dividers */
+--ko-amber-400: #FBBF24   /* Vibrante - CTAs secundários */
+--ko-amber-500: #F59E0B   /* Forte - botões secundários */
+--ko-amber-600: #D97706   /* Escuro - hover dourado */
+--ko-amber-700: #B45309   /* Muito escuro - texto em âmbar */
 ```
 
 ### ⚪ **Neutros Quentes** (Harmonizam com vermelho/dourado)
