@@ -97,7 +97,7 @@ const Attendance = ({ language, translations }) => {
 
   useEffect(() => {
     fetchAttendance();
-  }, [selectedDate, selectedMember]);
+  }, [selectedDate, selectedMember, activityFilter]);
 
   useEffect(() => {
     if (viewMode === 'calendar') {
