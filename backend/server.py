@@ -1369,7 +1369,7 @@ async def qr_checkin(
         parts = qr_data.split("-")
         member_number = parts[0]
         member_id = parts[1]
-    except:
+    except (ValueError, IndexError):
         raise HTTPException(status_code=400, detail="Invalid QR code format")
     
     # Check if member exists (try both member number and ID)
