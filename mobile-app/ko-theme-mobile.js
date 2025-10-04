@@ -1,0 +1,219 @@
+// KO Gym Theme - Mobile App Colors
+// Baseado no logo oficial do ginásio KO
+
+export const KOTheme = {
+  // Cores principais do logo
+  primary: {
+    red: '#8B0000',        // Vermelho principal do logo
+    yellow: '#DAA520',     // Dourado do logo
+  },
+
+  // Paleta de vermelhos (derivados do logo)
+  red: {
+    50: '#FEF2F2',   // Muito claro
+    100: '#FEE2E2',  // Claro
+    200: '#FECACA',  // Suave
+    300: '#FCA5A5',  // Médio claro
+    500: '#DC2626',  // Médio
+    600: '#B91C1C',  // Escuro
+    700: '#991B1B',  // Mais escuro
+    800: '#7F1D1D',  // Muito escuro
+    900: '#6B1515',  // Profundo
+  },
+
+  // Paleta de dourados (derivados do logo)
+  gold: {
+    50: '#FFFBF0',   // Muito claro
+    100: '#FEF3C7',  // Claro
+    200: '#FDE68A',  // Suave
+    300: '#FCD34D',  // Médio
+    400: '#FBBF24',  // Vibrante
+    500: '#F59E0B',  // Forte
+    600: '#D97706',  // Escuro
+    700: '#B45309',  // Mais escuro
+    800: '#92400E',  // Profundo
+  },
+
+  // Tons neutros quentes (harmonizam com vermelho/dourado)
+  neutral: {
+    50: '#FAF9F7',   // Bege muito claro
+    100: '#F5F3F0',  // Bege claro
+    200: '#E7E5E4',  // Bege suave
+    300: '#D6D3D1',  // Bege médio
+    400: '#A8A29E',  // Cinza quente
+    500: '#78716C',  // Cinza médio
+    600: '#57534E',  // Cinza escuro
+    700: '#44403C',  // Cinza mais escuro
+    800: '#292524',  // Cinza muito escuro
+    900: '#1C1917',  // Quase preto quente
+  },
+
+  // Cores de sistema
+  system: {
+    success: '#059669',
+    warning: '#D97706',
+    error: '#DC2626',
+    info: '#0EA5E9',
+  },
+
+  // Gradientes
+  gradients: {
+    primary: ['#B91C1C', '#7F1D1D'],      // Vermelho
+    gold: ['#FBBF24', '#D97706'],         // Dourado
+    warm: ['#FFFBF0', '#FAF9F7'],         // Fundo quente
+  },
+};
+
+// Tema React Native Paper
+export const KOPaperTheme = {
+  colors: {
+    primary: KOTheme.primary.red,
+    accent: KOTheme.primary.yellow,
+    background: KOTheme.neutral[50],
+    surface: '#FFFFFF',
+    text: KOTheme.neutral[900],
+    disabled: KOTheme.neutral[400],
+    placeholder: KOTheme.neutral[500],
+    backdrop: 'rgba(0, 0, 0, 0.5)',
+    onSurface: KOTheme.neutral[800],
+    notification: KOTheme.system.error,
+  },
+  roundness: 8,
+};
+
+// Exemplo de uso em React Native
+export const KOStyles = {
+  // Containers
+  container: {
+    flex: 1,
+    backgroundColor: KOTheme.neutral[50],
+  },
+
+  // Botões
+  primaryButton: {
+    backgroundColor: KOTheme.primary.red,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+
+  secondaryButton: {
+    backgroundColor: KOTheme.primary.yellow,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+
+  outlineButton: {
+    borderColor: KOTheme.primary.red,
+    borderWidth: 2,
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+
+  // Cards
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 8,
+    shadowColor: KOTheme.neutral[500],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  // Headers
+  header: {
+    backgroundColor: KOTheme.primary.red,
+    paddingVertical: 16,
+  },
+
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+
+  // Text styles
+  primaryText: {
+    color: KOTheme.neutral[900],
+    fontSize: 16,
+  },
+
+  secondaryText: {
+    color: KOTheme.neutral[600],
+    fontSize: 14,
+  },
+
+  mutedText: {
+    color: KOTheme.neutral[500],
+    fontSize: 12,
+  },
+
+  // Badges
+  badge: {
+    backgroundColor: KOTheme.primary.red,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // QR Code screen
+  qrContainer: {
+    flex: 1,
+    backgroundColor: KOTheme.neutral[900],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  qrCode: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 16,
+  },
+
+  // Status indicators
+  activeStatus: {
+    backgroundColor: KOTheme.system.success,
+  },
+
+  inactiveStatus: {
+    backgroundColor: KOTheme.neutral[400],
+  },
+
+  warningStatus: {
+    backgroundColor: KOTheme.system.warning,
+  },
+
+  errorStatus: {
+    backgroundColor: KOTheme.system.error,
+  },
+};
+
+// Utilitários
+export const KOUtils = {
+  // Obter cor com opacidade
+  withOpacity: (color, opacity) => `${color}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`,
+  
+  // Cores para atividades (baseadas na paleta KO)
+  activityColors: [
+    KOTheme.primary.red,
+    KOTheme.primary.yellow,
+    KOTheme.red[600],
+    KOTheme.gold[600],
+    KOTheme.neutral[600],
+    KOTheme.system.success,
+  ],
+};
+
+export default KOTheme;
