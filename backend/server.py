@@ -950,6 +950,7 @@ async def create_member(
     return member
 
 @api_router.get("/members", response_model=List[Member])
+@api_rate_limit()
 async def get_members(
     status: Optional[MemberStatus] = None,
     membership_type: Optional[MembershipType] = None,
