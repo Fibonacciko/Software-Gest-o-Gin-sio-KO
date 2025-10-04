@@ -460,6 +460,14 @@ class GymManagementAPITester:
         self.test_activity_report()
         self.test_top_members_report()
         
+        # NEW MOBILE FUNCTIONALITY TESTS (Priority)
+        print("\n🔥 TESTING NEW MOBILE FUNCTIONALITY")
+        print("-" * 40)
+        self.test_mobile_activities()
+        self.test_motivational_notes()
+        self.test_message_creation()
+        self.test_dashboard_with_new_changes()
+        
         # Update operations
         self.test_update_operations()
         
