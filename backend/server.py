@@ -934,6 +934,7 @@ async def create_member(
     member_data: MemberCreate,
     current_user: User = Depends(require_admin_or_staff)
 ):
+    """Create a new member with premium logging and cache invalidation"""
     member_dict = member_data.dict()
     
     # Generate automatic member number
