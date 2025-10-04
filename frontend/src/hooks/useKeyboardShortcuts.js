@@ -10,6 +10,9 @@ const useKeyboardShortcuts = () => {
   const navigate = useNavigate();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [searchMode, setSearchMode] = useState(false);
+  
+  // Access to dark mode from global context (we'll use DOM method for simplicity)
+  const isDarkMode = document.body.classList.contains('dark-mode');
 
   // Atalhos disponíveis
   const shortcuts = {
