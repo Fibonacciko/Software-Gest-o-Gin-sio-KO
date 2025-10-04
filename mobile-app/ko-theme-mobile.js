@@ -93,21 +93,21 @@ export const KOStyles = {
 
   // Botões
   primaryButton: {
-    backgroundColor: KOTheme.primary.red,
+    backgroundColor: KOTheme.primary.orange,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
   },
 
   secondaryButton: {
-    backgroundColor: KOTheme.primary.yellow,
+    backgroundColor: KOTheme.primary.golden,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
   },
 
   outlineButton: {
-    borderColor: KOTheme.primary.red,
+    borderColor: KOTheme.primary.orange,
     borderWidth: 2,
     backgroundColor: 'transparent',
     borderRadius: 8,
