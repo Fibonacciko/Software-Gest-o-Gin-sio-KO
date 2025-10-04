@@ -618,7 +618,11 @@ async def get_inventory(
     return [InventoryItem(**parse_from_mongo(item)) for item in items]
 
 @api_router.put("/inventory/{item_id}", response_model=InventoryItem)
-async def update_inventory_item(item_id: str, item_data: InventoryItemCreate):
+async def update_inventory_item(
+    item_id: str,
+    item_data: InventoryItemCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
     item_dict = prepare_for_mongo(item_data.dict())
     result = await db.inventory.update_one(
         {"id": item_id},
