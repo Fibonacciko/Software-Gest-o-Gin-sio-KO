@@ -1937,7 +1937,8 @@ async def get_system_status(current_user: User = Depends(require_admin), request
 @api_rate_limit()
 async def clear_cache(
     pattern: Optional[str] = None,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin),
+    request: Request = None
 ):
     """Clear cache (Admin only)"""
     try:
