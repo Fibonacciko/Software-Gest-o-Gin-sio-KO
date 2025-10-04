@@ -79,6 +79,13 @@ function App() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Dark Mode keyboard shortcut listener
+    const handleThemeToggle = () => {
+      toggleDarkMode();
+    };
+    
+    window.addEventListener('ko-gym-toggle-theme', handleThemeToggle);
+
     // PWA Install Prompt handling
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
