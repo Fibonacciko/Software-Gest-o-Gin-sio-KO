@@ -69,8 +69,8 @@ export const KOTheme = {
 // Tema React Native Paper
 export const KOPaperTheme = {
   colors: {
-    primary: KOTheme.primary.red,
-    accent: KOTheme.primary.yellow,
+    primary: KOTheme.primary.orange,
+    accent: KOTheme.primary.golden,
     background: KOTheme.neutral[50],
     surface: '#FFFFFF',
     text: KOTheme.neutral[900],
