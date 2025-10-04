@@ -93,10 +93,10 @@ background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
 - Gradientes sutis para não comprometer legibilidade
 
 ### **Hover States & Interações**
-- **Vermelho**: Escurece ligeiramente (`#7F1D1D`)
-- **Dourado**: Escurece para `#D97706`
-- **Movimento**: Transform `translateY(-1px)` para elevação
-- **Transições**: `200ms ease` para suavidade
+- **Laranja**: Escurece suavemente (`#C2410C`)
+- **Âmbar**: Escurece para `#D97706`
+- **Movimento**: Transform `translateY(-1px)` para elevação suave
+- **Transições**: `200ms ease` para fluidez natural
 
 ---
 
