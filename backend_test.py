@@ -306,6 +306,53 @@ class GymManagementAPITester:
         """Test detailed attendance with member and activity info"""
         return self.run_test("Detailed Attendance", "GET", "attendance/detailed", 200)
 
+    def test_mobile_activities(self):
+        """Test mobile activities endpoint for check-in selection"""
+        success, response = self.run_test("Mobile Activities Endpoint", "GET", "mobile/activities", 200, headers={'Content-Type': 'application/json'})
+        if success and response:
+            print(f"   Found {len(response)} mobile activities")
+            for activity in response:
+                print(f"   - {activity['name']} (Active: {activity.get('is_active', 'Unknown')})")
+        return success, response
+
+    def test_motivational_notes(self):
+        """Test motivational notes management endpoint"""
+        success, response = self.run_test("Motivational Notes Management", "GET", "motivational-notes", 200)
+        if success and response:
+            print(f"   Found {len(response)} motivational notes")
+            for note in response:
+                print(f"   - Level: {note['level_name']} (Workouts: {note['workout_count_min']}-{note['workout_count_max']})")
+        return success, response
+
+    def test_message_creation(self):
+        """Test creating a general message for all members"""
+        message_data = {
+            "title": "Teste de Mensagem Geral",
+            "content": "Esta é uma mensagem de teste enviada para todos os membros do ginásio.",
+            "message_type": "general",
+            "language": "pt",
+            "is_push_notification": True
+        }
+        
+        success, response = self.run_test("Create General Message", "POST", "messages", 200, message_data)
+        if success and response and 'id' in response:
+            print(f"   Created message ID: {response['id']}")
+            print(f"   Message type: {response['message_type']}")
+            print(f"   Push notification: {response['is_push_notification']}")
+        
+        return success, response
+
+    def test_dashboard_with_new_changes(self):
+        """Test dashboard stats to ensure it still works with new backend changes"""
+        success, response = self.run_test("Dashboard Stats (Post-Changes)", "GET", "dashboard", 200)
+        if success and response:
+            print(f"   Total members: {response.get('total_members', 'N/A')}")
+            print(f"   Active members: {response.get('active_members', 'N/A')}")
+            print(f"   Today's attendance: {response.get('today_attendance', 'N/A')}")
+            if 'monthly_revenue' in response:
+                print(f"   Monthly revenue: €{response.get('monthly_revenue', 'N/A')}")
+        return success, response
+
     def test_update_operations(self):
         """Test update operations"""
         success_count = 0
