@@ -1259,7 +1259,7 @@ async def delete_inventory_item(
 # Dashboard & Reports
 @api_router.get("/dashboard")
 @dashboard_rate_limit()
-async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staff)):
+async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staff), request: Request = None):
     """Get dashboard statistics with premium analytics"""
     
     try:
