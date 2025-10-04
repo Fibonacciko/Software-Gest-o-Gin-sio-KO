@@ -847,7 +847,6 @@ def get_motivational_note_for_member(workout_count: int, language: str = "pt") -
         }
     ]
     
-    import random
     
     for note_group in sarcastic_notes:
         if note_group["min"] <= workout_count <= note_group["max"]:
