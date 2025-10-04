@@ -313,7 +313,12 @@ const Dashboard = ({ language, translations }) => {
                       className="flex items-center justify-between p-3 hover:bg-gray-50 border-b last:border-b-0"
                     >
                       <div>
-                        <p className="font-medium">{member.name}</p>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-medium">{member.name}</p>
+                          <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-1 py-0.5 rounded">
+                            #{member.member_number}
+                          </span>
+                        </div>
                         <p className="text-sm text-gray-500">{member.phone}</p>
                       </div>
                       <div className="flex items-center gap-3">
