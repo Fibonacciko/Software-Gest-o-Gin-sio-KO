@@ -88,8 +88,8 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                         : 'hover:bg-opacity-50'
                     }`}
                     style={{
-                      backgroundColor: isActive ? 'var(--ko-red-50)' : 'transparent',
-                      color: isActive ? 'var(--ko-primary-red)' : 'var(--text-secondary)'
+                      backgroundColor: isActive ? 'var(--ko-orange-50)' : 'transparent',
+                      color: isActive ? 'var(--ko-primary-orange)' : 'var(--text-secondary)'
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
