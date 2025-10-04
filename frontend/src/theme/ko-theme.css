@@ -96,13 +96,13 @@
 
 /* Efeitos hover com cores KO */
 .ko-hover-primary:hover {
-  background-color: var(--ko-red-700);
+  background-color: var(--ko-orange-700);
   transform: translateY(-1px);
   transition: all 0.2s ease;
 }
 
-.ko-hover-gold:hover {
-  background-color: var(--ko-gold-600);
+.ko-hover-golden:hover {
+  background-color: var(--ko-amber-600);
   transform: translateY(-1px);
   transition: all 0.2s ease;
 }
