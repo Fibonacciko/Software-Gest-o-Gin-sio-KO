@@ -114,7 +114,7 @@ class AnalyticsEngine:
         total_members = await self.db.members.count_documents({})
         active_members = await self.db.members.count_documents({"status": "active"})
         new_members = await self.db.members.count_documents({
-            "join_date": {"$gte": thirty_days_ago}
+            "join_date": {"$gte": thirty_days_ago.date().isoformat()}
         })
         
         # Membros por tipo
