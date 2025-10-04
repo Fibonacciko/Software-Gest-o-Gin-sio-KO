@@ -243,7 +243,7 @@ async def create_admin_user():
             role=UserRole.ADMIN
         )
         admin_dict = prepare_for_mongo(admin_user.dict())
-        admin_dict["password_hash"] = get_password_hash("Gkhkkp3d*")
+        admin_dict["password_hash"] = get_password_hash("admin123")
         await db.users.insert_one(admin_dict)
         print("Admin user created successfully")
 
