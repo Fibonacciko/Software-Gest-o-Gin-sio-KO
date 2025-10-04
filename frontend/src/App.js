@@ -118,19 +118,9 @@ function App() {
               📴 Modo Offline - Algumas funcionalidades podem estar limitadas
             </div>
           )}
-          <ProtectedRoute>
-            <div className="flex h-screen">
-              <Sidebar 
-                isOpen={sidebarOpen}
-                toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-                language={language}
-                setLanguage={setLanguage}
-                translations={translations[language]}
-              />
-              
-              <main className={`flex-1 overflow-auto transition-all duration-300 ${
-                sidebarOpen ? 'ml-64' : 'ml-16'
-              }`} style={{ paddingTop: !isOnline ? '40px' : '0' }}>
+          
+          <Sidebar />
+          <div className="lg:ml-64" style={{ paddingTop: !isOnline ? '40px' : '0' }}>
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/" element={
