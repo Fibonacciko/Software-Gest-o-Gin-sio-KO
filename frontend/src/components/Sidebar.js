@@ -47,15 +47,24 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
         isOpen ? 'w-64' : 'w-16'
       }`} style={{ background: 'var(--background-elevated)', boxShadow: 'var(--shadow-lg)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
           {isOpen && (
-            <h1 className="text-xl font-bold text-gray-800 fade-in">
-              Gestão Fitness
-            </h1>
+            <div className="flex items-center space-x-2 fade-in">
+              <div className="w-8 h-8 rounded-full ko-bg-primary flex items-center justify-center">
+                <span className="text-white font-bold text-sm">KO</span>
+              </div>
+              <h1 className="text-xl font-bold ko-text-primary">
+                Gym Manager
+              </h1>
+            </div>
           )}
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ 
+              color: 'var(--text-secondary)',
+              ':hover': { backgroundColor: 'var(--ko-neutral-100)' }
+            }}
             data-testid="sidebar-toggle"
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
