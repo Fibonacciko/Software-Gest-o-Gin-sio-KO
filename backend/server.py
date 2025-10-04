@@ -626,6 +626,17 @@ async def get_member(
         raise HTTPException(status_code=404, detail="Member not found")
     return Member(**parse_from_mongo(member))
 
+@api_router.get("/members/number/{member_number}", response_model=Member)
+async def get_member_by_number(
+    member_number: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Get member by member number"""
+    member = await db.members.find_one({"member_number": member_number})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    return Member(**parse_from_mongo(member))
+
 @api_router.put("/members/{member_id}", response_model=Member)
 async def update_member(
     member_id: str,
