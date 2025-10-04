@@ -98,9 +98,30 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
           </ul>
         </nav>
 
-        {/* Language switcher */}
+        {/* User Info & Controls */}
         {isOpen && (
-          <div className="absolute bottom-6 left-4 right-4">
+          <div className="absolute bottom-6 left-4 right-4 space-y-3">
+            {/* User Info */}
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  {user?.role === 'admin' ? 
+                    <Shield size={16} className="text-blue-600" /> : 
+                    <User size={16} className="text-blue-600" />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.full_name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {user?.role === 'admin' ? 'Administrador' : 'Staff'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Language switcher */}
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center">
                 <Globe size={16} className="text-gray-500 mr-2" />
@@ -116,6 +137,17 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                 <option value="en">EN</option>
               </select>
             </div>
+            
+            {/* Logout Button */}
+            <Button
+              onClick={logout}
+              variant="outline"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              data-testid="logout-btn"
+            >
+              <LogOut size={16} className="mr-2" />
+              Terminar Sessão
+            </Button>
           </div>
         )}
       </div>
