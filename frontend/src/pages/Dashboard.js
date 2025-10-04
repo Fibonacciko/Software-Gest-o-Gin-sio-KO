@@ -179,20 +179,33 @@ const Dashboard = ({ language, translations }) => {
   };
 
   const StatCard = ({ title, value, icon: Icon, color, trend }) => (
-    <Card className="card-shadow hover:shadow-lg transition-all duration-200">
+    <Card 
+      className="transition-all duration-200 hover:transform hover:-translate-y-1"
+      style={{ 
+        background: 'var(--gradient-card-bg)',
+        boxShadow: 'var(--shadow-md)',
+        border: '1px solid var(--border-light)'
+      }}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>{title}</p>
+            <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{value}</p>
             {trend && (
               <div className="flex items-center mt-2">
-                <TrendingUp size={16} className="text-green-500 mr-1" />
-                <span className="text-sm text-green-600">+{trend}%</span>
+                <TrendingUp size={16} className="mr-1" style={{ color: 'var(--ko-success)' }} />
+                <span className="text-sm" style={{ color: 'var(--ko-success)' }}>+{trend}%</span>
               </div>
             )}
           </div>
-          <div className={`p-3 rounded-full ${color}`}>
+          <div 
+            className="p-3 rounded-full"
+            style={{ background: color === 'bg-blue-500' ? 'var(--gradient-primary)' : 
+                      color === 'bg-green-500' ? 'var(--ko-success)' :
+                      color === 'bg-purple-500' ? 'var(--gradient-golden)' : 
+                      'var(--gradient-primary)' }}
+          >
             <Icon size={24} className="text-white" />
           </div>
         </div>
