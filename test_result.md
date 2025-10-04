@@ -240,6 +240,30 @@ backend:
           agent: "testing"
           comment: "Reporting endpoints working correctly. Attendance reports, activity reports, and top members reports all functioning with proper data aggregation."
 
+  - task: "Mobile Check-in with Sarcastic Notes"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Mobile check-in endpoint (POST /api/mobile/checkin) working perfectly. Fixed date validation issue. Check-in correctly updates workout count, provides new sarcastic motivational notes based on workout frequency, and integrates seamlessly with the sarcastic motivational notes system. Tested with different workout count scenarios."
+
+  - task: "Mobile Profile with Sarcastic Notes"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Mobile profile endpoint (GET /api/mobile/profile) working perfectly. Fixed qr_code conflict issue. Returns member profile with accurate workout count and appropriate sarcastic motivational notes. Tested with 4 different workout count ranges: iniciantes (1-5), intermedios (6-20), avançados (21-50), hardcore (51+). Random selection working correctly."
+
 frontend:
   # No frontend testing performed as per instructions
 
