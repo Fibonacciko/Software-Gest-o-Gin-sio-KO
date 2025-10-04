@@ -1640,7 +1640,9 @@ async def create_message(
         
         if message.message_type == MessageType.INDIVIDUAL and message.target_member_id:
             # Single member
-            target_members = [{"id": message.target_member_id}]
+            member = await db.members.find_one({"id": message.target_member_id})
+            if member:
+                target_members = [member]
         elif message.message_type == MessageType.GENERAL:
             # All active members
             target_members = await db.members.find({"status": "active"}).to_list(1000)
@@ -1648,13 +1650,33 @@ async def create_message(
             # All members with member role
             target_members = await db.members.find({"status": "active"}).to_list(1000)
         
-        # Create notification logs
+        # Create notification logs and send push notifications
         for member in target_members:
+            # Create notification log
             notification_log = NotificationLog(
                 message_id=message.id,
                 member_id=member["id"],
                 fcm_token=member.get("fcm_token")
             )
+            
+            # Send push notification if FCM token exists
+            fcm_token = member.get("fcm_token")
+            if fcm_token and firebase_enabled:
+                success = await send_push_notification(
+                    fcm_token=fcm_token,
+                    title=message.title,
+                    body=message.content,
+                    data={
+                        "message_id": message.id,
+                        "type": message.message_type,
+                        "language": message.language
+                    }
+                )
+                if success:
+                    notification_log.status = NotificationStatus.DELIVERED
+                else:
+                    notification_log.status = NotificationStatus.FAILED
+            
             await db.notification_logs.insert_one(prepare_for_mongo(notification_log.dict()))
     
     return message
