@@ -75,6 +75,7 @@ const Attendance = ({ language, translations }) => {
       searchMembers: 'Search members...',
       memberName: 'Member Name',
       checkInTime: 'Check-in Time',
+      activity: 'Activity',
       method: 'Method',
       date: 'Date',
       noAttendance: 'No attendance recorded',
