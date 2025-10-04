@@ -170,7 +170,7 @@ const Payments = ({ language, translations }) => {
       const response = await axios.get(`${API}/payments?${params}`);
       let paymentsData = response.data;
       
-      // Get member details for each payment
+      // Get member details for each payment with better error handling
       const paymentsWithMembers = await Promise.all(
         paymentsData.map(async (payment) => {
           try {
@@ -180,9 +180,15 @@ const Payments = ({ language, translations }) => {
               member: memberResponse.data
             };
           } catch (error) {
+            console.warn(`Member ${payment.member_id} not found for payment, likely deleted`);
             return {
               ...payment,
-              member: { name: 'Membro não encontrado', id: payment.member_id }
+              member: { 
+                name: 'Membro eliminado', 
+                id: payment.member_id,
+                member_number: 'N/A',
+                membership_type: 'N/A'
+              }
             };
           }
         })
