@@ -166,7 +166,7 @@ class Payment(BaseModel):
 class PaymentCreate(BaseModel):
     member_id: str
     amount: float
-    payment_method: str = "cash"
+    payment_method: PaymentMethod = PaymentMethod.CASH
     description: Optional[str] = None
 
 class InventoryItem(BaseModel):
