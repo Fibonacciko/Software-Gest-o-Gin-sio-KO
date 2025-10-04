@@ -57,11 +57,12 @@ export const KOTheme = {
     info: '#0EA5E9',
   },
 
-  // Gradientes
+  // Gradientes (inspirados no logo)
   gradients: {
-    primary: ['#B91C1C', '#7F1D1D'],      // Vermelho
-    gold: ['#FBBF24', '#D97706'],         // Dourado
-    warm: ['#FFFBF0', '#FAF9F7'],         // Fundo quente
+    primary: ['#EA580C', '#9A3412'],      // Laranja
+    golden: ['#FBBF24', '#D97706'],       // Dourado
+    warm: ['#FFFBEB', '#FAF9F7'],         // Fundo quente
+    logo: ['#F4B942', '#D97706'],         // Gradiente do logo
   },
 };
 
