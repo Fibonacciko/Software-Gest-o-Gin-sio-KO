@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import '@/App.css';
-
-// Import components and contexts
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
+import CommandPalette from './components/CommandPalette';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Members from './pages/Members';
-import Attendance from './pages/Attendance';
 import Payments from './pages/Payments';
-import Inventory from './pages/Inventory';
+import Attendance from './pages/Attendance';
 import Reports from './pages/Reports';
-// import UserManagement from './pages/UserManagement';
+import Inventory from './pages/Inventory';
+import UserManagement from './pages/UserManagement';
+import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 import { Toaster } from './components/ui/sonner';
+import './App.css';
 
 function App() {
   const [language, setLanguage] = useState('pt');
