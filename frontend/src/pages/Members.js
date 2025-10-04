@@ -617,7 +617,12 @@ const Members = ({ language, translations }) => {
                       </div>
                     )}
                     <div>
-                      <h3 className="text-xl font-semibold">{selectedMember.name}</h3>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-xl font-semibold">{selectedMember.name}</h3>
+                        <span className="font-mono text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          #{selectedMember.member_number}
+                        </span>
+                      </div>
                       <Badge variant={getStatusVariant(selectedMember.status)}>
                         {t[language][selectedMember.status]}
                       </Badge>
