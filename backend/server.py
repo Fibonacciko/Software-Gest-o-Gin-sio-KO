@@ -17,6 +17,8 @@ import base64
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import json
+import firebase_admin
+from firebase_admin import credentials, messaging
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
