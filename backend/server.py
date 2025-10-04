@@ -35,6 +35,9 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Analytics Engine Premium
+analytics_engine = None
+
 # Firebase configuration (will be configured when user provides credentials)
 firebase_app = None
 firebase_enabled = False
