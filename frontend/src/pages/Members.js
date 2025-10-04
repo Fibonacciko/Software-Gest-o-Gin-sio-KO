@@ -715,6 +715,7 @@ const Members = ({ language, translations }) => {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };
