@@ -31,6 +31,7 @@ const Attendance = ({ language, translations }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('list'); // list or calendar
   const [monthlyAttendance, setMonthlyAttendance] = useState({});
+  const [activityFilter, setActivityFilter] = useState('all');
 
   const t = {
     pt: {
