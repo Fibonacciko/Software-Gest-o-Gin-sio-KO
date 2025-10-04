@@ -424,6 +424,19 @@ const Attendance = ({ language, translations }) => {
                           </div>
                         </td>
                         <td className="p-4">
+                          <div className="flex items-center space-x-2">
+                            {att.activity && (
+                              <>
+                                <div 
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: att.activity.color }}
+                                />
+                                <span className="text-sm font-medium">{att.activity.name}</span>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4">
                           <Badge variant={att.method === 'manual' ? 'secondary' : 'default'}>
                             {t[language][att.method] || att.method}
                           </Badge>
