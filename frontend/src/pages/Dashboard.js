@@ -254,19 +254,19 @@ const Dashboard = ({ language, translations }) => {
           title={t[language].totalMembers}
           value={stats.total_members}
           icon={Users}
-          color="bg-blue-500"
+          color="ko-primary"
         />
         <StatCard
           title={t[language].activeMembers}
           value={stats.active_members}
           icon={UserCheck}
-          color="bg-green-500"
+          color="ko-success"
         />
         <StatCard
           title={t[language].todayAttendance}
           value={stats.today_attendance}
           icon={Calendar}
-          color="bg-purple-500"
+          color="ko-golden"
         />
         {isAdmin() && (
           <StatCard
