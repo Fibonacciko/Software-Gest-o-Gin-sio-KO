@@ -288,10 +288,10 @@ class AnalyticsEngine:
         
         current_revenue = current_revenue[0]["total"] if current_revenue else 0
         
-        return {
+        return serialize_mongo_data({
             "current_month": round(current_revenue, 2),
             "access_level": "limited"
-        }
+        })
     
     async def _get_activity_metrics(self) -> Dict[str, Any]:
         """Métricas de atividades/modalidades"""
