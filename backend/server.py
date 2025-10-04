@@ -493,7 +493,10 @@ async def delete_member(
 
 # Attendance Routes
 @api_router.post("/attendance", response_model=Attendance)
-async def create_attendance(attendance_data: AttendanceCreate):
+async def create_attendance(
+    attendance_data: AttendanceCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
     # Check if member exists
     member = await db.members.find_one({"id": attendance_data.member_id})
     if not member:
