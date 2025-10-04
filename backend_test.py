@@ -324,6 +324,194 @@ class GymManagementAPITester:
                 print(f"   - Level: {note['level_name']} (Workouts: {note['workout_count_min']}-{note['workout_count_max']})")
         return success, response
 
+    def test_sarcastic_motivational_notes_system(self):
+        """Comprehensive test of the new sarcastic motivational notes system"""
+        print("\n🔥 TESTING SARCASTIC MOTIVATIONAL NOTES SYSTEM")
+        print("-" * 50)
+        
+        all_tests_passed = True
+        
+        # Test 1: Get motivational notes and verify sarcastic content
+        success, response = self.run_test("Get Sarcastic Motivational Notes", "GET", "motivational-notes", 200)
+        if success and response:
+            print(f"   Found {len(response)} motivational notes")
+            
+            # Check for sarcastic content indicators
+            sarcastic_indicators = ["🥊", "😈", "🥵", "🤷‍♂️", "calma", "medo", "suor", "saco"]
+            has_sarcastic_content = False
+            
+            for note in response:
+                print(f"   - Level: {note['level_name']} (Workouts: {note['workout_count_min']}-{note['workout_count_max']})")
+                print(f"     PT: {note['note_pt']}")
+                print(f"     EN: {note['note_en']}")
+                
+                # Check if this note contains sarcastic indicators
+                note_text = f"{note['note_pt']} {note['note_en']}".lower()
+                if any(indicator in note_text for indicator in sarcastic_indicators):
+                    has_sarcastic_content = True
+                    print(f"     ✅ Contains sarcastic content!")
+            
+            if has_sarcastic_content:
+                self.log_test("Sarcastic Content Verification", True, "Found sarcastic motivational notes")
+            else:
+                self.log_test("Sarcastic Content Verification", False, "No sarcastic content found in notes")
+                all_tests_passed = False
+        else:
+            all_tests_passed = False
+        
+        # Test 2: Create test members with different workout counts
+        test_members = []
+        workout_scenarios = [
+            {"name": "Iniciante Carlos", "workouts": 3, "expected_level": "iniciantes"},
+            {"name": "Intermedio Maria", "workouts": 15, "expected_level": "intermedios"},
+            {"name": "Avançado Pedro", "workouts": 35, "expected_level": "avançados"},
+            {"name": "Hardcore Ana", "workouts": 75, "expected_level": "hardcore"}
+        ]
+        
+        for scenario in workout_scenarios:
+            # Create member
+            member_data = {
+                "name": scenario["name"],
+                "email": f"{scenario['name'].lower().replace(' ', '.')}@test.com",
+                "phone": f"+35191234{len(test_members):04d}",
+                "date_of_birth": "1990-01-01",
+                "nationality": "Portuguesa",
+                "profession": "Testador",
+                "address": "Rua de Teste, 123",
+                "membership_type": "basic"
+            }
+            
+            success, member_response = self.run_test(f"Create Test Member ({scenario['name']})", "POST", "members", 200, member_data)
+            if success and member_response:
+                member_id = member_response['id']
+                test_members.append({
+                    "id": member_id,
+                    "name": scenario["name"],
+                    "target_workouts": scenario["workouts"],
+                    "expected_level": scenario["expected_level"]
+                })
+                
+                # Create attendance records to simulate workout history
+                activities_success, activities = self.run_test("Get Activities for Workout Simulation", "GET", "activities", 200)
+                if activities_success and activities:
+                    activity_id = activities[0]['id']  # Use first available activity
+                    
+                    # Create multiple attendance records
+                    for i in range(scenario["workouts"]):
+                        attendance_data = {
+                            "member_id": member_id,
+                            "activity_id": activity_id,
+                            "method": "manual"
+                        }
+                        self.run_test(f"Create Workout {i+1} for {scenario['name']}", "POST", "attendance", 200, attendance_data)
+        
+        # Test 3: Test mobile profile endpoint with different workout counts
+        for member in test_members:
+            success, profile_response = self.run_test(
+                f"Mobile Profile - {member['name']} ({member['target_workouts']} workouts)", 
+                "GET", 
+                f"mobile/profile?member_id={member['id']}", 
+                200,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if success and profile_response:
+                workout_count = profile_response.get('workout_count', 0)
+                motivational_note = profile_response.get('current_motivational_note', '')
+                
+                print(f"   Workout count: {workout_count}")
+                print(f"   Motivational note: {motivational_note}")
+                
+                # Verify workout count is approximately correct (allowing for some variance)
+                if abs(workout_count - member['target_workouts']) <= 2:
+                    self.log_test(f"Workout Count Accuracy - {member['name']}", True, f"Expected ~{member['target_workouts']}, got {workout_count}")
+                else:
+                    self.log_test(f"Workout Count Accuracy - {member['name']}", False, f"Expected ~{member['target_workouts']}, got {workout_count}")
+                    all_tests_passed = False
+                
+                # Verify motivational note is present and sarcastic
+                if motivational_note and len(motivational_note) > 10:
+                    self.log_test(f"Motivational Note Present - {member['name']}", True, f"Note: {motivational_note[:50]}...")
+                else:
+                    self.log_test(f"Motivational Note Present - {member['name']}", False, "No motivational note found")
+                    all_tests_passed = False
+            else:
+                all_tests_passed = False
+        
+        # Test 4: Test random selection by calling multiple times
+        if test_members:
+            member = test_members[0]  # Use first test member
+            notes_received = set()
+            
+            for i in range(5):  # Call 5 times to test randomness
+                success, profile_response = self.run_test(
+                    f"Random Selection Test {i+1}", 
+                    "GET", 
+                    f"mobile/profile?member_id={member['id']}", 
+                    200,
+                    headers={'Content-Type': 'application/json'}
+                )
+                
+                if success and profile_response:
+                    note = profile_response.get('current_motivational_note', '')
+                    if note:
+                        notes_received.add(note)
+            
+            if len(notes_received) > 1:
+                self.log_test("Random Selection Working", True, f"Received {len(notes_received)} different notes")
+            else:
+                self.log_test("Random Selection Working", False, f"Only received {len(notes_received)} unique note(s)")
+        
+        # Test 5: Test mobile check-in impact on motivational notes
+        if test_members:
+            member = test_members[0]  # Use first test member
+            
+            # Get current profile
+            success, before_profile = self.run_test("Profile Before Check-in", "GET", f"mobile/profile?member_id={member['id']}", 200, headers={'Content-Type': 'application/json'})
+            
+            if success and before_profile:
+                before_count = before_profile.get('workout_count', 0)
+                before_note = before_profile.get('current_motivational_note', '')
+                
+                # Perform mobile check-in
+                activities_success, activities = self.run_test("Get Activities for Mobile Check-in", "GET", "mobile/activities", 200, headers={'Content-Type': 'application/json'})
+                if activities_success and activities:
+                    activity_id = activities[0]['id']
+                    
+                    success, checkin_response = self.run_test(
+                        "Mobile Check-in Test", 
+                        "POST", 
+                        f"mobile/checkin?member_id={member['id']}&activity_id={activity_id}", 
+                        200,
+                        headers={'Content-Type': 'application/json'}
+                    )
+                    
+                    if success and checkin_response:
+                        new_count = checkin_response.get('workout_count', 0)
+                        new_note = checkin_response.get('motivational_note', '')
+                        
+                        print(f"   Before check-in: {before_count} workouts")
+                        print(f"   After check-in: {new_count} workouts")
+                        print(f"   New motivational note: {new_note}")
+                        
+                        if new_count == before_count + 1:
+                            self.log_test("Check-in Updates Workout Count", True, f"Count increased from {before_count} to {new_count}")
+                        else:
+                            self.log_test("Check-in Updates Workout Count", False, f"Expected {before_count + 1}, got {new_count}")
+                            all_tests_passed = False
+                        
+                        if new_note and len(new_note) > 10:
+                            self.log_test("Check-in Updates Motivational Note", True, f"New note: {new_note[:50]}...")
+                        else:
+                            self.log_test("Check-in Updates Motivational Note", False, "No new motivational note")
+                            all_tests_passed = False
+        
+        # Cleanup test members
+        for member in test_members:
+            self.run_test(f"Cleanup Test Member - {member['name']}", "DELETE", f"members/{member['id']}", 200)
+        
+        return all_tests_passed, {}
+
     def test_message_creation(self):
         """Test creating a general message for all members"""
         message_data = {
