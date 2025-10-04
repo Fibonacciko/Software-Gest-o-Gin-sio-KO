@@ -376,6 +376,12 @@ class GymManagementAPITester:
         # Basic API tests
         self.test_api_health()
         
+        # Authentication
+        login_success, _ = self.test_login()
+        if not login_success:
+            print("❌ Authentication failed - stopping tests")
+            return False
+        
         # Activities/Modalidades tests (PRIORITY)
         self.test_get_activities()
         self.test_create_activity()
