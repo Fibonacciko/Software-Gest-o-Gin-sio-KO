@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- KO Gym Icon - Premium Design -->
+  <defs>
+    <radialGradient id="logoGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#F4B942"/>
+      <stop offset="100%" style="stop-color:#B8651B"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#logoGrad)" stroke="#B8651B" stroke-width="8"/>
+  
+  <!-- KO Text -->
+  <text x="256" y="290" 
+        font-family="Arial Black, sans-serif" 
+        font-size="160" 
+        font-weight="900" 
+        text-anchor="middle" 
+        fill="#B8651B">KO</text>
+  
+  <!-- Subtitle -->
+  <text x="256" y="350" 
+        font-family="Arial, sans-serif" 
+        font-size="24" 
+        text-anchor="middle" 
+        fill="#B8651B" 
+        opacity="0.8">GYM</text>
+</svg>
