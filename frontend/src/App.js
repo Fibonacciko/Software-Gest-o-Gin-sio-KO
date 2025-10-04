@@ -43,41 +43,54 @@ function App() {
   return (
     <div className="App min-h-screen bg-slate-50">
       <BrowserRouter>
-        <div className="flex h-screen">
-          <Sidebar 
-            isOpen={sidebarOpen}
-            toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            language={language}
-            setLanguage={setLanguage}
-            translations={translations[language]}
-          />
-          
-          <main className={`flex-1 overflow-auto transition-all duration-300 ${
-            sidebarOpen ? 'ml-64' : 'ml-16'
-          }`}>
-            <Routes>
-              <Route path="/" element={
-                <Dashboard language={language} translations={translations[language]} />
-              } />
-              <Route path="/members" element={
-                <Members language={language} translations={translations[language]} />
-              } />
-              <Route path="/attendance" element={
-                <Attendance language={language} translations={translations[language]} />
-              } />
-              <Route path="/payments" element={
-                <Payments language={language} translations={translations[language]} />
-              } />
-              <Route path="/inventory" element={
-                <Inventory language={language} translations={translations[language]} />
-              } />
-              <Route path="/reports" element={
-                <Reports language={language} translations={translations[language]} />
-              } />
-            </Routes>
-          </main>
-        </div>
-        <Toaster position="top-right" />
+        <AuthProvider>
+          <ProtectedRoute>
+            <div className="flex h-screen">
+              <Sidebar 
+                isOpen={sidebarOpen}
+                toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+                language={language}
+                setLanguage={setLanguage}
+                translations={translations[language]}
+              />
+              
+              <main className={`flex-1 overflow-auto transition-all duration-300 ${
+                sidebarOpen ? 'ml-64' : 'ml-16'
+              }`}>
+                <Routes>
+                  <Route path="/" element={
+                    <Dashboard language={language} translations={translations[language]} />
+                  } />
+                  <Route path="/members" element={
+                    <Members language={language} translations={translations[language]} />
+                  } />
+                  <Route path="/attendance" element={
+                    <Attendance language={language} translations={translations[language]} />
+                  } />
+                  <Route path="/payments" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <Payments language={language} translations={translations[language]} />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/inventory" element={
+                    <Inventory language={language} translations={translations[language]} />
+                  } />
+                  <Route path="/reports" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <Reports language={language} translations={translations[language]} />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/users" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <UserManagement language={language} />
+                    </ProtectedRoute>
+                  } />
+                </Routes>
+              </main>
+            </div>
+          </ProtectedRoute>
+          <Toaster position="top-right" />
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );
