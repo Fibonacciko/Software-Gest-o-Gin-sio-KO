@@ -28,6 +28,27 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Firebase configuration (will be configured when user provides credentials)
+firebase_app = None
+firebase_enabled = False
+
+def initialize_firebase():
+    """Initialize Firebase when credentials are available"""
+    global firebase_app, firebase_enabled
+    try:
+        firebase_config_path = os.environ.get('FIREBASE_CONFIG_PATH')
+        if firebase_config_path and os.path.exists(firebase_config_path):
+            if not firebase_admin._apps:
+                cred = credentials.Certificate(firebase_config_path)
+                firebase_app = firebase_admin.initialize_app(cred)
+            firebase_enabled = True
+            print("Firebase initialized successfully")
+        else:
+            print("Firebase configuration not found - push notifications disabled")
+    except Exception as e:
+        print(f"Firebase initialization failed: {e}")
+        firebase_enabled = False
+
 # Create the main app
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
