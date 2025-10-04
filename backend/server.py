@@ -1711,6 +1711,7 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_db():
+    initialize_firebase()
     await create_admin_user()
     await create_default_activities()
     await update_existing_members_with_numbers()
