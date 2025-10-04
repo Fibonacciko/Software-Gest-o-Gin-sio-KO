@@ -343,19 +343,30 @@ const Attendance = ({ language, translations }) => {
               />
             </div>
             
-            <Select value={selectedMember} onValueChange={setSelectedMember}>
-              <SelectTrigger>
-                <SelectValue placeholder={t[language].allMembers} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t[language].allMembers}</SelectItem>
-                {members.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Select value={selectedMember} onValueChange={setSelectedMember}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t[language].allMembers} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t[language].allMembers}</SelectItem>
+                  {members.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Modalidade</label>
+                <ActivitySelector
+                  value={activityFilter}
+                  onChange={setActivityFilter}
+                  placeholder="Todas as modalidades"
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
