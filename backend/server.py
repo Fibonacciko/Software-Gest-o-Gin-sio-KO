@@ -1234,46 +1234,75 @@ async def delete_inventory_item(
 @dashboard_rate_limit()
 async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staff)):
     """Get dashboard statistics with premium analytics"""
-    # Get member stats
-    total_members = await db.members.count_documents({})
-    active_members = await db.members.count_documents({"status": "active"})
     
-    # Get today's attendance
-    today = date.today()
-    today_attendance = await db.attendance.count_documents({
-        "check_in_date": today.isoformat()
-    })
-    
-    response = {
-        "total_members": total_members,
-        "active_members": active_members,
-        "today_attendance": today_attendance,
-    }
-    
-    # Only show financial data to admins
-    if current_user.role == UserRole.ADMIN:
-        # Get this month's revenue
-        start_of_month = date(today.year, today.month, 1)
-        monthly_revenue_pipeline = [
-            {
-                "$match": {
-                    "payment_date": {"$gte": start_of_month.isoformat()},
-                    "status": "paid"
-                }
-            },
-            {
-                "$group": {
-                    "_id": None,
-                    "total": {"$sum": "$amount"}
+    try:
+        # Log dashboard access
+        gym_logger.business_metric("dashboard_accessed", True, 
+                                 user_id=current_user.id, user_role=current_user.role)
+        
+        # Use premium analytics engine
+        if analytics_engine:
+            analytics_data = await analytics_engine.get_dashboard_analytics(current_user.role)
+            
+            # Convert to legacy format for frontend compatibility + add new premium data
+            response = {
+                # Legacy format (maintain compatibility)
+                "total_members": analytics_data["members"]["total"],
+                "active_members": analytics_data["members"]["active"],
+                "today_attendance": analytics_data["attendance"]["today"],
+                
+                # Premium Analytics Data
+                "premium_analytics": {
+                    "members": analytics_data["members"],
+                    "attendance": analytics_data["attendance"],
+                    "activities": analytics_data["activities"],
+                    "growth": analytics_data["growth"],
+                    "generated_at": analytics_data["generated_at"]
                 }
             }
-        ]
+            
+            # Add financial data for admins
+            if current_user.role == UserRole.ADMIN:
+                response["monthly_revenue"] = analytics_data["financial"]["current_month"]
+                response["premium_analytics"]["financial"] = analytics_data["financial"]
+            
+            gym_logger.info("Premium dashboard analytics served", 
+                          user_id=current_user.id, metrics_count=len(response["premium_analytics"]))
+            
+            return response
         
-        monthly_revenue_result = await db.payments.aggregate(monthly_revenue_pipeline).to_list(1)
-        monthly_revenue = monthly_revenue_result[0]["total"] if monthly_revenue_result else 0
-        response["monthly_revenue"] = monthly_revenue
-    
-    return response
+        # Fallback to basic stats if analytics engine not available
+        else:
+            gym_logger.warning("Analytics engine not available, using fallback")
+            
+            # Basic fallback stats
+            total_members = await db.members.count_documents({})
+            active_members = await db.members.count_documents({"status": "active"})
+            today = date.today()
+            today_attendance = await db.attendance.count_documents({
+                "check_in_date": today.isoformat()
+            })
+            
+            response = {
+                "total_members": total_members,
+                "active_members": active_members,
+                "today_attendance": today_attendance,
+            }
+            
+            if current_user.role == UserRole.ADMIN:
+                start_of_month = date(today.year, today.month, 1)
+                monthly_revenue_result = await db.payments.aggregate([
+                    {"$match": {"payment_date": {"$gte": start_of_month.isoformat()}, "status": "paid"}},
+                    {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+                ]).to_list(1)
+                monthly_revenue = monthly_revenue_result[0]["total"] if monthly_revenue_result else 0
+                response["monthly_revenue"] = monthly_revenue
+            
+            return response
+            
+    except Exception as e:
+        gym_logger.error("Dashboard stats generation failed", error=e, user_id=current_user.id)
+        raise HTTPException(status_code=500, detail="Failed to generate dashboard statistics")
 
 @api_router.get("/reports/attendance")
 async def get_attendance_report(
