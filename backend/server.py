@@ -58,6 +58,10 @@ class ItemCategory(str, Enum):
     CLOTHING = "clothing"
     EQUIPMENT = "equipment"
 
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    STAFF = "staff"
+
 # Pydantic Models
 class Member(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
