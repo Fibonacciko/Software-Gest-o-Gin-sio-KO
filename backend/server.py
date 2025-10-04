@@ -703,19 +703,24 @@ async def get_detailed_attendance(
     # Enrich with member and activity data
     detailed_records = []
     for record in attendance_records:
-        # Get member data
-        member = await db.members.find_one({"id": record["member_id"]})
-        # Get activity data (handle legacy records without activity_id)
-        activity = None
-        if "activity_id" in record and record["activity_id"]:
-            activity = await db.activities.find_one({"id": record["activity_id"]})
-        
-        detailed_record = {
-            **parse_from_mongo(record),
-            "member": parse_from_mongo(member) if member else None,
-            "activity": parse_from_mongo(activity) if activity else None
-        }
-        detailed_records.append(detailed_record)
+        try:
+            # Get member data
+            member = await db.members.find_one({"id": record["member_id"]})
+            # Get activity data (handle legacy records without activity_id)
+            activity = None
+            if "activity_id" in record and record["activity_id"]:
+                activity = await db.activities.find_one({"id": record["activity_id"]})
+            
+            detailed_record = {
+                **parse_from_mongo(record),
+                "member": parse_from_mongo(member) if member else None,
+                "activity": parse_from_mongo(activity) if activity else None
+            }
+            detailed_records.append(detailed_record)
+        except Exception as e:
+            # Skip problematic records and log the error
+            print(f"Error processing attendance record {record.get('id', 'unknown')}: {e}")
+            continue
     
     return detailed_records
 
