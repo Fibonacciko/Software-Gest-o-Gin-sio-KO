@@ -979,7 +979,8 @@ async def get_members(
     status: Optional[MemberStatus] = None,
     membership_type: Optional[MembershipType] = None,
     search: Optional[str] = None,
-    current_user: User = Depends(require_admin_or_staff)
+    current_user: User = Depends(require_admin_or_staff),
+    request: Request = None
 ):
     filter_dict = {}
     if status:
