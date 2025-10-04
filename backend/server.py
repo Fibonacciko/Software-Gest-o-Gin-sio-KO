@@ -2046,6 +2046,7 @@ async def startup_db():
     await create_default_motivational_notes()
     
     # Inicializar Analytics Engine
+    global analytics_engine
     analytics_engine = AnalyticsEngine(db)
     gym_logger.info("✅ Analytics Engine initialized")
     
