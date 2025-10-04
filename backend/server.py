@@ -147,12 +147,18 @@ class AttendanceCreate(BaseModel):
     check_in_date: Optional[date] = None
     method: str = "manual"
 
+class PaymentMethod(str, Enum):
+    CASH = "cash"
+    CARD = "card"
+    TRANSFER = "transfer"
+    MBWAY = "mbway"
+
 class Payment(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     member_id: str
     amount: float
     payment_date: date = Field(default_factory=lambda: date.today())
-    payment_method: str = "cash"
+    payment_method: PaymentMethod = PaymentMethod.CASH
     status: PaymentStatus = PaymentStatus.PAID
     description: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
