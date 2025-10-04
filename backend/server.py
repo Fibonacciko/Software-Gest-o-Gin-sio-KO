@@ -1269,7 +1269,9 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
         
         # Use premium analytics engine
         if analytics_engine:
+            gym_logger.info("Getting dashboard analytics", user_role=current_user.role)
             analytics_data = await analytics_engine.get_dashboard_analytics(current_user.role)
+            gym_logger.info("Analytics data received", keys=list(analytics_data.keys()))
             
             # Convert to legacy format for frontend compatibility + add new premium data
             response = {
