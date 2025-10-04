@@ -46,10 +46,10 @@ const Login = () => {
           <p style={{ color: 'var(--text-secondary)' }}>Sistema de Gestão de Membership</p>
         </div>
 
-        <Card className="shadow-xl border-0">
+        <Card className="border-0" style={{ boxShadow: 'var(--shadow-xl)', backgroundColor: 'var(--background-elevated)' }}>
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl text-center font-bold">Entrar no Sistema</CardTitle>
-            <p className="text-center text-gray-600 text-sm">
+            <CardTitle className="text-2xl text-center font-bold" style={{ color: 'var(--text-primary)' }}>Entrar no Sistema</CardTitle>
+            <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
               Introduz as tuas credenciais para aceder
             </p>
           </CardHeader>
