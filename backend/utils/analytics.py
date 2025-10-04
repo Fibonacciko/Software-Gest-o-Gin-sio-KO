@@ -365,11 +365,11 @@ class AnalyticsEngine:
         # Previsão simples para próximo mês (média dos últimos 3 meses)
         recent_avg = sum(item["new_members"] for item in monthly_growth[-3:]) / 3
         
-        return {
+        return serialize_mongo_data({
             "monthly_new_members": monthly_growth,
             "predicted_next_month": round(recent_avg),
             "trend": "growing" if monthly_growth[-1]["new_members"] > monthly_growth[-2]["new_members"] else "stable"
-        }
+        })
     
     async def get_member_analytics(self, member_id: str) -> MemberAnalytics:
         """Analytics detalhadas de um membro específico"""
