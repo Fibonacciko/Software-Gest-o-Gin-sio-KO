@@ -230,7 +230,7 @@ class AnalyticsEngine:
         last_revenue = await self.db.payments.aggregate([
             {
                 "$match": {
-                    "payment_date": {"$gte": last_month_start.date(), "$lt": current_month_start.date()},
+                    "payment_date": {"$gte": last_month_start.date().isoformat(), "$lt": current_month_start.date().isoformat()},
                     "status": "paid"
                 }
             },
