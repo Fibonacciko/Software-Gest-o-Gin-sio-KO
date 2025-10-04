@@ -541,6 +541,140 @@ class GymManagementAPITester:
                 print(f"   Monthly revenue: €{response.get('monthly_revenue', 'N/A')}")
         return success, response
 
+    def test_premium_dashboard_analytics(self):
+        """Test premium dashboard analytics with enhanced data"""
+        success, response = self.run_test("Premium Dashboard Analytics", "GET", "dashboard", 200)
+        if success and response:
+            print(f"   Total members: {response.get('total_members', 'N/A')}")
+            print(f"   Active members: {response.get('active_members', 'N/A')}")
+            print(f"   Today's attendance: {response.get('today_attendance', 'N/A')}")
+            
+            # Check for premium analytics section
+            if 'premium_analytics' in response:
+                premium_data = response['premium_analytics']
+                print(f"   ✅ Premium analytics section found")
+                print(f"   Members data: {premium_data.get('members', {})}")
+                print(f"   Attendance data: {premium_data.get('attendance', {})}")
+                print(f"   Activities data: {premium_data.get('activities', {})}")
+                print(f"   Growth data: {premium_data.get('growth', {})}")
+                
+                if 'financial' in premium_data:
+                    print(f"   Financial data: {premium_data.get('financial', {})}")
+                
+                self.log_test("Premium Analytics Structure", True, "Premium analytics section present with expected data")
+            else:
+                self.log_test("Premium Analytics Structure", False, "Premium analytics section missing")
+                
+            if 'monthly_revenue' in response:
+                print(f"   Monthly revenue: €{response.get('monthly_revenue', 'N/A')}")
+        
+        return success, response
+
+    def test_system_status(self):
+        """Test system status monitoring endpoint"""
+        success, response = self.run_test("System Status Monitoring", "GET", "system/status", 200)
+        if success and response:
+            print(f"   System status response: {json.dumps(response, indent=2, default=str)[:300]}...")
+            
+            # Check for expected system status fields
+            expected_fields = ['database', 'cache', 'services', 'timestamp']
+            missing_fields = []
+            
+            for field in expected_fields:
+                if field not in response:
+                    missing_fields.append(field)
+            
+            if not missing_fields:
+                self.log_test("System Status Structure", True, "All expected system status fields present")
+            else:
+                self.log_test("System Status Structure", False, f"Missing fields: {missing_fields}")
+        
+        return success, response
+
+    def test_member_analytics(self):
+        """Test member analytics endpoint"""
+        if not self.created_member_id:
+            # Try to get any existing member
+            success, members = self.run_test("Get Members for Analytics", "GET", "members", 200)
+            if success and members and len(members) > 0:
+                member_id = members[0]['id']
+            else:
+                self.log_test("Member Analytics", False, "No member available for analytics testing")
+                return False, {}
+        else:
+            member_id = self.created_member_id
+        
+        success, response = self.run_test("Member Analytics", "GET", f"analytics/member/{member_id}", 200)
+        if success and response:
+            print(f"   Member analytics response: {json.dumps(response, indent=2, default=str)[:300]}...")
+            
+            # Check for expected analytics fields
+            expected_fields = ['member_id', 'workout_patterns', 'attendance_trends']
+            present_fields = [field for field in expected_fields if field in response]
+            
+            if len(present_fields) > 0:
+                self.log_test("Member Analytics Structure", True, f"Analytics fields present: {present_fields}")
+            else:
+                self.log_test("Member Analytics Structure", False, "No expected analytics fields found")
+        
+        return success, response
+
+    def test_churn_analysis(self):
+        """Test churn analysis endpoint"""
+        success, response = self.run_test("Churn Analysis", "GET", "analytics/churn", 200)
+        if success and response:
+            print(f"   Churn analysis response: {json.dumps(response, indent=2, default=str)[:300]}...")
+            
+            # Check for expected churn analysis fields
+            expected_fields = ['retention_rate', 'at_risk_members', 'churn_predictions']
+            present_fields = [field for field in expected_fields if field in response]
+            
+            if len(present_fields) > 0:
+                self.log_test("Churn Analysis Structure", True, f"Churn fields present: {present_fields}")
+            else:
+                self.log_test("Churn Analysis Structure", False, "No expected churn analysis fields found")
+        
+        return success, response
+
+    def test_premium_login(self):
+        """Test premium login with enhanced security"""
+        login_data = {
+            "username": "fabio.guerreiro",
+            "password": "admin123"
+        }
+        
+        success, response = self.run_test("Premium Login", "POST", "auth/login-premium", 200, login_data, {'Content-Type': 'application/json'})
+        if success and response:
+            print(f"   Premium login response: {json.dumps(response, indent=2, default=str)[:300]}...")
+            
+            # Check for enhanced security features
+            if 'access_token' in response:
+                self.log_test("Premium Login Token", True, "Access token generated successfully")
+            else:
+                self.log_test("Premium Login Token", False, "No access token in response")
+            
+            # Check for enhanced logging indicators
+            if 'security_log_id' in response or 'login_timestamp' in response:
+                self.log_test("Enhanced Security Logging", True, "Enhanced security features detected")
+            else:
+                self.log_test("Enhanced Security Logging", False, "No enhanced security features detected")
+        
+        return success, response
+
+    def test_cache_operations(self):
+        """Test cache clear operations"""
+        success, response = self.run_test("Cache Clear Operations", "POST", "cache/clear", 200, {})
+        if success and response:
+            print(f"   Cache operations response: {json.dumps(response, indent=2, default=str)[:200]}...")
+            
+            # Check for cache operation confirmation
+            if 'cache_cleared' in response or 'status' in response:
+                self.log_test("Cache Operations", True, "Cache operations completed successfully")
+            else:
+                self.log_test("Cache Operations", False, "No cache operation confirmation")
+        
+        return success, response
+
     def test_update_operations(self):
         """Test update operations"""
         success_count = 0
