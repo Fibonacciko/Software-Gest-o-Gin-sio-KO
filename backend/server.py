@@ -1845,7 +1845,8 @@ async def get_motivational_notes(current_user: User = Depends(require_admin)):
 @api_rate_limit()
 async def get_member_analytics(
     member_id: str,
-    current_user: User = Depends(require_admin_or_staff)
+    current_user: User = Depends(require_admin_or_staff),
+    request: Request = None
 ):
     """Get detailed analytics for a specific member"""
     try:
