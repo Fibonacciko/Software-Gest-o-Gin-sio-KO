@@ -274,6 +274,41 @@ async def create_admin_user():
     except Exception as e:
         print(f"Error creating admin user: {e}")
 
+async def generate_next_member_number():
+    """Generate the next sequential member number"""
+    try:
+        # Get the highest existing member number
+        pipeline = [
+            {
+                "$addFields": {
+                    "member_number_int": {"$toInt": "$member_number"}
+                }
+            },
+            {
+                "$sort": {"member_number_int": -1}
+            },
+            {
+                "$limit": 1
+            }
+        ]
+        
+        result = await db.members.aggregate(pipeline).to_list(1)
+        
+        if result:
+            last_number = result[0].get("member_number_int", 0)
+            next_number = last_number + 1
+        else:
+            next_number = 1
+        
+        # Format as 3-digit string with leading zeros
+        return f"{next_number:03d}"
+    
+    except Exception as e:
+        print(f"Error generating member number: {e}")
+        # Fallback: count all members and add 1
+        member_count = await db.members.count_documents({})
+        return f"{member_count + 1:03d}"
+
 async def create_default_activities():
     try:
         # Check if activities already exist
