@@ -142,7 +142,7 @@ class AnalyticsEngine:
         
         # Presenças nos últimos 30 dias
         monthly_attendance = await self.db.attendance.count_documents({
-            "check_in_datetime": {"$gte": thirty_days_ago}
+            "check_in_time": {"$gte": thirty_days_ago}
         })
         
         # Média diária
