@@ -596,7 +596,10 @@ async def get_payments(
 
 # Inventory Routes
 @api_router.post("/inventory", response_model=InventoryItem)
-async def create_inventory_item(item_data: InventoryItemCreate):
+async def create_inventory_item(
+    item_data: InventoryItemCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
     item = InventoryItem(**item_data.dict())
     item_dict = prepare_for_mongo(item.dict())
     await db.inventory.insert_one(item_dict)
