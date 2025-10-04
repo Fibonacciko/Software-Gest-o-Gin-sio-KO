@@ -97,6 +97,7 @@ function App() {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('ko-gym-toggle-theme', handleThemeToggle);
     };
   }, []);
 
