@@ -609,7 +609,8 @@ async def get_members(
         filter_dict['$or'] = [
             {'name': {'$regex': search, '$options': 'i'}},
             {'phone': {'$regex': search, '$options': 'i'}},
-            {'email': {'$regex': search, '$options': 'i'}}
+            {'email': {'$regex': search, '$options': 'i'}},
+            {'member_number': {'$regex': search, '$options': 'i'}}  # Search by member number
         ]
     
     members = await db.members.find(filter_dict).to_list(1000)
