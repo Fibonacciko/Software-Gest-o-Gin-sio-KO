@@ -275,6 +275,18 @@ class GymManagementAPITester:
         """Test attendance reports"""
         return self.run_test("Attendance Report", "GET", "reports/attendance", 200)
 
+    def test_activity_report(self):
+        """Test activity/modalidade reports"""
+        return self.run_test("Activity Report", "GET", "reports/activities", 200)
+
+    def test_top_members_report(self):
+        """Test top members report"""
+        return self.run_test("Top Members Report", "GET", "reports/top-members", 200)
+
+    def test_detailed_attendance(self):
+        """Test detailed attendance with member and activity info"""
+        return self.run_test("Detailed Attendance", "GET", "attendance/detailed", 200)
+
     def test_update_operations(self):
         """Test update operations"""
         success_count = 0
