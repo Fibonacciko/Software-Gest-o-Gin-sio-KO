@@ -144,7 +144,7 @@ background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
 import { KOTheme } from './ko-theme-mobile';
 
 // Usar cores
-backgroundColor: KOTheme.primary.red
+backgroundColor: KOTheme.primary.orange
 color: KOTheme.neutral[700]
 ```
 
