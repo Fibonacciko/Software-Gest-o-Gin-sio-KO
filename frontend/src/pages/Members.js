@@ -268,7 +268,8 @@ const Members = ({ language, translations }) => {
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
             <Button 
-              className="btn-hover"
+              className="ko-hover-primary transition-all duration-200"
+              style={{ backgroundColor: 'var(--button-primary-bg)', color: 'white' }}
               onClick={() => {
                 setEditingMember(null);
                 resetForm();
