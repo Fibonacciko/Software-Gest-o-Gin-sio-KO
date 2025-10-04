@@ -461,45 +461,42 @@ async def update_existing_members_with_numbers():
         print(f"Updated member {member['name']} with number {next_number}")
 
 async def create_default_motivational_notes():
-    """Create default motivational notes if they don't exist"""
+    """Create default sarcastic motivational notes if they don't exist"""
     existing_notes = await db.motivational_notes.count_documents({})
     if existing_notes > 0:
-        return
+        # Update existing notes to new sarcastic version
+        await db.motivational_notes.delete_many({})  # Clear old notes
+        print("Cleared old motivational notes for sarcastic update")
     
-    default_notes = [
+    sarcastic_notes = [
         {
-            "workout_count_min": 1, "workout_count_max": 10, "level_name": "beginner",
-            "note_pt": "Põr luvas conta como exercício? 🥊",
+            "workout_count_min": 1, "workout_count_max": 5, "level_name": "iniciantes",
+            "note_pt": "Calçar as luvas já conta como exercício? 🥊",
             "note_en": "Does putting on gloves count as exercise? 🥊"
         },
         {
-            "workout_count_min": 11, "workout_count_max": 30, "level_name": "getting_started",
-            "note_pt": "Cuidado, essa motivação toda pode durar... até amanhã! 💪", 
-            "note_en": "Be careful, all that motivation might last... until tomorrow! 💪"
+            "workout_count_min": 6, "workout_count_max": 20, "level_name": "intermedios",
+            "note_pt": "O saco ainda não tem medo de ti. Mas já te respeita. 🤷‍♂️", 
+            "note_en": "The bag isn't afraid of you yet. But it respects you. 🤷‍♂️"
         },
         {
-            "workout_count_min": 31, "workout_count_max": 60, "level_name": "building_habit",
-            "note_pt": "Agora já és um regular! O sofá já se sente abandonado. 🛋️",
-            "note_en": "Now you're a regular! Your couch is feeling abandoned. 🛋️"
+            "workout_count_min": 21, "workout_count_max": 50, "level_name": "avançados",
+            "note_pt": "Parabéns! Já fazes sombra... ao espelho. 😈",
+            "note_en": "Congratulations! You're throwing shade... at the mirror. 😈"
         },
         {
-            "workout_count_min": 61, "workout_count_max": 90, "level_name": "committed", 
-            "note_pt": "Wow! A tua dedição está a inspirar outros membros! 🔥",
-            "note_en": "Wow! Your dedication is inspiring other members! 🔥"
-        },
-        {
-            "workout_count_min": 91, "workout_count_max": 999, "level_name": "champion",
-            "note_pt": "És oficialmente um viciado no ginásio! E isso é bom! 🏆",
-            "note_en": "You're officially a gym addict! And that's a good thing! 🏆"
+            "workout_count_min": 51, "workout_count_max": 999, "level_name": "hardcore",
+            "note_pt": "O teu suor devia pagar renda. 🥵",
+            "note_en": "Your sweat should pay rent. 🥵"
         }
     ]
     
-    for note_data in default_notes:
+    for note_data in sarcastic_notes:
         note = MotivationalNote(**note_data)
         note_dict = prepare_for_mongo(note.dict())
         await db.motivational_notes.insert_one(note_dict)
     
-    print("Default motivational notes created")
+    print("Sarcastic motivational notes created successfully! 🔥")
 
 async def create_default_activities():
     try:
