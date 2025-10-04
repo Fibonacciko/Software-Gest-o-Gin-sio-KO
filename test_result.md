@@ -296,15 +296,18 @@ backend:
 
   - task: "Member Analytics"
     implemented: true
-    working: "NA"
+    working: false
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Member analytics endpoint (GET /api/analytics/member/{member_id}) implemented to return detailed member analytics including workout patterns, attendance trends, and performance metrics."
+        - working: false
+          agent: "testing"
+          comment: "CRITICAL: Member analytics endpoint failing with 500 error. TypeError: 'unsupported operand type(s) for -: 'datetime.datetime' and 'str''. Analytics engine has datetime type mismatch issues when processing member data. Date fields from MongoDB are strings but code expects datetime objects."
 
   - task: "Churn Analysis"
     implemented: true
