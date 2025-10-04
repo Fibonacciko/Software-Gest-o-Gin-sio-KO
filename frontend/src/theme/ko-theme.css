@@ -4,20 +4,21 @@
  */
 
 :root {
-  /* Cores principais do logo (versões sutis) */
-  --ko-primary-red: #8B0000;      /* Vermelho principal do logo */
-  --ko-primary-yellow: #DAA520;    /* Dourado do logo */
+  /* Cores principais do logo (tons de laranja suaves) */
+  --ko-primary-orange: #B8651B;     /* Laranja/âmbar principal do logo (texto KO) */
+  --ko-primary-golden: #F4B942;     /* Dourado vibrante do logo (fundo central) */
   
-  /* Paleta de cores harmoniosas */
-  --ko-red-50: #FEF2F2;          /* Vermelho muito claro */
-  --ko-red-100: #FEE2E2;         /* Vermelho claro */
-  --ko-red-200: #FECACA;         /* Vermelho suave */
-  --ko-red-300: #FCA5A5;         /* Vermelho médio claro */
-  --ko-red-500: #DC2626;         /* Vermelho médio */
-  --ko-red-600: #B91C1C;         /* Vermelho escuro */
-  --ko-red-700: #991B1B;         /* Vermelho mais escuro */
-  --ko-red-800: #7F1D1D;         /* Vermelho muito escuro */
-  --ko-red-900: #6B1515;         /* Vermelho profundo */
+  /* Paleta de laranjas suaves (baseada no logo) */
+  --ko-orange-50: #FFF8F1;        /* Laranja muito claro */
+  --ko-orange-100: #FEECDC;       /* Laranja claro */
+  --ko-orange-200: #FED7AA;       /* Laranja suave */
+  --ko-orange-300: #FDBA74;       /* Laranja médio claro */
+  --ko-orange-400: #FB923C;       /* Laranja vibrante */
+  --ko-orange-500: #F97316;       /* Laranja forte */
+  --ko-orange-600: #EA580C;       /* Laranja escuro */
+  --ko-orange-700: #C2410C;       /* Laranja mais escuro */
+  --ko-orange-800: #9A3412;       /* Laranja muito escuro */
+  --ko-orange-900: #7C2D12;       /* Laranja profundo */
   
   /* Tons dourados/amarelos suaves */
   --ko-gold-50: #FFFBF0;         /* Dourado muito claro */
