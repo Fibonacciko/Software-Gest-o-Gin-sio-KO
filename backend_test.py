@@ -132,22 +132,73 @@ class GymManagementAPITester:
         success2, _ = self.run_test("Filter Members by Type", "GET", "members?membership_type=premium", 200)
         return success1 and success2, {}
 
+    def test_get_activities(self):
+        """Test getting all activities/modalidades"""
+        success, response = self.run_test("Get All Activities", "GET", "activities", 200)
+        if success and response:
+            print(f"   Found {len(response)} activities")
+            for activity in response:
+                print(f"   - {activity['name']} (Color: {activity['color']})")
+        return success, response
+
+    def test_create_activity(self):
+        """Test creating a new activity/modalidade"""
+        activity_data = {
+            "name": "Teste Modalidade",
+            "color": "#ff6b6b",
+            "description": "Modalidade criada para teste"
+        }
+        
+        success, response = self.run_test("Create Activity", "POST", "activities", 200, activity_data)
+        if success and response and 'id' in response:
+            self.created_activity_id = response['id']
+            print(f"   Created activity ID: {self.created_activity_id}")
+        
+        return success, response
+
     def test_create_attendance(self):
-        """Test manual check-in"""
+        """Test manual check-in with mandatory activity"""
         if not self.created_member_id:
             self.log_test("Create Attendance", False, "No member ID available")
+            return False, {}
+        
+        # First get available activities
+        success, activities = self.run_test("Get Activities for Check-in", "GET", "activities", 200)
+        if not success or not activities:
+            self.log_test("Create Attendance", False, "No activities available for check-in")
+            return False, {}
+        
+        # Use the first available activity
+        activity_id = activities[0]['id']
+        
+        attendance_data = {
+            "member_id": self.created_member_id,
+            "activity_id": activity_id,  # Required modalidade
+            "method": "manual"
+        }
+        
+        success, response = self.run_test("Manual Check-in with Activity", "POST", "attendance", 200, attendance_data)
+        if success and response and 'id' in response:
+            self.created_attendance_id = response['id']
+            print(f"   Created attendance ID: {self.created_attendance_id}")
+            print(f"   Activity used: {activities[0]['name']}")
+        
+        return success, response
+
+    def test_attendance_without_activity(self):
+        """Test check-in without activity (should fail)"""
+        if not self.created_member_id:
+            self.log_test("Check-in without Activity", False, "No member ID available")
             return False, {}
         
         attendance_data = {
             "member_id": self.created_member_id,
             "method": "manual"
+            # Missing activity_id - should fail
         }
         
-        success, response = self.run_test("Manual Check-in", "POST", "attendance", 200, attendance_data)
-        if success and response and 'id' in response:
-            self.created_attendance_id = response['id']
-            print(f"   Created attendance ID: {self.created_attendance_id}")
-        
+        # This should fail with 422 or 400
+        success, response = self.run_test("Check-in without Activity (Should Fail)", "POST", "attendance", 422, attendance_data)
         return success, response
 
     def test_get_attendance(self):
