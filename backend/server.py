@@ -233,18 +233,21 @@ def require_admin_or_staff(current_user: User = Depends(get_current_active_user)
 
 # Initialize admin user on startup
 async def create_admin_user():
-    admin_exists = await db.users.find_one({"role": "admin"})
-    if not admin_exists:
-        admin_user = User(
-            username="fabio.guerreiro",
-            email="admin@gym.com",
-            full_name="Fábio Guerreiro",
-            role=UserRole.ADMIN
-        )
-        admin_dict = prepare_for_mongo(admin_user.dict())
-        admin_dict["password_hash"] = get_password_hash("admin123")
-        await db.users.insert_one(admin_dict)
-        print("Admin user created successfully")
+    try:
+        admin_exists = await db.users.find_one({"role": "admin"})
+        if not admin_exists:
+            admin_user = User(
+                username="fabio.guerreiro",
+                email="admin@gym.com",
+                full_name="Fábio Guerreiro",
+                role=UserRole.ADMIN
+            )
+            admin_dict = prepare_for_mongo(admin_user.dict())
+            admin_dict["password_hash"] = get_password_hash("admin123")
+            await db.users.insert_one(admin_dict)
+            print("Admin user created successfully")
+    except Exception as e:
+        print(f"Error creating admin user: {e}")
 
 # API Routes
 @api_router.get("/")
