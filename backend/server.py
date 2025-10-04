@@ -170,6 +170,12 @@ class MobileMemberLogin(BaseModel):
 class FCMTokenUpdate(BaseModel):
     fcm_token: str
 
+class PaymentMethod(str, Enum):
+    CASH = "cash"
+    CARD = "card"
+    TRANSFER = "transfer"
+    MBWAY = "mbway"
+
 # Mobile Payment Model (mock for now)
 class MobilePaymentRequest(BaseModel):
     amount: float
