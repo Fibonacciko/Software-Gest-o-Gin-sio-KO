@@ -50,9 +50,10 @@
   --ko-info: #0EA5E9;           /* Azul complementar */
   
   /* Variáveis de aplicação */
-  --background-primary: var(--ko-neutral-50);
-  --background-secondary: var(--ko-neutral-100);
-  --background-elevated: #FFFFFF;
+  --background-primary: var(--gradient-page-bg);
+  --background-secondary: var(--gradient-card-bg);
+  --background-elevated: var(--gradient-input);
+  --background-sidebar: var(--gradient-sidebar);
   
   --text-primary: var(--ko-neutral-900);
   --text-secondary: var(--ko-neutral-700);
