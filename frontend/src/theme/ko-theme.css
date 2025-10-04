@@ -82,16 +82,17 @@
 }
 
 /* Classes de utilidade para cores KO */
-.ko-bg-primary { background-color: var(--ko-primary-red); }
-.ko-bg-gold { background-color: var(--ko-primary-yellow); }
+.ko-bg-primary { background-color: var(--ko-primary-orange); }
+.ko-bg-golden { background-color: var(--ko-primary-golden); }
 .ko-bg-warm { background: var(--gradient-warm); }
+.ko-bg-logo { background: var(--gradient-logo); }
 
-.ko-text-primary { color: var(--ko-primary-red); }
-.ko-text-gold { color: var(--ko-primary-yellow); }
+.ko-text-primary { color: var(--ko-primary-orange); }
+.ko-text-golden { color: var(--ko-primary-golden); }
 .ko-text-neutral { color: var(--text-primary); }
 
-.ko-border-primary { border-color: var(--ko-primary-red); }
-.ko-border-gold { border-color: var(--ko-primary-yellow); }
+.ko-border-primary { border-color: var(--ko-primary-orange); }
+.ko-border-golden { border-color: var(--ko-primary-golden); }
 
 /* Efeitos hover com cores KO */
 .ko-hover-primary:hover {
