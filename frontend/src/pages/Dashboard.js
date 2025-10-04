@@ -328,7 +328,7 @@ const Dashboard = ({ language, translations }) => {
           {!qrMode ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                   Modalidade *
                 </label>
                 <ActivitySelector
@@ -339,12 +339,17 @@ const Dashboard = ({ language, translations }) => {
               </div>
               
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4" style={{ color: 'var(--text-muted)' }} />
                 <Input
                   placeholder="Procurar por nome, telefone ou nº sócio..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 transition-all duration-200"
+                  style={{
+                    background: 'var(--gradient-input)',
+                    borderColor: 'var(--border-medium)',
+                    color: 'var(--text-primary)'
+                  }}
                   data-testid="member-search"
                 />
               </div>
