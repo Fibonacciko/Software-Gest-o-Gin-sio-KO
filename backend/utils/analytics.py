@@ -213,8 +213,8 @@ class AnalyticsEngine:
         current_revenue = await self.db.payments.aggregate([
             {
                 "$match": {
-                    "date": {"$gte": current_month_start.date()},
-                    "type": "income"
+                    "payment_date": {"$gte": current_month_start.date()},
+                    "status": "paid"
                 }
             },
             {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
