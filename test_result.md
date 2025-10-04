@@ -311,15 +311,18 @@ backend:
 
   - task: "Churn Analysis"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Churn analysis endpoint (GET /api/analytics/churn) implemented to return member retention data and identify at-risk members for proactive engagement."
+        - working: true
+          agent: "testing"
+          comment: "Churn analysis endpoint working correctly (200 OK). Returns at-risk member count (3) and detailed at-risk member data including member IDs, names, membership types, and join dates. Churn analysis structure validated successfully."
 
   - task: "Premium Login with Enhanced Security"
     implemented: true
