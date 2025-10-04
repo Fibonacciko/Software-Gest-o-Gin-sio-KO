@@ -217,7 +217,7 @@ class AnalyticsEngine:
         current_revenue = await self.db.payments.aggregate([
             {
                 "$match": {
-                    "payment_date": {"$gte": current_month_start.date()},
+                    "payment_date": {"$gte": current_month_start.date().isoformat()},
                     "status": "paid"
                 }
             },
@@ -248,7 +248,7 @@ class AnalyticsEngine:
         payment_methods = await self.db.payments.aggregate([
             {
                 "$match": {
-                    "payment_date": {"$gte": current_month_start.date()},
+                    "payment_date": {"$gte": current_month_start.date().isoformat()},
                     "status": "paid"
                 }
             },
@@ -283,7 +283,7 @@ class AnalyticsEngine:
         current_revenue = await self.db.payments.aggregate([
             {
                 "$match": {
-                    "payment_date": {"$gte": current_month_start.date()},
+                    "payment_date": {"$gte": current_month_start.date().isoformat()},
                     "status": "paid"
                 }
             },
