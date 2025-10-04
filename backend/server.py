@@ -633,6 +633,7 @@ async def create_attendance(
 @api_router.get("/attendance", response_model=List[Attendance])
 async def get_attendance(
     member_id: Optional[str] = None,
+    activity_id: Optional[str] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     current_user: User = Depends(require_admin_or_staff)
@@ -640,6 +641,8 @@ async def get_attendance(
     filter_dict = {}
     if member_id:
         filter_dict['member_id'] = member_id
+    if activity_id:
+        filter_dict['activity_id'] = activity_id
     if start_date:
         filter_dict['check_in_date'] = filter_dict.get('check_in_date', {})
         filter_dict['check_in_date']['$gte'] = start_date.isoformat()
