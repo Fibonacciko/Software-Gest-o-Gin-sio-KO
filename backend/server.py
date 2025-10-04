@@ -309,6 +309,41 @@ async def generate_next_member_number():
         member_count = await db.members.count_documents({})
         return f"{member_count + 1:03d}"
 
+async def update_existing_members_with_numbers():
+    """Add member numbers to existing members who don't have them"""
+    try:
+        # Find members without member_number
+        members_without_numbers = await db.members.find({"member_number": {"$exists": False}}).to_list(1000)
+        
+        if not members_without_numbers:
+            return
+        
+        print(f"Updating {len(members_without_numbers)} members with numbers...")
+        
+        # Sort by creation date to maintain order
+        members_without_numbers.sort(key=lambda x: x.get('created_at', ''))
+        
+        for i, member in enumerate(members_without_numbers, 1):
+            member_number = f"{i:03d}"
+            
+            # Update member with number
+            await db.members.update_one(
+                {"id": member["id"]},
+                {"$set": {"member_number": member_number}}
+            )
+            
+            # Regenerate QR code with member number
+            new_qr_code = generate_qr_code(f"{member_number}-{member['id']}")
+            await db.members.update_one(
+                {"id": member["id"]},
+                {"$set": {"qr_code": new_qr_code}}
+            )
+        
+        print(f"Successfully updated {len(members_without_numbers)} members with numbers")
+    
+    except Exception as e:
+        print(f"Error updating existing members: {e}")
+
 async def create_default_activities():
     try:
         # Check if activities already exist
