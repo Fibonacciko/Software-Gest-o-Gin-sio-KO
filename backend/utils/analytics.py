@@ -131,14 +131,14 @@ class AnalyticsEngine:
         if members_last_month > 0:
             growth_rate = ((new_members - members_last_month) / members_last_month) * 100
         
-        return {
+        return serialize_mongo_data({
             "total": total_members,
             "active": active_members,
             "inactive": total_members - active_members,
             "new_this_month": new_members,
             "growth_rate": round(growth_rate, 2),
             "membership_breakdown": {item["_id"]: item["count"] for item in membership_breakdown}
-        }
+        })
     
     async def _get_attendance_metrics(self) -> Dict[str, Any]:
         """Métricas de frequência"""
