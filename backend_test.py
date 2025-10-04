@@ -85,6 +85,23 @@ class GymManagementAPITester:
         """Test API health endpoint"""
         return self.run_test("API Health Check", "GET", "", 200)
 
+    def test_login(self):
+        """Test login and get authentication token"""
+        login_data = {
+            "username": "fabio.guerreiro",
+            "password": "admin123"
+        }
+        
+        success, response = self.run_test("Admin Login", "POST", "auth/login", 200, login_data, {'Content-Type': 'application/json'})
+        if success and response and 'access_token' in response:
+            self.auth_token = response['access_token']
+            self.auth_headers['Authorization'] = f'Bearer {self.auth_token}'
+            print(f"   Authentication successful - Token acquired")
+            print(f"   User: {response.get('user', {}).get('full_name', 'Unknown')}")
+            print(f"   Role: {response.get('user', {}).get('role', 'Unknown')}")
+        
+        return success, response
+
     def test_create_member(self):
         """Test creating a new member"""
         member_data = {
