@@ -1564,6 +1564,7 @@ async def mobile_qr_checkin(member_id: str, activity_id: str):
     attendance_data = AttendanceCreate(
         member_id=member_id,
         activity_id=activity_id,
+        check_in_date=date.today(),
         method="mobile_qr"
     )
     attendance = Attendance(**attendance_data.dict())
