@@ -1803,11 +1803,25 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_db():
+    global analytics_engine
+    
+    gym_logger.info("🚀 Starting KO Gym Management API - Premium Edition")
+    
     initialize_firebase()
     await create_admin_user()
     await create_default_activities()
     await update_existing_members_with_numbers()
     await create_default_motivational_notes()
+    
+    # Inicializar Analytics Engine
+    analytics_engine = AnalyticsEngine(db)
+    gym_logger.info("✅ Analytics Engine initialized")
+    
+    # Verificar status dos sistemas premium
+    cache_stats = gym_cache.get_stats()
+    gym_logger.info("💾 Cache system status", **cache_stats)
+    
+    gym_logger.info("🎯 KO Gym API Premium started successfully")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
