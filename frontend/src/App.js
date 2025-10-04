@@ -132,33 +132,53 @@ function App() {
                 sidebarOpen ? 'ml-64' : 'ml-16'
               }`} style={{ paddingTop: !isOnline ? '40px' : '0' }}>
                 <Routes>
+                  <Route path="/login" element={<Login />} />
                   <Route path="/" element={
-                    <Dashboard language={language} translations={translations[language]} />
+                    <ProtectedRoute>
+                      <Dashboard language={language} />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                      <Dashboard language={language} />
+                    </ProtectedRoute>
                   } />
                   <Route path="/members" element={
-                    <Members language={language} translations={translations[language]} />
+                    <ProtectedRoute>
+                      <Members language={language} />
+                    </ProtectedRoute>
                   } />
                   <Route path="/attendance" element={
-                    <Attendance language={language} translations={translations[language]} />
+                    <ProtectedRoute>
+                      <Attendance language={language} />
+                    </ProtectedRoute>
                   } />
                   <Route path="/payments" element={
-                    <ProtectedRoute requiredRole="admin">
-                      <Payments language={language} translations={translations[language]} />
+                    <ProtectedRoute>
+                      <Payments language={language} />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/reports" element={
+                    <ProtectedRoute>
+                      <Reports language={language} />
                     </ProtectedRoute>
                   } />
                   <Route path="/inventory" element={
-                    <Inventory language={language} translations={translations[language]} />
-                  } />
-                  <Route path="/reports" element={
-                    <ProtectedRoute requiredRole="admin">
-                      <Reports language={language} translations={translations[language]} />
+                    <ProtectedRoute>
+                      <Inventory language={language} />
                     </ProtectedRoute>
                   } />
-                  {/* <Route path="/users" element={
-                    <ProtectedRoute requiredRole="admin">
+                  <Route path="/users" element={
+                    <ProtectedRoute requireAdmin>
                       <UserManagement language={language} />
                     </ProtectedRoute>
-                  } /> */}
+                  } />
+                  {/* Premium Analytics Route */}
+                  <Route path="/analytics" element={
+                    <ProtectedRoute requireAdmin>
+                      <Dashboard language={language} analytics={true} />
+                    </ProtectedRoute>
+                  } />
                 </Routes>
               </main>
             </div>
