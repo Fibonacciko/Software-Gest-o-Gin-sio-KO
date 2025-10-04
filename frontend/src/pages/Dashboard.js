@@ -298,7 +298,12 @@ const Dashboard = ({ language, translations }) => {
             <Button
               variant={!qrMode ? "default" : "outline"}
               onClick={() => setQrMode(false)}
-              className="btn-hover"
+              className="ko-hover-primary transition-all duration-200"
+              style={{ 
+                backgroundColor: !qrMode ? 'var(--button-primary-bg)' : 'transparent',
+                borderColor: 'var(--ko-primary-orange)',
+                color: !qrMode ? 'white' : 'var(--ko-primary-orange)'
+              }}
               data-testid="manual-checkin-btn"
             >
               <Users className="mr-2" size={16} />
@@ -307,7 +312,12 @@ const Dashboard = ({ language, translations }) => {
             <Button
               variant={qrMode ? "default" : "outline"}
               onClick={() => setQrMode(true)}
-              className="btn-hover"
+              className="ko-hover-primary transition-all duration-200"
+              style={{ 
+                backgroundColor: qrMode ? 'var(--button-primary-bg)' : 'transparent',
+                borderColor: 'var(--ko-primary-orange)',
+                color: qrMode ? 'white' : 'var(--ko-primary-orange)'
+              }}
               data-testid="qr-checkin-btn"
             >
               <QrCode className="mr-2" size={16} />
