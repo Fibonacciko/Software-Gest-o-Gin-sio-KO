@@ -89,6 +89,93 @@ class ActivityCreate(BaseModel):
     color: str
     description: Optional[str] = None
 
+# Message/Notification Models
+class Message(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    content: str
+    message_type: MessageType
+    target_member_id: Optional[str] = None  # For individual messages
+    target_role: Optional[UserRole] = None  # For role-based messages
+    language: str = "pt"  # pt or en
+    is_push_notification: bool = True
+    created_by: str  # Admin/Staff ID
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    scheduled_for: Optional[datetime] = None  # For future messages
+
+class MessageCreate(BaseModel):
+    title: str
+    content: str
+    message_type: MessageType
+    target_member_id: Optional[str] = None
+    target_role: Optional[UserRole] = None
+    language: str = "pt"
+    is_push_notification: bool = True
+    scheduled_for: Optional[datetime] = None
+
+class NotificationLog(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    message_id: str
+    member_id: str
+    status: NotificationStatus = NotificationStatus.SENT
+    sent_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    read_at: Optional[datetime] = None
+    fcm_token: Optional[str] = None
+
+# Motivational Notes Model
+class MotivationalNote(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    workout_count_min: int  # e.g., 1
+    workout_count_max: int  # e.g., 90
+    level_name: str  # e.g., "beginners"
+    note_pt: str
+    note_en: str
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MotivationalNoteCreate(BaseModel):
+    workout_count_min: int
+    workout_count_max: int
+    level_name: str
+    note_pt: str
+    note_en: str
+
+# Mobile Member Profile Model (extended for mobile app)
+class MobileMember(BaseModel):
+    id: str
+    member_number: str
+    name: str
+    email: Optional[str] = None
+    phone: str
+    date_of_birth: date
+    nationality: str
+    profession: str
+    membership_type: MembershipType
+    status: MemberStatus
+    join_date: date
+    expiry_date: Optional[date] = None
+    photo_url: Optional[str] = None
+    qr_code: str  # Base64 QR code image
+    workout_count: int = 0  # Total workouts
+    current_motivational_note: Optional[str] = None
+    subscription_active: bool = True
+    fcm_token: Optional[str] = None
+
+# Mobile Login Model
+class MobileMemberLogin(BaseModel):
+    member_number: str
+    phone: str  # Using phone as password for simplicity
+
+# FCM Token Update Model  
+class FCMTokenUpdate(BaseModel):
+    fcm_token: str
+
+# Mobile Payment Model (mock for now)
+class MobilePaymentRequest(BaseModel):
+    amount: float
+    payment_method: PaymentMethod
+    description: Optional[str] = None
+
 # Pydantic Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
