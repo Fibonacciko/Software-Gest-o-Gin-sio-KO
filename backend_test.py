@@ -790,6 +790,16 @@ class GymManagementAPITester:
         self.test_message_creation()
         self.test_dashboard_with_new_changes()
         
+        # PREMIUM BACKEND FEATURES TESTS (New Priority)
+        print("\n🔥 TESTING PREMIUM BACKEND FEATURES")
+        print("-" * 40)
+        self.test_premium_dashboard_analytics()
+        self.test_system_status()
+        self.test_member_analytics()
+        self.test_churn_analysis()
+        self.test_premium_login()
+        self.test_cache_operations()
+        
         # SARCASTIC MOTIVATIONAL NOTES SYSTEM TEST (New Priority)
         self.test_sarcastic_motivational_notes_system()
         
