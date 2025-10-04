@@ -1957,11 +1957,23 @@ async def clear_cache(
         gym_logger.error("Cache clear failed", error=e, user_id=current_user.id)
         raise HTTPException(status_code=500, detail="Failed to clear cache")
 
-# Rate limit endpoints
-@api_router.post("/auth/login")
+# Authentication helper function
+async def authenticate_user(username: str, password: str) -> Optional[User]:
+    """Authenticate user with username and password"""
+    user = await db.users.find_one({"username": username})
+    if not user:
+        return None
+    
+    if not verify_password(password, user["password"]):
+        return None
+    
+    return User(**parse_from_mongo(user))
+
+# Enhanced login endpoint with rate limiting
+@api_router.post("/auth/login-premium")
 @auth_rate_limit()
-async def login_with_rate_limit(user_data: UserLogin):
-    """Login with rate limiting"""
+async def login_with_premium_features(user_data: UserLogin):
+    """Premium login with advanced security and logging"""
     
     # Log login attempt
     gym_logger.security_event("login_attempt", user_id=user_data.username)
@@ -1979,10 +1991,14 @@ async def login_with_rate_limit(user_data: UserLogin):
         # Generate token
         access_token = create_access_token(data={"sub": user.id, "role": user.role})
         
+        # Log business metric
+        gym_logger.business_metric("user_login", 1, user_id=user.id, user_role=user.role)
+        
         return {
             "access_token": access_token,
             "token_type": "bearer",
-            "user": user
+            "user": user,
+            "features": ["premium_analytics", "advanced_security", "enhanced_logging"]
         }
         
     except HTTPException:
