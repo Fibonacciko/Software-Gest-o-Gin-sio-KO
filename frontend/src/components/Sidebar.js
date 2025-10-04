@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
+import DarkModeToggle from './DarkModeToggle';
+import useDarkMode from '../hooks/useDarkMode';
 
 const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations }) => {
   const location = useLocation();
