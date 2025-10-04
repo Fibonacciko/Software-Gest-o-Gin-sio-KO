@@ -21,6 +21,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Dashboard = ({ language, translations }) => {
+  const { isAdmin } = useAuth();
   const [stats, setStats] = useState({
     total_members: 0,
     active_members: 0,
