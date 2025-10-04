@@ -490,6 +490,7 @@ const Members = ({ language, translations }) => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-left p-4 font-medium text-gray-600">Nº Sócio</th>
                     <th className="text-left p-4 font-medium text-gray-600">{t[language].name}</th>
                     <th className="text-left p-4 font-medium text-gray-600">{t[language].phone}</th>
                     <th className="text-left p-4 font-medium text-gray-600">{t[language].membershipType}</th>
