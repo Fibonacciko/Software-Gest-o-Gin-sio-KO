@@ -130,12 +130,13 @@ background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
 
 ### **Classes CSS Disponíveis:**
 ```css
-.ko-bg-primary     /* Background vermelho principal */
-.ko-bg-gold        /* Background dourado */  
-.ko-text-primary   /* Texto vermelho */
-.ko-text-gold      /* Texto dourado */
-.ko-hover-primary  /* Hover effect vermelho */
-.ko-badge-red      /* Badge vermelho com gradiente */
+.ko-bg-primary     /* Background laranja principal */
+.ko-bg-golden      /* Background dourado */
+.ko-bg-logo        /* Gradiente igual ao logo */  
+.ko-text-primary   /* Texto laranja */
+.ko-text-golden    /* Texto dourado */
+.ko-hover-primary  /* Hover effect laranja */
+.ko-badge-primary  /* Badge laranja com gradiente */
 ```
 
 ### **React Native:**
