@@ -656,6 +656,9 @@ class GymManagementAPITester:
         self.test_message_creation()
         self.test_dashboard_with_new_changes()
         
+        # SARCASTIC MOTIVATIONAL NOTES SYSTEM TEST (New Priority)
+        self.test_sarcastic_motivational_notes_system()
+        
         # Update operations
         self.test_update_operations()
         
