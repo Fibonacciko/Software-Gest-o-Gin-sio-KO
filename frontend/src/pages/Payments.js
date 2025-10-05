@@ -543,12 +543,299 @@ const Payments = ({ language, translations }) => {
                   {t[language].registerExpenses}
                 </h2>
               </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t[language].addPayment}</DialogTitle>
-            </DialogHeader>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t[language].addExpense}</DialogTitle>
+                </DialogHeader>
+                
+                <form onSubmit={handleExpenseSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="category">{t[language].selectCategory} *</Label>
+                    <Select 
+                      value={expenseFormData.category} 
+                      onValueChange={(value) => setExpenseFormData({...expenseFormData, category: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="salaries">{t[language].salaries}</SelectItem>
+                        <SelectItem value="fixed">{t[language].fixedExpenses}</SelectItem>
+                        <SelectItem value="extra">{t[language].extraExpenses}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="expense_amount">{t[language].amount} (€) *</Label>
+                    <Input
+                      id="expense_amount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={expenseFormData.amount}
+                      onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
+                      required
+                      placeholder={t[language].enterAmount}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="expense_description">{t[language].description}</Label>
+                    <Textarea
+                      id="expense_description"
+                      value={expenseFormData.description}
+                      onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
+                      rows={3}
+                      placeholder={t[language].expenseDescription}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowExpenseDialog(false)}
+                    >
+                      {t[language].cancel}
+                    </Button>
+                    <Button type="submit">
+                      {t[language].save}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Financial Statistics - Only for Admin */}
+      {isAdmin() && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="card-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">
+                    {t[language].monthlyRevenue}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    €{enhancedStats.monthlyRevenue.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-green-500">
+                  <DollarSign size={24} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="card-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">
+                    {t[language].monthlyExpenses}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    €{enhancedStats.monthlyExpenses.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-red-500">
+                  <TrendingUp size={24} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="card-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">
+                    {t[language].netRevenue}
+                  </p>
+                  <p className={`text-2xl font-bold ${enhancedStats.netRevenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    €{enhancedStats.netRevenue.toFixed(2)}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-full ${enhancedStats.netRevenue >= 0 ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <TrendingUp size={24} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder={t[language].searchPayments}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                data-testid="payments-search"
+              />
+            </div>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t[language].allStatuses} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t[language].allStatuses}</SelectItem>
+                <SelectItem value="paid">{t[language].paid}</SelectItem>
+                <SelectItem value="pending">{t[language].pending}</SelectItem>
+                <SelectItem value="overdue">{t[language].overdue}</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t[language].allDates} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t[language].allDates}</SelectItem>
+                <SelectItem value="thisMonth">{t[language].thisMonth}</SelectItem>
+                <SelectItem value="lastMonth">{t[language].lastMonth}</SelectItem>
+                <SelectItem value="thisYear">{t[language].thisYear}</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={selectedMember} onValueChange={setSelectedMember}>
+              <SelectTrigger>
+                <SelectValue placeholder={t[language].allMembers} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t[language].allMembers}</SelectItem>
+                {members.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Payments */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center">
+            <CreditCard className="mr-2" />
+            {t[language].recentPayments} ({payments.length})
+          </CardTitle>
+          <Button 
+            variant="outline" 
+            onClick={exportPayments}
+            className="btn-hover"
+            data-testid="export-payments-btn"
+          >
+            <Download className="mr-2" size={16} />
+            {t[language].export}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="animate-pulse flex items-center space-x-4 p-4">
+                  <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : payments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].member}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].amount}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].paymentMethod}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].paymentDate}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].status}
+                    </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      {t[language].description}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment) => (
+                    <tr key={payment.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Users size={16} className="text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{payment.member?.name || 'Membro eliminado'}</p>
+                            <p className="text-sm text-gray-500">{payment.member?.membership_type || '-'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <DollarSign size={16} className="text-gray-400 mr-1" />
+                          <span className="font-semibold">€{payment.amount.toFixed(2)}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge className={getPaymentMethodColor(payment.payment_method)}>
+                          {t[language][payment.payment_method]}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Calendar size={16} className="text-gray-400 mr-2" />
+                          {new Date(payment.payment_date).toLocaleDateString('pt-PT')}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge variant={getStatusVariant(payment.status)}>
+                          {t[language][payment.status]}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm text-gray-600 truncate max-w-xs">
+                          {payment.description || '-'}
+                        </p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <CreditCard size={48} className="mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-600">{t[language].noPayments}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
               <div>
                 <Label htmlFor="member_id">{t[language].member} *</Label>
                 <Select 
