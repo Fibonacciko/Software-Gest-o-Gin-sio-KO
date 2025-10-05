@@ -360,6 +360,66 @@ backend:
           agent: "testing"
           comment: "Cache operations endpoint working correctly (200 OK). Returns success message 'Cleared all business cache' with success: true. Redis not available (expected in dev environment), using memory cache fallback as designed. Core functionality working."
 
+  - task: "Automated Messaging System"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented automated messaging system with default messages for new_member, membership_expiry (7/3 days), workout milestones (10,25,50,100), and inactivity (7/30 days). CRUD operations for automated message templates. Manual trigger capability. Full integration with Firebase push notifications."
+
+  - task: "Invoice Generation with Smart Discounts"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented automatic invoice generation with smart discount calculation based on member workout count, membership duration, and membership type. Invoice numbering system (INV-YYYY-001), tax calculation (23% IVA), and payment tracking integration."
+
+  - task: "Fiscal Reports Generation"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented fiscal reporting system supporting monthly, quarterly, and yearly reports. Aggregates total revenue, tax amounts, invoice counts by status (paid/pending/overdue). Portuguese tax compliance with 23% IVA calculations."
+
+  - task: "Smart Discounts Management"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented smart discount rules with flexible conditions (min_workouts, min_membership_days, membership_type). Support for percentage and fixed amount discounts. Automatic application during invoice generation with usage tracking."
+
+  - task: "Member Trigger Checking"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented automatic member state analysis for triggering automated messages. Checks workout milestones, membership expiry warnings, and inactivity periods. Provides endpoint for manual trigger checking and bulk member processing."
+
 frontend:
   # No frontend testing performed as per instructions
 
