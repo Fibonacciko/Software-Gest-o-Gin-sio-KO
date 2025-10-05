@@ -370,7 +370,11 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Automated Messaging System" 
+    - "Invoice Generation with Smart Discounts"
+    - "Fiscal Reports"
+    - "Member Trigger Checking"
   stuck_tasks:
     - "Member Analytics"
   test_all: false
