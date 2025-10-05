@@ -192,6 +192,41 @@ const Dashboard = ({ language, translations }) => {
     }
   };
 
+  const handleCancelLastCheckin = async () => {
+    if (!lastCheckedInMember) return;
+    
+    if (window.confirm(t[language].confirmCancelCheckin)) {
+      try {
+        console.log('🚫 Cancelling last check-in for member:', lastCheckedInMember.id);
+        
+        // Get today's attendance for this member
+        const today = new Date().toISOString().split('T')[0];
+        const attendanceResponse = await axios.get(
+          `${API}/attendance?member_id=${lastCheckedInMember.id}&date=${today}`
+        );
+        
+        if (attendanceResponse.data.length > 0) {
+          // Delete the most recent attendance record
+          const lastAttendance = attendanceResponse.data[attendanceResponse.data.length - 1];
+          await axios.delete(`${API}/attendance/${lastAttendance.id}`);
+          
+          console.log('✅ Last check-in cancelled successfully');
+          toast.success(t[language].checkinCancelled);
+          
+          // Clear the member panel and refresh data
+          setLastCheckedInMember(null);
+          fetchDashboardData();
+        } else {
+          toast.error('Nenhum check-in encontrado para cancelar hoje.');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error cancelling check-in:', error);
+        toast.error('Erro ao cancelar check-in: ' + (error.response?.data?.detail || error.message));
+      }
+    }
+  };
+
   const handleSaveMemberNotes = async () => {
     if (!lastCheckedInMember) return;
     
