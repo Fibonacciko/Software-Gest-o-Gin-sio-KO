@@ -247,6 +247,15 @@ const Members = ({ language, translations }) => {
     }
   };
 
+  const getStatusClassName = (status) => {
+    switch (status) {
+      case 'active': return 'bg-green-800 text-white hover:bg-green-900';
+      case 'inactive': return 'bg-orange-600 text-white hover:bg-orange-700';
+      case 'suspended': return 'bg-red-600 text-white hover:bg-red-700';
+      default: return 'bg-gray-500 text-white hover:bg-gray-600';
+    }
+  };
+
   const getMembershipColor = (type) => {
     switch (type) {
       case 'basic': return 'bg-blue-100 text-blue-800';
