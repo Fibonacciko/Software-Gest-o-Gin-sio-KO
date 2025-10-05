@@ -182,6 +182,31 @@ const Dashboard = ({ language, translations }) => {
     }
   };
 
+  const handleSaveMemberNotes = async () => {
+    if (!lastCheckedInMember) return;
+    
+    try {
+      await axios.put(`${API}/members/${lastCheckedInMember.id}`, {
+        notes: memberNotes,
+        medical_notes: memberMedicalNotes
+      });
+      
+      setEditingNotes(false);
+      setEditingMedical(false);
+      toast.success('Notas guardadas com sucesso!');
+      
+      // Update the member object with new notes
+      setLastCheckedInMember({
+        ...lastCheckedInMember,
+        notes: memberNotes,
+        medical_notes: memberMedicalNotes
+      });
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast.error('Erro ao guardar notas');
+    }
+  };
+
   const handleQuickCheckin = async (memberId) => {
     if (!selectedActivity) {
       toast.error('Por favor seleciona uma modalidade');
