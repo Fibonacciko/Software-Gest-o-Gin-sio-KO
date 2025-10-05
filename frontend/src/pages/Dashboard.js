@@ -364,7 +364,10 @@ const Dashboard = ({ language, translations }) => {
                 </label>
                 <ActivitySelector
                   value={selectedActivity}
-                  onChange={setSelectedActivity}
+                  onChange={(value) => {
+                    console.log('🏃‍♂️ Activity selected:', value);
+                    setSelectedActivity(value);
+                  }}
                   placeholder="Selecionar modalidade"
                 />
               </div>
