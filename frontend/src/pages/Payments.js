@@ -331,7 +331,90 @@ const Payments = ({ language, translations }) => {
     a.click();
   };
 
+  // Function to handle member search
+  const handleMemberSearch = (searchValue) => {
+    setMemberSearchTerm(searchValue);
+    if (searchValue.trim() === '') {
+      setFilteredMembers([]);
+      return;
+    }
+    
+    const filtered = members.filter(member =>
+      member.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      member.member_number.toString().includes(searchValue)
+    );
+    setFilteredMembers(filtered);
+  };
+
+  // Function to handle expense submission
+  const handleExpenseSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API}/expenses`, {
+        ...expenseFormData,
+        created_by: user.id
+      });
+      
+      toast.success(t[language].expenseAdded);
+      setShowExpenseDialog(false);
+      setExpenseFormData({
+        category: 'salaries',
+        amount: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0]
+      });
+      
+      if (isAdmin()) {
+        fetchExpenses();
+      }
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      toast.error('Erro ao registar despesa');
+    }
+  };
+
+  // Function to fetch expenses (only for admin)
+  const fetchExpenses = async () => {
+    if (!isAdmin()) return;
+    
+    try {
+      const response = await axios.get(`${API}/expenses`);
+      setExpenses(response.data);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+    }
+  };
+
   const stats = getPaymentStats();
+  
+  // Enhanced stats calculation
+  const getEnhancedStats = () => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    // Monthly revenue
+    const monthlyRevenue = payments
+      .filter(payment => new Date(payment.payment_date) >= startOfMonth && payment.status === 'paid')
+      .reduce((sum, payment) => sum + payment.amount, 0);
+    
+    // Monthly expenses (only for admin)
+    let monthlyExpenses = 0;
+    if (isAdmin()) {
+      monthlyExpenses = expenses
+        .filter(expense => new Date(expense.date) >= startOfMonth)
+        .reduce((sum, expense) => sum + expense.amount, 0);
+    }
+    
+    const netRevenue = monthlyRevenue - monthlyExpenses;
+    
+    return {
+      monthlyRevenue,
+      monthlyExpenses,
+      netRevenue
+    };
+  };
+
+  const enhancedStats = getEnhancedStats();
 
   return (
     <div className="p-6 space-y-6 fade-in">
