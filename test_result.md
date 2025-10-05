@@ -107,51 +107,63 @@ user_problem_statement: Test dashboard improvements in fitness management system
 frontend:
   - task: "Dashboard Login and Navigation"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Dashboard.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "testing"
         - comment: "Need to test admin login with credentials fabio.guerreiro/admin123 and verify dashboard loads correctly without statistics (removed as requested), with Check-in Rápido at top and Presenças de Hoje below."
+        - working: true
+        - agent: "testing"
+        - comment: "TESTING COMPLETE: ✅ Admin login successful with fabio.guerreiro/admin123. ✅ Dashboard loads correctly with 'Painel Principal' title. ✅ Statistics cards correctly removed as requested. ✅ Check-in Rápido section found at top. ✅ Presenças de Hoje section found below. ✅ Today's attendance shows Maria Santos and António Guerreiro. Dashboard layout matches requirements."
 
   - task: "Quick Check-in Functionality"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/pages/Dashboard.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "testing"
         - comment: "Need to test check-in process: select activity/modality, search for members (Maria/Antonio), perform check-in, and verify member details panel appears."
+        - working: false
+        - agent: "testing"
+        - comment: "CRITICAL ISSUE FOUND: ❌ Check-in functionality not working. Activity selector works (shows Boxe, Kickboxing, Jiu-Jitsu, CrossFit, Musculação, etc). Member search works (finds Maria Santos #001). However, when check-in button is clicked, the API call to POST /api/attendance is NOT being made. This prevents the member details panel from appearing. The check-in process appears to complete visually but no actual check-in occurs."
 
   - task: "Member Details Panel Layout"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/pages/Dashboard.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "testing"
         - comment: "Need to verify member panel layout: calendar with yellow dots for attendance days (as background, not blue numbers), notes in squares beside calendar, medical notes in separate square, and test note editing functionality."
+        - working: false
+        - agent: "testing"
+        - comment: "CANNOT TEST: Member details panel does not appear because check-in functionality is broken. The panel code exists in Dashboard.js with correct layout structure (3-column grid with calendar, notes, and medical notes), but it's conditional on lastCheckedInMember state which is never set due to failed check-in API calls."
 
   - task: "SimpleMemberCalendar Component"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/components/SimpleMemberCalendar.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "testing"
         - comment: "Need to verify calendar shows yellow dots as background for attendance days (bg-yellow-400 class), not blue numbers. Component should be compact and functional."
+        - working: true
+        - agent: "testing"
+        - comment: "CODE REVIEW COMPLETE: ✅ SimpleMemberCalendar component correctly implemented. Uses bg-yellow-400 class for attendance days (line 62). ✅ Shows yellow dots as background, not blue numbers. ✅ Compact layout with proper grid structure. ✅ Legend shows yellow dot for 'Presença'. Component is ready but cannot be tested in UI due to check-in functionality issue."
 
 metadata:
   created_by: "testing_agent"
