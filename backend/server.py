@@ -914,6 +914,67 @@ async def delete_inventory_item(
         raise HTTPException(status_code=404, detail="Item not found")
     return {"message": "Item deleted successfully"}
 
+@api_router.post("/inventory/{item_id}/sell")
+async def sell_inventory_item(
+    item_id: str, 
+    sale_data: dict, 
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """
+    Sell inventory item - reduce quantity and record sale
+    """
+    try:
+        # Check if item exists
+        item = await db.inventory.find_one({"id": item_id})
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        
+        quantity_to_sell = sale_data.get("quantity", 0)
+        sale_price = sale_data.get("sale_price", 0.0)
+        
+        # Validate quantity
+        if quantity_to_sell <= 0:
+            raise HTTPException(status_code=400, detail="Quantity must be greater than 0")
+        
+        if quantity_to_sell > item["quantity"]:
+            raise HTTPException(status_code=400, detail="Not enough stock available")
+        
+        # Update item quantity
+        new_quantity = item["quantity"] - quantity_to_sell
+        await db.inventory.update_one(
+            {"id": item_id}, 
+            {
+                "$set": {"quantity": new_quantity},
+                "$inc": {"sold_quantity": quantity_to_sell}  # Track total sold
+            }
+        )
+        
+        # Record sale transaction (optional - for future sales tracking)
+        sale_record = {
+            "id": str(uuid4()),
+            "item_id": item_id,
+            "item_name": item["name"],
+            "quantity_sold": quantity_to_sell,
+            "sale_price": sale_price,
+            "total_amount": quantity_to_sell * sale_price,
+            "sold_by": current_user["id"],
+            "sale_date": datetime.now().isoformat(),
+            "created_at": datetime.now().isoformat()
+        }
+        await db.sales.insert_one(sale_record)
+        
+        return {
+            "message": "Sale recorded successfully",
+            "item_name": item["name"],
+            "quantity_sold": quantity_to_sell,
+            "remaining_stock": new_quantity,
+            "total_amount": quantity_to_sell * sale_price
+        }
+        
+    except Exception as e:
+        print(f"Error selling item: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error recording sale")
+
 # Dashboard & Reports
 @api_router.get("/dashboard")
 async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staff)):
