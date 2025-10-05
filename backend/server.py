@@ -348,6 +348,93 @@ class InventoryItemCreate(BaseModel):
     price: float
     description: Optional[str] = None
 
+# Automated Messaging Models
+class AutomatedMessage(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    trigger: AutomatedMessageTrigger
+    title_pt: str
+    title_en: str
+    message_pt: str
+    message_en: str
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AutomatedMessageCreate(BaseModel):
+    trigger: AutomatedMessageTrigger
+    title_pt: str
+    title_en: str
+    message_pt: str
+    message_en: str
+
+class AutomatedMessageUpdate(BaseModel):
+    title_pt: Optional[str] = None
+    title_en: Optional[str] = None
+    message_pt: Optional[str] = None
+    message_en: Optional[str] = None
+    is_active: Optional[bool] = None
+
+# Financial Models
+class Invoice(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    invoice_number: str  # Auto-generated: INV-YYYY-001
+    member_id: str
+    member_name: str
+    member_email: Optional[str] = None
+    amount: float
+    tax_amount: float = 0.0
+    total_amount: float
+    description: str
+    due_date: date
+    issue_date: date = Field(default_factory=lambda: date.today())
+    status: PaymentStatus = PaymentStatus.PENDING
+    payment_method: Optional[PaymentMethod] = None
+    paid_date: Optional[date] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class InvoiceCreate(BaseModel):
+    member_id: str
+    amount: float
+    tax_rate: float = 0.23  # 23% IVA Portugal
+    description: str
+    due_days: int = 30  # Days from issue date
+
+class FiscalReport(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    report_type: str  # monthly, quarterly, yearly
+    period_start: date
+    period_end: date
+    total_revenue: float
+    total_tax: float
+    total_invoices: int
+    paid_invoices: int
+    pending_invoices: int
+    overdue_invoices: int
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SmartDiscount(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    discount_type: str  # percentage, fixed_amount
+    discount_value: float
+    conditions: Dict  # JSON conditions for automatic application
+    is_active: bool = True
+    valid_from: date
+    valid_until: Optional[date] = None
+    usage_limit: Optional[int] = None
+    used_count: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SmartDiscountCreate(BaseModel):
+    name: str
+    description: str
+    discount_type: str
+    discount_value: float
+    conditions: Dict
+    valid_from: date
+    valid_until: Optional[date] = None
+    usage_limit: Optional[int] = None
+
 # Authentication functions
 def verify_password(plain_password, hashed_password):
     # Temporary SHA256 for testing
