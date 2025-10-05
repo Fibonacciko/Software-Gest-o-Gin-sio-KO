@@ -338,7 +338,7 @@ const Payments = ({ language, translations }) => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
-          {t[language].payments}
+          {t[language].finances}
         </h1>
         
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
