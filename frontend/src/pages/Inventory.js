@@ -395,21 +395,19 @@ const Inventory = ({ language, translations }) => {
         <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
           {t[language].inventory}
         </h1>
-        
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
-            <Button 
-              className="btn-hover"
-              onClick={() => {
-                setEditingItem(null);
-                resetForm();
-              }}
-              data-testid="add-item-btn"
-            >
-              <Plus className="mr-2" size={16} />
-              {t[language].addItem}
-            </Button>
-          </DialogTrigger>
+      </div>
+
+      {/* Action Bars */}
+      <div className="space-y-4">
+        {/* Add Article Bar */}
+        <Card className="bg-black text-white">
+          <CardContent className="p-4">
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <h2 className="text-lg font-bold text-white cursor-pointer hover:text-gray-300 transition-colors">
+                  {t[language].addItem}
+                </h2>
+              </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
