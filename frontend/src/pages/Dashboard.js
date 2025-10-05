@@ -189,11 +189,31 @@ const Dashboard = ({ language, translations }) => {
     }
     
     try {
+      // First get member details
+      const memberResponse = await axios.get(`${API}/members/${memberId}`);
+      const member = memberResponse.data;
+      
+      // Get member's attendance history for the calendar
+      const year = new Date().getFullYear();
+      const month = new Date().getMonth() + 1;
+      const attendanceResponse = await axios.get(
+        `${API}/members/${memberId}/attendance?month=${month}&year=${year}`
+      );
+      
+      // Perform check-in
       await axios.post(`${API}/attendance`, {
         member_id: memberId,
         activity_id: selectedActivity,
         method: 'manual'
       });
+      
+      // Set the member details for the panel
+      setLastCheckedInMember({
+        ...member,
+        attendanceDates: attendanceResponse.data.map(att => att.check_in_date)
+      });
+      setMemberNotes(member.notes || '');
+      setMemberMedicalNotes(member.medical_notes || '');
       
       toast.success(t[language].checkinSuccess);
       setCheckinMemberId('');
