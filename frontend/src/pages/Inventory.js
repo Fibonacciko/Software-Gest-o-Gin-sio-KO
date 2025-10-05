@@ -491,6 +491,22 @@ const Inventory = ({ language, translations }) => {
                     data-testid="item-price"
                   />
                 </div>
+                
+                {/* Purchase Price - Admin Only */}
+                {isAdmin() && (
+                  <div>
+                    <Label htmlFor="purchase_price">{t[language].purchasePrice} (€)</Label>
+                    <Input
+                      id="purchase_price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.purchase_price}
+                      onChange={(e) => setFormData({...formData, purchase_price: e.target.value})}
+                      data-testid="item-purchase-price"
+                    />
+                  </div>
+                )}
               </div>
               
               <div>
