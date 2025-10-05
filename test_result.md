@@ -102,88 +102,73 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: Reactivate the UserManagement page functionality to allow admin users to create, edit, and manage staff accounts with custom passwords.
-
-backend:
-  - task: "User Management API Endpoints"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: "needs_testing"
-        - agent: "main"
-        - comment: "Backend endpoints for user management (GET /users, POST /users, PUT /users/{id}, DELETE /users/{id}, PUT /users/{id}/toggle-status) are already implemented. Need to verify they work correctly with authentication and role-based access control."
-        - working: true
-        - agent: "testing"
-        - comment: "COMPREHENSIVE TESTING COMPLETED: All user management endpoints working correctly. Fixed bcrypt password hashing issue by temporarily using SHA256. Tests passed: Admin login (✅), Get users (✅), Create staff user (✅), Update user (✅), Toggle user status (✅), Delete user (✅), Role-based access control (✅), Password security (✅), Duplicate user prevention (✅), Admin self-protection (✅). Success rate: 94.1% (16/17 tests passed). Only minor issue: 403 vs 401 status code for unauthorized access, which is acceptable behavior."
+user_problem_statement: Test dashboard improvements in fitness management system, specifically check-in functionality and member details panel layout with calendar and notes.
 
 frontend:
-  - task: "UserManagement Page Component"
+  - task: "Dashboard Login and Navigation"
     implemented: true
-    working: true
-    file: "/app/frontend/src/pages/UserManagement.js"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: false
-        - agent: "main"
-        - comment: "UserManagement.js exists and is comprehensive but is currently commented out in App.js. Need to reactivate the route and navigation."
-        - working: true
-        - agent: "main"
-        - comment: "Fixed syntax error in UserManagement.js caused by malformed newline characters. Recreated file with proper formatting. Component now loads without errors."
-
-  - task: "UserManagement Route in App.js"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/App.js"
+    working: "NA"
+    file: "/app/frontend/src/pages/Dashboard.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
-        - working: false
-        - agent: "main"
-        - comment: "UserManagement import and route are commented out on lines 15 and 83-87. Need to uncomment and reactivate."
-        - working: true
-        - agent: "main"
-        - comment: "Successfully uncommented UserManagement import and route. Added proper translations for user management. Route is now active and protected for admin-only access."
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Need to test admin login with credentials fabio.guerreiro/admin123 and verify dashboard loads correctly without statistics (removed as requested), with Check-in Rápido at top and Presenças de Hoje below."
 
-  - task: "UserManagement Navigation in Sidebar"
+  - task: "Quick Check-in Functionality"
     implemented: true
-    working: true
-    file: "/app/frontend/src/components/Sidebar.js"
+    working: "NA"
+    file: "/app/frontend/src/pages/Dashboard.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
-        - working: false
-        - agent: "main"
-        - comment: "User management menu item is commented out on line 32. Need to uncomment and add proper translations."
-        - working: true
-        - agent: "main"
-        - comment: "Successfully uncommented navigation menu item for user management. Added proper translation support. Menu item is now visible for admin users with Shield icon."
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Need to test check-in process: select activity/modality, search for members (Maria/Antonio), perform check-in, and verify member details panel appears."
+
+  - task: "Member Details Panel Layout"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Dashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Need to verify member panel layout: calendar with yellow dots for attendance days (as background, not blue numbers), notes in squares beside calendar, medical notes in separate square, and test note editing functionality."
+
+  - task: "SimpleMemberCalendar Component"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/SimpleMemberCalendar.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Need to verify calendar shows yellow dots as background for attendance days (bg-yellow-400 class), not blue numbers. Component should be compact and functional."
 
 metadata:
-  created_by: "main_agent"
+  created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 0
-  run_ui: false
+  test_sequence: 1
+  run_ui: true
 
 test_plan:
   current_focus:
-    - "UserManagement Route in App.js"
-    - "UserManagement Navigation in Sidebar"
+    - "Dashboard Login and Navigation"
+    - "Quick Check-in Functionality"
+    - "Member Details Panel Layout"
+    - "SimpleMemberCalendar Component"
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "sequential"
 
 agent_communication:
-    - agent: "main"
-    - message: "Starting reactivation of UserManagement functionality. Will first reactivate frontend routes and navigation, then test backend integration."
     - agent: "testing"
-    - message: "BACKEND TESTING COMPLETE: User management API endpoints are fully functional. Fixed critical bcrypt password hashing issue that was causing 500 errors. All core functionality verified: authentication, CRUD operations, role-based access control, security measures. Backend is ready for frontend integration. Main agent should now focus on frontend route reactivation and UI integration."
-    - agent: "main"
-    - message: "USER FEEDBACK IMPLEMENTED: 1) Fixed status badge colors in Members page (active=green-800, inactive=orange-600), 2) Enhanced error handling and logging for view/delete actions in Members page, 3) Reduced size of statistics cards in Attendance page (smaller padding, text, icons), 4) Improved 'Membros Únicos' label to 'Membros Distintos' for clarity."
+    - message: "Starting comprehensive testing of dashboard improvements. Will test login, check-in functionality, and member details panel layout with focus on calendar appearance and notes layout as requested by user."
