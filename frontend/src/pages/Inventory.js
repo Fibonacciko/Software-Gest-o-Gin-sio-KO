@@ -62,7 +62,8 @@ const Inventory = ({ language, translations }) => {
   const t = {
     pt: {
       inventory: 'Gestão de Stock',
-      addItem: 'Adicionar Item',
+      addItem: 'Adicionar Artigo',
+      sellItem: 'Venda Artigo',
       searchItems: 'Procurar items...',
       allCategories: 'Todas as Categorias',
       clothing: 'Roupa',
