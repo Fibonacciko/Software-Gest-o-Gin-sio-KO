@@ -36,7 +36,7 @@ const SimpleMemberCalendar = ({ attendanceDates = [], currentMonth = new Date() 
   });
 
   return (
-    <div className="bg-white rounded-lg p-2 border border-gray-200 max-w-xs">
+    <div className="bg-white rounded-lg p-3 border border-gray-200" style={{minHeight: '160px', width: '100%'}}>
       <h4 className="text-xs font-medium text-gray-700 mb-2 text-center">
         {monthName}
       </h4>
