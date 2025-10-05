@@ -251,7 +251,7 @@ const Attendance = ({ language, translations }) => {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="card-shadow">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -263,22 +263,6 @@ const Attendance = ({ language, translations }) => {
               </div>
               <div className="p-2 rounded-full bg-blue-500">
                 <Users size={18} className="text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="card-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">
-                  {t[language].uniqueMembers}
-                </p>
-                <p className="text-lg font-bold text-gray-900">{stats.uniqueMembers}</p>
-              </div>
-              <div className="p-2 rounded-full bg-green-500">
-                <CalendarIcon size={18} className="text-white" />
               </div>
             </div>
           </CardContent>
