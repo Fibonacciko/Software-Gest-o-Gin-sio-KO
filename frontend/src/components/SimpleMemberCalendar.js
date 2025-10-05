@@ -36,49 +36,49 @@ const SimpleMemberCalendar = ({ attendanceDates = [], currentMonth = new Date() 
   });
 
   return (
-    <div className="bg-white rounded-lg p-3 border border-gray-200">
-      <h4 className="text-sm font-medium text-gray-700 mb-3 text-center">
+    <div className="bg-white rounded-lg p-2 border border-gray-200 max-w-xs">
+      <h4 className="text-xs font-medium text-gray-700 mb-2 text-center">
         {monthName}
       </h4>
       
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-          <div key={day} className="text-xs text-gray-500 text-center font-medium py-1">
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
+        {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(day => (
+          <div key={day} className="text-xs text-gray-500 text-center font-medium py-0.5">
             {day}
           </div>
         ))}
       </div>
       
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5">
         {days.map((dayInfo, index) => (
           <div
             key={index}
-            className="aspect-square flex items-center justify-center relative p-1"
+            className="w-5 h-5 flex items-center justify-center relative"
           >
             {dayInfo ? (
-              <div className="relative w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+              <div className="relative w-full h-full flex items-center justify-center">
                 <span className={`text-xs z-10 relative ${
                   dayInfo.isToday ? 'font-bold text-blue-600' : 'text-gray-700'
                 }`}>
                   {dayInfo.day}
                 </span>
                 {dayInfo.hasAttendance && (
-                  <div className="absolute inset-0 bg-yellow-400 rounded-full opacity-60 border-2 border-yellow-500"></div>
+                  <div className="absolute inset-0 bg-yellow-400 rounded-full opacity-70"></div>
                 )}
               </div>
             ) : (
-              <div className="w-7 h-7"></div>
+              <div className="w-full h-full"></div>
             )}
           </div>
         ))}
       </div>
       
-      <div className="mt-3 pt-2 border-t border-gray-200">
+      <div className="mt-2 pt-1 border-t border-gray-200">
         <div className="flex items-center justify-center text-xs text-gray-500">
-          <div className="w-3 h-3 bg-yellow-400 rounded-full mr-2 border border-yellow-500"></div>
-          Presença registada
+          <div className="w-2 h-2 bg-yellow-400 rounded-full mr-1"></div>
+          Presença
         </div>
       </div>
     </div>
