@@ -58,14 +58,15 @@ const SimpleMemberCalendar = ({ attendanceDates = [], currentMonth = new Date() 
             className="w-5 h-5 flex items-center justify-center relative"
           >
             {dayInfo ? (
-              <div className={`relative w-full h-full flex items-center justify-center rounded-full ${
-                dayInfo.hasAttendance ? 'bg-yellow-400' : ''
-              }`}>
+              <div className="relative w-full h-full flex items-center justify-center">
                 <span className={`text-xs z-10 relative ${
                   dayInfo.isToday ? 'font-bold text-blue-600' : 'text-gray-700'
                 }`}>
                   {dayInfo.day}
                 </span>
+                {dayInfo.hasAttendance && (
+                  <div className="absolute inset-0 border-2 border-yellow-400 rounded-full bg-yellow-100 opacity-80"></div>
+                )}
               </div>
             ) : (
               <div className="w-full h-full"></div>
