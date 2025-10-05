@@ -906,8 +906,9 @@ class GymManagementAPITester:
             print(f"   Trigger check response: {json.dumps(response, indent=2, default=str)[:300]}...")
             
             # Check for expected trigger response fields
-            if 'triggers_checked' in response or 'messages_sent' in response:
+            if 'triggered_messages' in response and 'total_triggered' in response:
                 self.log_test("Member Trigger Structure", True, "Trigger checking completed successfully")
+                print(f"   Total triggered messages: {response.get('total_triggered', 0)}")
             else:
                 self.log_test("Member Trigger Structure", False, "No trigger checking confirmation")
                 all_tests_passed = False
