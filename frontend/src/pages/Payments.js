@@ -45,8 +45,18 @@ const Payments = ({ language, translations }) => {
 
   const t = {
     pt: {
-      payments: 'Gestão de Pagamentos',
+      finances: 'Finanças',
+      registerPayments: 'Registar os Pagamentos',
+      registerExpenses: 'Registar Despesas',
+      searchMembers: 'Procurar por nome ou número de sócio',
+      salaries: 'Ordenados',
+      fixedExpenses: 'Despesas Fixas',
+      extraExpenses: 'Despesas Extras',
+      monthlyRevenue: 'Receita do Mês',
+      monthlyExpenses: 'Despesas do Mês',
+      netRevenue: 'Receita Líquida',
       addPayment: 'Registar Pagamento',
+      addExpense: 'Registar Despesa',
       searchPayments: 'Procurar pagamentos...',
       allStatuses: 'Todos os Status',
       paid: 'Pago',
@@ -71,18 +81,18 @@ const Payments = ({ language, translations }) => {
       cancel: 'Cancelar',
       view: 'Ver',
       edit: 'Editar',
-      totalRevenue: 'Receita Total',
-      monthlyRevenue: 'Receita Mensal',
-      pendingPayments: 'Pagamentos Pendentes',
       recentPayments: 'Pagamentos Recentes',
       noPayments: 'Nenhum pagamento encontrado',
       paymentAdded: 'Pagamento registado com sucesso!',
+      expenseAdded: 'Despesa registada com sucesso!',
       export: 'Exportar',
       paymentDetails: 'Detalhes do Pagamento',
       membershipPayment: 'Pagamento de Membership',
       selectMember: 'Selecionar membro...',
       enterAmount: 'Inserir valor...',
-      paymentDescription: 'Descrição do pagamento...'
+      paymentDescription: 'Descrição do pagamento...',
+      expenseDescription: 'Descrição da despesa...',
+      selectCategory: 'Selecionar categoria...'
     },
     en: {
       payments: 'Payment Management',
