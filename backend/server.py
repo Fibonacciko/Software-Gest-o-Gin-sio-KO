@@ -98,6 +98,24 @@ class ItemCategory(str, Enum):
     CLOTHING = "clothing"
     EQUIPMENT = "equipment"
 
+class MessageType(str, Enum):
+    WELCOME = "welcome"
+    RENEWAL_REMINDER = "renewal_reminder" 
+    MILESTONE = "milestone"
+    GENERAL = "general"
+    AUTOMATED = "automated"
+
+class AutomatedMessageTrigger(str, Enum):
+    NEW_MEMBER = "new_member"
+    MEMBERSHIP_EXPIRY_7_DAYS = "membership_expiry_7_days"
+    MEMBERSHIP_EXPIRY_3_DAYS = "membership_expiry_3_days"
+    MILESTONE_10_WORKOUTS = "milestone_10_workouts"
+    MILESTONE_25_WORKOUTS = "milestone_25_workouts"
+    MILESTONE_50_WORKOUTS = "milestone_50_workouts"
+    MILESTONE_100_WORKOUTS = "milestone_100_workouts"
+    INACTIVE_7_DAYS = "inactive_7_days"
+    INACTIVE_30_DAYS = "inactive_30_days"
+
 class UserRole(str, Enum):
     ADMIN = "admin"
     STAFF = "staff"
