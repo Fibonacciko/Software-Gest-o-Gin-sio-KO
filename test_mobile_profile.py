@@ -4,7 +4,7 @@ import requests
 import json
 
 # Test the mobile profile endpoint
-base_url = "https://gymflow-58.preview.emergentagent.com"
+base_url = "https://traintrack-23.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 # First login to get auth token

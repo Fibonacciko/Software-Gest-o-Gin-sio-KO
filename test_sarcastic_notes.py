@@ -4,7 +4,7 @@ import requests
 import json
 
 # Test the sarcastic motivational notes system
-base_url = "https://gymflow-58.preview.emergentagent.com"
+base_url = "https://traintrack-23.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 print("🔥 TESTING SARCASTIC MOTIVATIONAL NOTES SYSTEM")
