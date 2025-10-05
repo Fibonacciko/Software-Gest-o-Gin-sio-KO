@@ -149,13 +149,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Quick Check-in Functionality"
-    - "Calendar Yellow Background and Black Numbers"
-    - "Cancel Last Check-in Button"
-  stuck_tasks: 
-    - "Quick Check-in Functionality"
+    - "Login and Navigation to Stock Page"
+    - "Article Sale Functionality"
+    - "Article Deletion Functionality"
+  stuck_tasks: []
   test_all: false
-  test_priority: "stuck_first"
+  test_priority: "high_first"
 
 agent_communication:
     - agent: "testing"
