@@ -185,3 +185,5 @@ agent_communication:
     - message: "Starting reactivation of UserManagement functionality. Will first reactivate frontend routes and navigation, then test backend integration."
     - agent: "testing"
     - message: "BACKEND TESTING COMPLETE: User management API endpoints are fully functional. Fixed critical bcrypt password hashing issue that was causing 500 errors. All core functionality verified: authentication, CRUD operations, role-based access control, security measures. Backend is ready for frontend integration. Main agent should now focus on frontend route reactivation and UI integration."
+    - agent: "main"
+    - message: "USER FEEDBACK IMPLEMENTED: 1) Fixed status badge colors in Members page (active=green-800, inactive=orange-600), 2) Enhanced error handling and logging for view/delete actions in Members page, 3) Reduced size of statistics cards in Attendance page (smaller padding, text, icons), 4) Improved 'Membros Únicos' label to 'Membros Distintos' for clarity."
