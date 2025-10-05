@@ -535,6 +535,20 @@ const Inventory = ({ language, translations }) => {
             </form>
           </DialogContent>
         </Dialog>
+          </CardContent>
+        </Card>
+
+        {/* Sell Article Bar */}
+        <Card className="bg-black text-white">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold text-white">
+              {t[language].sellItem}
+            </h2>
+            <p className="text-sm text-gray-300 mt-1">
+              Selecione um artigo na lista abaixo para registar venda
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Statistics */}
