@@ -1269,8 +1269,8 @@ def main():
     tester = GymManagementAPITester()
     
     try:
-        # Run focused premium features test for final verification
-        success = tester.run_premium_features_final_test()
+        # Run focused test for new automated messaging and financial features
+        success = tester.run_automated_messaging_and_financial_tests()
         return 0 if success else 1
     except KeyboardInterrupt:
         print("\n\n⚠️  Tests interrupted by user")
