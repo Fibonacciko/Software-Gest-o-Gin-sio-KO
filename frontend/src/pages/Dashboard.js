@@ -165,6 +165,10 @@ const Dashboard = ({ language, translations }) => {
       );
       
       setTodayAttendance(attendanceWithMembers);
+      
+      console.log('Dashboard stats:', statsResponse.data);
+      console.log('Dashboard today attendance:', attendanceWithMembers);
+      console.log('🎯 Selected Activity State:', selectedActivity, 'Type:', typeof selectedActivity);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Erro ao carregar dados do painel');
