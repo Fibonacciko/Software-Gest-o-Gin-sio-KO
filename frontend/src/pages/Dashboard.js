@@ -415,75 +415,154 @@ const Dashboard = ({ language, translations }) => {
         </CardContent>
       </Card>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Members */}
-        <Card className="card-shadow">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Users className="mr-2" />
-              {t[language].recentMembers}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentMembers.length > 0 ? (
-              <div className="space-y-3">
-                {recentMembers.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-gray-500">{member.membership_type}</p>
-                    </div>
-                    <Badge 
-                      variant={member.status === 'active' ? 'default' : 'secondary'}
-                    >
-                      {member.status}
-                    </Badge>
+      {/* Today's Attendance - moved up as requested */}
+      <Card className="card-shadow">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Calendar className="mr-2" />
+            {t[language].todayAttendanceList}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {todayAttendance.length > 0 ? (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {todayAttendance.map((attendance) => (
+                <div key={attendance.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{attendance.member?.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">Nenhum membro registado</p>
-            )}
-          </CardContent>
-        </Card>
+                  <Badge variant="outline">
+                    {attendance.method}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              {t[language].noAttendance}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Today's Attendance */}
-        <Card className="card-shadow">
+      {/* Member Details Panel - shown after check-in */}
+      {lastCheckedInMember && (
+        <Card className="card-shadow border-l-4 border-l-green-500">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Calendar className="mr-2" />
-              {t[language].todayAttendanceList}
+              <UserCheck className="mr-2" />
+              {t[language].memberDetails}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {todayAttendance.length > 0 ? (
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {todayAttendance.map((attendance) => (
-                  <div key={attendance.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{attendance.member?.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
-                    <Badge variant="outline">
-                      {attendance.method}
-                    </Badge>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Member Info */}
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <UserCheck size={32} className="text-green-600" />
                   </div>
-                ))}
+                  <h3 className="text-lg font-semibold">{lastCheckedInMember.name}</h3>
+                  <p className="text-sm text-gray-500 mb-2">#{lastCheckedInMember.member_number}</p>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">{t[language].memberStatus}</label>
+                    <p className="text-sm font-medium text-green-600 capitalize">{lastCheckedInMember.status}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">{t[language].subscriptionPlan}</label>
+                    <p className="text-sm font-medium capitalize">{lastCheckedInMember.membership_type}</p>
+                  </div>
+                </div>
+                
+                {/* Notes Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-gray-500">{t[language].notes}</label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditingNotes(!editingNotes)}
+                    >
+                      <Edit3 size={14} />
+                    </Button>
+                  </div>
+                  
+                  {editingNotes ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={memberNotes}
+                        onChange={(e) => setMemberNotes(e.target.value)}
+                        placeholder="Adicionar notas..."
+                        rows={3}
+                      />
+                      <Button size="sm" onClick={handleSaveMemberNotes}>
+                        <Save size={14} className="mr-1" />
+                        {t[language].saveNotes}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                      {memberNotes || 'Sem notas...'}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Medical Notes Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-gray-500">{t[language].medicalNotes}</label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditingMedical(!editingMedical)}
+                    >
+                      <Heart size={14} />
+                    </Button>
+                  </div>
+                  
+                  {editingMedical ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={memberMedicalNotes}
+                        onChange={(e) => setMemberMedicalNotes(e.target.value)}
+                        placeholder="Informações médicas..."
+                        rows={3}
+                      />
+                      <Button size="sm" onClick={handleSaveMemberNotes}>
+                        <Save size={14} className="mr-1" />
+                        {t[language].saveNotes}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600 bg-red-50 p-2 rounded border border-red-200">
+                      {memberMedicalNotes || 'Sem informações médicas...'}
+                    </p>
+                  )}
+                </div>
               </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">
-                {t[language].noAttendance}
-              </p>
-            )}
+              
+              {/* Right Column - Calendar */}
+              <div className="lg:col-span-2">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">{t[language].attendanceCalendar}</h4>
+                <SimpleMemberCalendar 
+                  attendanceDates={lastCheckedInMember.attendanceDates || []}
+                  currentMonth={new Date()}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 };
