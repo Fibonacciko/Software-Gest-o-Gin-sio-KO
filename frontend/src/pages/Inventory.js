@@ -45,8 +45,19 @@ const Inventory = ({ language, translations }) => {
     color: '',
     quantity: '',
     price: '',
+    purchase_price: '',
     description: ''
   });
+
+  const [saleFormData, setSaleFormData] = useState({
+    quantity: '',
+    sale_price: ''
+  });
+
+  // Helper function to check if user is admin
+  const isAdmin = () => {
+    return user && user.role === 'admin';
+  };
 
   const t = {
     pt: {
