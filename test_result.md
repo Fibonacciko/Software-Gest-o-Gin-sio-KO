@@ -140,11 +140,11 @@ frontend:
 
   - task: "Member Details Panel Layout"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/frontend/src/pages/Dashboard.js"
     stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
         - agent: "testing"
@@ -152,6 +152,9 @@ frontend:
         - working: false
         - agent: "testing"
         - comment: "CANNOT TEST: Member details panel does not appear because check-in functionality is broken. The panel code exists in Dashboard.js with correct layout structure (3-column grid with calendar, notes, and medical notes), but it's conditional on lastCheckedInMember state which is never set due to failed check-in API calls."
+        - working: "NA"
+        - agent: "testing"
+        - comment: "STILL CANNOT TEST: Member details panel cannot be tested because check-in functionality remains broken. The panel code structure looks correct with 3-column grid layout, calendar section, notes section, and medical notes section. SimpleMemberCalendar component is properly implemented with yellow backgrounds (bg-yellow-400) for attendance days. Panel will need testing once check-in functionality is fixed."
 
   - task: "SimpleMemberCalendar Component"
     implemented: true
