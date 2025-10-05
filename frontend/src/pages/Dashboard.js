@@ -312,35 +312,7 @@ const Dashboard = ({ language, translations }) => {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin() ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
-        <StatCard
-          title={t[language].totalMembers}
-          value={stats.total_members}
-          icon={Users}
-          color="bg-blue-500"
-        />
-        <StatCard
-          title={t[language].activeMembers}
-          value={stats.active_members}
-          icon={UserCheck}
-          color="bg-green-500"
-        />
-        <StatCard
-          title={t[language].todayAttendance}
-          value={stats.today_attendance}
-          icon={Calendar}
-          color="bg-purple-500"
-        />
-        {isAdmin() && (
-          <StatCard
-            title={t[language].monthlyRevenue}
-            value={`€${(stats.monthly_revenue || 0).toFixed(2)}`}
-            icon={DollarSign}
-            color="bg-orange-500"
-          />
-        )}
-      </div>
+      {/* Removed Stats Cards as requested */}
 
       {/* Quick Check-in Section */}
       <Card className="card-shadow">
