@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: Test dashboard improvements in fitness management system, specifically check-in functionality and member details panel layout with calendar and notes.
+user_problem_statement: Teste completo das funcionalidades de venda e eliminação de artigos na página de Gestão de Stock após correções no backend. Backend foi corrigido com endpoint /api/inventory/{id}/sell e import uuid4/current_user.id. Testar login (fabio.guerreiro/admin123), navegação para Stock, funcionalidade de venda (🛒 button), e funcionalidade de eliminação (🗑️ button).
 
 frontend:
   - task: "Dashboard Login and Navigation"
