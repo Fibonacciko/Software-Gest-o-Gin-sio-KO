@@ -122,9 +122,9 @@ frontend:
 
   - task: "Quick Check-in Functionality"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/pages/Dashboard.js"
-    stuck_count: 2
+    stuck_count: 3
     priority: "high"
     needs_retesting: false
     status_history:
@@ -140,6 +140,9 @@ frontend:
         - working: true
         - agent: "testing"
         - comment: "✅ CHECK-IN FUNCTIONALITY NOW WORKING PERFECTLY! Complete test successful with fabio.guerreiro/admin123 login. ✅ Activity selection works (Boxe selected). ✅ Member search works (Maria Santos found). ✅ Check-in button click triggers handleQuickCheckin function with full debug logs. ✅ API calls successful: GET member details, GET attendance history, POST /api/attendance (200 response). ✅ Member details panel appears immediately after check-in. ✅ Toast notification shows 'Check-in realizado com sucesso!'. The previous issue was resolved - the check-in process now works end-to-end."
+        - working: false
+        - agent: "testing"
+        - comment: "🚨 CRITICAL REGRESSION: Check-in functionality BROKEN AGAIN during testing of new calendar/cancel features. Comprehensive diagnostic testing confirms: ✅ Login works (fabio.guerreiro/admin123). ✅ Activity selection works (Boxe selected via shadcn Select component). ✅ Member search works (Maria Santos found). ❌ CRITICAL: Check-in button click generates ZERO console logs and ZERO network requests, confirming handleQuickCheckin function is never called. This is the SAME onClick event handler issue as before. Button is clickable and not disabled, but event handler not firing. STUCK TASK - requires immediate investigation of JavaScript event binding in Dashboard component."
 
   - task: "Member Details Panel Layout"
     implemented: true
