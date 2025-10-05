@@ -78,7 +78,10 @@ const Dashboard = ({ language, translations }) => {
       medicalNotes: 'Quadro Clínico',
       editNotes: 'Editar Notas',
       saveNotes: 'Guardar',
-      attendanceCalendar: 'Calendário de Presenças'
+      attendanceCalendar: 'Calendário de Presenças',
+      cancelLastCheckin: 'Cancelar Último Check-in',
+      checkinCancelled: 'Check-in cancelado com sucesso!',
+      confirmCancelCheckin: 'Tem certeza que deseja cancelar o último check-in?'
     },
     en: {
       dashboard: 'Dashboard',
