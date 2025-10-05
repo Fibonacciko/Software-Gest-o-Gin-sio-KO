@@ -362,63 +362,78 @@ backend:
 
   - task: "Automated Messaging System"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implemented automated messaging system with default messages for new_member, membership_expiry (7/3 days), workout milestones (10,25,50,100), and inactivity (7/30 days). CRUD operations for automated message templates. Manual trigger capability. Full integration with Firebase push notifications."
+        - working: true
+          agent: "testing"
+          comment: "✅ AUTOMATED MESSAGING SYSTEM FULLY TESTED: GET /api/automated-messages (7 templates found), POST /api/automated-messages (create new template working), PUT /api/automated-messages/{id} (update template working), POST /api/automated-messages/trigger (manual trigger working). All CRUD operations functioning correctly with proper message structure and Firebase integration ready."
 
   - task: "Invoice Generation with Smart Discounts"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implemented automatic invoice generation with smart discount calculation based on member workout count, membership duration, and membership type. Invoice numbering system (INV-YYYY-001), tax calculation (23% IVA), and payment tracking integration."
+        - working: true
+          agent: "testing"
+          comment: "✅ INVOICE GENERATION WITH SMART DISCOUNTS FULLY TESTED: POST /api/invoices (auto calculations working), GET /api/invoices (list with filters working), PUT /api/invoices/{id}/pay (mark as paid working). Tax calculation fixed (23% IVA = €11.5 on €50). Invoice numbering system (INV-2025-002) working correctly. Smart discount integration functional."
 
   - task: "Fiscal Reports Generation"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implemented fiscal reporting system supporting monthly, quarterly, and yearly reports. Aggregates total revenue, tax amounts, invoice counts by status (paid/pending/overdue). Portuguese tax compliance with 23% IVA calculations."
+        - working: true
+          agent: "testing"
+          comment: "✅ FISCAL REPORTS FULLY TESTED: GET /api/fiscal-reports/monthly?year=2025&month=10 (monthly report working), GET /api/fiscal-reports/yearly?year=2025 (yearly report working). Reports correctly aggregate revenue (€111.62), tax (€11.62), invoice counts by status. Portuguese tax compliance with 23% IVA working correctly."
 
   - task: "Smart Discounts Management"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implemented smart discount rules with flexible conditions (min_workouts, min_membership_days, membership_type). Support for percentage and fixed amount discounts. Automatic application during invoice generation with usage tracking."
+        - working: true
+          agent: "testing"
+          comment: "✅ SMART DISCOUNTS MANAGEMENT FULLY TESTED: POST /api/smart-discounts (create discount rule working), GET /api/smart-discounts (list rules working), PUT /api/smart-discounts/{id}/toggle (activate/deactivate working). Flexible conditions (min_workouts: 20, min_membership_days: 30, membership_type filters) working correctly. Percentage and fixed amount discounts supported."
 
   - task: "Member Trigger Checking"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implemented automatic member state analysis for triggering automated messages. Checks workout milestones, membership expiry warnings, and inactivity periods. Provides endpoint for manual trigger checking and bulk member processing."
+        - working: true
+          agent: "testing"
+          comment: "✅ MEMBER TRIGGER CHECKING FULLY TESTED: POST /api/members/{member_id}/check-triggers working correctly. Returns proper response structure with triggered_messages array and total_triggered count. Checks workout milestones, membership expiry warnings, and inactivity periods. Automatic member state analysis functioning as designed."
 
 frontend:
   # No frontend testing performed as per instructions
