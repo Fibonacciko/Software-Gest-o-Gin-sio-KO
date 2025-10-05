@@ -50,6 +50,13 @@ const Payments = ({ language, translations }) => {
     description: ''
   });
 
+  const [expenseFormData, setExpenseFormData] = useState({
+    category: 'salaries',
+    amount: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0]
+  });
+
   const t = {
     pt: {
       finances: 'Finanças',
