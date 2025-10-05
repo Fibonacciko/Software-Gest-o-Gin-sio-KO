@@ -788,6 +788,16 @@ const Inventory = ({ language, translations }) => {
                           <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => openSaleDialog(item)}
+                            className="text-green-600 hover:text-green-700"
+                            disabled={item.quantity === 0}
+                            data-testid={`sell-item-${item.id}`}
+                          >
+                            <ShoppingCart size={14} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() => handleEdit(item)}
                             data-testid={`edit-item-${item.id}`}
                           >
