@@ -56,7 +56,7 @@ const Attendance = ({ language, translations }) => {
       export: 'Exportar',
       attendanceStats: 'Estatísticas de Presença',
       totalAttendance: 'Total de Presenças',
-      uniqueMembers: 'Membros Únicos',
+      uniqueMembers: 'Membros Distintos',
       averageDaily: 'Média Diária',
       previousMonth: 'Mês Anterior',
       nextMonth: 'Próximo Mês',
