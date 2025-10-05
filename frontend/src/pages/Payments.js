@@ -28,14 +28,20 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Payments = ({ language, translations }) => {
+  const { user } = useAuth();
   const [payments, setPayments] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedMember, setSelectedMember] = useState('all');
+  const [expenseCategory, setExpenseCategory] = useState('salaries');
+  const [filteredMembers, setFilteredMembers] = useState([]);
 
   const [formData, setFormData] = useState({
     member_id: '',
