@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
 import { 
   Users, 
   UserCheck, 
@@ -12,11 +13,16 @@ import {
   TrendingUp,
   Plus,
   Search,
-  QrCode
+  QrCode,
+  Edit3,
+  FileText,
+  Heart,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import ActivitySelector from '../components/ActivitySelector';
+import SimpleMemberCalendar from '../components/SimpleMemberCalendar';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
