@@ -67,7 +67,18 @@ const Dashboard = ({ language, translations }) => {
       qrCheckin: 'Check-in QR',
       manualCheckin: 'Check-in Manual',
       selectMember: 'Selecionar membro',
-      checkin: 'Check-in'
+      checkin: 'Check-in',
+      memberNotFound: 'Membro não encontrado',
+      checkinSuccess: 'Check-in realizado com sucesso!',
+      selectActivity: 'Selecionar modalidade',
+      memberDetails: 'Detalhes do Membro',
+      memberStatus: 'Status',
+      subscriptionPlan: 'Plano de Subscrição',
+      notes: 'Notas',
+      medicalNotes: 'Quadro Clínico',
+      editNotes: 'Editar Notas',
+      saveNotes: 'Guardar',
+      attendanceCalendar: 'Calendário de Presenças'
     },
     en: {
       dashboard: 'Dashboard',
