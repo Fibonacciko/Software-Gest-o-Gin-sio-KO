@@ -551,14 +551,14 @@ const Inventory = ({ language, translations }) => {
         </Card>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Statistics - Staff View */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="card-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">
-                  {t[language].totalItems}
+                  {t[language].totalArticles}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalItems}</p>
               </div>
