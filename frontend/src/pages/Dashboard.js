@@ -43,6 +43,11 @@ const Dashboard = ({ language, translations }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [selectedActivity, setSelectedActivity] = useState('');
+  const [lastCheckedInMember, setLastCheckedInMember] = useState(null);
+  const [memberNotes, setMemberNotes] = useState('');
+  const [memberMedicalNotes, setMemberMedicalNotes] = useState('');
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [editingMedical, setEditingMedical] = useState(false);
 
   const t = {
     pt: {
