@@ -107,39 +107,48 @@ user_problem_statement: Teste completo das funcionalidades de venda e eliminaç�
 frontend:
   - task: "Login and Navigation to Stock Page"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Inventory.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "testing"
         - comment: "Need to test admin login with credentials fabio.guerreiro/admin123 and navigate to Stock page to verify inventory management interface loads correctly."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ LOGIN AND NAVIGATION SUCCESSFUL: Admin login with fabio.guerreiro/admin123 works perfectly. ✅ Stock page loads correctly with 'Gestão de Stock' title. ✅ Inventory interface displays properly with statistics cards (Total de Artigos: 42, Stock Baixo: 0, Sem Stock: 0). ✅ Admin-specific financial statistics visible (Valor Total em Stock: €989.58, Valor Total Vendido: €0.00, Receita Líquida: €0.00). ✅ Inventory items display correctly with T-shirt Academia Premium and Luvas de Boxe visible. Navigation and authentication working as expected."
 
   - task: "Article Sale Functionality"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Inventory.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "testing"
         - comment: "Need to test sale functionality: locate article (T-shirt Academia Premium), click sale button (🛒), verify dialog opens, fill form (quantity: 1, price: 25.00), submit, verify success toast and stock reduction. Backend endpoint /api/inventory/{id}/sell was corrected."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ SALE FUNCTIONALITY WORKING PERFECTLY: Complete end-to-end testing successful. ✅ Sale button (🛒) found and clickable for T-shirt Academia Premium. ✅ Sale dialog opens correctly with title 'Venda Artigo - T-shirt Academia Premium'. ✅ Form fields work: quantity filled (1), price filled (25.00). ✅ Form submission successful with POST /api/inventory/75679996-d85c-4baa-8fc4-62f25f030995/sell returning 200 OK. ✅ Success toast appears: 'Venda registada com sucesso!'. ✅ Stock reduced from 27 to 26 immediately after sale. ✅ Inventory list refreshed automatically. Backend corrections successful - sale functionality fully operational."
 
   - task: "Article Deletion Functionality"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Inventory.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "testing"
         - comment: "Need to test deletion functionality: locate article, click delete button (🗑️), verify confirmation dialog, confirm deletion, verify success toast and article removal from list. Backend DELETE /api/inventory/{id} endpoint should be working."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ DELETION FUNCTIONALITY WORKING PERFECTLY: Complete end-to-end testing successful. ✅ Delete button (🗑️) found and clickable for T-shirt Academia Premium. ✅ Browser confirmation dialog handled correctly (auto-accepted). ✅ DELETE API call successful: DELETE /api/inventory/75679996-d85c-4baa-8fc4-62f25f030995 returning 200 OK. ✅ Success toast appears: 'Artigo eliminado com sucesso!'. ✅ Article completely removed from inventory list. ✅ Statistics updated: Total items reduced from 42 to 15, Valor Total em Stock reduced from €989.58 to €449.85. ✅ Inventory list refreshed automatically. Backend corrections successful - deletion functionality fully operational."
 
 metadata:
   created_by: "testing_agent"
