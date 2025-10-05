@@ -504,6 +504,18 @@ const Dashboard = ({ language, translations }) => {
                     <p className="text-sm font-medium capitalize">{lastCheckedInMember.membership_type}</p>
                   </div>
                 </div>
+                
+                {/* Cancel Check-in Button */}
+                <div className="mt-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCancelLastCheckin}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    ❌ Cancelar Último Check-in
+                  </Button>
+                </div>
               </div>
               
               {/* Calendar and Notes Side by Side */}
