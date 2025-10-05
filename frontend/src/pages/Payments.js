@@ -423,18 +423,51 @@ const Payments = ({ language, translations }) => {
         <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
           {t[language].finances}
         </h1>
-        
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
-            <Button 
-              className="btn-hover"
-              onClick={resetForm}
-              data-testid="add-payment-btn"
-            >
-              <Plus className="mr-2" size={16} />
-              {t[language].addPayment}
-            </Button>
-          </DialogTrigger>
+      </div>
+
+      {/* Main Action Bars */}
+      <div className="space-y-4">
+        {/* Register Payments Bar */}
+        <Card className="bg-black text-white">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold mb-4 text-white">
+              {t[language].registerPayments}
+            </h2>
+            
+            {/* Member Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder={t[language].searchMembers}
+                value={memberSearchTerm}
+                onChange={(e) => handleMemberSearch(e.target.value)}
+                className="pl-10 bg-white text-black"
+              />
+            </div>
+            
+            {/* Member Results */}
+            {filteredMembers.length > 0 && (
+              <div className="mt-4 space-y-2 max-h-64 overflow-y-auto">
+                {filteredMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="bg-gray-800 p-3 rounded-lg flex justify-between items-center"
+                  >
+                    <div className="text-white">
+                      <p className="font-medium">{member.name}</p>
+                      <p className="text-sm text-gray-300">#{member.member_number}</p>
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => setFormData({...formData, member_id: member.id})}
+                        >
+                          <CreditCard className="mr-2" size={14} />
+                          {t[language].addPayment}
+                        </Button>
+                      </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t[language].addPayment}</DialogTitle>
