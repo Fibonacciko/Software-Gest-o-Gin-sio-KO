@@ -101,3 +101,74 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: Reactivate the UserManagement page functionality to allow admin users to create, edit, and manage staff accounts with custom passwords.
+
+backend:
+  - task: "User Management API Endpoints"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "needs_testing"
+        - agent: "main"
+        - comment: "Backend endpoints for user management (GET /users, POST /users, PUT /users/{id}, DELETE /users/{id}, PUT /users/{id}/toggle-status) are already implemented. Need to verify they work correctly with authentication and role-based access control."
+
+frontend:
+  - task: "UserManagement Page Component"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/UserManagement.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+        - agent: "main"
+        - comment: "UserManagement.js exists and is comprehensive but is currently commented out in App.js. Need to reactivate the route and navigation."
+
+  - task: "UserManagement Route in App.js"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+        - agent: "main"
+        - comment: "UserManagement import and route are commented out on lines 15 and 83-87. Need to uncomment and reactivate."
+
+  - task: "UserManagement Navigation in Sidebar"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/components/Sidebar.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+        - agent: "main"
+        - comment: "User management menu item is commented out on line 32. Need to uncomment and add proper translations."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "UserManagement Route in App.js"
+    - "UserManagement Navigation in Sidebar"
+    - "User Management API Endpoints"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+    - message: "Starting reactivation of UserManagement functionality. Will first reactivate frontend routes and navigation, then test backend integration."
