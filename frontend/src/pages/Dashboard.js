@@ -506,8 +506,8 @@ const Dashboard = ({ language, translations }) => {
                 </div>
               </div>
               
-              {/* Bottom Row - Calendar and Notes Side by Side */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Calendar and Notes Side by Side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 {/* Calendar */}
                 <div className="flex flex-col items-center">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">{t[language].attendanceCalendar}</h4>
@@ -518,7 +518,7 @@ const Dashboard = ({ language, translations }) => {
                 </div>
                 
                 {/* Notes Section */}
-                <div className="max-w-xs">
+                <div className="flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-medium text-gray-500">{t[language].notes}</label>
                     <Button
@@ -530,14 +530,15 @@ const Dashboard = ({ language, translations }) => {
                     </Button>
                   </div>
                   
-                  <div className="bg-white rounded-lg p-2 border border-gray-200 h-40">
+                  <div className="bg-white rounded-lg p-3 border border-gray-200 flex-1" style={{minHeight: '160px'}}>
                     {editingNotes ? (
                       <div className="h-full flex flex-col">
                         <Textarea
                           value={memberNotes}
                           onChange={(e) => setMemberNotes(e.target.value)}
                           placeholder="Adicionar notas..."
-                          className="flex-1 resize-none text-xs"
+                          className="flex-1 resize-none text-sm"
+                          style={{minHeight: '120px'}}
                         />
                         <Button size="sm" onClick={handleSaveMemberNotes} className="mt-2">
                           <Save size={14} className="mr-1" />
@@ -545,47 +546,45 @@ const Dashboard = ({ language, translations }) => {
                         </Button>
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-600 h-full overflow-y-auto">
+                      <p className="text-sm text-gray-600 h-full overflow-y-auto">
                         {memberNotes || 'Sem notas...'}
                       </p>
                     )}
                   </div>
                 </div>
+              </div>
+              
+              {/* Medical Notes Section as Bar */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-gray-500">{t[language].medicalNotes}</label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditingMedical(!editingMedical)}
+                  >
+                    <Heart size={14} />
+                  </Button>
+                </div>
                 
-                {/* Medical Notes Section */}
-                <div className="max-w-xs">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-medium text-gray-500">{t[language].medicalNotes}</label>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setEditingMedical(!editingMedical)}
-                    >
-                      <Heart size={14} />
+                {editingMedical ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={memberMedicalNotes}
+                      onChange={(e) => setMemberMedicalNotes(e.target.value)}
+                      placeholder="Informações médicas..."
+                      rows={3}
+                    />
+                    <Button size="sm" onClick={handleSaveMemberNotes}>
+                      <Save size={14} className="mr-1" />
+                      {t[language].saveNotes}
                     </Button>
                   </div>
-                  
-                  <div className="bg-red-50 rounded-lg p-2 border border-red-200 h-40">
-                    {editingMedical ? (
-                      <div className="h-full flex flex-col">
-                        <Textarea
-                          value={memberMedicalNotes}
-                          onChange={(e) => setMemberMedicalNotes(e.target.value)}
-                          placeholder="Informações médicas..."
-                          className="flex-1 resize-none text-xs"
-                        />
-                        <Button size="sm" onClick={handleSaveMemberNotes} className="mt-2">
-                          <Save size={14} className="mr-1" />
-                          {t[language].saveNotes}
-                        </Button>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-600 h-full overflow-y-auto">
-                        {memberMedicalNotes || 'Sem informações médicas...'}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-600 bg-red-50 p-2 rounded border border-red-200">
+                    {memberMedicalNotes || 'Sem informações médicas...'}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
