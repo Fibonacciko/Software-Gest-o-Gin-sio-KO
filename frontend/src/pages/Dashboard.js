@@ -208,29 +208,42 @@ const Dashboard = ({ language, translations }) => {
   };
 
   const handleQuickCheckin = async (memberId) => {
+    console.log('🔍 Check-in initiated for member ID:', memberId);
+    console.log('🔍 Selected activity:', selectedActivity);
+    
     if (!selectedActivity) {
+      console.log('❌ No activity selected');
       toast.error('Por favor seleciona uma modalidade');
       return;
     }
     
     try {
+      console.log('📡 Fetching member details...');
       // First get member details
       const memberResponse = await axios.get(`${API}/members/${memberId}`);
       const member = memberResponse.data;
+      console.log('✅ Member details fetched:', member.name);
       
       // Get member's attendance history for the calendar
       const year = new Date().getFullYear();
       const month = new Date().getMonth() + 1;
+      console.log('📡 Fetching attendance history for', year, month);
       const attendanceResponse = await axios.get(
         `${API}/members/${memberId}/attendance?month=${month}&year=${year}`
       );
+      console.log('✅ Attendance history fetched:', attendanceResponse.data.length, 'records');
       
       // Perform check-in
-      await axios.post(`${API}/attendance`, {
+      console.log('📡 Performing check-in API call...');
+      const checkinPayload = {
         member_id: memberId,
         activity_id: selectedActivity,
         method: 'manual'
-      });
+      };
+      console.log('📤 Check-in payload:', checkinPayload);
+      
+      await axios.post(`${API}/attendance`, checkinPayload);
+      console.log('✅ Check-in API call successful');
       
       // Set the member details for the panel
       setLastCheckedInMember({
@@ -240,6 +253,7 @@ const Dashboard = ({ language, translations }) => {
       setMemberNotes(member.notes || '');
       setMemberMedicalNotes(member.medical_notes || '');
       
+      console.log('✅ Member panel state set');
       toast.success(t[language].checkinSuccess);
       setCheckinMemberId('');
       setSearchTerm('');
@@ -247,11 +261,12 @@ const Dashboard = ({ language, translations }) => {
       setSelectedActivity('');
       fetchDashboardData(); // Refresh data
     } catch (error) {
-      console.error('Error during check-in:', error);
+      console.error('❌ Error during check-in:', error);
+      console.error('❌ Error details:', error.response?.data);
       if (error.response?.status === 404) {
         toast.error(t[language].memberNotFound);
       } else {
-        toast.error('Erro ao realizar check-in');
+        toast.error('Erro ao realizar check-in: ' + (error.response?.data?.detail || error.message));
       }
     }
   };
