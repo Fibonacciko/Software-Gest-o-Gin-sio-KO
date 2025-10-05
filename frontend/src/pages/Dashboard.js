@@ -404,7 +404,11 @@ const Dashboard = ({ language, translations }) => {
                         </Badge>
                         <Button
                           size="sm"
-                          onClick={() => handleQuickCheckin(member.id)}
+                          onClick={() => {
+                            console.log('🖱️ Button clicked for member:', member.id);
+                            console.log('🖱️ Selected activity at click:', selectedActivity);
+                            handleQuickCheckin(member.id);
+                          }}
                           className="btn-hover"
                           data-testid={`checkin-${member.id}`}
                           disabled={!selectedActivity}
