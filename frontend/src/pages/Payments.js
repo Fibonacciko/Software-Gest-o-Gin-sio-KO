@@ -468,6 +468,81 @@ const Payments = ({ language, translations }) => {
                           {t[language].addPayment}
                         </Button>
                       </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{t[language].addPayment} - {member.name}</DialogTitle>
+                        </DialogHeader>
+                        
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                          <div>
+                            <Label htmlFor="amount">{t[language].amount} *</Label>
+                            <Input
+                              id="amount"
+                              type="number"
+                              step="0.01"
+                              value={formData.amount}
+                              onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                              required
+                              placeholder={t[language].enterAmount}
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="payment_method">{t[language].paymentMethod} *</Label>
+                            <Select 
+                              value={formData.payment_method} 
+                              onValueChange={(value) => setFormData({...formData, payment_method: value})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="cash">{t[language].cash}</SelectItem>
+                                <SelectItem value="card">{t[language].card}</SelectItem>
+                                <SelectItem value="transfer">{t[language].transfer}</SelectItem>
+                                <SelectItem value="mbway">{t[language].mbway}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="description">{t[language].description}</Label>
+                            <Textarea
+                              id="description"
+                              value={formData.description}
+                              onChange={(e) => setFormData({...formData, description: e.target.value})}
+                              rows={3}
+                              placeholder={t[language].paymentDescription}
+                            />
+                          </div>
+                          
+                          <div className="flex justify-end gap-3 pt-4">
+                            <Button type="button" variant="outline">
+                              {t[language].cancel}
+                            </Button>
+                            <Button type="submit">
+                              {t[language].save}
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Register Expenses Bar */}
+        <Card className="bg-black text-white">
+          <CardContent className="p-4">
+            <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+              <DialogTrigger asChild>
+                <h2 className="text-lg font-bold text-white cursor-pointer hover:text-gray-300 transition-colors">
+                  {t[language].registerExpenses}
+                </h2>
+              </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t[language].addPayment}</DialogTitle>
