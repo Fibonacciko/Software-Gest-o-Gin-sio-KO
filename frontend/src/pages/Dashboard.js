@@ -549,7 +549,7 @@ const Dashboard = ({ language, translations }) => {
               </div>
               
               {/* Right Column - Calendar */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 flex flex-col items-center">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">{t[language].attendanceCalendar}</h4>
                 <SimpleMemberCalendar 
                   attendanceDates={lastCheckedInMember.attendanceDates || []}
