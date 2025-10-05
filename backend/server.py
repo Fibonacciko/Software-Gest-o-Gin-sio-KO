@@ -2798,6 +2798,7 @@ async def startup_db():
     await create_default_activities()
     await update_existing_members_with_numbers()
     await create_default_motivational_notes()
+    await create_default_automated_messages()
     
     # Inicializar Analytics Engine
     global analytics_engine
