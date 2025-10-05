@@ -574,24 +574,6 @@ const Inventory = ({ language, translations }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">
-                  {t[language].totalValue}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  €{stats.totalValue.toFixed(2)}
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-green-500">
-                <TrendingUp size={24} className="text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="card-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
                   {t[language].lowStock}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">{stats.lowStockItems}</p>
