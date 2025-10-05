@@ -602,6 +602,121 @@ const Inventory = ({ language, translations }) => {
         </Card>
       </div>
 
+      {/* Admin-Only Financial Statistics */}
+      {isAdmin() && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="card-shadow border-l-4 border-l-green-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">
+                    {t[language].totalStockValue}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    €{stats.totalStockValue.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-green-500">
+                  <TrendingUp size={24} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-shadow border-l-4 border-l-blue-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">
+                    {t[language].totalSoldValue}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    €{stats.totalSoldValue.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-blue-500">
+                  <ShoppingCart size={24} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-shadow border-l-4 border-l-purple-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">
+                    {t[language].netRevenue}
+                  </p>
+                  <p className={`text-2xl font-bold ${stats.netRevenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    €{stats.netRevenue.toFixed(2)}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-full ${stats.netRevenue >= 0 ? 'bg-green-500' : 'bg-red-500'}`}>
+                  <TrendingUp size={24} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Sale Dialog */}
+      <Dialog open={showSaleDialog} onOpenChange={setShowSaleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t[language].sellItem} - {selectedItemForSale?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSaleSubmit} className="space-y-4">
+            <div>
+              <Label>Stock Disponível: {selectedItemForSale?.quantity}</Label>
+            </div>
+            
+            <div>
+              <Label htmlFor="sale_quantity">{t[language].quantityToSell} *</Label>
+              <Input
+                id="sale_quantity"
+                type="number"
+                min="1"
+                max={selectedItemForSale?.quantity}
+                value={saleFormData.quantity}
+                onChange={(e) => setSaleFormData({...saleFormData, quantity: e.target.value})}
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="sale_price">{t[language].salePrice} (€) *</Label>
+              <Input
+                id="sale_price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={saleFormData.sale_price}
+                onChange={(e) => setSaleFormData({...saleFormData, sale_price: e.target.value})}
+                required
+              />
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowSaleDialog(false)}
+              >
+                {t[language].cancel}
+              </Button>
+              <Button type="submit">
+                {t[language].save}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
