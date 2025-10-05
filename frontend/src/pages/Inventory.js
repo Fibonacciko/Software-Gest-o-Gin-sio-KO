@@ -353,7 +353,37 @@ const Inventory = ({ language, translations }) => {
     const lowStockItems = inventory.filter(item => item.quantity > 0 && item.quantity <= 5).length;
     const outOfStockItems = inventory.filter(item => item.quantity === 0).length;
     
-    return { totalItems, totalValue, lowStockItems, outOfStockItems };
+    // Admin-specific calculations
+    let totalStockValue = 0;
+    let totalSoldValue = 0;
+    let netRevenue = 0;
+    
+    if (isAdmin()) {
+      totalStockValue = inventory.reduce((sum, item) => 
+        sum + (item.quantity * (item.purchase_price || item.price)), 0
+      );
+      
+      // These would come from sales data (to be implemented in backend)
+      totalSoldValue = inventory.reduce((sum, item) => 
+        sum + ((item.sold_quantity || 0) * item.price), 0
+      );
+      
+      const totalPurchaseCost = inventory.reduce((sum, item) => 
+        sum + ((item.sold_quantity || 0) * (item.purchase_price || item.price)), 0
+      );
+      
+      netRevenue = totalSoldValue - totalPurchaseCost;
+    }
+    
+    return { 
+      totalItems, 
+      totalValue, 
+      lowStockItems, 
+      outOfStockItems,
+      totalStockValue,
+      totalSoldValue,
+      netRevenue
+    };
   };
 
   const stats = getInventoryStats();
