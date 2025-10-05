@@ -552,7 +552,7 @@ const Members = ({ language, translations }) => {
                       </td>
                       <td className="p-4">
                         <Badge className={getStatusClassName(member.status)}>
-                          {t[language][member.status]}
+                          {t[language][member.status] || member.status}
                         </Badge>
                       </td>
                       <td className="p-4">
