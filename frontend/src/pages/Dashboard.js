@@ -92,8 +92,6 @@ const Dashboard = ({ language, translations }) => {
       monthlyRevenue: 'Monthly Revenue',
       quickCheckin: 'Quick Check-in',
       searchMember: 'Search member...',
-      checkinSuccess: 'Check-in successful!',
-      memberNotFound: 'Member not found',
       recentMembers: 'Recent Members',
       todayAttendanceList: "Today's Attendance",
       noAttendance: 'No attendance recorded today',
