@@ -2439,6 +2439,332 @@ async def login_with_premium_features(request: Request, user_data: UserLogin):
         gym_logger.error("Login system error", error=e, user_id=user_data.username)
         raise HTTPException(status_code=500, detail="Authentication system error")
 
+# Automated Messaging Routes (Admin only)
+@api_router.post("/automated-messages", response_model=AutomatedMessage)
+async def create_automated_message(
+    message_data: AutomatedMessageCreate,
+    current_user: User = Depends(require_admin)
+):
+    """Create or update automated message template"""
+    message = AutomatedMessage(**message_data.dict())
+    message_dict = prepare_for_mongo(message.dict())
+    await db.automated_messages.insert_one(message_dict)
+    
+    gym_logger.business_metric("automated_message_created", True, 
+                             user_id=current_user.id, trigger=message.trigger)
+    return message
+
+@api_router.get("/automated-messages", response_model=List[AutomatedMessage])
+async def get_automated_messages(current_user: User = Depends(require_admin)):
+    """Get all automated message templates"""
+    messages = await db.automated_messages.find().sort("trigger", 1).to_list(100)
+    return [AutomatedMessage(**parse_from_mongo(msg)) for msg in messages]
+
+@api_router.put("/automated-messages/{message_id}", response_model=AutomatedMessage)
+async def update_automated_message(
+    message_id: str,
+    message_data: AutomatedMessageUpdate,
+    current_user: User = Depends(require_admin)
+):
+    """Update automated message template"""
+    update_data = {k: v for k, v in message_data.dict().items() if v is not None}
+    
+    result = await db.automated_messages.update_one(
+        {"id": message_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Automated message not found")
+    
+    updated_message = await db.automated_messages.find_one({"id": message_id})
+    return AutomatedMessage(**parse_from_mongo(updated_message))
+
+@api_router.post("/automated-messages/trigger")
+async def trigger_automated_message_endpoint(
+    trigger_data: dict,
+    current_user: User = Depends(require_admin)
+):
+    """Manually trigger an automated message"""
+    trigger = trigger_data.get("trigger")
+    member_id = trigger_data.get("member_id")
+    
+    if not trigger or not member_id:
+        raise HTTPException(status_code=400, detail="trigger and member_id required")
+    
+    message_id = await trigger_automated_message(trigger, member_id)
+    if message_id:
+        return {"message": "Automated message triggered successfully", "message_id": message_id}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to trigger automated message")
+
+# Financial Management Routes
+@api_router.post("/invoices", response_model=Invoice)
+async def create_invoice(
+    invoice_data: InvoiceCreate,
+    current_user: User = Depends(require_admin)
+):
+    """Create automatic invoice"""
+    # Get member info
+    member = await db.members.find_one({"id": invoice_data.member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    # Calculate amounts
+    tax_amount = invoice_data.amount * (invoice_data.tax_rate / 100)
+    total_amount = invoice_data.amount + tax_amount
+    
+    # Calculate smart discount
+    discount_amount, discount_obj = await calculate_smart_discount(
+        invoice_data.member_id, 
+        total_amount
+    )
+    
+    if discount_amount > 0:
+        total_amount -= discount_amount
+        # Update discount usage count
+        if discount_obj:
+            await db.smart_discounts.update_one(
+                {"id": discount_obj["id"]},
+                {"$inc": {"used_count": 1}}
+            )
+    
+    # Generate invoice
+    invoice = Invoice(
+        invoice_number=await generate_next_invoice_number(),
+        member_id=invoice_data.member_id,
+        member_name=member["name"],
+        member_email=member.get("email"),
+        amount=invoice_data.amount,
+        tax_amount=tax_amount,
+        total_amount=total_amount,
+        description=invoice_data.description,
+        due_date=date.today() + timedelta(days=invoice_data.due_days)
+    )
+    
+    invoice_dict = prepare_for_mongo(invoice.dict())
+    await db.invoices.insert_one(invoice_dict)
+    
+    gym_logger.business_metric("invoice_created", True, 
+                             user_id=current_user.id, member_id=invoice_data.member_id,
+                             amount=total_amount, discount_applied=discount_amount > 0)
+    return invoice
+
+@api_router.get("/invoices", response_model=List[Invoice])
+async def get_invoices(
+    member_id: Optional[str] = None,
+    status: Optional[PaymentStatus] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Get invoices with filters"""
+    filter_dict = {}
+    if member_id:
+        filter_dict["member_id"] = member_id
+    if status:
+        filter_dict["status"] = status
+    if start_date:
+        filter_dict["issue_date"] = filter_dict.get("issue_date", {})
+        filter_dict["issue_date"]["$gte"] = start_date.isoformat()
+    if end_date:
+        filter_dict["issue_date"] = filter_dict.get("issue_date", {})
+        filter_dict["issue_date"]["$lte"] = end_date.isoformat()
+    
+    invoices = await db.invoices.find(filter_dict).sort("issue_date", -1).to_list(1000)
+    return [Invoice(**parse_from_mongo(invoice)) for invoice in invoices]
+
+@api_router.put("/invoices/{invoice_id}/pay")
+async def mark_invoice_as_paid(
+    invoice_id: str,
+    payment_data: dict,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Mark invoice as paid"""
+    payment_method = payment_data.get("payment_method")
+    
+    result = await db.invoices.update_one(
+        {"id": invoice_id},
+        {
+            "$set": {
+                "status": "paid",
+                "payment_method": payment_method,
+                "paid_date": date.today().isoformat()
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    # Create payment record
+    invoice = await db.invoices.find_one({"id": invoice_id})
+    payment = Payment(
+        member_id=invoice["member_id"],
+        amount=invoice["total_amount"],
+        payment_method=payment_method,
+        description=f"Payment for invoice {invoice['invoice_number']}",
+        invoice_id=invoice_id
+    )
+    payment_dict = prepare_for_mongo(payment.dict())
+    await db.payments.insert_one(payment_dict)
+    
+    gym_logger.business_metric("invoice_paid", True, 
+                             user_id=current_user.id, invoice_id=invoice_id,
+                             amount=invoice["total_amount"])
+    return {"message": "Invoice marked as paid"}
+
+@api_router.get("/fiscal-reports/{report_type}")
+async def get_fiscal_report(
+    report_type: str,
+    year: int = None,
+    month: int = None,
+    quarter: int = None,
+    current_user: User = Depends(require_admin)
+):
+    """Generate fiscal report"""
+    if year is None:
+        year = datetime.now().year
+    
+    # Calculate period
+    if report_type == "monthly" and month:
+        period_start = date(year, month, 1)
+        if month == 12:
+            period_end = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            period_end = date(year, month + 1, 1) - timedelta(days=1)
+    elif report_type == "quarterly" and quarter:
+        start_month = (quarter - 1) * 3 + 1
+        period_start = date(year, start_month, 1)
+        if quarter == 4:
+            period_end = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            period_end = date(year, start_month + 3, 1) - timedelta(days=1)
+    elif report_type == "yearly":
+        period_start = date(year, 1, 1)
+        period_end = date(year, 12, 31)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid report type or missing parameters")
+    
+    report = await generate_fiscal_report(report_type, period_start, period_end)
+    
+    gym_logger.business_metric("fiscal_report_generated", True,
+                             user_id=current_user.id, report_type=report_type,
+                             period_start=period_start.isoformat())
+    return report
+
+# Smart Discounts Routes
+@api_router.post("/smart-discounts", response_model=SmartDiscount)
+async def create_smart_discount(
+    discount_data: SmartDiscountCreate,
+    current_user: User = Depends(require_admin)
+):
+    """Create smart discount rule"""
+    discount = SmartDiscount(**discount_data.dict())
+    discount_dict = prepare_for_mongo(discount.dict())
+    await db.smart_discounts.insert_one(discount_dict)
+    
+    gym_logger.business_metric("smart_discount_created", True,
+                             user_id=current_user.id, discount_name=discount.name)
+    return discount
+
+@api_router.get("/smart-discounts", response_model=List[SmartDiscount])
+async def get_smart_discounts(current_user: User = Depends(require_admin)):
+    """Get all smart discount rules"""
+    discounts = await db.smart_discounts.find().sort("created_at", -1).to_list(100)
+    return [SmartDiscount(**parse_from_mongo(discount)) for discount in discounts]
+
+@api_router.put("/smart-discounts/{discount_id}/toggle")
+async def toggle_smart_discount(
+    discount_id: str,
+    current_user: User = Depends(require_admin)
+):
+    """Toggle smart discount active status"""
+    discount = await db.smart_discounts.find_one({"id": discount_id})
+    if not discount:
+        raise HTTPException(status_code=404, detail="Smart discount not found")
+    
+    new_status = not discount.get("is_active", True)
+    
+    await db.smart_discounts.update_one(
+        {"id": discount_id},
+        {"$set": {"is_active": new_status}}
+    )
+    
+    return {"message": f"Smart discount {'activated' if new_status else 'deactivated'}"}
+
+# Automated Membership Management
+@api_router.post("/members/{member_id}/check-triggers")
+async def check_member_triggers(
+    member_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Check and trigger automated messages for member based on their current state"""
+    member = await db.members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    triggered_messages = []
+    
+    # Check workout milestones
+    workout_count = member.get("workout_count", 0)
+    milestone_triggers = {
+        10: "milestone_10_workouts",
+        25: "milestone_25_workouts", 
+        50: "milestone_50_workouts",
+        100: "milestone_100_workouts"
+    }
+    
+    for milestone, trigger in milestone_triggers.items():
+        if workout_count == milestone:
+            message_id = await trigger_automated_message(trigger, member_id)
+            if message_id:
+                triggered_messages.append({"trigger": trigger, "message_id": message_id})
+    
+    # Check membership expiry
+    if member.get("expiry_date"):
+        expiry_date = member["expiry_date"]
+        if isinstance(expiry_date, str):
+            expiry_date = datetime.fromisoformat(expiry_date).date()
+        
+        days_until_expiry = (expiry_date - date.today()).days
+        
+        if days_until_expiry == 7:
+            message_id = await trigger_automated_message("membership_expiry_7_days", member_id)
+            if message_id:
+                triggered_messages.append({"trigger": "membership_expiry_7_days", "message_id": message_id})
+        elif days_until_expiry == 3:
+            message_id = await trigger_automated_message("membership_expiry_3_days", member_id)
+            if message_id:
+                triggered_messages.append({"trigger": "membership_expiry_3_days", "message_id": message_id})
+    
+    # Check inactivity (no attendance in 7 or 30 days)
+    recent_attendance = await db.attendance.find({
+        "member_id": member_id,
+        "date": {"$gte": (date.today() - timedelta(days=30)).isoformat()}
+    }).sort("date", -1).limit(1).to_list(1)
+    
+    if not recent_attendance:
+        # No attendance in 30 days
+        message_id = await trigger_automated_message("inactive_30_days", member_id)
+        if message_id:
+            triggered_messages.append({"trigger": "inactive_30_days", "message_id": message_id})
+    else:
+        last_attendance = recent_attendance[0]
+        last_date = datetime.fromisoformat(last_attendance["date"]).date()
+        days_since_last = (date.today() - last_date).days
+        
+        if days_since_last == 7:
+            message_id = await trigger_automated_message("inactive_7_days", member_id)
+            if message_id:
+                triggered_messages.append({"trigger": "inactive_7_days", "message_id": message_id})
+    
+    return {
+        "member_name": member["name"],
+        "triggered_messages": triggered_messages,
+        "total_triggered": len(triggered_messages)
+    }
+
 # Apply rate limiting to existing endpoints
 original_create_member = api_router.routes[0]  # Will be properly applied after all routes
 
