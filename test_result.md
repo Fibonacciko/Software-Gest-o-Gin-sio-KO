@@ -167,7 +167,6 @@ test_plan:
   current_focus:
     - "UserManagement Route in App.js"
     - "UserManagement Navigation in Sidebar"
-    - "User Management API Endpoints"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
