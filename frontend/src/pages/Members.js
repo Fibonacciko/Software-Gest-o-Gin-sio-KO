@@ -202,12 +202,13 @@ const Members = ({ language, translations }) => {
   const handleDelete = async (memberId) => {
     if (window.confirm(t[language].confirmDelete)) {
       try {
+        console.log('Deleting member with ID:', memberId);
         await axios.delete(`${API}/members/${memberId}`);
         toast.success(t[language].memberDeleted);
         fetchMembers();
       } catch (error) {
         console.error('Error deleting member:', error);
-        toast.error('Erro ao eliminar membro');
+        toast.error('Erro ao eliminar membro: ' + (error.response?.data?.detail || error.message));
       }
     }
   };
