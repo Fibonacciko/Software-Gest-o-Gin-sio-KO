@@ -637,7 +637,7 @@ const Members = ({ language, translations }) => {
                         </span>
                       </div>
                       <Badge className={getStatusClassName(selectedMember.status)}>
-                        {t[language][selectedMember.status]}
+                        {t[language][selectedMember.status] || selectedMember.status}
                       </Badge>
                     </div>
                   </div>
