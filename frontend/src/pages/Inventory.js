@@ -28,12 +28,15 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Inventory = ({ language, translations }) => {
+  const { user } = useAuth();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showSaleDialog, setShowSaleDialog] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [selectedItemForSale, setSelectedItemForSale] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
