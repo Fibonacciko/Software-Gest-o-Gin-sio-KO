@@ -184,3 +184,5 @@ test_plan:
 agent_communication:
     - agent: "testing"
     - message: "Starting comprehensive testing of dashboard improvements. Will test login, check-in functionality, and member details panel layout with focus on calendar appearance and notes layout as requested by user."
+    - agent: "testing"
+    - message: "TESTING COMPLETE - CRITICAL ISSUE FOUND: Dashboard login and layout work perfectly, but check-in functionality is broken. The check-in button click does not trigger the POST /api/attendance API call, preventing the member details panel from appearing. This is a high-priority issue that needs immediate attention from the main agent. The SimpleMemberCalendar component is correctly implemented with yellow backgrounds for attendance days. All UI components are ready but the check-in integration is failing."
