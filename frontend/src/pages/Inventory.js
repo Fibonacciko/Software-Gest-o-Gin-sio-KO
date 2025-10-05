@@ -286,8 +286,47 @@ const Inventory = ({ language, translations }) => {
       color: '',
       quantity: '',
       price: '',
+      purchase_price: '',
       description: ''
     });
+  };
+
+  const resetSaleForm = () => {
+    setSaleFormData({
+      quantity: '',
+      sale_price: ''
+    });
+  };
+
+  // Handle item sale
+  const handleSaleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedItemForSale) return;
+
+    try {
+      await axios.post(`${API}/inventory/${selectedItemForSale.id}/sell`, {
+        quantity: parseInt(saleFormData.quantity),
+        sale_price: parseFloat(saleFormData.sale_price)
+      });
+      
+      toast.success(t[language].itemSold);
+      setShowSaleDialog(false);
+      setSelectedItemForSale(null);
+      resetSaleForm();
+      fetchInventory();
+    } catch (error) {
+      console.error('Error selling item:', error);
+      toast.error('Erro ao registar venda');
+    }
+  };
+
+  const openSaleDialog = (item) => {
+    setSelectedItemForSale(item);
+    setSaleFormData({
+      quantity: '',
+      sale_price: item.price?.toString() || ''
+    });
+    setShowSaleDialog(true);
   };
 
   const getCategoryIcon = (category) => {
