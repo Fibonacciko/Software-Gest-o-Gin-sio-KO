@@ -97,7 +97,18 @@ const Dashboard = ({ language, translations }) => {
       qrCheckin: 'QR Check-in',
       manualCheckin: 'Manual Check-in',
       selectMember: 'Select member',
-      checkin: 'Check-in'
+      checkin: 'Check-in',
+      memberNotFound: 'Member not found',
+      checkinSuccess: 'Check-in successful!',
+      selectActivity: 'Select activity',
+      memberDetails: 'Member Details',
+      memberStatus: 'Status',
+      subscriptionPlan: 'Subscription Plan',
+      notes: 'Notes',
+      medicalNotes: 'Medical Notes',
+      editNotes: 'Edit Notes',
+      saveNotes: 'Save',
+      attendanceCalendar: 'Attendance Calendar'
     }
   };
 
