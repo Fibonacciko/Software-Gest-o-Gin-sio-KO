@@ -446,10 +446,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Automated Messaging System" 
-    - "Invoice Generation with Smart Discounts"
-    - "Fiscal Reports"
-    - "Member Trigger Checking"
+    - "All new automated messaging and financial features tested successfully"
   stuck_tasks:
     - "Member Analytics"
   test_all: false
