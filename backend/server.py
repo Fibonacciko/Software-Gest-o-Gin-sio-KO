@@ -958,7 +958,7 @@ async def sell_inventory_item(
             "quantity_sold": quantity_to_sell,
             "sale_price": sale_price,
             "total_amount": quantity_to_sell * sale_price,
-            "sold_by": current_user["id"],
+            "sold_by": current_user.id,
             "sale_date": datetime.now().isoformat(),
             "created_at": datetime.now().isoformat()
         }
