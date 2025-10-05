@@ -675,6 +675,345 @@ class GymManagementAPITester:
         
         return success, response
 
+    def test_automated_messages_management(self):
+        """Test automated messages CRUD operations"""
+        print("\n🤖 TESTING AUTOMATED MESSAGES MANAGEMENT")
+        print("-" * 50)
+        
+        all_tests_passed = True
+        
+        # Test 1: Get all automated message templates
+        success, response = self.run_test("Get Automated Messages", "GET", "automated-messages", 200)
+        if success and response:
+            print(f"   Found {len(response)} automated message templates")
+            for msg in response:
+                print(f"   - {msg['trigger']}: {msg['title_pt']}")
+        else:
+            all_tests_passed = False
+        
+        # Test 2: Create new automated message template
+        new_message_data = {
+            "trigger": "milestone_10_workouts",
+            "title_pt": "10 Treinos Completos! 💪",
+            "title_en": "10 Workouts Complete! 💪",
+            "message_pt": "Parabéns! Completaste 10 treinos. Estás no bom caminho!",
+            "message_en": "Congratulations! You've completed 10 workouts. You're on the right track!"
+        }
+        
+        success, response = self.run_test("Create Automated Message", "POST", "automated-messages", 200, new_message_data)
+        created_message_id = None
+        if success and response and 'id' in response:
+            created_message_id = response['id']
+            print(f"   Created automated message ID: {created_message_id}")
+        else:
+            all_tests_passed = False
+        
+        # Test 3: Update automated message template
+        if created_message_id:
+            update_data = {
+                "title_pt": "10 Treinos - Atualizado! 🔥",
+                "message_pt": "Incrível! 10 treinos completos. Continue assim, campeão!"
+            }
+            success, response = self.run_test("Update Automated Message", "PUT", f"automated-messages/{created_message_id}", 200, update_data)
+            if not success:
+                all_tests_passed = False
+        
+        # Test 4: Manual trigger test
+        if self.created_member_id:
+            trigger_data = {
+                "trigger": "milestone_10_workouts",
+                "member_id": self.created_member_id
+            }
+            success, response = self.run_test("Manual Trigger Automated Message", "POST", "automated-messages/trigger", 200, trigger_data)
+            if not success:
+                all_tests_passed = False
+        
+        return all_tests_passed, {}
+
+    def test_invoice_generation_with_smart_discounts(self):
+        """Test invoice generation with automatic smart discount calculations"""
+        print("\n💰 TESTING INVOICE GENERATION WITH SMART DISCOUNTS")
+        print("-" * 50)
+        
+        all_tests_passed = True
+        
+        # Ensure we have a member for testing
+        if not self.created_member_id:
+            success, _ = self.test_create_member()
+            if not success:
+                self.log_test("Invoice Generation", False, "No member available for invoice testing")
+                return False, {}
+        
+        # Test 1: Create invoice with automatic calculations
+        invoice_data = {
+            "member_id": self.created_member_id,
+            "amount": 50.00,
+            "description": "Mensalidade Premium - Teste Automático",
+            "tax_rate": 0.23,  # 23% IVA Portugal
+            "due_days": 30
+        }
+        
+        success, response = self.run_test("Create Invoice with Auto Calculations", "POST", "invoices", 200, invoice_data)
+        created_invoice_id = None
+        if success and response and 'id' in response:
+            created_invoice_id = response['id']
+            print(f"   Created invoice ID: {created_invoice_id}")
+            print(f"   Invoice number: {response.get('invoice_number', 'N/A')}")
+            print(f"   Amount: €{response.get('amount', 0)}")
+            print(f"   Tax amount: €{response.get('tax_amount', 0)}")
+            print(f"   Total amount: €{response.get('total_amount', 0)}")
+            
+            # Verify tax calculation
+            expected_tax = 50.00 * 0.23
+            actual_tax = response.get('tax_amount', 0)
+            if abs(actual_tax - expected_tax) < 0.01:
+                self.log_test("Tax Calculation", True, f"Tax correctly calculated: €{actual_tax}")
+            else:
+                self.log_test("Tax Calculation", False, f"Expected €{expected_tax}, got €{actual_tax}")
+                all_tests_passed = False
+        else:
+            all_tests_passed = False
+        
+        # Test 2: Get invoices with filters
+        success, response = self.run_test("Get All Invoices", "GET", "invoices", 200)
+        if success and response:
+            print(f"   Found {len(response)} invoices")
+        else:
+            all_tests_passed = False
+        
+        # Test 3: Filter invoices by member
+        success, response = self.run_test("Get Member Invoices", "GET", f"invoices?member_id={self.created_member_id}", 200)
+        if success and response:
+            print(f"   Found {len(response)} invoices for member")
+        else:
+            all_tests_passed = False
+        
+        # Test 4: Mark invoice as paid
+        if created_invoice_id:
+            payment_data = {
+                "payment_method": "card",
+                "paid_date": date.today().isoformat()
+            }
+            success, response = self.run_test("Mark Invoice as Paid", "PUT", f"invoices/{created_invoice_id}/pay", 200, payment_data)
+            if success and response:
+                print(f"   Invoice status: {response.get('status', 'N/A')}")
+                print(f"   Payment method: {response.get('payment_method', 'N/A')}")
+            else:
+                all_tests_passed = False
+        
+        return all_tests_passed, {}
+
+    def test_fiscal_reports(self):
+        """Test fiscal reports generation"""
+        print("\n📊 TESTING FISCAL REPORTS")
+        print("-" * 50)
+        
+        all_tests_passed = True
+        
+        # Test 1: Monthly fiscal report
+        success, response = self.run_test("Monthly Fiscal Report", "GET", "fiscal-reports/monthly?year=2025&month=10", 200)
+        if success and response:
+            print(f"   Report type: {response.get('report_type', 'N/A')}")
+            print(f"   Period: {response.get('period_start', 'N/A')} to {response.get('period_end', 'N/A')}")
+            print(f"   Total revenue: €{response.get('total_revenue', 0)}")
+            print(f"   Total tax: €{response.get('total_tax', 0)}")
+            print(f"   Total invoices: {response.get('total_invoices', 0)}")
+            print(f"   Paid invoices: {response.get('paid_invoices', 0)}")
+            print(f"   Pending invoices: {response.get('pending_invoices', 0)}")
+            print(f"   Overdue invoices: {response.get('overdue_invoices', 0)}")
+        else:
+            all_tests_passed = False
+        
+        # Test 2: Yearly fiscal report
+        success, response = self.run_test("Yearly Fiscal Report", "GET", "fiscal-reports/yearly?year=2025", 200)
+        if success and response:
+            print(f"   Yearly report generated for 2025")
+            print(f"   Total revenue: €{response.get('total_revenue', 0)}")
+            print(f"   Total tax: €{response.get('total_tax', 0)}")
+        else:
+            all_tests_passed = False
+        
+        return all_tests_passed, {}
+
+    def test_smart_discounts_management(self):
+        """Test smart discounts CRUD operations"""
+        print("\n🎯 TESTING SMART DISCOUNTS MANAGEMENT")
+        print("-" * 50)
+        
+        all_tests_passed = True
+        
+        # Test 1: Create smart discount rule
+        discount_data = {
+            "name": "Desconto Fidelidade",
+            "description": "Desconto para membros com mais de 20 treinos",
+            "discount_type": "percentage",
+            "discount_value": 15.0,
+            "conditions": {
+                "min_workouts": 20,
+                "min_membership_days": 30,
+                "membership_type": ["premium", "vip"]
+            },
+            "valid_from": date.today().isoformat(),
+            "usage_limit": 100
+        }
+        
+        success, response = self.run_test("Create Smart Discount", "POST", "smart-discounts", 200, discount_data)
+        created_discount_id = None
+        if success and response and 'id' in response:
+            created_discount_id = response['id']
+            print(f"   Created discount ID: {created_discount_id}")
+            print(f"   Discount name: {response.get('name', 'N/A')}")
+            print(f"   Discount value: {response.get('discount_value', 0)}%")
+        else:
+            all_tests_passed = False
+        
+        # Test 2: Get all smart discounts
+        success, response = self.run_test("Get Smart Discounts", "GET", "smart-discounts", 200)
+        if success and response:
+            print(f"   Found {len(response)} smart discount rules")
+            for discount in response:
+                print(f"   - {discount['name']}: {discount['discount_value']}% ({discount['discount_type']})")
+        else:
+            all_tests_passed = False
+        
+        # Test 3: Toggle discount activation
+        if created_discount_id:
+            success, response = self.run_test("Toggle Discount Status", "PUT", f"smart-discounts/{created_discount_id}/toggle", 200)
+            if success and response:
+                print(f"   Discount status: {'Active' if response.get('is_active', False) else 'Inactive'}")
+            else:
+                all_tests_passed = False
+        
+        return all_tests_passed, {}
+
+    def test_member_trigger_checking(self):
+        """Test member trigger checking for automated messages"""
+        print("\n🎯 TESTING MEMBER TRIGGER CHECKING")
+        print("-" * 50)
+        
+        all_tests_passed = True
+        
+        # Ensure we have a member for testing
+        if not self.created_member_id:
+            success, _ = self.test_create_member()
+            if not success:
+                self.log_test("Member Trigger Checking", False, "No member available for trigger testing")
+                return False, {}
+        
+        # Test member trigger checking
+        success, response = self.run_test("Check Member Triggers", "POST", f"members/{self.created_member_id}/check-triggers", 200)
+        if success and response:
+            print(f"   Trigger check response: {json.dumps(response, indent=2, default=str)[:300]}...")
+            
+            # Check for expected trigger response fields
+            if 'triggers_checked' in response or 'messages_sent' in response:
+                self.log_test("Member Trigger Structure", True, "Trigger checking completed successfully")
+            else:
+                self.log_test("Member Trigger Structure", False, "No trigger checking confirmation")
+                all_tests_passed = False
+        else:
+            all_tests_passed = False
+        
+        return all_tests_passed, {}
+
+    def run_automated_messaging_and_financial_tests(self):
+        """Run comprehensive tests for new automated messaging and financial features"""
+        print("🚀 TESTING AUTOMATED MESSAGING & FINANCIAL FEATURES")
+        print("=" * 60)
+        print("Testing new features:")
+        print("1. Automated Messages Management")
+        print("2. Invoice Generation with Smart Discounts")
+        print("3. Fiscal Reports")
+        print("4. Smart Discounts Management")
+        print("5. Member Trigger Checking")
+        print("=" * 60)
+        
+        # Authentication first
+        login_success, _ = self.test_login()
+        if not login_success:
+            print("❌ Authentication failed - stopping tests")
+            return False
+        
+        # Create a test member if needed
+        member_created = False
+        if not self.created_member_id:
+            success, _ = self.test_create_member()
+            if success:
+                member_created = True
+        
+        # Run all new feature tests
+        print("\n🔥 TESTING NEW AUTOMATED MESSAGING & FINANCIAL FEATURES")
+        print("-" * 50)
+        
+        # Test 1: Automated Messages Management
+        print("\n1️⃣ AUTOMATED MESSAGES MANAGEMENT TEST")
+        automated_messages_success, _ = self.test_automated_messages_management()
+        
+        # Test 2: Invoice Generation with Smart Discounts
+        print("\n2️⃣ INVOICE GENERATION WITH SMART DISCOUNTS TEST")
+        invoice_success, _ = self.test_invoice_generation_with_smart_discounts()
+        
+        # Test 3: Fiscal Reports
+        print("\n3️⃣ FISCAL REPORTS TEST")
+        fiscal_reports_success, _ = self.test_fiscal_reports()
+        
+        # Test 4: Smart Discounts Management
+        print("\n4️⃣ SMART DISCOUNTS MANAGEMENT TEST")
+        smart_discounts_success, _ = self.test_smart_discounts_management()
+        
+        # Test 5: Member Trigger Checking
+        print("\n5️⃣ MEMBER TRIGGER CHECKING TEST")
+        member_triggers_success, _ = self.test_member_trigger_checking()
+        
+        # Cleanup test member if we created one
+        if member_created and self.created_member_id:
+            self.run_test("Cleanup Test Member", "DELETE", f"members/{self.created_member_id}", 200)
+        
+        # FINAL SUMMARY
+        print("\n" + "=" * 60)
+        print("📊 AUTOMATED MESSAGING & FINANCIAL FEATURES TEST SUMMARY")
+        print("=" * 60)
+        
+        feature_tests = [
+            ("Automated Messages Management", automated_messages_success),
+            ("Invoice Generation with Smart Discounts", invoice_success),
+            ("Fiscal Reports", fiscal_reports_success),
+            ("Smart Discounts Management", smart_discounts_success),
+            ("Member Trigger Checking", member_triggers_success)
+        ]
+        
+        passed_features = sum(1 for _, success in feature_tests if success)
+        total_features = len(feature_tests)
+        
+        print(f"New Features: {passed_features}/{total_features} PASSED")
+        print(f"Overall tests run: {self.tests_run}")
+        print(f"Overall tests passed: {self.tests_passed}")
+        print(f"Overall success rate: {(self.tests_passed/self.tests_run*100):.1f}%")
+        
+        # Detailed results for new features
+        print("\n🎯 NEW FEATURES STATUS:")
+        for test_name, success in feature_tests:
+            status = "✅ WORKING" if success else "❌ FAILED"
+            print(f"  {test_name}: {status}")
+        
+        # Print failed tests
+        failed_tests = [test for test in self.test_results if not test['success']]
+        if failed_tests:
+            print("\n❌ FAILED TESTS DETAILS:")
+            for test in failed_tests:
+                print(f"  - {test['test_name']}: {test['details']}")
+        
+        # Final verdict
+        all_features_passed = passed_features == total_features
+        if all_features_passed:
+            print("\n🎉 ALL NEW AUTOMATED MESSAGING & FINANCIAL FEATURES ARE WORKING!")
+            print("✅ Ready for production use")
+        else:
+            print(f"\n⚠️  {total_features - passed_features} FEATURES STILL FAILING")
+            print("❌ Requires fixes before production deployment")
+        
+        return all_features_passed
+
     def test_update_operations(self):
         """Test update operations"""
         success_count = 0
