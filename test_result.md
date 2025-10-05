@@ -120,6 +120,30 @@ frontend:
         - agent: "testing"
         - comment: "TESTING COMPLETE: ✅ Admin login successful with fabio.guerreiro/admin123. ✅ Dashboard loads correctly with 'Painel Principal' title. ✅ Statistics cards correctly removed as requested. ✅ Check-in Rápido section found at top. ✅ Presenças de Hoje section found below. ✅ Today's attendance shows Maria Santos and António Guerreiro. Dashboard layout matches requirements."
 
+  - task: "Calendar Yellow Background and Black Numbers"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/SimpleMemberCalendar.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "CANNOT TEST: New calendar improvements (yellow background with black numbers for attendance days) cannot be tested because check-in functionality is broken. The member details panel never appears, preventing verification of calendar colors. Code review shows SimpleMemberCalendar.js has correct implementation: bg-yellow-400 for attendance days and text-black for numbers. Feature is implemented but untestable due to check-in regression."
+
+  - task: "Cancel Last Check-in Button"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Dashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "CANNOT TEST: New cancel check-in button (red outline with ❌ emoji) cannot be tested because check-in functionality is broken. The member details panel never appears, preventing verification of cancel button functionality. Code review shows Dashboard.js has correct implementation: handleCancelLastCheckin function and button with red styling. Feature is implemented but untestable due to check-in regression."
+
   - task: "Quick Check-in Functionality"
     implemented: true
     working: false
