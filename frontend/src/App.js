@@ -27,6 +27,7 @@ function App() {
       payments: 'Pagamentos',
       inventory: 'Stock',
       reports: 'Relatórios',
+      users: 'Utilizadores',
       settings: 'Configurações'
     },
     en: {
@@ -36,6 +37,7 @@ function App() {
       payments: 'Payments',
       inventory: 'Inventory',
       reports: 'Reports',
+      users: 'Users',
       settings: 'Settings'
     }
   };
