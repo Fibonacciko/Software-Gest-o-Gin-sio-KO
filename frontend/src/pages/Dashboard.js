@@ -269,7 +269,7 @@ const Dashboard = ({ language, translations }) => {
         toast.error('Erro ao realizar check-in: ' + (error.response?.data?.detail || error.message));
       }
     }
-  };
+  }, [selectedActivity, API, t, language]);
 
   const StatCard = ({ title, value, icon: Icon, color, trend }) => (
     <Card className="card-shadow hover:shadow-lg transition-all duration-200">
