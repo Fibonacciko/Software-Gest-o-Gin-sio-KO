@@ -2511,7 +2511,7 @@ async def create_invoice(
         raise HTTPException(status_code=404, detail="Member not found")
     
     # Calculate amounts
-    tax_amount = invoice_data.amount * (invoice_data.tax_rate / 100)
+    tax_amount = invoice_data.amount * invoice_data.tax_rate
     total_amount = invoice_data.amount + tax_amount
     
     # Calculate smart discount
