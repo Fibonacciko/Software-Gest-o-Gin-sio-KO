@@ -647,6 +647,308 @@ async def create_default_activities():
     except Exception as e:
         print(f"Error creating default activities: {e}")
 
+# Automated Messaging Helper Functions
+async def create_default_automated_messages():
+    """Create default automated messages if they don't exist"""
+    try:
+        existing_count = await db.automated_messages.count_documents({})
+        if existing_count > 0:
+            return
+        
+        default_messages = [
+            {
+                "trigger": "new_member",
+                "title_pt": "Bem-vindo ao KO Gym! 🥊",
+                "title_en": "Welcome to KO Gym! 🥊",
+                "message_pt": "Parabéns por escolheres o KO Gym! Estamos ansiosos para te ver em ação. Prepara-te para dar tudo!",
+                "message_en": "Congratulations on choosing KO Gym! We're excited to see you in action. Get ready to give it your all!"
+            },
+            {
+                "trigger": "membership_expiry_7_days",
+                "title_pt": "Renovação em 7 dias ⏰",
+                "title_en": "Renewal in 7 days ⏰",
+                "message_pt": "O teu membership expira em 7 dias! Não percas o ritmo - renova já e continua a tua jornada fitness.",
+                "message_en": "Your membership expires in 7 days! Don't lose momentum - renew now and continue your fitness journey."
+            },
+            {
+                "trigger": "membership_expiry_3_days",
+                "title_pt": "ÚLTIMA CHAMADA! 3 dias ⚠️",
+                "title_en": "LAST CALL! 3 days ⚠️",
+                "message_pt": "Só tens 3 dias para renovar! Não deixes que o teu progresso pare aqui. Renova agora!",
+                "message_en": "You only have 3 days to renew! Don't let your progress stop here. Renew now!"
+            },
+            {
+                "trigger": "milestone_25_workouts",
+                "title_pt": "25 Treinos! 🔥",
+                "title_en": "25 Workouts! 🔥",
+                "message_pt": "Incrível! Completaste 25 treinos. O teu corpo já está a agradecer. Continua assim, campeão!",
+                "message_en": "Amazing! You've completed 25 workouts. Your body is already thanking you. Keep it up, champion!"
+            },
+            {
+                "trigger": "milestone_50_workouts",
+                "title_pt": "LENDA! 50 Treinos 🏆",
+                "title_en": "LEGEND! 50 Workouts 🏆",
+                "message_pt": "50 treinos? És oficialmente uma lenda do KO Gym! O teu suor podia encher uma piscina pequena.",
+                "message_en": "50 workouts? You're officially a KO Gym legend! Your sweat could fill a small pool."
+            },
+            {
+                "trigger": "inactive_7_days",
+                "title_pt": "Sentimos a tua falta 😢",
+                "title_en": "We miss you 😢",
+                "message_pt": "Já não te vemos há uma semana! Os sacos de boxe estão com saudades. Volta em breve!",
+                "message_en": "We haven't seen you for a week! The punching bags miss you. Come back soon!"
+            }
+        ]
+        
+        for msg_data in default_messages:
+            message = AutomatedMessage(**msg_data)
+            message_dict = prepare_for_mongo(message.dict())
+            await db.automated_messages.insert_one(message_dict)
+        
+        print("Default automated messages created successfully")
+    except Exception as e:
+        print(f"Error creating default automated messages: {e}")
+
+async def trigger_automated_message(trigger: AutomatedMessageTrigger, member_id: str, context: Dict = {}):
+    """Trigger an automated message for a specific member"""
+    try:
+        # Get the automated message template
+        message_template = await db.automated_messages.find_one({
+            "trigger": trigger,
+            "is_active": True
+        })
+        
+        if not message_template:
+            print(f"No active automated message found for trigger: {trigger}")
+            return
+        
+        # Get member info
+        member = await db.members.find_one({"id": member_id})
+        if not member:
+            print(f"Member not found: {member_id}")
+            return
+        
+        # Create the message
+        message_data = {
+            "id": str(uuid.uuid4()),
+            "member_id": member_id,
+            "member_name": member["name"],
+            "title": message_template["title_pt"],  # Default to PT
+            "message": message_template["message_pt"],
+            "message_type": "automated",
+            "trigger": trigger,
+            "sent_at": datetime.now(timezone.utc).isoformat(),
+            "read": False
+        }
+        
+        await db.messages.insert_one(message_data)
+        
+        # Send push notification if member has FCM token
+        if firebase_enabled and member.get("fcm_token"):
+            try:
+                notification = messaging.Notification(
+                    title=message_template["title_pt"],
+                    body=message_template["message_pt"]
+                )
+                
+                message = messaging.Message(
+                    notification=notification,
+                    token=member["fcm_token"],
+                    data={
+                        "message_id": message_data["id"],
+                        "trigger": trigger,
+                        "type": "automated_message"
+                    }
+                )
+                
+                response = messaging.send(message)
+                print(f"Push notification sent successfully: {response}")
+            except Exception as e:
+                print(f"Push notification failed: {e}")
+        
+        print(f"Automated message triggered: {trigger} for member {member['name']}")
+        return message_data["id"]
+        
+    except Exception as e:
+        print(f"Error triggering automated message: {e}")
+        return None
+
+# Financial Helper Functions
+async def generate_next_invoice_number():
+    """Generate the next sequential invoice number"""
+    try:
+        current_year = datetime.now().year
+        invoice_prefix = f"INV-{current_year}-"
+        
+        # Find the highest invoice number for current year
+        pipeline = [
+            {"$match": {"invoice_number": {"$regex": f"^{invoice_prefix}"}}},
+            {
+                "$addFields": {
+                    "invoice_suffix": {
+                        "$toInt": {
+                            "$arrayElemAt": [
+                                {"$split": ["$invoice_number", "-"]}, 2
+                            ]
+                        }
+                    }
+                }
+            },
+            {"$sort": {"invoice_suffix": -1}},
+            {"$limit": 1}
+        ]
+        
+        result = await db.invoices.aggregate(pipeline).to_list(1)
+        
+        if result:
+            last_number = result[0].get("invoice_suffix", 0)
+            next_number = last_number + 1
+        else:
+            next_number = 1
+        
+        return f"{invoice_prefix}{next_number:03d}"
+    
+    except Exception as e:
+        print(f"Error generating invoice number: {e}")
+        # Fallback
+        timestamp = int(datetime.now().timestamp())
+        return f"INV-{datetime.now().year}-{timestamp}"
+
+async def calculate_smart_discount(member_id: str, amount: float):
+    """Calculate applicable smart discounts for a member"""
+    try:
+        member = await db.members.find_one({"id": member_id})
+        if not member:
+            return 0.0, None
+        
+        # Get member's workout count and membership duration
+        workout_count = member.get("workout_count", 0)
+        join_date = member.get("join_date")
+        if isinstance(join_date, str):
+            join_date = datetime.fromisoformat(join_date).date()
+        
+        membership_days = (date.today() - join_date).days
+        
+        # Get active smart discounts
+        active_discounts = await db.smart_discounts.find({
+            "is_active": True,
+            "valid_from": {"$lte": date.today().isoformat()},
+            "$or": [
+                {"valid_until": None},
+                {"valid_until": {"$gte": date.today().isoformat()}}
+            ]
+        }).to_list(100)
+        
+        best_discount = 0.0
+        best_discount_obj = None
+        
+        for discount in active_discounts:
+            # Check usage limit
+            if discount.get("usage_limit") and discount.get("used_count", 0) >= discount["usage_limit"]:
+                continue
+            
+            # Evaluate conditions
+            conditions = discount.get("conditions", {})
+            applies = True
+            
+            if "min_workouts" in conditions and workout_count < conditions["min_workouts"]:
+                applies = False
+            if "min_membership_days" in conditions and membership_days < conditions["min_membership_days"]:
+                applies = False
+            if "membership_type" in conditions and member.get("membership_type") not in conditions["membership_type"]:
+                applies = False
+            
+            if applies:
+                if discount["discount_type"] == "percentage":
+                    discount_amount = amount * (discount["discount_value"] / 100)
+                else:  # fixed_amount
+                    discount_amount = discount["discount_value"]
+                
+                if discount_amount > best_discount:
+                    best_discount = discount_amount
+                    best_discount_obj = discount
+        
+        return best_discount, best_discount_obj
+    
+    except Exception as e:
+        print(f"Error calculating smart discount: {e}")
+        return 0.0, None
+
+async def generate_fiscal_report(report_type: str, period_start: date, period_end: date):
+    """Generate fiscal report for a specific period"""
+    try:
+        # Convert dates to ISO strings for MongoDB query
+        start_str = period_start.isoformat()
+        end_str = period_end.isoformat()
+        
+        # Aggregate invoice data
+        pipeline = [
+            {
+                "$match": {
+                    "issue_date": {
+                        "$gte": start_str,
+                        "$lte": end_str
+                    }
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "total_revenue": {"$sum": "$total_amount"},
+                    "total_tax": {"$sum": "$tax_amount"},
+                    "total_invoices": {"$sum": 1},
+                    "paid_invoices": {
+                        "$sum": {"$cond": [{"$eq": ["$status", "paid"]}, 1, 0]}
+                    },
+                    "pending_invoices": {
+                        "$sum": {"$cond": [{"$eq": ["$status", "pending"]}, 1, 0]}
+                    },
+                    "overdue_invoices": {
+                        "$sum": {"$cond": [{"$eq": ["$status", "overdue"]}, 1, 0]}
+                    }
+                }
+            }
+        ]
+        
+        result = await db.invoices.aggregate(pipeline).to_list(1)
+        
+        if result:
+            data = result[0]
+            report = FiscalReport(
+                report_type=report_type,
+                period_start=period_start,
+                period_end=period_end,
+                total_revenue=data.get("total_revenue", 0.0),
+                total_tax=data.get("total_tax", 0.0),
+                total_invoices=data.get("total_invoices", 0),
+                paid_invoices=data.get("paid_invoices", 0),
+                pending_invoices=data.get("pending_invoices", 0),
+                overdue_invoices=data.get("overdue_invoices", 0)
+            )
+        else:
+            # No invoices in period
+            report = FiscalReport(
+                report_type=report_type,
+                period_start=period_start,
+                period_end=period_end,
+                total_revenue=0.0,
+                total_tax=0.0,
+                total_invoices=0,
+                paid_invoices=0,
+                pending_invoices=0,
+                overdue_invoices=0
+            )
+        
+        # Save report
+        report_dict = prepare_for_mongo(report.dict())
+        await db.fiscal_reports.insert_one(report_dict)
+        
+        return report
+    
+    except Exception as e:
+        print(f"Error generating fiscal report: {e}")
+        raise HTTPException(status_code=500, detail="Error generating fiscal report")
+
 # API Routes
 @api_router.get("/")
 async def root():
