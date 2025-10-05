@@ -12,7 +12,7 @@ import Attendance from './pages/Attendance';
 import Payments from './pages/Payments';
 import Inventory from './pages/Inventory';
 import Reports from './pages/Reports';
-// import UserManagement from './pages/UserManagement';
+import UserManagement from './pages/UserManagement';
 import { Toaster } from './components/ui/sonner';
 
 function App() {
