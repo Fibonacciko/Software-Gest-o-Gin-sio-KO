@@ -157,10 +157,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Login and Navigation to Stock Page"
-    - "Article Sale Functionality"
-    - "Article Deletion Functionality"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
