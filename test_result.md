@@ -148,7 +148,7 @@ frontend:
     implemented: true
     working: false
     file: "/app/frontend/src/pages/Dashboard.js"
-    stuck_count: 3
+    stuck_count: 4
     priority: "high"
     needs_retesting: false
     status_history:
