@@ -123,7 +123,8 @@ const Inventory = ({ language, translations }) => {
     },
     en: {
       inventory: 'Inventory Management',
-      addItem: 'Add Item',
+      addItem: 'Add Article',
+      sellItem: 'Sell Article',
       searchItems: 'Search items...',
       allCategories: 'All Categories',
       clothing: 'Clothing',
