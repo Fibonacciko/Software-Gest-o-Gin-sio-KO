@@ -632,7 +632,7 @@ const Members = ({ language, translations }) => {
                           #{selectedMember.member_number}
                         </span>
                       </div>
-                      <Badge variant={getStatusVariant(selectedMember.status)}>
+                      <Badge className={getStatusClassName(selectedMember.status)}>
                         {t[language][selectedMember.status]}
                       </Badge>
                     </div>
