@@ -111,7 +111,10 @@ const Dashboard = ({ language, translations }) => {
       medicalNotes: 'Medical Notes',
       editNotes: 'Edit Notes',
       saveNotes: 'Save',
-      attendanceCalendar: 'Attendance Calendar'
+      attendanceCalendar: 'Attendance Calendar',
+      cancelLastCheckin: 'Cancel Last Check-in',
+      checkinCancelled: 'Check-in cancelled successfully!',
+      confirmCancelCheckin: 'Are you sure you want to cancel the last check-in?'
     }
   };
 
