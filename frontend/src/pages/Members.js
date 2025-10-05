@@ -547,7 +547,7 @@ const Members = ({ language, translations }) => {
                         </Badge>
                       </td>
                       <td className="p-4">
-                        <Badge variant={getStatusVariant(member.status)}>
+                        <Badge className={getStatusClassName(member.status)}>
                           {t[language][member.status]}
                         </Badge>
                       </td>
