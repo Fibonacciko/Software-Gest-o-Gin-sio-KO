@@ -179,13 +179,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Dashboard Login and Navigation"
     - "Quick Check-in Functionality"
     - "Member Details Panel Layout"
-    - "SimpleMemberCalendar Component"
-  stuck_tasks: []
+  stuck_tasks: 
+    - "Quick Check-in Functionality"
   test_all: false
-  test_priority: "sequential"
+  test_priority: "stuck_first"
 
 agent_communication:
     - agent: "testing"
