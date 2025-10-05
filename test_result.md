@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the newly implemented premium backend features including premium dashboard analytics, system status monitoring, member analytics, churn analysis, premium login with enhanced security, and cache operations"
+user_problem_statement: "Test automated messaging system and financial features including: automated messages (welcome, renewals, milestones), invoice generation with smart discounts, fiscal reports, and member trigger checking. Consolidate everything into the main functional URL (fitmanager-pro.preview.emergentagent.com)."
 
 backend:
   - task: "Mobile Activities Endpoint"
