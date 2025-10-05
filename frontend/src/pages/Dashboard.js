@@ -207,7 +207,7 @@ const Dashboard = ({ language, translations }) => {
     }
   };
 
-  const handleQuickCheckin = async (memberId) => {
+  const handleQuickCheckin = useCallback(async (memberId) => {
     console.log('🔍 Check-in initiated for member ID:', memberId);
     console.log('🔍 Selected activity:', selectedActivity);
     
