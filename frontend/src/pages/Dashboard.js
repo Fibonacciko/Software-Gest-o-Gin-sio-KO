@@ -554,7 +554,7 @@ const Dashboard = ({ language, translations }) => {
                     onClick={handleCancelLastCheckin}
                     className="text-red-600 border-red-300 hover:bg-red-50"
                   >
-                    ❌ Cancelar Último Check-in
+                    ❌ {t[language].cancelLastCheckin}
                   </Button>
                 </div>
               </div>
