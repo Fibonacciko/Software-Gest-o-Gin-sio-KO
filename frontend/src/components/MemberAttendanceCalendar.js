@@ -150,7 +150,7 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
               className="rounded-md border w-full"
               modifiers={modifiers}
               components={{
-                Day: ({ date, modifiers }) => {
+                Day: ({ date, modifiers = {} }) => {
                   const attendanceForDate = getAttendanceForDate(date);
                   const hasAttendance = attendanceForDate.length > 0;
                   
