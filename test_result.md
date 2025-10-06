@@ -105,74 +105,41 @@
 user_problem_statement: Diagnosticar e corrigir problema com botões de ação na página de Gestão de Membros. Os botões de "visualizar" (olho), "editar" (lápis) e "apagar" (lixeira) estão visíveis mas não funcionam quando clicados - não abrem os diálogos/modais esperados. Página: http://localhost:3000/members, Login: fabio.guerreiro/admin123. Funcionalidade esperada: 1) Botão "visualizar" deve abrir modal com detalhes do membro, 2) Botão "editar" deve abrir formulário de edição, 3) Botão "apagar" deve mostrar confirmação de eliminação.
 
 frontend:
-  - task: "Login and Navigation to Stock Page"
+  - task: "Members Page Action Buttons - View Details"
     implemented: true
-    working: true
-    file: "/app/frontend/src/pages/Inventory.js"
+    working: "NA"
+    file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
-        - agent: "testing"
-        - comment: "Need to test admin login with credentials fabio.guerreiro/admin123 and navigate to Stock page to verify inventory management interface loads correctly."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ LOGIN AND NAVIGATION SUCCESSFUL: Admin login with fabio.guerreiro/admin123 works perfectly. ✅ Stock page loads correctly with 'Gestão de Stock' title. ✅ Inventory interface displays properly with statistics cards (Total de Artigos: 42, Stock Baixo: 0, Sem Stock: 0). ✅ Admin-specific financial statistics visible (Valor Total em Stock: €989.58, Valor Total Vendido: €0.00, Receita Líquida: €0.00). ✅ Inventory items display correctly with T-shirt Academia Premium and Luvas de Boxe visible. Navigation and authentication working as expected."
+        - agent: "user"
+        - comment: "User reported that the 'visualizar' (eye) button is visible but not working - when clicked, it doesn't open the expected modal with member details. Need to test handleViewDetails function and verify if the dialog opens correctly."
 
-  - task: "Article Sale Functionality"
+  - task: "Members Page Action Buttons - Edit Member"
     implemented: true
-    working: true
-    file: "/app/frontend/src/pages/Inventory.js"
+    working: "NA"
+    file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
-        - agent: "testing"
-        - comment: "Need to test sale functionality: locate article (T-shirt Academia Premium), click sale button (🛒), verify dialog opens, fill form (quantity: 1, price: 25.00), submit, verify success toast and stock reduction. Backend endpoint /api/inventory/{id}/sell was corrected."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ SALE FUNCTIONALITY WORKING PERFECTLY: Complete end-to-end testing successful. ✅ Sale button (🛒) found and clickable for T-shirt Academia Premium. ✅ Sale dialog opens correctly with title 'Venda Artigo - T-shirt Academia Premium'. ✅ Form fields work: quantity filled (1), price filled (25.00). ✅ Form submission successful with POST /api/inventory/75679996-d85c-4baa-8fc4-62f25f030995/sell returning 200 OK. ✅ Success toast appears: 'Venda registada com sucesso!'. ✅ Stock reduced from 27 to 26 immediately after sale. ✅ Inventory list refreshed automatically. Backend corrections successful - sale functionality fully operational."
+        - agent: "user"
+        - comment: "User reported that the 'editar' (pencil) button is visible but not working - when clicked, it doesn't open the expected edit form dialog. Need to test handleEdit function and verify if the edit dialog opens correctly."
 
-  - task: "Article Deletion Functionality"
+  - task: "Members Page Action Buttons - Delete Member"
     implemented: true
-    working: true
-    file: "/app/frontend/src/pages/Inventory.js"
+    working: "NA"
+    file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
-        - agent: "testing"
-        - comment: "Need to test deletion functionality: locate article, click delete button (🗑️), verify confirmation dialog, confirm deletion, verify success toast and article removal from list. Backend DELETE /api/inventory/{id} endpoint should be working."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ DELETION FUNCTIONALITY WORKING PERFECTLY: Complete end-to-end testing successful. ✅ Delete button (🗑️) found and clickable for T-shirt Academia Premium. ✅ Browser confirmation dialog handled correctly (auto-accepted). ✅ DELETE API call successful: DELETE /api/inventory/75679996-d85c-4baa-8fc4-62f25f030995 returning 200 OK. ✅ Success toast appears: 'Artigo eliminado com sucesso!'. ✅ Article completely removed from inventory list. ✅ Statistics updated: Total items reduced from 42 to 15, Valor Total em Stock reduced from €989.58 to €449.85. ✅ Inventory list refreshed automatically. Backend corrections successful - deletion functionality fully operational."
-
-  - task: "Reports Page Charts Visualization"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/pages/Reports.js"
-    stuck_count: 1
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: false
-        - agent: "main"
-        - comment: "User reported multiple issues: 1) Bar charts showing absolute values instead of percentages 2) Financial Report bar chart missing specific metrics (Pagamentos recebidos, Artigos vendidos, Despesas totais, Receitas Líquida) 3) Member Report throwing errors with undefined properties (activeMembers, membersByStatus). Need to fix chart configurations and data calculations."
-        - working: true
-        - agent: "main"
-        - comment: "Fixed all reported issues: 1) Bar charts now show percentages for non-financial reports, absolute values for financial reports with proper titles 2) Financial Report bar chart corrected to show specific metrics: Pagamentos recebidos, Artigos vendidos, Despesas totais, Receitas Líquida 3) Member Report errors fixed by adding proper calculation for activeMembers and membersByStatus with safety checks. Chart logic improved to handle single-category displays appropriately."
-        - working: true
-        - agent: "main"
-        - comment: "Additional Member Report corrections implemented: Modified to show the 3 specific metrics requested: 'Membros Total', 'Membros Modalidade', 'Membros Pack'. Bar chart now displays these metrics with percentage calculations. Added proper grouping by membership type (Basic/Premium/VIP) and improved activity-based member counting. Charts display correctly with appropriate percentages for the three main metrics."
-        - working: true
-        - agent: "main"
-        - comment: "COMPREHENSIVE REPORTS OVERHAUL COMPLETED: 1) Charts standardized - Bar charts always in Euros, Pie charts always in percentages 2) Financial Report restructured with 8 specific metrics: Receitas Mensalidades, Receitas Extras, Despesas Fixas, Despesas Extras, Receita Artigos, Despesa Artigos, Total Bruto, Total Líquido 3) Member Report focused on 5 specific modalities: Boxe, Kickboxing, Jiu-Jitsu, Pilates, Yoga with euro values for chart visualization 4) Stock Report simplified to 4 metrics: Artigos em Stock, Valor Investido, Valor Recebido, Valor Líquido. All statistical cards updated to match new metrics structure."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ COMPREHENSIVE REPORTS TESTING COMPLETED - ALL FUNCTIONALITY WORKING PERFECTLY! ✅ Financial Report: All 4 specific metrics found (Pagamentos Recebidos, Artigos Vendidos, Despesas Totais, Receitas Líquida), correct chart title 'Gráfico de Barras', statistical cards with € values working. ✅ Member Report: Bar chart with correct title 'Gráfico de Barras (%)', pie chart displaying properly, no JavaScript errors with undefined properties. ✅ Stock Report: Bar chart with percentage title, pie chart with multiple categories (Roupa/Equipamentos), all statistics displaying correctly. ✅ Period filters working (Este Mês, Últimos Trimestre, Este Ano). ✅ Export functionality available and enabled. ✅ Chart visualizations working correctly: Financial shows absolute values in euros, Member/Stock show percentages when multiple categories exist. All previously reported issues have been successfully resolved."
+        - agent: "user"
+        - comment: "User reported that the 'apagar' (trash) button is visible but not working - when clicked, it doesn't show the expected confirmation dialog. Need to test handleDelete function and verify if the confirmation dialog appears correctly."
 
 metadata:
   created_by: "testing_agent"
