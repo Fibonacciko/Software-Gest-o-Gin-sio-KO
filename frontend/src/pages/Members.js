@@ -667,7 +667,7 @@ const Members = ({ language, translations }) => {
                     </div>
                     <div className="flex items-center">
                       <Calendar size={16} className="text-gray-400 mr-3" />
-                      <span>{new Date(selectedMember.date_of_birth).toLocaleDateString('pt-PT')}</span>
+                      <span>{selectedMember.date_of_birth ? new Date(selectedMember.date_of_birth).toLocaleDateString('pt-PT') : 'N/A'}</span>
                     </div>
                   </div>
                 </div>
