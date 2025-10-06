@@ -350,7 +350,7 @@ const Inventory = ({ language, translations }) => {
   const getInventoryStats = () => {
     const totalItems = inventory.reduce((sum, item) => sum + item.quantity, 0);
     const totalValue = inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-    const lowStockItems = inventory.filter(item => item.quantity > 0 && item.quantity <= 3).length;
+    const lowStockItems = inventory.filter(item => item.quantity > 0 && item.quantity <= 5).length;
     const outOfStockItems = inventory.filter(item => item.quantity === 0).length;
     
     // Admin-specific calculations
