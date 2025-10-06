@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 class UserManagementTester:
-    def __init__(self, base_url="https://gymdesk.preview.emergentagent.com"):
+    def __init__(self, base_url="https://kotracker.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
