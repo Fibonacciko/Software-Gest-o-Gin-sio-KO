@@ -172,6 +172,14 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
               }}
             />
             
+            {/* Legend */}
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="flex items-center justify-center text-xs text-gray-500">
+                <div className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+                Presença Registada
+              </div>
+            </div>
+            
             {/* Selected Date Details */}
             {selectedDate && (
               <div className="mt-4 pt-4 border-t">
