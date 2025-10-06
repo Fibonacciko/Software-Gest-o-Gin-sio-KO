@@ -547,7 +547,7 @@ const Members = ({ language, translations }) => {
                       </td>
                       <td className="p-4">
                         <Badge className={getMembershipColor(member.membership_type)}>
-                          {t[language][member.membership_type]}
+                          {t[language][member.membership_type] || member.membership_type || 'N/A'}
                         </Badge>
                       </td>
                       <td className="p-4">
