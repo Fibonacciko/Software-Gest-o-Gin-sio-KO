@@ -678,13 +678,11 @@ async def create_member(
     member_dict = prepare_for_mongo(member.dict())
     await db.members.insert_one(member_dict)
     
-    # 🚀 ADVANCED INTEGRATIONS
+    # Removed advanced integrations for deployment
+    # await cache.invalidate_pattern("gym:members:*")
+    # await cache.invalidate_pattern("gym:stats:*")
     
-    # Invalidate member cache
-    await cache.invalidate_pattern("gym:members:*")
-    await cache.invalidate_pattern("gym:stats:*")
-    
-    logger.info(f"✅ Member created with advanced caching: {member.name}")
+    logger.info(f"✅ Member created: {member.name}")
     
     return member
 
