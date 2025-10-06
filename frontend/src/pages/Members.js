@@ -651,7 +651,7 @@ const Members = ({ language, translations }) => {
                     )}
                     <div className="flex items-center">
                       <Phone size={16} className="text-gray-400 mr-3" />
-                      <span>{selectedMember.phone}</span>
+                      <span>{selectedMember.phone || 'N/A'}</span>
                     </div>
                     <div className="flex items-center">
                       <MapPin size={16} className="text-gray-400 mr-3" />
