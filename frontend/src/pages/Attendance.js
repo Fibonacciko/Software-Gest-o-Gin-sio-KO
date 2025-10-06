@@ -141,7 +141,7 @@ const Attendance = ({ language, translations }) => {
       // Filter by search term if provided
       if (searchTerm) {
         attendanceWithMembers = attendanceWithMembers.filter(att => 
-          att.member.name.toLowerCase().includes(searchTerm.toLowerCase())
+          att.member && att.member.name && att.member.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
       
