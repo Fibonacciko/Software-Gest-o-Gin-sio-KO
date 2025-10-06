@@ -1,0 +1,39 @@
+# Core FastAPI and web server
+fastapi==0.110.1
+uvicorn==0.25.0
+starlette==0.37.2
+python-multipart==0.0.20
+
+# MongoDB
+motor==3.3.1
+pymongo==4.5.0
+dnspython==2.8.0
+
+# Authentication and Security
+python-jose==3.5.0
+PyJWT==2.10.1
+passlib==1.7.4
+bcrypt==5.0.0
+python-dotenv==1.1.1
+cryptography==46.0.1
+
+# Pydantic for data validation
+pydantic==2.11.9
+pydantic_core==2.33.2
+
+# Email validation
+email-validator==2.3.0
+
+# QR Code generation
+qrcode==8.2
+pillow==11.3.0
+
+# HTTP requests
+requests==2.32.5
+aiohttp==3.12.15
+certifi==2025.8.3
+
+# Utilities
+python-dateutil==2.9.0.post0
+typing_extensions==4.15.0
+anyio==4.11.0
