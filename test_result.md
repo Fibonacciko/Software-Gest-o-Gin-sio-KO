@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: Teste completo das funcionalidades de venda e eliminação de artigos na página de Gestão de Stock após correções no backend. Backend foi corrigido com endpoint /api/inventory/{id}/sell e import uuid4/current_user.id. Testar login (fabio.guerreiro/admin123), navegação para Stock, funcionalidade de venda (🛒 button), e funcionalidade de eliminação (🗑️ button).
+user_problem_statement: Diagnosticar e corrigir problema com botões de ação na página de Gestão de Membros. Os botões de "visualizar" (olho), "editar" (lápis) e "apagar" (lixeira) estão visíveis mas não funcionam quando clicados - não abrem os diálogos/modais esperados. Página: http://localhost:3000/members, Login: fabio.guerreiro/admin123. Funcionalidade esperada: 1) Botão "visualizar" deve abrir modal com detalhes do membro, 2) Botão "editar" deve abrir formulário de edição, 3) Botão "apagar" deve mostrar confirmação de eliminação.
 
 frontend:
   - task: "Login and Navigation to Stock Page"
