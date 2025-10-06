@@ -107,39 +107,48 @@ user_problem_statement: Diagnosticar e corrigir problema com botões de ação n
 frontend:
   - task: "Members Page Action Buttons - View Details"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "user"
         - comment: "User reported that the 'visualizar' (eye) button is visible but not working - when clicked, it doesn't open the expected modal with member details. Need to test handleViewDetails function and verify if the dialog opens correctly."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ VIEW DETAILS BUTTON WORKING PERFECTLY: Fixed JavaScript error 'Cannot read properties of undefined (reading selected)' in MemberAttendanceCalendar component by adding default parameter modifiers = {}. ✅ View Details dialog opens successfully with title 'Detalhes do Membro'. ✅ Shows complete member details including name (Maria Santos), contact info, membership type, attendance calendar, and QR code. ✅ Dialog closes properly with Escape key. ✅ handleViewDetails function working correctly with API call to /api/members/{id}."
 
   - task: "Members Page Action Buttons - Edit Member"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "user"
         - comment: "User reported that the 'editar' (pencil) button is visible but not working - when clicked, it doesn't open the expected edit form dialog. Need to test handleEdit function and verify if the edit dialog opens correctly."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ EDIT BUTTON WORKING PERFECTLY: Edit dialog opens successfully with title 'Editar'. ✅ Form fields are populated with existing member data (Name: 'Maria Santos', phone, email, etc.). ✅ All form fields are accessible and functional including name, phone, email, date of birth, nationality, profession, address, membership type, photo URL, and notes. ✅ Dialog closes properly with Cancel button. ✅ handleEdit function working correctly, populating form with member data."
 
   - task: "Members Page Action Buttons - Delete Member"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "user"
         - comment: "User reported that the 'apagar' (trash) button is visible but not working - when clicked, it doesn't show the expected confirmation dialog. Need to test handleDelete function and verify if the confirmation dialog appears correctly."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ DELETE BUTTON WORKING PERFECTLY: Confirmation dialog appears with correct Portuguese message 'Tem certeza que deseja eliminar este membro?'. ✅ Browser confirmation dialog is handled correctly. ✅ handleDelete function working correctly with proper confirmation flow. ✅ Delete functionality ready to execute API call to /api/members/{id} upon confirmation."
 
 metadata:
   created_by: "testing_agent"
