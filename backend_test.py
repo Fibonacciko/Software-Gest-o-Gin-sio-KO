@@ -515,6 +515,12 @@ class GymManagementAPITester:
             print("❌ Authentication failed - stopping tests")
             return False
         
+        # PRIORITY TESTS - Review Request Specific Tests
+        print("\n🎯 PRIORITY TESTS - Review Request Specific")
+        print("-" * 50)
+        self.test_authentication_on_endpoints()
+        self.test_expense_endpoints()
+        
         # Activities/Modalidades tests (PRIORITY)
         self.test_get_activities()
         self.test_create_activity()
@@ -525,6 +531,9 @@ class GymManagementAPITester:
         self.test_get_member_by_id()
         self.test_search_members()
         self.test_filter_members()
+        
+        # Member status calculation tests (PRIORITY)
+        self.test_member_status_calculation()
         
         # Attendance tests with modalidades
         self.test_attendance_without_activity()  # Should fail
