@@ -561,9 +561,8 @@ const Payments = ({ language, translations }) => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="salaries">{t[language].salaries}</SelectItem>
                         <SelectItem value="fixed">{t[language].fixedExpenses}</SelectItem>
-                        <SelectItem value="extra">{t[language].extraExpenses}</SelectItem>
+                        <SelectItem value="variable">{t[language].variableExpenses}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
