@@ -1344,28 +1344,8 @@ async def qr_checkin(
 # Advanced API endpoints
 
 @api_router.get("/dashboard/stats/live")
-@cached(ttl=30, key_prefix="dashboard")
-async def get_live_dashboard_stats(current_user: User = Depends(require_admin_or_staff)):
-    """Get live dashboard statistics with caching"""
-    stats = await ws_manager.get_current_dashboard_stats()
-    return stats
-
-@api_router.get("/analytics/performance")
-async def get_performance_analytics(
-    days: int = Query(30, description="Number of days to analyze"),
-    current_user: User = Depends(require_admin_or_staff)
-):
-    """Advanced performance analytics"""
-    # Rate limiting
-    if not await RateLimiter.check_rate_limit(f"analytics_{current_user.id}", max_requests=10, window=60):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
-    
-    # This would implement complex analytics
-    return {
-        "message": "Advanced analytics endpoint ready",
-        "period_days": days,
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+# Removed: Advanced integrations endpoints (cache, rate limiter, websockets)
+# These were not actively used in the main application
 
 # Include router
 app.include_router(api_router)
