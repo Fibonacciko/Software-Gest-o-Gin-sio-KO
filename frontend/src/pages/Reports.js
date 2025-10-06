@@ -620,17 +620,39 @@ const Reports = ({ language, translations }) => {
             {reportData.charts && Object.keys(reportData.charts).length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Gráfico de Barras</CardTitle>
+                  <CardTitle>Gráfico de Barras (%)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Bar
                     data={{
                       labels: Object.keys(Object.values(reportData.charts)[0] || {}),
                       datasets: [{
-                        label: 'Quantidade',
-                        data: Object.values(Object.values(reportData.charts)[0] || {}),
-                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
+                        label: reportData.type === 'financial' ? 'Valores (€)' : 'Percentagem (%)',
+                        data: (() => {
+                          const values = Object.values(Object.values(reportData.charts)[0] || {});
+                          if (reportData.type === 'financial') {
+                            return values; // For financial, show actual values
+                          } else {
+                            const total = values.reduce((sum, val) => sum + val, 0);
+                            return values.map(val => total > 0 ? ((val / total) * 100).toFixed(1) : 0);
+                          }
+                        })(),
+                        backgroundColor: [
+                          'rgba(54, 162, 235, 0.8)',
+                          'rgba(255, 99, 132, 0.8)', 
+                          'rgba(255, 206, 86, 0.8)',
+                          'rgba(75, 192, 192, 0.8)',
+                          'rgba(153, 102, 255, 0.8)',
+                          'rgba(255, 159, 64, 0.8)'
+                        ],
+                        borderColor: [
+                          'rgba(54, 162, 235, 1)',
+                          'rgba(255, 99, 132, 1)',
+                          'rgba(255, 206, 86, 1)',
+                          'rgba(75, 192, 192, 1)',
+                          'rgba(153, 102, 255, 1)',
+                          'rgba(255, 159, 64, 1)'
+                        ],
                         borderWidth: 1
                       }]
                     }}
@@ -640,7 +662,32 @@ const Reports = ({ language, translations }) => {
                         legend: {
                           position: 'top',
                         },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              if (reportData.type === 'financial') {
+                                return `${context.dataset.label}: €${context.parsed.y.toFixed(2)}`;
+                              } else {
+                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                              }
+                            }
+                          }
+                        }
                       },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          ticks: {
+                            callback: function(value) {
+                              if (reportData.type === 'financial') {
+                                return '€' + value;
+                              } else {
+                                return value + '%';
+                              }
+                            }
+                          }
+                        }
+                      }
                     }}
                   />
                 </CardContent>
