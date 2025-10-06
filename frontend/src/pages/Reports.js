@@ -260,6 +260,35 @@ const Reports = ({ language, translations }) => {
     });
   };
 
+  const generateFinancialReport = (start, end) => {
+    // Filter payments within date range
+    const filteredPayments = payments.filter(payment => {
+      const payDate = new Date(payment.payment_date);
+      return payDate >= start && payDate <= end && payment.status === 'paid';
+    });
+    
+    // Group payments by method
+    const paymentsByMethod = filteredPayments.reduce((acc, payment) => {
+      acc[payment.payment_method] = (acc[payment.payment_method] || 0) + payment.amount;
+      return acc;
+    }, {});
+    
+    // Group payments by month
+    const paymentsByMonth = filteredPayments.reduce((acc, payment) => {
+      const month = new Date(payment.payment_date).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
+      acc[month] = (acc[month] || 0) + payment.amount;
+      return acc;
+    }, {});
+    
+    const totalRevenue = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    
+    setReportData({
+      type: 'financial',
+      stats: { totalRevenue },
+      charts: { paymentsByMethod, paymentsByMonth }
+    });
+  };
+
   const generatePaymentReport = (start, end) => {
     const filteredPayments = payments.filter(payment => {
       const payDate = new Date(payment.payment_date);
