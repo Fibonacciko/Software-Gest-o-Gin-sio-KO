@@ -26,29 +26,18 @@ class CacheManager:
             self.connected = False
     
     async def get(self, key: str) -> Optional[Any]:
-        """Get cached value with intelligent deserialization"""
+        """Get cached value"""
         try:
-            if self.connected:
-                value = await self.redis.get(key)
-                if value:
-                    return json.loads(value)
-            else:
-                # Fallback to in-memory
-                return self.redis.get(key)
+            return self.redis.get(key)
         except Exception as e:
             logger.error(f"Cache get error for key {key}: {e}")
         return None
     
     async def set(self, key: str, value: Any, ttl: int = 300):
-        """Set cached value with TTL (Time To Live)"""
+        """Set cached value"""
         try:
-            if self.connected:
-                serialized = json.dumps(value, default=str)
-                await self.redis.setex(key, ttl, serialized)
-            else:
-                # Fallback to in-memory (no TTL in simple dict)
-                self.redis[key] = value
-            logger.debug(f"✅ Cached {key} for {ttl}s")
+            self.redis[key] = value
+            logger.debug(f"✅ Cached {key}")
         except Exception as e:
             logger.error(f"Cache set error for key {key}: {e}")
     
