@@ -800,13 +800,11 @@ async def create_attendance(
     attendance_dict = prepare_for_mongo(attendance.dict())
     await db.attendance.insert_one(attendance_dict)
     
-    # 🚀 ADVANCED INTEGRATIONS
+    # Removed advanced integrations for deployment
+    # await cache.invalidate_pattern("gym:attendance:*")
+    # await cache.invalidate_pattern("gym:stats:*")
     
-    # Invalidate attendance cache
-    await cache.invalidate_pattern("gym:attendance:*")
-    await cache.invalidate_pattern("gym:stats:*")
-    
-    logger.info(f"✅ Attendance created with advanced caching: {member['name']} -> {activity['name']}")
+    logger.info(f"✅ Attendance created: {member['name']} -> {activity['name']}")
     
     return attendance
 
