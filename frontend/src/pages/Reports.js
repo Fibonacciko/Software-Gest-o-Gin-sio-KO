@@ -364,6 +364,7 @@ const Reports = ({ language, translations }) => {
   const generateMemberReport = async () => {
     try {
       const totalMembers = members.length;
+      const activeMembers = members.filter(member => member.status === 'active').length;
       
       // Get attendance data to group members by activity
       const attendanceRes = await axios.get(`${API}/attendance`);
@@ -385,12 +386,20 @@ const Reports = ({ language, translations }) => {
         membersByActivityCount[activity] = membersByActivity[activity].size;
       });
       
+      // Group members by status
+      const membersByStatus = members.reduce((acc, member) => {
+        const status = member.status || 'unknown';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+      
       setReportData({
         type: 'member',
-        stats: { totalMembers },
+        stats: { totalMembers, activeMembers },
         charts: { 
-          totals: { [`${t[language || 'pt'].totalMembers}`]: totalMembers },
-          membersByActivity: membersByActivityCount 
+          memberTotals: { [`${t[language || 'pt'].totalMembers}`]: totalMembers },
+          membersByActivity: membersByActivityCount,
+          membersByStatus: membersByStatus
         }
       });
     } catch (error) {
