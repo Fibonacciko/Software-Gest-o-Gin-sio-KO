@@ -236,9 +236,11 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Attendance Page - Fix null member error"
+    - "Payments Page - Update expense categories"
+  stuck_tasks: 
     - "SimpleMemberCalendar - Yellow attendance indicators"
     - "MemberAttendanceCalendar - Yellow attendance indicators and proportion fix"
-  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
