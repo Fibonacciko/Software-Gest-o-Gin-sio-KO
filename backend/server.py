@@ -712,7 +712,11 @@ async def get_member(
     member = await db.members.find_one({"id": member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    return Member(**parse_from_mongo(member))
+    
+    member_obj = Member(**parse_from_mongo(member))
+    # Calculate actual status based on payments
+    member_obj.status = await calculate_member_status(member_obj.id)
+    return member_obj
 
 @api_router.get("/members/number/{member_number}", response_model=Member)
 async def get_member_by_number(
