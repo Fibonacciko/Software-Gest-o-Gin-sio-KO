@@ -103,11 +103,8 @@
 #====================================================================================================
 
 user_problem_statement: 
-1. Página Presenças - erro, não é possível abrir a página (erro: Cannot read properties of null reading 'name')
-2. Pagamentos - alterar nome na barra lateral para "Finanças"
-3. Registar Despesa: mudar categorias para "Despesa Fixa ou Variável" (em vez de Ordenados/Fixas/Extras)
-4. Stock - atualizar limite de stock baixo para ser consistente (5 unidades)
-5. Stock - verificar cálculo da Receita Líquida após venda de produto
+1. Painel Principal - Detalhes do membro - Calendário de Presenças: adicionar bola amarela com fundo amarelo a cada dia em que a presença é registada
+2. Membros - Detalhes - Calendário: corrigir proporção e adicionar bola amarela com fundo amarelo a cada dia com presença, sincronizando-o com o calendário do Painel Principal
 
 backend:
   - task: "Expense categories update"
@@ -126,6 +123,30 @@ backend:
         - comment: "TESTED SUCCESSFULLY: ✅ POST /api/expenses with 'fixed' category works (200). ✅ POST /api/expenses with 'variable' category works (200). ✅ POST /api/expenses with old 'salaries' category properly rejected with validation error (422). ✅ GET /api/expenses endpoint working after cleaning up legacy data with invalid categories. All expense category validation working as expected."
 
 frontend:
+  - task: "SimpleMemberCalendar - Yellow attendance indicators"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/SimpleMemberCalendar.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Updated SimpleMemberCalendar component (used in Dashboard) to show yellow circular background on days with attendance. Changed from small yellow circle to full-size yellow circle (bg-yellow-400) that fills the entire day cell. Black bold text displays on top of yellow background for attendance days."
+
+  - task: "MemberAttendanceCalendar - Yellow attendance indicators and proportion fix"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/MemberAttendanceCalendar.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Updated MemberAttendanceCalendar component (used in Members page) to match SimpleMemberCalendar appearance. Applied yellow circular background (bg-yellow-400) for attendance days with black bold text on top. Fixed proportion by using 'aspect-square' class and proper padding. Added legend showing 'Presença Registada' with yellow circle indicator. Now synchronized with Dashboard calendar appearance."
+
   - task: "Attendance Page - Fix null member error"
     implemented: true
     working: "NA"
@@ -209,14 +230,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Sidebar - Rename Pagamentos to Finanças"
-    - "Payments Page - Update expense categories"
+    - "SimpleMemberCalendar - Yellow attendance indicators"
+    - "MemberAttendanceCalendar - Yellow attendance indicators and proportion fix"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-    - message: "Implemented fixes for 5 reported issues: 1) Fixed Attendance page crash caused by null member references when attendance records reference deleted members. 2) Changed sidebar navigation from 'Pagamentos' to 'Finanças'. 3) Simplified expense categories from 3 (Ordenados/Fixas/Extras) to 2 (Fixa/Variável) in both backend and frontend. 4) Standardized low stock threshold to 5 units across Inventory page. 5) Net revenue calculation logic appears correct (totalSoldValue - totalPurchaseCost) but needs testing to verify it updates properly after sales. All services restarted successfully. Ready for testing."
-    - agent: "testing"
-    - message: "BACKEND TESTING COMPLETED: ✅ All backend functionality tested successfully. ✅ Expense categories properly updated - only 'fixed' and 'variable' accepted, 'salaries' rejected with validation error. ✅ Inventory low stock threshold consistent at 5 units. ✅ Inventory net revenue calculation working correctly with proper quantity tracking. ✅ Attendance API handles deleted members gracefully. ✅ Fixed data migration issue by cleaning up legacy expenses with invalid categories. All backend APIs working as expected. Frontend testing still needed for UI components and navigation changes."
+    - message: "Implemented calendar attendance indicator improvements: 1) SimpleMemberCalendar (Dashboard): Updated to show full yellow circular background (bg-yellow-400) for days with attendance, with black bold text on top. 2) MemberAttendanceCalendar (Members page): Synchronized appearance with Dashboard calendar - yellow circular background for attendance days, fixed proportion using aspect-square class, added legend. Both calendars now have consistent appearance with yellow circles indicating attendance dates. Screenshots show calendars displaying correctly with yellow indicators on days 5, 6, and 8 of October 2025."
