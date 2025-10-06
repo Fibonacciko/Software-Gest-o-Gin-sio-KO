@@ -13,9 +13,12 @@ import {
   Globe,
   LogOut,
   Shield,
-  User
+  User,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './ui/button';
 
 const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations }) => {
