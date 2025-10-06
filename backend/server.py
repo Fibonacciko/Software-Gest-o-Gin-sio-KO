@@ -1239,17 +1239,6 @@ async def qr_checkin(
     }
 
 # Advanced API endpoints
-@api_router.get("/certificates/{member_id}")
-async def get_member_certificates(member_id: str, current_user: User = Depends(require_admin_or_staff)):
-    """Get all certificates for a member"""
-    certificates = await cert_manager.get_member_certificates(member_id)
-    return certificates
-
-@api_router.get("/certificates/verify/{certificate_id}")
-async def verify_certificate(certificate_id: str):
-    """Verify certificate authenticity (public endpoint)"""
-    verification = await cert_manager.verify_certificate(certificate_id)
-    return verification
 
 @api_router.get("/dashboard/stats/live")
 @cached(ttl=30, key_prefix="dashboard")
