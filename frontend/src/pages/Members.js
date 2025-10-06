@@ -501,7 +501,6 @@ const Members = ({ language, translations }) => {
                 <SelectItem value="all">{t[language].allStatuses}</SelectItem>
                 <SelectItem value="active">{t[language].active}</SelectItem>
                 <SelectItem value="inactive">{t[language].inactive}</SelectItem>
-                <SelectItem value="suspended">{t[language].suspended}</SelectItem>
               </SelectContent>
             </Select>
             
