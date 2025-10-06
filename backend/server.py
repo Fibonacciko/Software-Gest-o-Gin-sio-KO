@@ -2,6 +2,8 @@ from fastapi import FastAPI, APIRouter, HTTPException, Query, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from strawberry.fastapi import GraphQLRouter
+from graphql_schema import schema
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
