@@ -47,7 +47,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
       )}
       
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full bg-gradient-to-b from-white/95 to-orange-50/95 dark:from-gray-800/95 dark:to-gray-700/95 backdrop-blur-sm shadow-lg transition-all duration-300 z-50 ${
+      <div className={`fixed left-0 top-0 h-full bg-gradient-to-b from-white/95 to-orange-50/95 dark:from-neutral-800/95 dark:to-neutral-900/95 backdrop-blur-sm shadow-lg transition-all duration-300 z-50 ${
         isOpen ? 'w-64' : 'w-16'
       }`}>
         {/* Header */}
