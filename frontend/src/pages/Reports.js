@@ -239,36 +239,24 @@ const Reports = ({ language, translations }) => {
       return attDate >= start && attDate <= end;
     });
     
-    const totalAttendance = filteredAttendance.length;
-    const uniqueVisitors = new Set(filteredAttendance.map(att => att.member_id)).size;
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) || 1;
-    const dailyAverage = (totalAttendance / days).toFixed(1);
-    
-    // Group by date
+    // Group by date for chart
     const attendanceByDay = filteredAttendance.reduce((acc, att) => {
       const date = att.check_in_date;
       acc[date] = (acc[date] || 0) + 1;
       return acc;
     }, {});
     
-    // Top members by attendance
-    const memberAttendance = filteredAttendance.reduce((acc, att) => {
-      acc[att.member_id] = (acc[att.member_id] || 0) + 1;
+    // Group by activity/modality for chart
+    const attendanceByActivity = filteredAttendance.reduce((acc, att) => {
+      const activity = att.activity?.name || 'Sem modalidade';
+      acc[activity] = (acc[activity] || 0) + 1;
       return acc;
     }, {});
     
-    const topMembers = Object.entries(memberAttendance)
-      .map(([memberId, count]) => {
-        const member = members.find(m => m.id === memberId);
-        return { member: member?.name || 'Desconhecido', count };
-      })
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-    
     setReportData({
       type: 'attendance',
-      stats: { totalAttendance, uniqueVisitors, dailyAverage },
-      charts: { attendanceByDay, topMembers }
+      stats: {},
+      charts: { attendanceByDay, attendanceByActivity }
     });
   };
 
