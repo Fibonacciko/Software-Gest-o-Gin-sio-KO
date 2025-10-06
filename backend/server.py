@@ -1248,9 +1248,29 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_db():
+    # Original setup
     await create_admin_user()
     await create_default_activities()
     await update_existing_members_with_numbers()
+    
+    # Initialize advanced technologies
+    logger.info("🚀 Initializing advanced backend technologies...")
+    
+    # Cache system
+    await cache.connect()
+    await warm_dashboard_cache()
+    
+    # Event bus (message queue)
+    await event_bus.connect()
+    await setup_event_subscriptions()
+    
+    # Blockchain certificates
+    await cert_manager.connect()
+    
+    # WebSocket manager
+    await ws_manager.start_background_tasks()
+    
+    logger.info("✅ Advanced backend systems initialized successfully")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
