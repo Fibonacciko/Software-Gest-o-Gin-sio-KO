@@ -1057,9 +1057,9 @@ async def sell_inventory_item(
 @api_router.post("/expenses", response_model=Expense)
 async def create_expense(
     expense_data: ExpenseCreate,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
-    """Create a new expense record (Admin only)"""
+    """Create a new expense record (Admin or Staff)"""
     expense_dict = expense_data.dict()
     # Map 'date' field from input to 'expense_date' in the model
     if 'date' in expense_dict and expense_dict['date'] is not None:
