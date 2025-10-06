@@ -349,7 +349,7 @@ const Dashboard = ({ language, translations }) => {
   }
 
   return (
-    <div className="p-6 space-y-6 fade-in bg-gradient-to-br from-white/80 to-orange-50/80 dark:from-black/80 dark:to-orange-900/80 backdrop-blur-sm min-h-screen">
+    <div className="p-6 space-y-6 fade-in bg-gradient-to-br from-white/80 to-orange-50/80 dark:from-gray-800/80 dark:to-gray-700/80 backdrop-blur-sm min-h-screen">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <div>
