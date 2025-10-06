@@ -92,9 +92,10 @@ function App() {
                 </Routes>
               </main>
             </div>
-          </ProtectedRoute>
-          <Toaster position="top-right" />
-        </AuthProvider>
+            </ProtectedRoute>
+            <Toaster position="top-right" />
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </div>
   );
