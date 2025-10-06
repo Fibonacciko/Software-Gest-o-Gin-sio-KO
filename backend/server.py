@@ -1068,7 +1068,11 @@ async def create_expense(
     current_user: User = Depends(require_admin)
 ):
     """Create a new expense record (Admin only)"""
-    expense = Expense(**expense_data.dict())
+    expense_dict = expense_data.dict()
+    # Map 'date' field from input to 'expense_date' in the model
+    if 'date' in expense_dict:
+        expense_dict['expense_date'] = expense_dict.pop('date')
+    expense = Expense(**expense_dict)
     expense_dict = prepare_for_mongo(expense.dict())
     await db.expenses.insert_one(expense_dict)
     return expense
