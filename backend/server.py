@@ -1350,9 +1350,9 @@ async def qr_checkin(
 # Include router
 app.include_router(api_router)
 
-# GraphQL Router - Modern Query Layer
-graphql_app = GraphQLRouter(schema)
-app.include_router(graphql_app, prefix="/graphql")
+# Removed: GraphQL Router - not actively used in main application
+# graphql_app = GraphQLRouter(schema)
+# app.include_router(graphql_app, prefix="/graphql")
 
 # WebSocket integration (commented out for now)
 # sio_app = socketio.ASGIApp(ws_manager.sio, app)
