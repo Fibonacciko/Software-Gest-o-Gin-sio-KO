@@ -197,9 +197,8 @@ class InventoryItemCreate(BaseModel):
     description: Optional[str] = None
 
 class ExpenseCategory(str, Enum):
-    SALARIES = "salaries"
     FIXED = "fixed"
-    EXTRA = "extra"
+    VARIABLE = "variable"
 
 class Expense(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
