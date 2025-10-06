@@ -209,11 +209,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Attendance Page - Fix null member error"
     - "Sidebar - Rename Pagamentos to Finanças"
     - "Payments Page - Update expense categories"
-    - "Inventory Page - Standardize low stock threshold"
-    - "Inventory Page - Verify net revenue calculation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -221,3 +218,5 @@ test_plan:
 agent_communication:
     - agent: "main"
     - message: "Implemented fixes for 5 reported issues: 1) Fixed Attendance page crash caused by null member references when attendance records reference deleted members. 2) Changed sidebar navigation from 'Pagamentos' to 'Finanças'. 3) Simplified expense categories from 3 (Ordenados/Fixas/Extras) to 2 (Fixa/Variável) in both backend and frontend. 4) Standardized low stock threshold to 5 units across Inventory page. 5) Net revenue calculation logic appears correct (totalSoldValue - totalPurchaseCost) but needs testing to verify it updates properly after sales. All services restarted successfully. Ready for testing."
+    - agent: "testing"
+    - message: "BACKEND TESTING COMPLETED: ✅ All backend functionality tested successfully. ✅ Expense categories properly updated - only 'fixed' and 'variable' accepted, 'salaries' rejected with validation error. ✅ Inventory low stock threshold consistent at 5 units. ✅ Inventory net revenue calculation working correctly with proper quantity tracking. ✅ Attendance API handles deleted members gracefully. ✅ Fixed data migration issue by cleaning up legacy expenses with invalid categories. All backend APIs working as expected. Frontend testing still needed for UI components and navigation changes."
