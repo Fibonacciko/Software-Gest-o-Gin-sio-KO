@@ -42,7 +42,7 @@ const API = `${BACKEND_URL}/api`;
 
 const Reports = ({ language, translations }) => {
   const [loading, setLoading] = useState(true);
-  const [reportType, setReportType] = useState('attendance');
+  const [reportType, setReportType] = useState('financial');
   const [dateRange, setDateRange] = useState('thisMonth');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
