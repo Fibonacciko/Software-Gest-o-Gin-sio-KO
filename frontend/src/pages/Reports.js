@@ -541,7 +541,6 @@ const Reports = ({ language, translations }) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="financial">{t[language].financialReport}</SelectItem>
-                  <SelectItem value="attendance">{t[language].attendanceReport}</SelectItem>
                   <SelectItem value="member">{t[language].memberReport}</SelectItem>
                   <SelectItem value="stock">{t[language].stockReport}</SelectItem>
                 </SelectContent>
