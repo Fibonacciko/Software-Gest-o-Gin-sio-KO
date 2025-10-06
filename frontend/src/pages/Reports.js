@@ -799,28 +799,57 @@ const Reports = ({ language, translations }) => {
           {reportData.type === 'financial' && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <StatCard
-                title={t[language].paymentsReceived}
-                value={`€${reportData.stats.paymentsReceived.toFixed(2)}`}
+                title={t[language].monthlyRevenue}
+                value={`€${reportData.stats.monthlyRevenue.toFixed(2)}`}
                 icon={DollarSign}
                 color="bg-blue-500"
               />
               <StatCard
-                title={t[language].itemsSold}
-                value={`€${reportData.stats.totalSoldValue.toFixed(2)}`}
+                title={t[language].extraRevenue}
+                value={`€${reportData.stats.extraRevenue.toFixed(2)}`}
                 icon={TrendingUp}
                 color="bg-green-500"
               />
               <StatCard
-                title={t[language].totalExpenses}
-                value={`€${reportData.stats.totalExpenses.toFixed(2)}`}
+                title={t[language].articleRevenue}
+                value={`€${reportData.stats.articleRevenue.toFixed(2)}`}
+                icon={Package}
+                color="bg-purple-500"
+              />
+              <StatCard
+                title={t[language].netTotal}
+                value={`€${reportData.stats.netTotal.toFixed(2)}`}
+                icon={Activity}
+                color="bg-orange-500"
+              />
+            </div>
+          )}
+          
+          {reportData.type === 'financial' && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <StatCard
+                title={t[language].fixedExpenses}
+                value={`€${reportData.stats.fixedExpenses.toFixed(2)}`}
                 icon={BarChart}
                 color="bg-red-500"
               />
               <StatCard
-                title={t[language].netRevenue}
-                value={`€${reportData.stats.netRevenue.toFixed(2)}`}
+                title={t[language].extraExpenses}
+                value={`€${reportData.stats.extraExpenses.toFixed(2)}`}
                 icon={Calendar}
-                color="bg-purple-500"
+                color="bg-red-600"
+              />
+              <StatCard
+                title={t[language].articleExpenses}
+                value={`€${reportData.stats.articleExpenses.toFixed(2)}`}
+                icon={Package}
+                color="bg-red-700"
+              />
+              <StatCard
+                title={t[language].grossTotal}
+                value={`€${reportData.stats.grossTotal.toFixed(2)}`}
+                icon={TrendingUp}
+                color="bg-green-600"
               />
             </div>
           )}
