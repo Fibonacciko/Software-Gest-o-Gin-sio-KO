@@ -481,34 +481,29 @@ const Reports = ({ language, translations }) => {
       const response = await axios.get(`${API}/inventory`);
       const inventory = response.data;
       
-      // Separate clothing and equipment
-      const clothing = inventory.filter(item => item.category === 'clothing');
-      const equipment = inventory.filter(item => item.category === 'equipment');
-      
-      const totalArticles = inventory.reduce((sum, item) => sum + item.quantity, 0);
-      const totalStockValue = inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-      const totalSoldValue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * item.price), 0);
-      const totalPurchaseValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.purchase_price || item.price)), 0);
-      const netRevenue = totalSoldValue - totalPurchaseValue;
-      
-      // Group by category
-      const itemsByCategory = {
-        'Roupa': clothing.reduce((sum, item) => sum + item.quantity, 0),
-        'Equipamentos': equipment.reduce((sum, item) => sum + item.quantity, 0)
-      };
-      
-      // Value breakdown
-      const valueBreakdown = {
-        [`${t[language || 'pt'].totalStockValue}`]: totalStockValue,
-        [`${t[language || 'pt'].totalSoldValue}`]: totalSoldValue,
-        [`${t[language || 'pt'].totalPurchaseValue}`]: totalPurchaseValue,
-        [`${t[language || 'pt'].netRevenue}`]: netRevenue
-      };
+      // Calculate the 4 specific stock metrics
+      const articlesInStock = inventory.reduce((sum, item) => sum + item.quantity, 0);
+      const investedValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.purchase_price || item.price * 0.6)), 0);
+      const receivedValue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * item.price), 0);
+      const netValue = receivedValue - investedValue;
       
       setReportData({
         type: 'stock',
-        stats: { totalArticles, totalStockValue, totalSoldValue, totalPurchaseValue, netRevenue },
-        charts: { itemsByCategory, valueBreakdown }
+        stats: { articlesInStock, investedValue, receivedValue, netValue },
+        charts: { 
+          stockMetrics: {
+            [`${t[language || 'pt'].articlesInStock}`]: articlesInStock * 25, // Convert to euro equivalent for chart
+            [`${t[language || 'pt'].investedValue}`]: investedValue,
+            [`${t[language || 'pt'].receivedValue}`]: receivedValue,
+            [`${t[language || 'pt'].netValue}`]: netValue
+          },
+          valueBreakdown: {
+            [`${t[language || 'pt'].investedValue}`]: investedValue,
+            [`${t[language || 'pt'].receivedValue}`]: receivedValue,
+            [`${t[language || 'pt'].netValue}`]: netValue > 0 ? netValue : 0,
+            'Margem': receivedValue > 0 ? ((netValue / receivedValue) * 100) : 0
+          }
+        }
       });
     } catch (error) {
       console.error('Error fetching inventory data:', error);
