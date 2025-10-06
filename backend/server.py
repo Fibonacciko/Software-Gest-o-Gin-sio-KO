@@ -4,6 +4,11 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
 from graphql_schema import schema
+import socketio
+from cache_manager import cache, cached, warm_dashboard_cache, RateLimiter
+from websocket_manager import ws_manager, notify_check_in, notify_payment, notify_new_member
+from message_queue import event_bus, setup_event_subscriptions, publish_member_event, publish_attendance_event, publish_payment_event, GymEvents
+from blockchain_certificates import cert_manager, AchievementDetector
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
