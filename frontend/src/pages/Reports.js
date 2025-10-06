@@ -405,26 +405,40 @@ const Reports = ({ language, translations }) => {
 
   const generateStockReport = async () => {
     try {
-      const inventoryRes = await axios.get(`${API}/inventory`);
-      const inventory = inventoryRes.data;
+      const response = await axios.get(`${API}/inventory`);
+      const inventory = response.data;
       
-      const totalItems = inventory.reduce((sum, item) => sum + item.quantity, 0);
-      const totalValue = inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-      const lowStockItems = inventory.filter(item => item.quantity > 0 && item.quantity <= 5).length;
+      // Separate clothing and equipment
+      const clothing = inventory.filter(item => item.category === 'clothing');
+      const equipment = inventory.filter(item => item.category === 'equipment');
       
-      // Items by category
-      const itemsByCategory = inventory.reduce((acc, item) => {
-        acc[item.category] = (acc[item.category] || 0) + item.quantity;
-        return acc;
-      }, {});
+      const totalArticles = inventory.reduce((sum, item) => sum + item.quantity, 0);
+      const totalStockValue = inventory.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+      const totalSoldValue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * item.price), 0);
+      const totalPurchaseValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.purchase_price || item.price)), 0);
+      const netRevenue = totalSoldValue - totalPurchaseValue;
+      
+      // Group by category
+      const itemsByCategory = {
+        'Roupa': clothing.reduce((sum, item) => sum + item.quantity, 0),
+        'Equipamentos': equipment.reduce((sum, item) => sum + item.quantity, 0)
+      };
+      
+      // Value breakdown
+      const valueBreakdown = {
+        [`${t[language || 'pt'].totalStockValue}`]: totalStockValue,
+        [`${t[language || 'pt'].totalSoldValue}`]: totalSoldValue,
+        [`${t[language || 'pt'].totalPurchaseValue}`]: totalPurchaseValue,
+        [`${t[language || 'pt'].netRevenue}`]: netRevenue
+      };
       
       setReportData({
-        type: 'inventory',
-        stats: { totalItems, totalValue, lowStockItems },
-        charts: { itemsByCategory }
+        type: 'stock',
+        stats: { totalArticles, totalStockValue, totalSoldValue, totalPurchaseValue, netRevenue },
+        charts: { itemsByCategory, valueBreakdown }
       });
     } catch (error) {
-      console.error('Error fetching inventory:', error);
+      console.error('Error fetching inventory data:', error);
     }
   };
 
