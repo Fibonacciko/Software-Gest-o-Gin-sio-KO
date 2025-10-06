@@ -1230,6 +1230,10 @@ app.include_router(api_router)
 graphql_app = GraphQLRouter(schema)
 app.include_router(graphql_app, prefix="/graphql")
 
+# WebSocket integration
+sio_app = socketio.ASGIApp(ws_manager.sio, app)
+app.mount("/ws", sio_app)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
