@@ -1343,7 +1343,6 @@ async def qr_checkin(
 
 # Advanced API endpoints
 
-@api_router.get("/dashboard/stats/live")
 # Removed: Advanced integrations endpoints (cache, rate limiter, websockets)
 # These were not actively used in the main application
 
