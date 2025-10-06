@@ -754,22 +754,28 @@ const Reports = ({ language, translations }) => {
           
           {reportData.type === 'stock' && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatCard
-                  title={t[language].totalItems}
-                  value={reportData.stats.totalItems}
+                  title={t[language].totalArticles}
+                  value={reportData.stats.totalArticles}
                   icon={Package}
                   color="bg-blue-500"
                 />
                 <StatCard
-                  title={t[language].totalValue}
-                  value={`€${reportData.stats.totalValue.toFixed(2)}`}
+                  title={t[language].totalStockValue}
+                  value={`€${reportData.stats.totalStockValue.toFixed(2)}`}
                   icon={DollarSign}
                   color="bg-green-500"
                 />
                 <StatCard
-                  title={t[language].lowStockItems}
-                  value={reportData.stats.lowStockItems}
+                  title={t[language].totalSoldValue}
+                  value={`€${reportData.stats.totalSoldValue.toFixed(2)}`}
+                  icon={TrendingUp}
+                  color="bg-purple-500"
+                />
+                <StatCard
+                  title={t[language].netRevenue}
+                  value={`€${reportData.stats.netRevenue.toFixed(2)}`}
                   icon={Activity}
                   color="bg-orange-500"
                 />
