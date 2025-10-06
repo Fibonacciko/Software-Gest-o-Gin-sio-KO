@@ -1077,9 +1077,9 @@ async def get_expenses(
     category: Optional[ExpenseCategory] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
-    """Get all expenses with optional filters (Admin only)"""
+    """Get all expenses with optional filters (Admin or Staff)"""
     filter_dict = {}
     if category:
         filter_dict['category'] = category
