@@ -428,7 +428,7 @@ const Payments = ({ language, translations }) => {
       </div>
 
       {/* Main Action Bars */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className={`grid grid-cols-1 ${isAdmin() ? 'lg:grid-cols-2' : ''} gap-4 mb-6`}>
         {/* Register Payments Bar */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
