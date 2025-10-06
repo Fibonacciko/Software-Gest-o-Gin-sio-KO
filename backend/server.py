@@ -1381,14 +1381,7 @@ async def startup_db():
     await create_default_activities()
     await update_existing_members_with_numbers()
     
-    # Initialize advanced technologies
-    logger.info("🚀 Initializing advanced backend technologies...")
-    
-    # Cache system
-    await cache.connect()
-    await warm_dashboard_cache()
-    
-    logger.info("✅ Advanced backend systems initialized successfully")
+    logger.info("✅ Application initialized successfully")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
