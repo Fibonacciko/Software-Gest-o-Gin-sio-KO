@@ -186,6 +186,20 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
             </Button>
           </div>
         )}
+        
+        {/* Collapsed Theme Toggle */}
+        {!isOpen && (
+          <div className="absolute bottom-6 left-0 right-0 px-2">
+            <button
+              onClick={toggleTheme}
+              className="w-full p-3 rounded-lg bg-orange-100/50 dark:bg-orange-800/50 hover:bg-orange-200/50 dark:hover:bg-orange-700/50 text-orange-600 dark:text-orange-400 transition-colors"
+              data-testid="theme-toggle-collapsed"
+              title={isDark ? 'Modo Claro' : 'Modo Escuro'}
+            >
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
