@@ -366,27 +366,41 @@ const Reports = ({ language, translations }) => {
     });
   };
 
-  const generateMemberReport = () => {
-    const totalMembers = members.length;
-    const activeMembers = members.filter(m => m.status === 'active').length;
-    
-    // Members by type
-    const membersByType = members.reduce((acc, member) => {
-      acc[member.membership_type] = (acc[member.membership_type] || 0) + 1;
-      return acc;
-    }, {});
-    
-    // Members by status
-    const membersByStatus = members.reduce((acc, member) => {
-      acc[member.status] = (acc[member.status] || 0) + 1;
-      return acc;
-    }, {});
-    
-    setReportData({
-      type: 'member',
-      stats: { totalMembers, activeMembers },
-      charts: { membersByType, membersByStatus }
-    });
+  const generateMemberReport = async () => {
+    try {
+      const totalMembers = members.length;
+      
+      // Get attendance data to group members by activity
+      const attendanceRes = await axios.get(`${API}/attendance`);
+      const attendanceData = attendanceRes.data;
+      
+      // Group members by activity/modality
+      const membersByActivity = attendanceData.reduce((acc, att) => {
+        const activity = att.activity?.name || 'Sem modalidade';
+        if (!acc[activity]) {
+          acc[activity] = new Set();
+        }
+        acc[activity].add(att.member_id);
+        return acc;
+      }, {});
+      
+      // Convert sets to counts
+      const membersByActivityCount = {};
+      Object.keys(membersByActivity).forEach(activity => {
+        membersByActivityCount[activity] = membersByActivity[activity].size;
+      });
+      
+      setReportData({
+        type: 'member',
+        stats: { totalMembers },
+        charts: { 
+          totals: { [`${t[language || 'pt'].totalMembers}`]: totalMembers },
+          membersByActivity: membersByActivityCount 
+        }
+      });
+    } catch (error) {
+      console.error('Error generating member report:', error);
+    }
   };
 
   const generateStockReport = async () => {
