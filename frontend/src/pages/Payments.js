@@ -166,6 +166,9 @@ const Payments = ({ language, translations }) => {
   useEffect(() => {
     fetchMembers();
     fetchPayments();
+    if (isAdmin()) {
+      fetchExpenses();
+    }
   }, []);
 
   useEffect(() => {
