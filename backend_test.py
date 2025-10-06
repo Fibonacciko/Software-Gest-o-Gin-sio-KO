@@ -697,6 +697,13 @@ class GymManagementAPITester:
         print("\n🎯 PRIORITY TESTS - Review Request Specific")
         print("-" * 50)
         self.test_authentication_on_endpoints()
+        
+        # Review Request Test Cases
+        self.test_expense_categories_backend()  # Test Case 3
+        self.test_inventory_low_stock_consistency()  # Test Case 4
+        self.test_inventory_net_revenue_calculation()  # Test Case 5
+        
+        # Legacy expense test
         self.test_expense_endpoints()
         
         # Activities/Modalidades tests (PRIORITY)
