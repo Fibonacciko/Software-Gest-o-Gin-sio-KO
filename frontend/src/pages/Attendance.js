@@ -196,7 +196,7 @@ const Attendance = ({ language, translations }) => {
       ['Data', 'Membro', 'Hora', 'Método'],
       ...attendance.map(att => [
         att.check_in_date,
-        att.member.name,
+        att.member ? att.member.name : 'Membro eliminado',
         new Date(att.check_in_time).toLocaleTimeString('pt-PT'),
         att.method
       ])
