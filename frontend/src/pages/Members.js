@@ -62,7 +62,6 @@ const Members = ({ language, translations }) => {
       allStatuses: 'Todos os Status',
       active: 'Ativo',
       inactive: 'Inativo',
-      suspended: 'Suspenso',
       allMemberships: 'Tipos de Planos',
       basic: 'Básico',
       premium: 'Premium',
