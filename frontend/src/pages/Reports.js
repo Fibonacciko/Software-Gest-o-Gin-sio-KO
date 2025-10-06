@@ -97,6 +97,7 @@ const Reports = ({ language, translations }) => {
       netRevenue: 'Receitas Líquida',
       totalMembers: 'Membros Totais',
       membersByActivity: 'Membros por Modalidade',
+      membersByPack: 'Membros por Pack',
       totalArticles: 'Total de Artigos',
       totalStockValue: 'Valor Total em Stock',
       totalSoldValue: 'Valor Total Vendido',
