@@ -112,15 +112,18 @@ user_problem_statement:
 backend:
   - task: "Expense categories update"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Updated ExpenseCategory enum from 3 categories (SALARIES, FIXED, EXTRA) to 2 categories (FIXED, VARIABLE) as requested. This simplifies expense tracking to just 'Despesa Fixa' and 'Despesa Variável'."
+        - working: true
+        - agent: "testing"
+        - comment: "TESTED SUCCESSFULLY: ✅ POST /api/expenses with 'fixed' category works (200). ✅ POST /api/expenses with 'variable' category works (200). ✅ POST /api/expenses with old 'salaries' category properly rejected with validation error (422). ✅ GET /api/expenses endpoint working after cleaning up legacy data with invalid categories. All expense category validation working as expected."
 
 frontend:
   - task: "Attendance Page - Fix null member error"
