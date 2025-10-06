@@ -66,7 +66,7 @@ const SimpleMemberCalendar = ({ attendanceDates = [], currentMonth = new Date() 
                   {dayInfo.day}
                 </span>
                 {dayInfo.hasAttendance && (
-                  <div className="absolute inset-0 border-2 border-yellow-400 rounded-full bg-yellow-400"></div>
+                  <div className="absolute inset-0 w-3 h-3 mx-auto my-auto rounded-full bg-yellow-400 border border-yellow-500"></div>
                 )}
               </div>
             ) : (
