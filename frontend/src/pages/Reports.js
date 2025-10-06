@@ -730,6 +730,35 @@ const Reports = ({ language, translations }) => {
             )}
           </div>
           
+          {reportData.type === 'financial' && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <StatCard
+                title={t[language].paymentsReceived}
+                value={`€${reportData.stats.paymentsReceived.toFixed(2)}`}
+                icon={DollarSign}
+                color="bg-blue-500"
+              />
+              <StatCard
+                title={t[language].itemsSold}
+                value={`€${reportData.stats.totalSoldValue.toFixed(2)}`}
+                icon={TrendingUp}
+                color="bg-green-500"
+              />
+              <StatCard
+                title={t[language].totalExpenses}
+                value={`€${reportData.stats.totalExpenses.toFixed(2)}`}
+                icon={BarChart}
+                color="bg-red-500"
+              />
+              <StatCard
+                title={t[language].netRevenue}
+                value={`€${reportData.stats.netRevenue.toFixed(2)}`}
+                icon={Calendar}
+                color="bg-purple-500"
+              />
+            </div>
+          )}
+          
           {reportData.type === 'payment' && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <StatCard
