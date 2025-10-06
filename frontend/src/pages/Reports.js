@@ -770,7 +770,7 @@ const Reports = ({ language, translations }) => {
                 />
                 <StatCard
                   title={t[language].activeMembers}
-                  value={reportData.stats.activeMembers}
+                  value={reportData.stats.activeMembers || 0}
                   icon={Activity}
                   color="bg-green-500"
                 />
@@ -779,13 +779,13 @@ const Reports = ({ language, translations }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t[language].membersByType}</CardTitle>
+                    <CardTitle>{t[language].membersByActivity}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {Object.entries(reportData.charts.membersByType).map(([type, count]) => (
-                        <div key={type} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="font-medium">{t[language][type] || type}</span>
+                      {reportData.charts.membersByActivity && Object.entries(reportData.charts.membersByActivity).map(([activity, count]) => (
+                        <div key={activity} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span className="font-medium">{activity}</span>
                           <span className="text-sm font-semibold text-blue-600">{count}</span>
                         </div>
                       ))}
@@ -799,7 +799,7 @@ const Reports = ({ language, translations }) => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {Object.entries(reportData.charts.membersByStatus).map(([status, count]) => (
+                      {reportData.charts.membersByStatus && Object.entries(reportData.charts.membersByStatus).map(([status, count]) => (
                         <div key={status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <span className="font-medium">{t[language][status] || status}</span>
                           <span className="text-sm font-semibold text-green-600">{count}</span>
