@@ -679,8 +679,6 @@ async def get_members(
     current_user: User = Depends(require_admin_or_staff)
 ):
     filter_dict = {}
-    if status:
-        filter_dict['status'] = status
     if membership_type:
         filter_dict['membership_type'] = membership_type
     if search:
@@ -692,7 +690,19 @@ async def get_members(
         ]
     
     members = await db.members.find(filter_dict).to_list(1000)
-    return [Member(**parse_from_mongo(member)) for member in members]
+    
+    # Calculate status for each member based on payments
+    result_members = []
+    for member in members:
+        member_obj = Member(**parse_from_mongo(member))
+        # Calculate actual status based on payments
+        member_obj.status = await calculate_member_status(member_obj.id)
+        
+        # Filter by status if specified
+        if status is None or member_obj.status == status:
+            result_members.append(member_obj)
+    
+    return result_members
 
 @api_router.get("/members/{member_id}", response_model=Member)
 async def get_member(
