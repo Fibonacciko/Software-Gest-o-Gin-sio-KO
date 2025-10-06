@@ -620,7 +620,9 @@ const Reports = ({ language, translations }) => {
             {reportData.charts && Object.keys(reportData.charts).length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Gráfico de Barras (%)</CardTitle>
+                  <CardTitle>
+                    {reportData.type === 'financial' ? 'Gráfico de Barras' : 'Gráfico de Barras (%)'}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Bar
@@ -629,12 +631,21 @@ const Reports = ({ language, translations }) => {
                       datasets: [{
                         label: reportData.type === 'financial' ? 'Valores (€)' : 'Percentagem (%)',
                         data: (() => {
-                          const values = Object.values(Object.values(reportData.charts)[0] || {});
+                          const chartData = Object.values(reportData.charts)[0] || {};
+                          const values = Object.values(chartData);
+                          
                           if (reportData.type === 'financial') {
                             return values; // For financial, show actual values
                           } else {
+                            // For non-financial reports, show percentages only if there are multiple categories
                             const total = values.reduce((sum, val) => sum + val, 0);
-                            return values.map(val => total > 0 ? ((val / total) * 100).toFixed(1) : 0);
+                            if (Object.keys(chartData).length === 1) {
+                              // If only one category, show the actual count
+                              return values;
+                            } else {
+                              // Multiple categories, show percentages
+                              return values.map(val => total > 0 ? parseFloat(((val / total) * 100).toFixed(1)) : 0);
+                            }
                           }
                         })(),
                         backgroundColor: [
@@ -665,10 +676,15 @@ const Reports = ({ language, translations }) => {
                         tooltip: {
                           callbacks: {
                             label: function(context) {
+                              const chartData = Object.values(reportData.charts)[0] || {};
                               if (reportData.type === 'financial') {
                                 return `${context.dataset.label}: €${context.parsed.y.toFixed(2)}`;
                               } else {
-                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                                if (Object.keys(chartData).length === 1) {
+                                  return `Quantidade: ${context.parsed.y}`;
+                                } else {
+                                  return `${context.dataset.label}: ${context.parsed.y}%`;
+                                }
                               }
                             }
                           }
@@ -679,10 +695,15 @@ const Reports = ({ language, translations }) => {
                           beginAtZero: true,
                           ticks: {
                             callback: function(value) {
+                              const chartData = Object.values(reportData.charts)[0] || {};
                               if (reportData.type === 'financial') {
                                 return '€' + value;
                               } else {
-                                return value + '%';
+                                if (Object.keys(chartData).length === 1) {
+                                  return value;
+                                } else {
+                                  return value + '%';
+                                }
                               }
                             }
                           }
