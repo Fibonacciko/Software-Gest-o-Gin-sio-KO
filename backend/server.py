@@ -752,28 +752,7 @@ async def create_attendance(
     await cache.invalidate_pattern("gym:attendance:*")
     await cache.invalidate_pattern("gym:stats:*")
     
-    # Publish attendance event
-    await publish_attendance_event(
-        GymEvents.MEMBER_CHECKED_IN,
-        Member(**parse_from_mongo(member)).dict(),
-        activity,
-        attendance.dict()
-    )
-    
-    # WebSocket real-time notification
-    await notify_check_in(
-        Member(**parse_from_mongo(member)).dict(),
-        activity
-    )
-    
-    # Check for attendance milestones
-    total_attendance = await db.attendance.count_documents({"member_id": attendance_data.member_id})
-    await AchievementDetector.check_attendance_milestones(attendance_data.member_id, total_attendance)
-    
-    # Check loyalty milestones
-    member_obj = Member(**parse_from_mongo(member))
-    days_since_join = (date.today() - member_obj.join_date).days
-    await AchievementDetector.check_loyalty_milestones(attendance_data.member_id, days_since_join)
+    logger.info(f"✅ Attendance created with advanced caching: {member['name']} -> {activity['name']}")
     
     return attendance
 
