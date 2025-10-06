@@ -426,9 +426,9 @@ const Payments = ({ language, translations }) => {
       </div>
 
       {/* Main Action Bars */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         {/* Register Payments Bar */}
-        <Card className="bg-black text-white">
+        <Card className="bg-gray-800/80 dark:bg-gray-700/80 text-white border-orange-200/30">
           <CardContent className="p-4">
             <h2 className="text-lg font-bold mb-4 text-white">
               {t[language].registerPayments}
