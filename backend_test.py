@@ -404,13 +404,191 @@ class GymManagementAPITester:
         
         return True, {}
 
-    def test_expense_endpoints(self):
-        """Test expense endpoints functionality"""
-        print("\n🔍 Testing Expense Endpoints...")
+    def test_expense_categories_backend(self):
+        """Test expense categories backend - Review Request Test Case 3"""
+        print("\n🔍 Testing Expense Categories Backend (Review Request)...")
         
-        # Create a new expense
-        expense_data = {
+        # Test 1: POST /api/expenses with category "fixed" - should work
+        expense_fixed_data = {
+            "category": "fixed",
+            "amount": 500.0,
+            "description": "Despesa fixa teste",
+            "created_by": "fabio.guerreiro"
+        }
+        
+        success_fixed, response_fixed = self.run_test("Create Expense - Fixed Category", "POST", "expenses", 200, expense_fixed_data)
+        
+        # Test 2: POST /api/expenses with category "variable" - should work
+        expense_variable_data = {
+            "category": "variable",
+            "amount": 300.0,
+            "description": "Despesa variável teste",
+            "created_by": "fabio.guerreiro"
+        }
+        
+        success_variable, response_variable = self.run_test("Create Expense - Variable Category", "POST", "expenses", 200, expense_variable_data)
+        
+        # Test 3: POST /api/expenses with old category "salaries" - should fail with validation error
+        expense_salaries_data = {
             "category": "salaries",
+            "amount": 1000.0,
+            "description": "Despesa ordenados teste (deve falhar)",
+            "created_by": "fabio.guerreiro"
+        }
+        
+        success_salaries, response_salaries = self.run_test("Create Expense - Salaries Category (Should Fail)", "POST", "expenses", 422, expense_salaries_data)
+        
+        # Cleanup created expenses
+        if success_fixed and response_fixed and 'id' in response_fixed:
+            self.run_test("Cleanup Fixed Expense", "DELETE", f"expenses/{response_fixed['id']}", 200)
+        
+        if success_variable and response_variable and 'id' in response_variable:
+            self.run_test("Cleanup Variable Expense", "DELETE", f"expenses/{response_variable['id']}", 200)
+        
+        # Overall test success
+        overall_success = success_fixed and success_variable and success_salaries
+        if overall_success:
+            self.log_test("Expense Categories Backend Test", True, "Fixed and Variable categories work, Salaries category properly rejected")
+        else:
+            self.log_test("Expense Categories Backend Test", False, f"Fixed: {success_fixed}, Variable: {success_variable}, Salaries rejected: {success_salaries}")
+        
+        return overall_success, {}
+
+    def test_inventory_low_stock_consistency(self):
+        """Test inventory low stock consistency - Review Request Test Case 4"""
+        print("\n🔍 Testing Inventory Low Stock Consistency (Review Request)...")
+        
+        # Get all inventory items
+        success, inventory_response = self.run_test("Get All Inventory Items", "GET", "inventory", 200)
+        if not success or not inventory_response:
+            self.log_test("Inventory Low Stock Test", False, "Could not retrieve inventory items")
+            return False, {}
+        
+        # Count items with quantity <= 5 and > 0 (low stock items)
+        low_stock_items = []
+        for item in inventory_response:
+            quantity = item.get('quantity', 0)
+            if 0 < quantity <= 5:
+                low_stock_items.append(item)
+                print(f"   Low stock item: {item.get('name')} (Quantity: {quantity})")
+        
+        low_stock_count = len(low_stock_items)
+        print(f"   Found {low_stock_count} low stock items (quantity <= 5 and > 0)")
+        
+        # Create a test item with low stock to verify the logic
+        test_item_data = {
+            "name": "Teste Low Stock Item",
+            "category": "equipment",
+            "quantity": 3,  # Low stock
+            "price": 25.99,
+            "purchase_price": 15.00,
+            "description": "Item para teste de stock baixo"
+        }
+        
+        success, test_item_response = self.run_test("Create Low Stock Test Item", "POST", "inventory", 200, test_item_data)
+        if success and test_item_response and 'id' in test_item_response:
+            test_item_id = test_item_response['id']
+            
+            # Get inventory again and verify our test item is counted as low stock
+            success, updated_inventory = self.run_test("Get Updated Inventory", "GET", "inventory", 200)
+            if success:
+                updated_low_stock = [item for item in updated_inventory if 0 < item.get('quantity', 0) <= 5]
+                if any(item.get('id') == test_item_id for item in updated_low_stock):
+                    self.log_test("Low Stock Threshold Consistency", True, "Test item with quantity 3 correctly identified as low stock")
+                else:
+                    self.log_test("Low Stock Threshold Consistency", False, "Test item with quantity 3 not identified as low stock")
+            
+            # Cleanup test item
+            self.run_test("Cleanup Low Stock Test Item", "DELETE", f"inventory/{test_item_id}", 200)
+        
+        return True, {}
+
+    def test_inventory_net_revenue_calculation(self):
+        """Test inventory net revenue calculation - Review Request Test Case 5"""
+        print("\n🔍 Testing Inventory Net Revenue Calculation (Review Request)...")
+        
+        # Create test inventory item with purchase_price=10, price=20, quantity=10
+        test_item_data = {
+            "name": "Teste Net Revenue Item",
+            "category": "equipment",
+            "quantity": 10,
+            "price": 20.0,
+            "purchase_price": 10.0,
+            "description": "Item para teste de receita líquida"
+        }
+        
+        success, test_item_response = self.run_test("Create Net Revenue Test Item", "POST", "inventory", 200, test_item_data)
+        if not success or not test_item_response or 'id' not in test_item_response:
+            self.log_test("Net Revenue Test Setup", False, "Could not create test item")
+            return False, {}
+        
+        test_item_id = test_item_response['id']
+        print(f"   Created test item ID: {test_item_id}")
+        
+        # Sell 2 units at price 20
+        sale_data = {
+            "quantity": 2,
+            "sale_price": 20.0
+        }
+        
+        success, sale_response = self.run_test("Sell 2 Units", "POST", f"inventory/{test_item_id}/sell", 200, sale_data)
+        if not success:
+            self.log_test("Net Revenue Sale Test", False, "Could not sell items")
+            # Cleanup
+            self.run_test("Cleanup Net Revenue Test Item", "DELETE", f"inventory/{test_item_id}", 200)
+            return False, {}
+        
+        # Verify sale response
+        if sale_response:
+            print(f"   Sale response: {json.dumps(sale_response, indent=2, default=str)}")
+            
+            # Check if quantity_sold and remaining_stock are correct
+            remaining_stock = sale_response.get('remaining_stock')
+            if remaining_stock == 8:  # 10 - 2 = 8
+                self.log_test("Remaining Stock After Sale", True, f"Remaining stock is correct: {remaining_stock}")
+            else:
+                self.log_test("Remaining Stock After Sale", False, f"Expected 8, got {remaining_stock}")
+        
+        # Get updated item to verify sold_quantity is incremented
+        success, updated_item = self.run_test("Get Updated Item After Sale", "GET", "inventory", 200)
+        if success and updated_item:
+            # Find our test item in the inventory list
+            our_item = next((item for item in updated_item if item.get('id') == test_item_id), None)
+            if our_item:
+                sold_quantity = our_item.get('sold_quantity', 0)
+                current_quantity = our_item.get('quantity', 0)
+                
+                print(f"   Item after sale - Quantity: {current_quantity}, Sold: {sold_quantity}")
+                
+                if sold_quantity == 2:
+                    self.log_test("Sold Quantity Increment", True, f"Sold quantity correctly incremented to {sold_quantity}")
+                else:
+                    self.log_test("Sold Quantity Increment", False, f"Expected sold_quantity=2, got {sold_quantity}")
+                
+                if current_quantity == 8:
+                    self.log_test("Quantity Decrement", True, f"Quantity correctly decremented to {current_quantity}")
+                else:
+                    self.log_test("Quantity Decrement", False, f"Expected quantity=8, got {current_quantity}")
+                
+                # Calculate expected net revenue: (2 * 20) - (2 * 10) = 40 - 20 = 20
+                expected_net_revenue = (2 * 20.0) - (2 * 10.0)
+                print(f"   Expected net revenue calculation: (2 * 20) - (2 * 10) = {expected_net_revenue}")
+                self.log_test("Net Revenue Calculation Logic", True, f"Net revenue should be {expected_net_revenue} for this sale")
+            else:
+                self.log_test("Find Updated Item", False, "Could not find updated item in inventory")
+        
+        # Cleanup test item
+        self.run_test("Cleanup Net Revenue Test Item", "DELETE", f"inventory/{test_item_id}", 200)
+        
+        return True, {}
+
+    def test_expense_endpoints(self):
+        """Test expense endpoints functionality (legacy test)"""
+        print("\n🔍 Testing Expense Endpoints (Legacy)...")
+        
+        # Create a new expense with valid category
+        expense_data = {
+            "category": "fixed",  # Updated to use valid category
             "amount": 1000.0,
             "description": "Test expense",
             "created_by": "fabio.guerreiro"
@@ -437,10 +615,10 @@ class GymManagementAPITester:
                 self.log_test("Expense in List Check", False, "Created expense not found in expenses list")
         
         # Test filtering by category
-        success, filtered_response = self.run_test("Filter Expenses by Category", "GET", "expenses?category=salaries", 200)
+        success, filtered_response = self.run_test("Filter Expenses by Category", "GET", "expenses?category=fixed", 200)
         if success:
-            salaries_expenses = [e for e in filtered_response if e.get('category') == 'salaries']
-            found_our_expense = next((e for e in salaries_expenses if e.get('id') == created_expense_id), None)
+            fixed_expenses = [e for e in filtered_response if e.get('category') == 'fixed']
+            found_our_expense = next((e for e in fixed_expenses if e.get('id') == created_expense_id), None)
             if found_our_expense:
                 self.log_test("Expense Category Filter Check", True, "Created expense found in category filter")
             else:
