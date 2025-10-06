@@ -102,7 +102,9 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: Diagnosticar e corrigir problema com botões de ação na página de Gestão de Membros. Os botões de "visualizar" (olho), "editar" (lápis) e "apagar" (lixeira) estão visíveis mas não funcionam quando clicados - não abrem os diálogos/modais esperados. Página: http://localhost:3000/members, Login: fabio.guerreiro/admin123. Funcionalidade esperada: 1) Botão "visualizar" deve abrir modal com detalhes do membro, 2) Botão "editar" deve abrir formulário de edição, 3) Botão "apagar" deve mostrar confirmação de eliminação.
+user_problem_statement: 
+1. Corrigir redirecionamento para página de login ao navegar para a página "Finanças" (Payments). O utilizador não deveria ser redirecionado para login.
+2. Atualizar o status do membro para ser baseado no status de pagamento (pago = ativo, não pago = inativo). Eliminar o status "suspenso".
 
 frontend:
   - task: "Members Page Action Buttons - View Details"
