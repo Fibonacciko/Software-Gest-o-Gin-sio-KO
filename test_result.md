@@ -189,6 +189,18 @@ frontend:
         - agent: "testing"
         - comment: "TESTED SUCCESSFULLY: ✅ Created test item with purchase_price=10, price=20, quantity=10. ✅ Sold 2 units at price 20 via POST /api/inventory/{id}/sell. ✅ Verified sold_quantity incremented to 2. ✅ Verified quantity decremented to 8. ✅ Net revenue calculation logic verified: (2 * 20) - (2 * 10) = 20. ✅ Sale transaction properly recorded in sales collection. Backend inventory sales and revenue tracking working correctly."
 
+  - task: "Attendance API - Support for deleted members"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "TESTED SUCCESSFULLY: ✅ GET /api/attendance/detailed endpoint properly handles attendance records with deleted members. ✅ Backend returns null for member data when member is deleted, allowing frontend to show 'Membro eliminado'. ✅ Attendance records are preserved even when members are deleted. ✅ Error handling in place to skip problematic records and continue processing. Backend attendance API robust against deleted member references."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
