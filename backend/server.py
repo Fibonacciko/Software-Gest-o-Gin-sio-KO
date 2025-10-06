@@ -206,7 +206,7 @@ class Expense(BaseModel):
     category: ExpenseCategory
     amount: float
     description: Optional[str] = None
-    date: date = Field(default_factory=lambda: date.today())
+    expense_date: date = Field(default_factory=lambda: date.today())
     created_by: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
