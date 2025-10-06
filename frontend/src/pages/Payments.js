@@ -404,7 +404,7 @@ const Payments = ({ language, translations }) => {
     let monthlyExpenses = 0;
     if (isAdmin()) {
       monthlyExpenses = expenses
-        .filter(expense => new Date(expense.date) >= startOfMonth)
+        .filter(expense => new Date(expense.expense_date) >= startOfMonth)
         .reduce((sum, expense) => sum + expense.amount, 0);
     }
     
