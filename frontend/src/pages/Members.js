@@ -214,13 +214,22 @@ const Members = ({ language, translations }) => {
   };
 
   const handleViewDetails = async (memberId) => {
+    if (!memberId) {
+      toast.error('ID do membro não fornecido');
+      return;
+    }
+    
     try {
       console.log('Fetching member details for ID:', memberId);
       const response = await axios.get(`${API}/members/${memberId}`);
       console.log('Member details response:', response.data);
-      setSelectedMember(response.data);
-      setShowDetailDialog(true);
-      toast.success('Detalhes do membro carregados com sucesso');
+      if (response.data) {
+        setSelectedMember(response.data);
+        setShowDetailDialog(true);
+        toast.success('Detalhes do membro carregados com sucesso');
+      } else {
+        throw new Error('Dados do membro não encontrados');
+      }
     } catch (error) {
       console.error('Error fetching member details:', error);
       toast.error('Erro ao carregar detalhes do membro: ' + (error.response?.data?.detail || error.message));
