@@ -98,7 +98,6 @@ const Members = ({ language, translations }) => {
       allStatuses: 'All Statuses',
       active: 'Active',
       inactive: 'Inactive',
-      suspended: 'Suspended',
       allMemberships: 'Plan Types',
       basic: 'Basic',
       premium: 'Premium',
