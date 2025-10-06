@@ -72,9 +72,7 @@ function App() {
                     <Attendance language={language} translations={translations[language]} />
                   } />
                   <Route path="/payments" element={
-                    <ProtectedRoute requiredRole="admin">
-                      <Payments language={language} translations={translations[language]} />
-                    </ProtectedRoute>
+                    <Payments language={language} translations={translations[language]} />
                   } />
                   <Route path="/inventory" element={
                     <Inventory language={language} translations={translations[language]} />
