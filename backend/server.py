@@ -642,6 +642,29 @@ async def create_member(
     
     member_dict = prepare_for_mongo(member.dict())
     await db.members.insert_one(member_dict)
+    
+    # 🚀 ADVANCED INTEGRATIONS
+    
+    # Invalidate member cache
+    await cache.invalidate_pattern("gym:members:*")
+    await cache.invalidate_pattern("gym:stats:*")
+    
+    # Publish member created event
+    await publish_member_event(GymEvents.MEMBER_CREATED, member.dict())
+    
+    # WebSocket notification
+    await notify_new_member(member.dict())
+    
+    # Check for first member achievement
+    total_members = await db.members.count_documents({})
+    if total_members == 1:
+        await AchievementDetector.award_achievement(
+            member.id,
+            'fitness_milestone',
+            'Primeiro Membro do Ginásio KO!',
+            {'milestone_type': 'first_member'}
+        )
+    
     return member
 
 @api_router.get("/members", response_model=List[Member])
