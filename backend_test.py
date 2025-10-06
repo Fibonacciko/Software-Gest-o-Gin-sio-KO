@@ -413,7 +413,6 @@ class GymManagementAPITester:
             "category": "salaries",
             "amount": 1000.0,
             "description": "Test expense",
-            "date": "2025-10-06",
             "created_by": "fabio.guerreiro"
         }
         
