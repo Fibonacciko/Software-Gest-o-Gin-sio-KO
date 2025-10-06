@@ -51,7 +51,6 @@ class MembershipType(str, Enum):
 class MemberStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
-    SUSPENDED = "suspended"
 
 class PaymentStatus(str, Enum):
     PAID = "paid"
