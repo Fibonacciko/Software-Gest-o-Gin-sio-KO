@@ -610,6 +610,7 @@ const Payments = ({ language, translations }) => {
             </Dialog>
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Financial Statistics - Only for Admin */}
