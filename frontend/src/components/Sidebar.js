@@ -94,15 +94,15 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                     to={item.path}
                     className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group ${
                       isActive 
-                        ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-orange-100/80 dark:bg-orange-800/80 text-orange-700 dark:text-orange-200 border-r-2 border-orange-500' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-orange-50/50 dark:hover:bg-orange-900/30'
                     }`}
                     data-testid={`nav-${item.path.replace('/', '') || 'dashboard'}`}
                   >
                     <Icon 
                       size={20} 
                       className={`transition-colors ${
-                        isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
+                        isActive ? 'text-orange-600 dark:text-orange-400' : 'text-gray-500 dark:text-gray-400 group-hover:text-orange-600 dark:group-hover:text-orange-400'
                       }`} 
                     />
                     {isOpen && (
