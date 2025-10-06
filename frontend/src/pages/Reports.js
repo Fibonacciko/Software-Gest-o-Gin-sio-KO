@@ -366,7 +366,7 @@ const Reports = ({ language, translations }) => {
       const totalMembers = members.length;
       const activeMembers = members.filter(member => member.status === 'active').length;
       
-      // Get attendance data to group members by activity
+      // Get attendance data to group members by activity/modality
       const attendanceRes = await axios.get(`${API}/attendance`);
       const attendanceData = attendanceRes.data;
       
@@ -380,26 +380,38 @@ const Reports = ({ language, translations }) => {
         return acc;
       }, {});
       
-      // Convert sets to counts
+      // Convert sets to counts - showing unique members per activity
       const membersByActivityCount = {};
       Object.keys(membersByActivity).forEach(activity => {
         membersByActivityCount[activity] = membersByActivity[activity].size;
       });
       
-      // Group members by status
-      const membersByStatus = members.reduce((acc, member) => {
-        const status = member.status || 'unknown';
-        acc[status] = (acc[status] || 0) + 1;
+      // Group members by membership type (Pack)
+      const membersByPack = members.reduce((acc, member) => {
+        const pack = member.membership_type || 'unknown';
+        const packName = pack === 'basic' ? 'Básico' : 
+                        pack === 'premium' ? 'Premium' : 
+                        pack === 'vip' ? 'VIP' : 'Desconhecido';
+        acc[packName] = (acc[packName] || 0) + 1;
         return acc;
       }, {});
+      
+      // Create the main metrics for the bar chart
+      const mainMetrics = {
+        'Membros Total': totalMembers,
+        'Membros Modalidade': Object.keys(membersByActivityCount).length > 0 ? 
+          Object.values(membersByActivityCount).reduce((sum, count) => sum + count, 0) : 0,
+        'Membros Pack': Object.keys(membersByPack).length > 0 ? 
+          Object.values(membersByPack).reduce((sum, count) => sum + count, 0) : totalMembers
+      };
       
       setReportData({
         type: 'member',
         stats: { totalMembers, activeMembers },
         charts: { 
-          memberTotals: { [`${t[language || 'pt'].totalMembers}`]: totalMembers },
+          mainMetrics: mainMetrics,
           membersByActivity: membersByActivityCount,
-          membersByStatus: membersByStatus
+          membersByPack: membersByPack
         }
       });
     } catch (error) {
