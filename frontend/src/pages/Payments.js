@@ -165,9 +165,7 @@ const Payments = ({ language, translations }) => {
   useEffect(() => {
     fetchMembers();
     fetchPayments();
-    if (isAdmin()) {
-      fetchExpenses();
-    }
+    fetchExpenses(); // Staff can now access expenses too
   }, []);
 
   useEffect(() => {
