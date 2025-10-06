@@ -1070,8 +1070,11 @@ async def create_expense(
     """Create a new expense record (Admin only)"""
     expense_dict = expense_data.dict()
     # Map 'date' field from input to 'expense_date' in the model
-    if 'date' in expense_dict:
+    if 'date' in expense_dict and expense_dict['date'] is not None:
         expense_dict['expense_date'] = expense_dict.pop('date')
+    elif 'date' in expense_dict:
+        # Remove None date field so Expense model can use its default
+        expense_dict.pop('date')
     expense = Expense(**expense_dict)
     expense_dict = prepare_for_mongo(expense.dict())
     await db.expenses.insert_one(expense_dict)
