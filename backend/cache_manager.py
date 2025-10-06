@@ -158,14 +158,7 @@ class RateLimiter:
         try:
             key = cache_key("rate_limit", identifier)
             current = await cache.increment(key)
-            
-            if current == 1:
-                # Set expiration on first request
-                if cache.connected:
-                    await cache.redis.expire(key, window)
-            
             return current <= max_requests
-            
         except Exception as e:
             logger.error(f"Rate limit check error: {e}")
             return True  # Allow on error
