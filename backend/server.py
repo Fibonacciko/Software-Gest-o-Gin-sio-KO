@@ -196,6 +196,27 @@ class InventoryItemCreate(BaseModel):
     purchase_price: Optional[float] = None
     description: Optional[str] = None
 
+class ExpenseCategory(str, Enum):
+    SALARIES = "salaries"
+    FIXED = "fixed"
+    EXTRA = "extra"
+
+class Expense(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    category: ExpenseCategory
+    amount: float
+    description: Optional[str] = None
+    date: date = Field(default_factory=lambda: date.today())
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ExpenseCreate(BaseModel):
+    category: ExpenseCategory
+    amount: float
+    description: Optional[str] = None
+    date: Optional[date] = None
+    created_by: str
+
 # Authentication functions
 def verify_password(plain_password, hashed_password):
     # Temporary SHA256 for testing
