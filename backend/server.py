@@ -190,6 +190,7 @@ class InventoryItemCreate(BaseModel):
     color: Optional[str] = None
     quantity: int = 0
     price: float
+    purchase_price: Optional[float] = None
     description: Optional[str] = None
 
 # Authentication functions
