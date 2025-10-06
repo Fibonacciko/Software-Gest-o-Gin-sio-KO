@@ -44,20 +44,14 @@ class CacheManager:
     async def delete(self, key: str):
         """Delete cached value"""
         try:
-            if self.connected:
-                await self.redis.delete(key)
-            else:
-                self.redis.pop(key, None)
+            self.redis.pop(key, None)
         except Exception as e:
             logger.error(f"Cache delete error for key {key}: {e}")
     
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache"""
         try:
-            if self.connected:
-                return await self.redis.exists(key) > 0
-            else:
-                return key in self.redis
+            return key in self.redis
         except Exception as e:
             logger.error(f"Cache exists error for key {key}: {e}")
         return False
@@ -65,13 +59,10 @@ class CacheManager:
     async def increment(self, key: str, amount: int = 1) -> int:
         """Atomic counter increment"""
         try:
-            if self.connected:
-                return await self.redis.incrby(key, amount)
-            else:
-                current = self.redis.get(key, 0)
-                new_value = current + amount
-                self.redis[key] = new_value
-                return new_value
+            current = self.redis.get(key, 0)
+            new_value = current + amount
+            self.redis[key] = new_value
+            return new_value
         except Exception as e:
             logger.error(f"Cache increment error for key {key}: {e}")
         return 0
@@ -79,25 +70,17 @@ class CacheManager:
     async def set_hash(self, key: str, field: str, value: Any):
         """Set hash field value"""
         try:
-            if self.connected:
-                await self.redis.hset(key, field, json.dumps(value, default=str))
-            else:
-                if key not in self.redis:
-                    self.redis[key] = {}
-                self.redis[key][field] = value
+            if key not in self.redis:
+                self.redis[key] = {}
+            self.redis[key][field] = value
         except Exception as e:
             logger.error(f"Cache hash set error for key {key}, field {field}: {e}")
     
     async def get_hash(self, key: str, field: str) -> Optional[Any]:
         """Get hash field value"""
         try:
-            if self.connected:
-                value = await self.redis.hget(key, field)
-                if value:
-                    return json.loads(value)
-            else:
-                hash_data = self.redis.get(key, {})
-                return hash_data.get(field)
+            hash_data = self.redis.get(key, {})
+            return hash_data.get(field)
         except Exception as e:
             logger.error(f"Cache hash get error for key {key}, field {field}: {e}")
         return None
@@ -105,16 +88,9 @@ class CacheManager:
     async def invalidate_pattern(self, pattern: str):
         """Invalidate all keys matching pattern"""
         try:
-            if self.connected:
-                keys = await self.redis.keys(pattern)
-                if keys:
-                    await self.redis.delete(*keys)
-                    logger.info(f"🗑️ Invalidated {len(keys)} keys matching {pattern}")
-            else:
-                # Simple pattern matching for fallback
-                keys_to_delete = [k for k in self.redis.keys() if pattern.replace('*', '') in k]
-                for key in keys_to_delete:
-                    del self.redis[key]
+            keys_to_delete = [k for k in self.redis.keys() if pattern.replace('*', '') in k]
+            for key in keys_to_delete:
+                del self.redis[key]
         except Exception as e:
             logger.error(f"Cache pattern invalidation error for {pattern}: {e}")
 
