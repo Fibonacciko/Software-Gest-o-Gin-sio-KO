@@ -360,7 +360,7 @@ const Payments = ({ language, translations }) => {
       toast.success(t[language].expenseAdded);
       setShowExpenseDialog(false);
       setExpenseFormData({
-        category: 'salaries',
+        category: 'fixed',
         amount: '',
         description: '',
         date: new Date().toISOString().split('T')[0]
