@@ -469,6 +469,16 @@ const Reports = ({ language, translations }) => {
           ['Pagamentos Pendentes', reportData.stats.pendingPayments]
         ].map(row => row.join(',')).join('\n');
         break;
+      case 'stock':
+        csvContent = [
+          ['Relatório de Stock'],
+          ['Total de Artigos', reportData.stats.totalArticles],
+          ['Valor Total em Stock', reportData.stats.totalStockValue.toFixed(2)],
+          ['Valor Total Vendido', reportData.stats.totalSoldValue.toFixed(2)],
+          ['Valor Total de Compra', reportData.stats.totalPurchaseValue.toFixed(2)],
+          ['Receita Líquida', reportData.stats.netRevenue.toFixed(2)]
+        ].map(row => row.join(',')).join('\n');
+        break;
       default:
         csvContent = 'Relatório não suportado para exportação';
     }
