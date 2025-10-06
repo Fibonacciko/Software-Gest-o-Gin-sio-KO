@@ -536,8 +536,7 @@ const Payments = ({ language, translations }) => {
           </CardContent>
         </Card>
 
-        {/* Register Expenses Bar - Admin Only */}
-        {isAdmin() && (
+        {/* Register Expenses Bar */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
             <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
