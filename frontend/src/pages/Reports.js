@@ -943,50 +943,32 @@ const Reports = ({ language, translations }) => {
           )}
           
           {reportData.type === 'stock' && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <StatCard
-                  title={t[language].totalArticles}
-                  value={reportData.stats.totalArticles}
-                  icon={Package}
-                  color="bg-blue-500"
-                />
-                <StatCard
-                  title={t[language].totalStockValue}
-                  value={`€${reportData.stats.totalStockValue.toFixed(2)}`}
-                  icon={DollarSign}
-                  color="bg-green-500"
-                />
-                <StatCard
-                  title={t[language].totalSoldValue}
-                  value={`€${reportData.stats.totalSoldValue.toFixed(2)}`}
-                  icon={TrendingUp}
-                  color="bg-purple-500"
-                />
-                <StatCard
-                  title={t[language].netRevenue}
-                  value={`€${reportData.stats.netRevenue.toFixed(2)}`}
-                  icon={Activity}
-                  color="bg-orange-500"
-                />
-              </div>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Items por Categoria</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {Object.entries(reportData.charts.itemsByCategory).map(([category, count]) => (
-                      <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium">{t[language][category] || category}</span>
-                        <span className="text-sm font-semibold text-blue-600">{count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <StatCard
+                title={t[language].articlesInStock}
+                value={reportData.stats.articlesInStock}
+                icon={Package}
+                color="bg-blue-500"
+              />
+              <StatCard
+                title={t[language].investedValue}
+                value={`€${reportData.stats.investedValue.toFixed(2)}`}
+                icon={DollarSign}
+                color="bg-red-500"
+              />
+              <StatCard
+                title={t[language].receivedValue}
+                value={`€${reportData.stats.receivedValue.toFixed(2)}`}
+                icon={TrendingUp}
+                color="bg-green-500"
+              />
+              <StatCard
+                title={t[language].netValue}
+                value={`€${reportData.stats.netValue.toFixed(2)}`}
+                icon={Activity}
+                color="bg-purple-500"
+              />
+            </div>
           )}
         </div>
       ) : (
