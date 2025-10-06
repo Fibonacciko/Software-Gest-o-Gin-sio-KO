@@ -157,10 +157,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Members Page Action Buttons - View Details"
-    - "Members Page Action Buttons - Edit Member"
-    - "Members Page Action Buttons - Delete Member"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
