@@ -50,7 +50,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
         <div className="flex items-center justify-between p-4 border-b">
           {isOpen && (
             <h1 className="text-xl font-bold text-gray-800 fade-in">
-              Gestão Fitness
+              Ginásio KO
             </h1>
           )}
           <button
