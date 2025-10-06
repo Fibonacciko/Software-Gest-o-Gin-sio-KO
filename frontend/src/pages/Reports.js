@@ -752,7 +752,7 @@ const Reports = ({ language, translations }) => {
             </>
           )}
           
-          {reportData.type === 'inventory' && (
+          {reportData.type === 'stock' && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
