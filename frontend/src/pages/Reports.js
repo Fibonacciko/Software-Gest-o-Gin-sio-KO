@@ -399,20 +399,29 @@ const Reports = ({ language, translations }) => {
         return acc;
       }, {});
       
-      // Create the main metrics for the bar chart
-      const mainMetrics = {
-        'Membros Total': totalMembers,
-        'Membros Modalidade': Object.keys(membersByActivityCount).length > 0 ? 
-          Object.values(membersByActivityCount).reduce((sum, count) => sum + count, 0) : 0,
-        'Membros Pack': Object.keys(membersByPack).length > 0 ? 
-          Object.values(membersByPack).reduce((sum, count) => sum + count, 0) : totalMembers
+      // Create comprehensive bar chart with all individual bars
+      const allMetrics = {
+        // Total first
+        'Total': totalMembers,
+        
+        // Individual activities/modalities
+        ...Object.keys(membersByActivityCount).reduce((acc, activity) => {
+          acc[activity] = membersByActivityCount[activity];
+          return acc;
+        }, {}),
+        
+        // Individual membership types
+        ...Object.keys(membersByPack).reduce((acc, pack) => {
+          acc[pack] = membersByPack[pack];
+          return acc;
+        }, {})
       };
       
       setReportData({
         type: 'member',
         stats: { totalMembers, activeMembers },
         charts: { 
-          mainMetrics: mainMetrics,
+          allMetrics: allMetrics,
           membersByActivity: membersByActivityCount,
           membersByPack: membersByPack
         }
