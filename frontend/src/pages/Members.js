@@ -659,7 +659,7 @@ const Members = ({ language, translations }) => {
                     </div>
                     <div className="flex items-center">
                       <Flag size={16} className="text-gray-400 mr-3" />
-                      <span>{selectedMember.nationality}</span>
+                      <span>{selectedMember.nationality || 'N/A'}</span>
                     </div>
                     <div className="flex items-center">
                       <Briefcase size={16} className="text-gray-400 mr-3" />
