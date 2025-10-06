@@ -406,14 +406,52 @@ const Members = ({ language, translations }) => {
               </div>
               
               <div>
-                <Label htmlFor="photo_url">{t[language].photoUrl}</Label>
-                <Input
-                  id="photo_url"
-                  type="url"
-                  value={formData.photo_url}
-                  onChange={(e) => setFormData({...formData, photo_url: e.target.value})}
-                  data-testid="member-photo-url"
-                />
+                <Label htmlFor="photo_url">Foto do Membro</Label>
+                <div className="space-y-3">
+                  {/* Photo Preview */}
+                  {formData.photo_url && (
+                    <div className="flex justify-center">
+                      <img 
+                        src={formData.photo_url} 
+                        alt="Preview" 
+                        className="w-20 h-20 object-cover rounded-full border-2 border-orange-200"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* File Upload */}
+                  <Input
+                    id="photo_upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        // For demo purposes, we'll use a placeholder
+                        // In production, upload to cloud storage
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          setFormData({...formData, photo_url: e.target.result});
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="mb-2"
+                  />
+                  
+                  {/* URL Input as fallback */}
+                  <Input
+                    id="photo_url"
+                    type="url"
+                    placeholder="Ou cole URL da foto"
+                    value={formData.photo_url}
+                    onChange={(e) => setFormData({...formData, photo_url: e.target.value})}
+                    data-testid="member-photo-url"
+                  />
+                </div>
               </div>
               
               <div>
