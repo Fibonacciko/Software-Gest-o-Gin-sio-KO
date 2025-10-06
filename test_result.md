@@ -152,7 +152,7 @@ frontend:
 
   - task: "Reports Page Charts Visualization"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/pages/Reports.js"
     stuck_count: 1
     priority: "high"
@@ -161,6 +161,9 @@ frontend:
         - working: false
         - agent: "main"
         - comment: "User reported multiple issues: 1) Bar charts showing absolute values instead of percentages 2) Financial Report bar chart missing specific metrics (Pagamentos recebidos, Artigos vendidos, Despesas totais, Receitas Líquida) 3) Member Report throwing errors with undefined properties (activeMembers, membersByStatus). Need to fix chart configurations and data calculations."
+        - working: true
+        - agent: "main"
+        - comment: "Fixed all reported issues: 1) Bar charts now show percentages for non-financial reports, absolute values for financial reports with proper titles 2) Financial Report bar chart corrected to show specific metrics: Pagamentos recebidos, Artigos vendidos, Despesas totais, Receitas Líquida 3) Member Report errors fixed by adding proper calculation for activeMembers and membersByStatus with safety checks. Chart logic improved to handle single-category displays appropriately."
 
 metadata:
   created_by: "testing_agent"
