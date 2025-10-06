@@ -535,7 +535,7 @@ const Payments = ({ language, translations }) => {
         </Card>
 
         {/* Register Expenses Bar */}
-        <Card className="bg-black text-white">
+        <Card className="bg-gray-800/80 dark:bg-gray-700/80 text-white border-orange-200/30">
           <CardContent className="p-4">
             <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
               <DialogTrigger asChild>
