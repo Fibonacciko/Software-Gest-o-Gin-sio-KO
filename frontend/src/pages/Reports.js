@@ -706,25 +706,32 @@ const Reports = ({ language, translations }) => {
               </Card>
             )}
 
-            {/* Pie Chart */}
+            {/* Pie Chart - Always in Percentages */}
             {reportData.charts && Object.keys(reportData.charts).length > 1 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Gráfico Circular</CardTitle>
+                  <CardTitle>Gráfico Circular (%)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Pie
                     data={{
                       labels: Object.keys(Object.values(reportData.charts)[1] || {}),
                       datasets: [{
-                        data: Object.values(Object.values(reportData.charts)[1] || {}),
+                        data: (() => {
+                          const chartData = Object.values(reportData.charts)[1] || {};
+                          const values = Object.values(chartData);
+                          const total = values.reduce((sum, val) => sum + val, 0);
+                          return values.map(val => total > 0 ? parseFloat(((val / total) * 100).toFixed(1)) : 0);
+                        })(),
                         backgroundColor: [
                           '#FF6384',
-                          '#36A2EB',
+                          '#36A2EB', 
                           '#FFCE56',
                           '#4BC0C0',
                           '#9966FF',
-                          '#FF9F40'
+                          '#FF9F40',
+                          '#FF8C94',
+                          '#A8E6CF'
                         ],
                       }]
                     }}
@@ -734,6 +741,13 @@ const Reports = ({ language, translations }) => {
                         legend: {
                           position: 'bottom',
                         },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              return `${context.label}: ${context.parsed}%`;
+                            }
+                          }
+                        }
                       },
                     }}
                   />
