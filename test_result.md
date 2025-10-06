@@ -150,6 +150,18 @@ frontend:
         - agent: "testing"
         - comment: "✅ DELETION FUNCTIONALITY WORKING PERFECTLY: Complete end-to-end testing successful. ✅ Delete button (🗑️) found and clickable for T-shirt Academia Premium. ✅ Browser confirmation dialog handled correctly (auto-accepted). ✅ DELETE API call successful: DELETE /api/inventory/75679996-d85c-4baa-8fc4-62f25f030995 returning 200 OK. ✅ Success toast appears: 'Artigo eliminado com sucesso!'. ✅ Article completely removed from inventory list. ✅ Statistics updated: Total items reduced from 42 to 15, Valor Total em Stock reduced from €989.58 to €449.85. ✅ Inventory list refreshed automatically. Backend corrections successful - deletion functionality fully operational."
 
+  - task: "Reports Page Charts Visualization"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/Reports.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+        - agent: "main"
+        - comment: "User reported multiple issues: 1) Bar charts showing absolute values instead of percentages 2) Financial Report bar chart missing specific metrics (Pagamentos recebidos, Artigos vendidos, Despesas totais, Receitas Líquida) 3) Member Report throwing errors with undefined properties (activeMembers, membersByStatus). Need to fix chart configurations and data calculations."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
