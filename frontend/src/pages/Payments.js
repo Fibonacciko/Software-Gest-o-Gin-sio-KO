@@ -40,7 +40,7 @@ const Payments = ({ language, translations }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedMember, setSelectedMember] = useState('all');
-  const [expenseCategory, setExpenseCategory] = useState('salaries');
+  const [expenseCategory, setExpenseCategory] = useState('fixed');
   const [filteredMembers, setFilteredMembers] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -51,7 +51,7 @@ const Payments = ({ language, translations }) => {
   });
 
   const [expenseFormData, setExpenseFormData] = useState({
-    category: 'salaries',
+    category: 'fixed',
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0]
