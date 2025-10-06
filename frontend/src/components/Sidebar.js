@@ -49,13 +49,27 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           {isOpen && (
-            <h1 className="text-xl font-bold text-gray-800 fade-in">
-              Ginásio KO
-            </h1>
+            <div className="flex items-center space-x-3 fade-in">
+              <img 
+                src="/logo-ko.png" 
+                alt="Ginásio KO" 
+                className="h-8 w-auto"
+              />
+              <h1 className="text-xl font-bold text-gray-800">
+                Ginásio KO
+              </h1>
+            </div>
+          )}
+          {!isOpen && (
+            <img 
+              src="/logo-ko.png" 
+              alt="Ginásio KO" 
+              className="h-8 w-auto mx-auto"
+            />
           )}
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors ml-auto"
             data-testid="sidebar-toggle"
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
