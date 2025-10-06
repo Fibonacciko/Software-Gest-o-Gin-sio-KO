@@ -296,33 +296,45 @@ const Reports = ({ language, translations }) => {
     });
   };
 
-  const generateFinancialReport = (start, end) => {
-    // Filter payments within date range
-    const filteredPayments = payments.filter(payment => {
-      const payDate = new Date(payment.payment_date);
-      return payDate >= start && payDate <= end && payment.status === 'paid';
-    });
-    
-    // Group payments by method
-    const paymentsByMethod = filteredPayments.reduce((acc, payment) => {
-      acc[payment.payment_method] = (acc[payment.payment_method] || 0) + payment.amount;
-      return acc;
-    }, {});
-    
-    // Group payments by month
-    const paymentsByMonth = filteredPayments.reduce((acc, payment) => {
-      const month = new Date(payment.payment_date).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
-      acc[month] = (acc[month] || 0) + payment.amount;
-      return acc;
-    }, {});
-    
-    const totalRevenue = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
-    
-    setReportData({
-      type: 'financial',
-      stats: { totalRevenue },
-      charts: { paymentsByMethod, paymentsByMonth }
-    });
+  const generateFinancialReport = async (start, end) => {
+    try {
+      // Filter payments within date range
+      const filteredPayments = payments.filter(payment => {
+        const payDate = new Date(payment.payment_date);
+        return payDate >= start && payDate <= end && payment.status === 'paid';
+      });
+      
+      const paymentsReceived = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+      
+      // Get inventory sales data
+      const inventoryRes = await axios.get(`${API}/inventory`);
+      const inventory = inventoryRes.data;
+      
+      const itemsSold = inventory.reduce((sum, item) => sum + (item.sold_quantity || 0), 0);
+      const totalSoldValue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * item.price), 0);
+      
+      // Get expenses (mock data for now - would need expenses API)
+      const totalExpenses = 0; // TODO: Implement expenses calculation
+      
+      const netRevenue = paymentsReceived + totalSoldValue - totalExpenses;
+      
+      setReportData({
+        type: 'financial',
+        stats: { paymentsReceived, itemsSold, totalExpenses, netRevenue },
+        charts: { 
+          revenues: {
+            [`${t[language || 'pt'].paymentsReceived}`]: paymentsReceived,
+            [`${t[language || 'pt'].itemsSold}`]: totalSoldValue
+          },
+          expenses: {
+            [`${t[language || 'pt'].totalExpenses}`]: totalExpenses,
+            [`${t[language || 'pt'].netRevenue}`]: netRevenue
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error generating financial report:', error);
+    }
   };
 
   const generatePaymentReport = (start, end) => {
