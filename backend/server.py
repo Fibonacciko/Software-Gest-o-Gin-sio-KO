@@ -1061,6 +1061,50 @@ async def sell_inventory_item(
         print(f"Error selling item: {str(e)}")
         raise HTTPException(status_code=500, detail="Error recording sale")
 
+# Expense Routes
+@api_router.post("/expenses", response_model=Expense)
+async def create_expense(
+    expense_data: ExpenseCreate,
+    current_user: User = Depends(require_admin)
+):
+    """Create a new expense record (Admin only)"""
+    expense = Expense(**expense_data.dict())
+    expense_dict = prepare_for_mongo(expense.dict())
+    await db.expenses.insert_one(expense_dict)
+    return expense
+
+@api_router.get("/expenses", response_model=List[Expense])
+async def get_expenses(
+    category: Optional[ExpenseCategory] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin)
+):
+    """Get all expenses with optional filters (Admin only)"""
+    filter_dict = {}
+    if category:
+        filter_dict['category'] = category
+    if start_date:
+        filter_dict['date'] = filter_dict.get('date', {})
+        filter_dict['date']['$gte'] = start_date.isoformat()
+    if end_date:
+        filter_dict['date'] = filter_dict.get('date', {})
+        filter_dict['date']['$lte'] = end_date.isoformat()
+    
+    expenses = await db.expenses.find(filter_dict).to_list(1000)
+    return [Expense(**parse_from_mongo(expense)) for expense in expenses]
+
+@api_router.delete("/expenses/{expense_id}")
+async def delete_expense(
+    expense_id: str,
+    current_user: User = Depends(require_admin)
+):
+    """Delete an expense (Admin only)"""
+    result = await db.expenses.delete_one({"id": expense_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    return {"message": "Expense deleted successfully"}
+
 # Dashboard & Reports
 @api_router.get("/dashboard")
 async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staff)):
