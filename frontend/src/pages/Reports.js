@@ -216,20 +216,20 @@ const Reports = ({ language, translations }) => {
     const { start, end } = getDateRange();
     
     switch (reportType) {
+      case 'financial':
+        generateFinancialReport(start, end);
+        break;
       case 'attendance':
         generateAttendanceReport(start, end);
-        break;
-      case 'payment':
-        generatePaymentReport(start, end);
         break;
       case 'member':
         generateMemberReport();
         break;
-      case 'inventory':
-        generateInventoryReport();
+      case 'stock':
+        generateStockReport();
         break;
       default:
-        generateAttendanceReport(start, end);
+        generateFinancialReport(start, end);
     }
   };
 
