@@ -103,8 +103,11 @@
 #====================================================================================================
 
 user_problem_statement: 
-1. Corrigir redirecionamento para página de login ao navegar para a página "Finanças" (Payments). O utilizador não deveria ser redirecionado para login.
-2. Atualizar o status do membro para ser baseado no status de pagamento (pago = ativo, não pago = inativo). Eliminar o status "suspenso".
+1. Página Presenças - erro, não é possível abrir a página (erro: Cannot read properties of null reading 'name')
+2. Pagamentos - alterar nome na barra lateral para "Finanças"
+3. Registar Despesa: mudar categorias para "Despesa Fixa ou Variável" (em vez de Ordenados/Fixas/Extras)
+4. Stock - atualizar limite de stock baixo para ser consistente (5 unidades)
+5. Stock - verificar cálculo da Receita Líquida após venda de produto
 
 backend:
   - task: "Member Status - Payment-based calculation"
