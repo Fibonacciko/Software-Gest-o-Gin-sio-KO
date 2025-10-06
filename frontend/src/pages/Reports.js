@@ -440,10 +440,10 @@ const Reports = ({ language, translations }) => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="financial">{t[language].financialReport}</SelectItem>
                   <SelectItem value="attendance">{t[language].attendanceReport}</SelectItem>
-                  <SelectItem value="payment">{t[language].paymentReport}</SelectItem>
                   <SelectItem value="member">{t[language].memberReport}</SelectItem>
-                  <SelectItem value="inventory">{t[language].inventoryReport}</SelectItem>
+                  <SelectItem value="stock">{t[language].stockReport}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
