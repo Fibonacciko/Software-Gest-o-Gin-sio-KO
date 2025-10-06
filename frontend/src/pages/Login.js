@@ -123,7 +123,7 @@ const Login = () => {
         </Card>
         
         <div className="text-center mt-8 text-sm text-gray-500">
-          <p>&copy; 2025 Gestão Fitness. Sistema de gestão profissional.</p>
+          <p>&copy; 2025 Ginásio KO. Sistema de gestão profissional.</p>
         </div>
       </div>
     </div>
