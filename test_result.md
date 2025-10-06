@@ -109,27 +109,33 @@ user_problem_statement:
 backend:
   - task: "Member Status - Payment-based calculation"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Implemented calculate_member_status() function that checks for paid payments in current month. Updated get_members, get_member, and get_member_by_number endpoints to calculate status dynamically. Removed SUSPENDED from MemberStatus enum. Status is now: ACTIVE (has paid payment in current month) or INACTIVE (no paid payment in current month)."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED SUCCESSFULLY: Member status calculation working correctly. Verified no members have 'suspended' status - all members show either 'active' or 'inactive'. Created test member with status 'inactive', added paid payment for current month, verified member status changed to 'active'. Dynamic status calculation based on payments is functioning as expected."
 
   - task: "Expenses API endpoints"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Created ExpenseCategory enum, Expense and ExpenseCreate Pydantic models. Added three expense endpoints: POST /api/expenses (create), GET /api/expenses (list with filters), DELETE /api/expenses/{id} (delete). All endpoints require admin role. Fixed field naming conflict by using 'expense_date' instead of 'date' in Expense model."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED SUCCESSFULLY: All expense endpoints working correctly. Fixed minor issue in create_expense function where None date field was causing validation error - updated to properly handle optional date field. POST /api/expenses creates expenses successfully, GET /api/expenses returns expense list, category filtering works (GET /api/expenses?category=salaries), DELETE /api/expenses/{id} removes expenses properly. All endpoints require admin authentication as expected."
 
 frontend:
   - task: "Members Page - Remove suspended status"
