@@ -341,7 +341,7 @@ const Reports = ({ language, translations }) => {
     });
   };
 
-  const generateInventoryReport = async () => {
+  const generateStockReport = async () => {
     try {
       const inventoryRes = await axios.get(`${API}/inventory`);
       const inventory = inventoryRes.data;
