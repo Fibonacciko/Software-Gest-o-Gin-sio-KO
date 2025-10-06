@@ -683,7 +683,7 @@ const Members = ({ language, translations }) => {
                   
                   <div>
                     <h4 className="font-medium mb-2">{t[language].joinDate}</h4>
-                    <p>{new Date(selectedMember.join_date).toLocaleDateString('pt-PT')}</p>
+                    <p>{selectedMember.join_date ? new Date(selectedMember.join_date).toLocaleDateString('pt-PT') : 'N/A'}</p>
                   </div>
                   
                   {selectedMember.notes && (
