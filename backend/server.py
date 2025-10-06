@@ -31,8 +31,8 @@ db = client[os.environ['DB_NAME']]
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-# Security
-SECRET_KEY = "your-secret-key-change-in-production-2024-gym-management"
+# Security - Read from environment
+SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-dev-key-not-for-production')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours
 
