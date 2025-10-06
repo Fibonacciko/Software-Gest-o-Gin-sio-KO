@@ -153,22 +153,19 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
                 Day: ({ date, modifiers = {} }) => {
                   const attendanceForDate = getAttendanceForDate(date);
                   const hasAttendance = attendanceForDate.length > 0;
+                  const isToday = new Date().toDateString() === date.toDateString();
                   
                   return (
-                    <div className="relative w-full h-full">
-                      <div className={`w-full h-full flex items-center justify-center text-sm ${
-                        modifiers.selected ? 'bg-blue-600 text-white rounded-md' :
-                        modifiers.today ? 'bg-blue-100 text-blue-900 rounded-md' : ''
+                    <div className="relative w-full aspect-square flex items-center justify-center p-1">
+                      {hasAttendance && (
+                        <div className="absolute inset-0 rounded-full bg-yellow-400 m-1"></div>
+                      )}
+                      <span className={`text-sm z-10 relative font-bold ${
+                        hasAttendance ? 'text-black' : 
+                        isToday ? 'font-bold text-gray-800' : 'text-gray-700'
                       }`}>
                         {date.getDate()}
-                        {hasAttendance && (
-                          <div 
-                            className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full"
-                            style={{ backgroundColor: getActivityColor(attendanceForDate[0].activity_id) }}
-                            title={`${getActivityName(attendanceForDate[0].activity_id)} - ${new Date(attendanceForDate[0].check_in_time).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`}
-                          />
-                        )}
-                      </div>
+                      </span>
                     </div>
                   );
                 }
