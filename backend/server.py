@@ -628,7 +628,7 @@ def parse_from_mongo(item):
             # Handle ObjectId conversion to string
             if hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
                 item[key] = str(value)
-            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date'] and isinstance(value, str):
+            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date', 'expense_date'] and isinstance(value, str):
                 try:
                     item[key] = datetime.fromisoformat(value).date()
                 except:
