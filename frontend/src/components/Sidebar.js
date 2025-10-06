@@ -51,7 +51,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
         isOpen ? 'w-64' : 'w-16'
       }`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b border-orange-200/50 dark:border-orange-700/50">
           {isOpen ? (
             <div className="flex items-center space-x-3 fade-in">
               <img 
@@ -59,7 +59,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                 alt="Ginásio KO" 
                 className="h-8 w-auto"
               />
-              <h1 className="text-xl font-bold text-gray-800">
+              <h1 className="text-xl font-bold text-gray-800 dark:text-orange-100">
                 Ginásio KO
               </h1>
             </div>
@@ -74,7 +74,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
           )}
           <button
             onClick={toggleSidebar}
-            className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${isOpen ? 'ml-auto' : 'absolute right-4'}`}
+            className={`p-2 rounded-lg hover:bg-orange-100/50 dark:hover:bg-orange-800/50 text-gray-700 dark:text-orange-200 transition-colors ${isOpen ? 'ml-auto' : 'absolute right-4'}`}
             data-testid="sidebar-toggle"
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
