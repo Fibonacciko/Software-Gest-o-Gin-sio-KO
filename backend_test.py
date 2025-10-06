@@ -347,6 +347,139 @@ class GymManagementAPITester:
         
         return success_count == total_tests, {}
 
+    def test_member_status_calculation(self):
+        """Test member status calculation based on payments"""
+        print("\n🔍 Testing Member Status Calculation...")
+        
+        # First, get all members to check status values
+        success, members_response = self.run_test("Get Members - Check Status Values", "GET", "members", 200)
+        if not success:
+            return False, {}
+        
+        # Verify no members have "suspended" status
+        suspended_members = [m for m in members_response if m.get('status') == 'suspended']
+        if suspended_members:
+            self.log_test("No Suspended Status Check", False, f"Found {len(suspended_members)} members with suspended status")
+            return False, {}
+        else:
+            self.log_test("No Suspended Status Check", True, "No members have suspended status")
+        
+        # Check that all members have either "active" or "inactive" status
+        valid_statuses = ['active', 'inactive']
+        invalid_status_members = [m for m in members_response if m.get('status') not in valid_statuses]
+        if invalid_status_members:
+            self.log_test("Valid Status Values Check", False, f"Found members with invalid status: {[m.get('status') for m in invalid_status_members]}")
+            return False, {}
+        else:
+            self.log_test("Valid Status Values Check", True, "All members have valid status (active/inactive)")
+        
+        # If we have a created member, test payment-based status change
+        if self.created_member_id:
+            # First check member status before payment
+            success, member_before = self.run_test("Get Member Before Payment", "GET", f"members/{self.created_member_id}", 200)
+            if success:
+                print(f"   Member status before payment: {member_before.get('status')}")
+            
+            # Create a payment for current month with "paid" status
+            payment_data = {
+                "member_id": self.created_member_id,
+                "amount": 50.00,
+                "payment_method": "cash",
+                "status": "paid",
+                "description": "Test payment for status calculation"
+            }
+            
+            success, payment_response = self.run_test("Create Paid Payment for Status Test", "POST", "payments", 200, payment_data)
+            if not success:
+                return False, {}
+            
+            # Now check member status after payment
+            success, member_after = self.run_test("Get Member After Payment", "GET", f"members/{self.created_member_id}", 200)
+            if success:
+                print(f"   Member status after payment: {member_after.get('status')}")
+                if member_after.get('status') == 'active':
+                    self.log_test("Member Status Active After Payment", True, "Member status correctly changed to active after paid payment")
+                else:
+                    self.log_test("Member Status Active After Payment", False, f"Member status is {member_after.get('status')}, expected active")
+        
+        return True, {}
+
+    def test_expense_endpoints(self):
+        """Test expense endpoints functionality"""
+        print("\n🔍 Testing Expense Endpoints...")
+        
+        # Create a new expense
+        expense_data = {
+            "category": "salaries",
+            "amount": 1000.0,
+            "description": "Test expense",
+            "created_by": "fabio.guerreiro"
+        }
+        
+        success, expense_response = self.run_test("Create Expense", "POST", "expenses", 200, expense_data)
+        if not success:
+            return False, {}
+        
+        created_expense_id = expense_response.get('id') if expense_response else None
+        if not created_expense_id:
+            self.log_test("Expense Creation ID Check", False, "No expense ID returned")
+            return False, {}
+        
+        print(f"   Created expense ID: {created_expense_id}")
+        
+        # Get all expenses and verify our expense is in the list
+        success, expenses_response = self.run_test("Get All Expenses", "GET", "expenses", 200)
+        if success:
+            found_expense = next((e for e in expenses_response if e.get('id') == created_expense_id), None)
+            if found_expense:
+                self.log_test("Expense in List Check", True, "Created expense found in expenses list")
+            else:
+                self.log_test("Expense in List Check", False, "Created expense not found in expenses list")
+        
+        # Test filtering by category
+        success, filtered_response = self.run_test("Filter Expenses by Category", "GET", "expenses?category=salaries", 200)
+        if success:
+            salaries_expenses = [e for e in filtered_response if e.get('category') == 'salaries']
+            found_our_expense = next((e for e in salaries_expenses if e.get('id') == created_expense_id), None)
+            if found_our_expense:
+                self.log_test("Expense Category Filter Check", True, "Created expense found in category filter")
+            else:
+                self.log_test("Expense Category Filter Check", False, "Created expense not found in category filter")
+        
+        # Delete the expense
+        success, delete_response = self.run_test("Delete Expense", "DELETE", f"expenses/{created_expense_id}", 200)
+        if success:
+            # Verify expense is deleted by trying to get all expenses again
+            success, expenses_after_delete = self.run_test("Verify Expense Deleted", "GET", "expenses", 200)
+            if success:
+                deleted_expense = next((e for e in expenses_after_delete if e.get('id') == created_expense_id), None)
+                if not deleted_expense:
+                    self.log_test("Expense Deletion Verification", True, "Expense successfully deleted")
+                else:
+                    self.log_test("Expense Deletion Verification", False, "Expense still exists after deletion")
+        
+        return True, {}
+
+    def test_authentication_on_endpoints(self):
+        """Test authentication on payments and members endpoints"""
+        print("\n🔍 Testing Authentication on Key Endpoints...")
+        
+        # Test payments endpoint access (admin should have access)
+        success, payments_response = self.run_test("Admin Access to Payments", "GET", "payments", 200)
+        if success:
+            self.log_test("Admin Payments Access", True, "Admin can access payments endpoint without 401 error")
+        else:
+            self.log_test("Admin Payments Access", False, "Admin cannot access payments endpoint")
+        
+        # Test members endpoint access (admin should have access)
+        success, members_response = self.run_test("Admin Access to Members", "GET", "members", 200)
+        if success:
+            self.log_test("Admin Members Access", True, "Admin can access members endpoint without 401 error")
+        else:
+            self.log_test("Admin Members Access", False, "Admin cannot access members endpoint")
+        
+        return True, {}
+
     def test_delete_operations(self):
         """Test delete operations (cleanup)"""
         success_count = 0
