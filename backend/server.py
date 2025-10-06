@@ -178,6 +178,8 @@ class InventoryItem(BaseModel):
     color: Optional[str] = None
     quantity: int = 0
     price: float
+    purchase_price: Optional[float] = None
+    sold_quantity: Optional[int] = 0
     description: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
