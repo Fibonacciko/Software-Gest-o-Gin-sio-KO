@@ -418,14 +418,14 @@ const Attendance = ({ language, translations }) => {
                             </div>
                             <div>
                               <div className="flex items-center space-x-2">
-                                <p className="font-medium">{att.member.name}</p>
+                                <p className="font-medium">{att.member ? att.member.name : 'Membro eliminado'}</p>
                                 {att.member?.member_number && (
                                   <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-1 py-0.5 rounded">
                                     #{att.member.member_number}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-500">{att.member.phone}</p>
+                              <p className="text-sm text-gray-500">{att.member ? att.member.phone : 'N/A'}</p>
                             </div>
                           </div>
                         </td>
