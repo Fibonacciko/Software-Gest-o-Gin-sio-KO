@@ -400,7 +400,7 @@ const Inventory = ({ language, translations }) => {
       {/* Action Bars */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         {/* Add Article Bar */}
-        <Card className="bg-gray-800/80 dark:bg-gray-700/80 text-white border-orange-200/30">
+        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
