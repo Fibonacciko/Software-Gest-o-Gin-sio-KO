@@ -1351,16 +1351,6 @@ async def startup_db():
     await cache.connect()
     await warm_dashboard_cache()
     
-    # Event bus (message queue)
-    await event_bus.connect()
-    await setup_event_subscriptions()
-    
-    # Blockchain certificates
-    await cert_manager.connect()
-    
-    # WebSocket manager
-    await ws_manager.start_background_tasks()
-    
     logger.info("✅ Advanced backend systems initialized successfully")
 
 @app.on_event("shutdown")
