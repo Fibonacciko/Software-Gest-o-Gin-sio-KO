@@ -338,7 +338,7 @@ const Dashboard = ({ language, translations }) => {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 bg-gradient-to-br from-white/80 to-orange-50/80 dark:from-gray-800/80 dark:to-gray-700/80 backdrop-blur-sm min-h-screen">
+      <div className="p-6 space-y-6 bg-gradient-to-br from-white/80 to-orange-50/80 dark:from-neutral-800/80 dark:to-neutral-900/80 backdrop-blur-sm min-h-screen">
         <div className="animate-pulse">
           <div className="h-8 bg-orange-200/50 dark:bg-orange-700/50 rounded w-1/4 mb-6"></div>
           <div className="h-32 bg-orange-200/50 dark:bg-orange-700/50 rounded"></div>
