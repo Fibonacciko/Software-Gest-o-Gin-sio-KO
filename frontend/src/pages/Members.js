@@ -542,7 +542,7 @@ const Members = ({ language, translations }) => {
                       <td className="p-4">
                         <div className="flex items-center">
                           <Phone size={16} className="text-gray-400 mr-2" />
-                          {member.phone}
+                          {member.phone || 'N/A'}
                         </div>
                       </td>
                       <td className="p-4">
