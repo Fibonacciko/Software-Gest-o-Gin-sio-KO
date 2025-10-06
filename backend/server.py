@@ -1221,6 +1221,10 @@ async def qr_checkin(
 # Include router
 app.include_router(api_router)
 
+# GraphQL Router - Modern Query Layer
+graphql_app = GraphQLRouter(schema)
+app.include_router(graphql_app, prefix="/graphql")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
