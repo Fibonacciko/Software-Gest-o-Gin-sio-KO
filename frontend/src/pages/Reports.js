@@ -255,9 +255,6 @@ const Reports = ({ language, translations }) => {
       case 'financial':
         generateFinancialReport(start, end);
         break;
-      case 'attendance':
-        generateAttendanceReport(start, end);
-        break;
       case 'member':
         generateMemberReport();
         break;
