@@ -523,54 +523,75 @@ const Reports = ({ language, translations }) => {
         </Card>
       ) : reportData ? (
         <div className="space-y-6">
-          {/* Statistics */}
-          {reportData.type === 'attendance' && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard
-                  title={t[language].totalAttendance}
-                  value={reportData.stats.totalAttendance}
-                  icon={Activity}
-                  color="bg-blue-500"
-                />
-                <StatCard
-                  title={t[language].uniqueVisitors}
-                  value={reportData.stats.uniqueVisitors}
-                  icon={Users}
-                  color="bg-green-500"
-                />
-                <StatCard
-                  title={t[language].dailyAverage}
-                  value={reportData.stats.dailyAverage}
-                  icon={Calendar}
-                  color="bg-purple-500"
-                />
-              </div>
-              
-              {/* Top Members */}
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Bar Chart */}
+            {reportData.charts && Object.keys(reportData.charts).length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>{t[language].topMembers}</CardTitle>
+                  <CardTitle>Gráfico de Barras</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {reportData.charts.topMembers.length > 0 ? (
-                    <div className="space-y-3">
-                      {reportData.charts.topMembers.map((member, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="font-medium">{member.member}</span>
-                          <span className="text-sm font-semibold text-blue-600">
-                            {member.count} presenças
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-4">{t[language].noData}</p>
-                  )}
+                  <Bar
+                    data={{
+                      labels: Object.keys(Object.values(reportData.charts)[0] || {}),
+                      datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(Object.values(reportData.charts)[0] || {}),
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                      }]
+                    }}
+                    options={{
+                      responsive: true,
+                      plugins: {
+                        legend: {
+                          position: 'top',
+                        },
+                      },
+                    }}
+                  />
                 </CardContent>
               </Card>
-            </>
-          )}
+            )}
+
+            {/* Pie Chart */}
+            {reportData.charts && Object.keys(reportData.charts).length > 1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gráfico Circular</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Pie
+                    data={{
+                      labels: Object.keys(Object.values(reportData.charts)[1] || {}),
+                      datasets: [{
+                        data: Object.values(Object.values(reportData.charts)[1] || {}),
+                        backgroundColor: [
+                          '#FF6384',
+                          '#36A2EB',
+                          '#FFCE56',
+                          '#4BC0C0',
+                          '#9966FF',
+                          '#FF9F40'
+                        ],
+                      }]
+                    }}
+                    options={{
+                      responsive: true,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                        },
+                      },
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
           
           {reportData.type === 'payment' && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
