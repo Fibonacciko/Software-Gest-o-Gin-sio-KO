@@ -106,66 +106,72 @@ user_problem_statement:
 1. Corrigir redirecionamento para página de login ao navegar para a página "Finanças" (Payments). O utilizador não deveria ser redirecionado para login.
 2. Atualizar o status do membro para ser baseado no status de pagamento (pago = ativo, não pago = inativo). Eliminar o status "suspenso".
 
+backend:
+  - task: "Member Status - Payment-based calculation"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Implemented calculate_member_status() function that checks for paid payments in current month. Updated get_members, get_member, and get_member_by_number endpoints to calculate status dynamically. Removed SUSPENDED from MemberStatus enum. Status is now: ACTIVE (has paid payment in current month) or INACTIVE (no paid payment in current month)."
+
+  - task: "Expenses API endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Created ExpenseCategory enum, Expense and ExpenseCreate Pydantic models. Added three expense endpoints: POST /api/expenses (create), GET /api/expenses (list with filters), DELETE /api/expenses/{id} (delete). All endpoints require admin role. Fixed field naming conflict by using 'expense_date' instead of 'date' in Expense model."
+
 frontend:
-  - task: "Members Page Action Buttons - View Details"
+  - task: "Members Page - Remove suspended status"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
-        - agent: "user"
-        - comment: "User reported that the 'visualizar' (eye) button is visible but not working - when clicked, it doesn't open the expected modal with member details. Need to test handleViewDetails function and verify if the dialog opens correctly."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ VIEW DETAILS BUTTON WORKING PERFECTLY: Fixed JavaScript error 'Cannot read properties of undefined (reading selected)' in MemberAttendanceCalendar component by adding default parameter modifiers = {}. ✅ View Details dialog opens successfully with title 'Detalhes do Membro'. ✅ Shows complete member details including name (Maria Santos), contact info, membership type, attendance calendar, and QR code. ✅ Dialog closes properly with Escape key. ✅ handleViewDetails function working correctly with API call to /api/members/{id}."
+        - agent: "main"
+        - comment: "Removed 'suspended' status from translations (both PT and EN), status filter dropdown, getStatusVariant, and getStatusClassName functions. Status now only shows active (green) or inactive (orange)."
 
-  - task: "Members Page Action Buttons - Edit Member"
+  - task: "Payments Page - Expense integration"
     implemented: true
-    working: true
-    file: "/app/frontend/src/pages/Members.js"
+    working: "NA"
+    file: "/app/frontend/src/pages/Payments.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
-        - agent: "user"
-        - comment: "User reported that the 'editar' (pencil) button is visible but not working - when clicked, it doesn't open the expected edit form dialog. Need to test handleEdit function and verify if the edit dialog opens correctly."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ EDIT BUTTON WORKING PERFECTLY: Edit dialog opens successfully with title 'Editar'. ✅ Form fields are populated with existing member data (Name: 'Maria Santos', phone, email, etc.). ✅ All form fields are accessible and functional including name, phone, email, date of birth, nationality, profession, address, membership type, photo URL, and notes. ✅ Dialog closes properly with Cancel button. ✅ handleEdit function working correctly, populating form with member data."
-
-  - task: "Members Page Action Buttons - Delete Member"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/pages/Members.js"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: "NA"
-        - agent: "user"
-        - comment: "User reported that the 'apagar' (trash) button is visible but not working - when clicked, it doesn't show the expected confirmation dialog. Need to test handleDelete function and verify if the confirmation dialog appears correctly."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ DELETE BUTTON WORKING PERFECTLY: Confirmation dialog appears with correct Portuguese message 'Tem certeza que deseja eliminar este membro?'. ✅ Browser confirmation dialog is handled correctly. ✅ handleDelete function working correctly with proper confirmation flow. ✅ Delete functionality ready to execute API call to /api/members/{id} upon confirmation."
+        - agent: "main"
+        - comment: "Added fetchExpenses() call in useEffect on component mount for admin users. Updated expense date field reference from 'expense.date' to 'expense.expense_date' to match backend model changes. This should fix the navigation redirect issue caused by missing expense endpoint."
 
 metadata:
-  created_by: "testing_agent"
+  created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
-  run_ui: true
+  test_sequence: 0
+  run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Member Status - Payment-based calculation"
+    - "Expenses API endpoints"
+    - "Members Page - Remove suspended status"
+    - "Payments Page - Expense integration"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
-    - agent: "testing"
-    - message: "Starting testing of Members page action buttons issue. User reported that the 'visualizar' (eye), 'editar' (pencil), and 'apagar' (trash) buttons are visible but not working when clicked - they don't open the expected dialogs/modals. Will test with login fabio.guerreiro/admin123 on /members page to diagnose the issue with handleViewDetails, handleEdit, and handleDelete functions."
-    - agent: "testing"
-    - message: "🎉 MEMBERS PAGE ACTION BUTTONS ISSUE COMPLETELY RESOLVED! ✅ Root cause identified: JavaScript error 'Cannot read properties of undefined (reading selected)' in MemberAttendanceCalendar component was preventing action buttons from working. ✅ Fixed by adding default parameter modifiers = {} in Day component. ✅ All three action buttons now working perfectly: View Details opens member details dialog with complete info including attendance calendar and QR code, Edit opens populated form dialog, Delete shows proper confirmation dialog. ✅ Comprehensive testing completed with login fabio.guerreiro/admin123 - all functionality restored and working as expected. No further action needed."
+    - agent: "main"
+    - message: "Implemented two main fixes: 1) Member status now calculated dynamically based on payment history (paid payment in current month = active, otherwise inactive). Removed 'suspended' status completely from both backend and frontend. 2) Created missing expense endpoints in backend to prevent errors when navigating to Payments page. Updated frontend to call fetchExpenses on mount and use correct field names. Backend and frontend changes applied, services restarted successfully. Ready for testing."
