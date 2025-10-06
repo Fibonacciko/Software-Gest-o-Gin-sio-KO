@@ -539,7 +539,7 @@ const Inventory = ({ language, translations }) => {
         </Card>
 
         {/* Sell Article Bar */}
-        <Card className="bg-gray-800/80 dark:bg-gray-700/80 text-white border-orange-200/30">
+        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
             <h2 className="text-lg font-bold text-white">
               {t[language].sellItem}
