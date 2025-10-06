@@ -511,9 +511,10 @@ const Reports = ({ language, translations }) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="thisMonth">{t[language].thisMonth}</SelectItem>
-                  <SelectItem value="lastMonth">{t[language].lastMonth}</SelectItem>
+                  <SelectItem value="lastQuarter">{t[language].lastQuarter}</SelectItem>
+                  <SelectItem value="lastSemester">{t[language].lastSemester}</SelectItem>
                   <SelectItem value="thisYear">{t[language].thisYear}</SelectItem>
-                  <SelectItem value="lastYear">{t[language].lastYear}</SelectItem>
+                  <SelectItem value="lastThreeYears">{t[language].lastThreeYears}</SelectItem>
                   <SelectItem value="custom">{t[language].custom}</SelectItem>
                 </SelectContent>
               </Select>
