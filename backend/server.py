@@ -619,6 +619,28 @@ def parse_from_mongo(item):
                     pass
     return item
 
+async def calculate_member_status(member_id: str) -> MemberStatus:
+    """
+    Calculate member status based on payment history.
+    Active: Has at least one paid payment in the current month.
+    Inactive: No paid payments in the current month.
+    """
+    # Get current month start date
+    now = date.today()
+    start_of_month = date(now.year, now.month, 1)
+    
+    # Check if member has any paid payments in the current month
+    payment = await db.payments.find_one({
+        "member_id": member_id,
+        "status": "paid",
+        "payment_date": {"$gte": start_of_month.isoformat()}
+    })
+    
+    if payment:
+        return MemberStatus.ACTIVE
+    else:
+        return MemberStatus.INACTIVE
+
 # Member Routes
 @api_router.post("/members", response_model=Member)
 async def create_member(
