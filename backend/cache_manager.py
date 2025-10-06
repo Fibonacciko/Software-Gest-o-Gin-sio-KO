@@ -1,4 +1,3 @@
-import aioredis
 import json
 import os
 from typing import Any, Optional, Union
@@ -8,31 +7,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 class CacheManager:
-    """Advanced Redis Cache Manager for high-performance data caching"""
+    """Simple Cache Manager with in-memory fallback"""
     
     def __init__(self):
-        self.redis = None
+        self.redis = {}  # In-memory cache for now
         self.connected = False
         
     async def connect(self):
-        """Initialize Redis connection"""
+        """Initialize cache connection"""
         try:
-            # Use Redis if available, fallback to in-memory cache
-            redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379')
-            self.redis = await aioredis.from_url(
-                redis_url,
-                encoding="utf-8",
-                decode_responses=True,
-                retry_on_timeout=True,
-                socket_connect_timeout=5
-            )
-            # Test connection
-            await self.redis.ping()
+            # Use in-memory cache for simplicity
+            self.redis = {}
             self.connected = True
-            logger.info("✅ Redis cache connected successfully")
+            logger.info("✅ In-memory cache initialized successfully")
         except Exception as e:
-            logger.warning(f"⚠️ Redis not available, using fallback: {e}")
-            # In-memory fallback cache
+            logger.warning(f"⚠️ Cache initialization failed: {e}")
             self.redis = {}
             self.connected = False
     
