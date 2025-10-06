@@ -848,25 +848,31 @@ const Reports = ({ language, translations }) => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {reportData.charts.membersByActivity && Object.entries(reportData.charts.membersByActivity).map(([activity, count]) => (
-                        <div key={activity} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="font-medium">{activity}</span>
-                          <span className="text-sm font-semibold text-blue-600">{count}</span>
+                      {reportData.charts.membersByActivity && Object.keys(reportData.charts.membersByActivity).length > 0 ? (
+                        Object.entries(reportData.charts.membersByActivity).map(([activity, count]) => (
+                          <div key={activity} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span className="font-medium">{activity}</span>
+                            <span className="text-sm font-semibold text-blue-600">{count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-lg text-center text-gray-600">
+                          Nenhum dados de modalidade disponível
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
                 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Membros por Status</CardTitle>
+                    <CardTitle>{t[language].membersByPack}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {reportData.charts.membersByStatus && Object.entries(reportData.charts.membersByStatus).map(([status, count]) => (
-                        <div key={status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="font-medium">{t[language][status] || status}</span>
+                      {reportData.charts.membersByPack && Object.entries(reportData.charts.membersByPack).map(([pack, count]) => (
+                        <div key={pack} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span className="font-medium">{pack}</span>
                           <span className="text-sm font-semibold text-green-600">{count}</span>
                         </div>
                       ))}
