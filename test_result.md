@@ -125,15 +125,18 @@ backend:
 frontend:
   - task: "SimpleMemberCalendar - Yellow attendance indicators"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/components/SimpleMemberCalendar.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Updated SimpleMemberCalendar component (used in Dashboard) to show yellow circular background on days with attendance. Changed from small yellow circle to full-size yellow circle (bg-yellow-400) that fills the entire day cell. Black bold text displays on top of yellow background for attendance days."
+        - working: false
+        - agent: "testing"
+        - comment: "TESTING FAILED: Unable to complete full test due to session persistence issues and UI interaction problems. Multiple attempts to perform check-in and trigger SimpleMemberCalendar display were unsuccessful. Issues encountered: 1) Session expires frequently, redirecting to login page 2) Activity selector dropdown has click interaction issues 3) Member search and check-in process fails to complete 4) SimpleMemberCalendar component not visible in member details panel after check-in. Backend shows 404 errors for some deleted members. Calendar component code appears correct but cannot verify functionality due to UI workflow issues."
 
   - task: "MemberAttendanceCalendar - Yellow attendance indicators and proportion fix"
     implemented: true
