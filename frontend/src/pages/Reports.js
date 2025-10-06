@@ -334,29 +334,54 @@ const Reports = ({ language, translations }) => {
         return payDate >= start && payDate <= end && payment.status === 'paid';
       });
       
-      const paymentsReceived = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+      // Calculate financial metrics
+      const monthlyRevenue = filteredPayments
+        .filter(p => p.description && p.description.toLowerCase().includes('mensalidade'))
+        .reduce((sum, payment) => sum + payment.amount, 0);
       
-      // Get inventory sales data
+      const extraRevenue = filteredPayments
+        .filter(p => !p.description || !p.description.toLowerCase().includes('mensalidade'))
+        .reduce((sum, payment) => sum + payment.amount, 0);
+      
+      // Get inventory data for articles
       const inventoryRes = await axios.get(`${API}/inventory`);
       const inventory = inventoryRes.data;
       
-      const itemsSold = inventory.reduce((sum, item) => sum + (item.sold_quantity || 0), 0);
-      const totalSoldValue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * item.price), 0);
+      const articleRevenue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * item.price), 0);
+      const articleExpenses = inventory.reduce((sum, item) => sum + (item.quantity * (item.purchase_price || item.price * 0.6)), 0);
       
-      // Get expenses (mock data for now - would need expenses API)
-      const totalExpenses = 0; // TODO: Implement expenses calculation
+      // Mock expenses data (would need proper expenses system)
+      const fixedExpenses = 500; // Mock: rent, utilities, etc.
+      const extraExpenses = 200; // Mock: maintenance, equipment, etc.
       
-      const netRevenue = paymentsReceived + totalSoldValue - totalExpenses;
+      // Calculate totals
+      const grossTotal = monthlyRevenue + extraRevenue + articleRevenue;
+      const netTotal = grossTotal - (fixedExpenses + extraExpenses + articleExpenses);
       
       setReportData({
         type: 'financial',
-        stats: { paymentsReceived, itemsSold, totalExpenses, netRevenue, totalSoldValue },
+        stats: { 
+          monthlyRevenue, 
+          extraRevenue, 
+          fixedExpenses, 
+          extraExpenses, 
+          articleRevenue, 
+          articleExpenses, 
+          grossTotal, 
+          netTotal 
+        },
         charts: { 
-          financialMetrics: {
-            [`${t[language || 'pt'].paymentsReceived}`]: paymentsReceived,
-            [`${t[language || 'pt'].itemsSold}`]: totalSoldValue,
-            [`${t[language || 'pt'].totalExpenses}`]: totalExpenses,
-            [`${t[language || 'pt'].netRevenue}`]: netRevenue
+          revenues: {
+            [`${t[language || 'pt'].monthlyRevenue}`]: monthlyRevenue,
+            [`${t[language || 'pt'].extraRevenue}`]: extraRevenue,
+            [`${t[language || 'pt'].articleRevenue}`]: articleRevenue,
+            [`${t[language || 'pt'].grossTotal}`]: grossTotal
+          },
+          expenses: {
+            [`${t[language || 'pt'].fixedExpenses}`]: fixedExpenses,
+            [`${t[language || 'pt'].extraExpenses}`]: extraExpenses,
+            [`${t[language || 'pt'].articleExpenses}`]: articleExpenses,
+            [`${t[language || 'pt'].netTotal}`]: netTotal
           }
         }
       });
