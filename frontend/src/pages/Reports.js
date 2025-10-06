@@ -317,13 +317,11 @@ const Reports = ({ language, translations }) => {
       
       setReportData({
         type: 'financial',
-        stats: { paymentsReceived, itemsSold, totalExpenses, netRevenue },
+        stats: { paymentsReceived, itemsSold, totalExpenses, netRevenue, totalSoldValue },
         charts: { 
-          revenues: {
+          financialMetrics: {
             [`${t[language || 'pt'].paymentsReceived}`]: paymentsReceived,
-            [`${t[language || 'pt'].itemsSold}`]: totalSoldValue
-          },
-          expenses: {
+            [`${t[language || 'pt'].itemsSold}`]: totalSoldValue,
             [`${t[language || 'pt'].totalExpenses}`]: totalExpenses,
             [`${t[language || 'pt'].netRevenue}`]: netRevenue
           }
