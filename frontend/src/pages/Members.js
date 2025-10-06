@@ -558,7 +558,7 @@ const Members = ({ language, translations }) => {
                       <td className="p-4">
                         <div className="flex items-center">
                           <Calendar size={16} className="text-gray-400 mr-2" />
-                          {new Date(member.join_date).toLocaleDateString('pt-PT')}
+                          {member.join_date ? new Date(member.join_date).toLocaleDateString('pt-PT') : 'N/A'}
                         </div>
                       </td>
                       <td className="p-4">
