@@ -110,60 +110,66 @@ user_problem_statement:
 5. Stock - verificar cálculo da Receita Líquida após venda de produto
 
 backend:
-  - task: "Member Status - Payment-based calculation"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: "NA"
-        - agent: "main"
-        - comment: "Implemented calculate_member_status() function that checks for paid payments in current month. Updated get_members, get_member, and get_member_by_number endpoints to calculate status dynamically. Removed SUSPENDED from MemberStatus enum. Status is now: ACTIVE (has paid payment in current month) or INACTIVE (no paid payment in current month)."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ TESTED SUCCESSFULLY: Member status calculation working correctly. Verified no members have 'suspended' status - all members show either 'active' or 'inactive'. Created test member with status 'inactive', added paid payment for current month, verified member status changed to 'active'. Dynamic status calculation based on payments is functioning as expected."
-
-  - task: "Expenses API endpoints"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: "NA"
-        - agent: "main"
-        - comment: "Created ExpenseCategory enum, Expense and ExpenseCreate Pydantic models. Added three expense endpoints: POST /api/expenses (create), GET /api/expenses (list with filters), DELETE /api/expenses/{id} (delete). All endpoints require admin role. Fixed field naming conflict by using 'expense_date' instead of 'date' in Expense model."
-        - working: true
-        - agent: "testing"
-        - comment: "✅ TESTED SUCCESSFULLY: All expense endpoints working correctly. Fixed minor issue in create_expense function where None date field was causing validation error - updated to properly handle optional date field. POST /api/expenses creates expenses successfully, GET /api/expenses returns expense list, category filtering works (GET /api/expenses?category=salaries), DELETE /api/expenses/{id} removes expenses properly. All endpoints require admin authentication as expected."
-
-frontend:
-  - task: "Members Page - Remove suspended status"
+  - task: "Expense categories update"
     implemented: true
     working: "NA"
-    file: "/app/frontend/src/pages/Members.js"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Updated ExpenseCategory enum from 3 categories (SALARIES, FIXED, EXTRA) to 2 categories (FIXED, VARIABLE) as requested. This simplifies expense tracking to just 'Despesa Fixa' and 'Despesa Variável'."
+
+frontend:
+  - task: "Attendance Page - Fix null member error"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Attendance.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
         - working: "NA"
         - agent: "main"
-        - comment: "Removed 'suspended' status from translations (both PT and EN), status filter dropdown, getStatusVariant, and getStatusClassName functions. Status now only shows active (green) or inactive (orange)."
+        - comment: "Fixed 'Cannot read properties of null (reading name)' error that prevented Attendance page from loading. Added null checks for att.member in filter (line 144), export function (line 199), and table rendering (line 421). Now shows 'Membro eliminado' for deleted members instead of crashing."
 
-  - task: "Payments Page - Expense integration"
+  - task: "Sidebar - Rename Pagamentos to Finanças"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Updated sidebar translations in App.js. Changed 'Pagamentos' to 'Finanças' (PT) and 'Payments' to 'Finance' (EN) in navigation menu."
+
+  - task: "Payments Page - Update expense categories"
     implemented: true
     working: "NA"
     file: "/app/frontend/src/pages/Payments.js"
     stuck_count: 0
-    priority: "high"
+    priority: "medium"
     needs_retesting: true
     status_history:
         - working: "NA"
         - agent: "main"
-        - comment: "Added fetchExpenses() call in useEffect on component mount for admin users. Updated expense date field reference from 'expense.date' to 'expense.expense_date' to match backend model changes. This should fix the navigation redirect issue caused by missing expense endpoint."
+        - comment: "Updated expense category form to use only 2 categories: 'fixed' (Despesa Fixa) and 'variable' (Despesa Variável). Removed 'salaries' and 'extra' categories. Updated default values, translations, and form reset logic."
+
+  - task: "Inventory Page - Standardize low stock threshold"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Inventory.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Fixed inconsistency in low stock threshold. Changed from 3 to 5 units in getInventoryStats function (line 353) to match getStockStatus function (line 343). Now both use <= 5 as the threshold for 'Stock Baixo'."
 
 metadata:
   created_by: "main_agent"
@@ -173,16 +179,15 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Member Status - Payment-based calculation"
-    - "Expenses API endpoints"
-    - "Members Page - Remove suspended status"
-    - "Payments Page - Expense integration"
+    - "Attendance Page - Fix null member error"
+    - "Sidebar - Rename Pagamentos to Finanças"
+    - "Payments Page - Update expense categories"
+    - "Inventory Page - Standardize low stock threshold"
+    - "Inventory Page - Verify net revenue calculation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-    - message: "Implemented two main fixes: 1) Member status now calculated dynamically based on payment history (paid payment in current month = active, otherwise inactive). Removed 'suspended' status completely from both backend and frontend. 2) Created missing expense endpoints in backend to prevent errors when navigating to Payments page. Updated frontend to call fetchExpenses on mount and use correct field names. Backend and frontend changes applied, services restarted successfully. Ready for testing."
-    - agent: "testing"
-    - message: "✅ BACKEND TESTING COMPLETED: All priority backend functionality tested and working correctly. Member status calculation is dynamic and payment-based as requested. Expense endpoints are fully functional with proper admin authentication. Fixed minor backend issue with expense date field handling during testing. Authentication on payments and members endpoints working without 401 errors for admin users. All requested test cases from review request have been verified successfully."
+    - message: "Implemented fixes for 5 reported issues: 1) Fixed Attendance page crash caused by null member references when attendance records reference deleted members. 2) Changed sidebar navigation from 'Pagamentos' to 'Finanças'. 3) Simplified expense categories from 3 (Ordenados/Fixas/Extras) to 2 (Fixa/Variável) in both backend and frontend. 4) Standardized low stock threshold to 5 units across Inventory page. 5) Net revenue calculation logic appears correct (totalSoldValue - totalPurchaseCost) but needs testing to verify it updates properly after sales. All services restarted successfully. Ready for testing."
