@@ -48,7 +48,7 @@ code {
         --radius: 0.5rem;
     }
   .dark {
-        /* Dark Mode - Lighter shade for better readability */
+        /* Dark Mode - Neutral gray to black tones (no blue tint) */
         --background: 0 0% 18%;
         --foreground: 0 0% 98%;
         --card: 0 0% 22%;
@@ -57,16 +57,16 @@ code {
         --popover-foreground: 0 0% 98%;
         --primary: 22 92% 55%;
         --primary-foreground: 0 0% 10%;
-        --secondary: 22 12% 28%;
+        --secondary: 0 0% 28%;
         --secondary-foreground: 0 0% 98%;
-        --muted: 22 8% 26%;
+        --muted: 0 0% 26%;
         --muted-foreground: 0 0% 85%;
-        --accent: 22 15% 30%;
+        --accent: 0 0% 30%;
         --accent-foreground: 0 0% 98%;
         --destructive: 0 62.8% 50%;
         --destructive-foreground: 0 0% 98%;
-        --border: 22 8% 35%;
-        --input: 22 6% 30%;
+        --border: 0 0% 35%;
+        --input: 0 0% 30%;
         --ring: 22 92% 55%;
         --chart-1: 22 92% 60%;
         --chart-2: 160 60% 45%;
