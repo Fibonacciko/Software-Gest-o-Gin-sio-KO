@@ -140,15 +140,18 @@ frontend:
 
   - task: "MemberAttendanceCalendar - Yellow attendance indicators and proportion fix"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/components/MemberAttendanceCalendar.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Updated MemberAttendanceCalendar component (used in Members page) to match SimpleMemberCalendar appearance. Applied yellow circular background (bg-yellow-400) for attendance days with black bold text on top. Fixed proportion by using 'aspect-square' class and proper padding. Added legend showing 'Presença Registada' with yellow circle indicator. Now synchronized with Dashboard calendar appearance."
+        - working: false
+        - agent: "testing"
+        - comment: "TESTING FAILED: Unable to access member details page to view MemberAttendanceCalendar. Navigation to Members page successful, but clicking on member details triggers session expiration. Found calendar-related elements (1 yellow element, 11 'Presença' text elements) but could not identify complete calendar structure with 7-column grid. Member details view not accessible due to session/authentication issues."
 
   - task: "Attendance Page - Fix null member error"
     implemented: true
