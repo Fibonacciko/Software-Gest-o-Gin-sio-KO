@@ -373,10 +373,8 @@ const Payments = ({ language, translations }) => {
     }
   };
 
-  // Function to fetch expenses (only for admin)
+  // Function to fetch expenses (now accessible to staff too)
   const fetchExpenses = async () => {
-    if (!isAdmin()) return;
-    
     try {
       const response = await axios.get(`${API}/expenses`);
       setExpenses(response.data);
