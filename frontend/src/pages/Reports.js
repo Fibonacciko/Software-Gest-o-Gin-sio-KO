@@ -218,25 +218,31 @@ const Reports = ({ language, translations }) => {
         start = new Date(now.getFullYear(), now.getMonth(), 1);
         end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         break;
-      case 'lastMonth':
-        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        end = new Date(now.getFullYear(), now.getMonth(), 0);
+      case 'lastQuarter':
+        const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3 - 3;
+        start = new Date(now.getFullYear(), quarterStartMonth, 1);
+        end = new Date(now.getFullYear(), quarterStartMonth + 3, 0);
+        break;
+      case 'lastSemester':
+        const semesterStartMonth = Math.floor(now.getMonth() / 6) * 6 - 6;
+        start = new Date(now.getFullYear(), semesterStartMonth, 1);
+        end = new Date(now.getFullYear(), semesterStartMonth + 6, 0);
         break;
       case 'thisYear':
         start = new Date(now.getFullYear(), 0, 1);
         end = new Date(now.getFullYear(), 11, 31);
         break;
-      case 'lastYear':
-        start = new Date(now.getFullYear() - 1, 0, 1);
+      case 'lastThreeYears':
+        start = new Date(now.getFullYear() - 3, 0, 1);
         end = new Date(now.getFullYear() - 1, 11, 31);
         break;
       case 'custom':
-        start = startDate ? new Date(startDate) : new Date();
-        end = endDate ? new Date(endDate) : new Date();
+        start = startDate ? new Date(startDate) : new Date(now.getFullYear(), 0, 1);
+        end = endDate ? new Date(endDate) : now;
         break;
       default:
         start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date();
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     }
     
     return { start, end };
