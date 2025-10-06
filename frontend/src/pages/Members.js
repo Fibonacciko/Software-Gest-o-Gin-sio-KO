@@ -253,7 +253,6 @@ const Members = ({ language, translations }) => {
     switch (status) {
       case 'active': return 'default';
       case 'inactive': return 'secondary';
-      case 'suspended': return 'destructive';
       default: return 'secondary';
     }
   };
@@ -262,7 +261,6 @@ const Members = ({ language, translations }) => {
     switch (status) {
       case 'active': return 'bg-green-800 text-white hover:bg-green-900';
       case 'inactive': return 'bg-orange-600 text-white hover:bg-orange-700';
-      case 'suspended': return 'bg-red-600 text-white hover:bg-red-700';
       default: return 'bg-gray-500 text-white hover:bg-gray-600';
     }
   };
