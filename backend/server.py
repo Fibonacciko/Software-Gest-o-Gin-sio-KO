@@ -1089,11 +1089,11 @@ async def get_expenses(
     if category:
         filter_dict['category'] = category
     if start_date:
-        filter_dict['date'] = filter_dict.get('date', {})
-        filter_dict['date']['$gte'] = start_date.isoformat()
+        filter_dict['expense_date'] = filter_dict.get('expense_date', {})
+        filter_dict['expense_date']['$gte'] = start_date.isoformat()
     if end_date:
-        filter_dict['date'] = filter_dict.get('date', {})
-        filter_dict['date']['$lte'] = end_date.isoformat()
+        filter_dict['expense_date'] = filter_dict.get('expense_date', {})
+        filter_dict['expense_date']['$lte'] = end_date.isoformat()
     
     expenses = await db.expenses.find(filter_dict).to_list(1000)
     return [Expense(**parse_from_mongo(expense)) for expense in expenses]
