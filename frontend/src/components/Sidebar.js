@@ -24,6 +24,7 @@ import { Button } from './ui/button';
 const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations }) => {
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   const menuItems = [
     { path: '/', icon: Home, label: translations.dashboard },
