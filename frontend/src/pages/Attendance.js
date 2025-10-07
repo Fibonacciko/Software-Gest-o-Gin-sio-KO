@@ -101,12 +101,6 @@ const Attendance = ({ language, translations }) => {
     fetchAttendance();
   }, [selectedDate, selectedMember, activityFilter]);
 
-  useEffect(() => {
-    if (viewMode === 'calendar') {
-      fetchMonthlyAttendance();
-    }
-  }, [selectedDate, viewMode]);
-
   const fetchMembers = async () => {
     try {
       const response = await axios.get(`${API}/members`);
