@@ -86,6 +86,7 @@ const Members = ({ language, translations }) => {
       memberDetails: 'Detalhes do Membro',
       joinDate: 'Data de Adesão',
       status: 'Status',
+      modalities: 'Modalidades',
       qrCode: 'Código QR',
       confirmDelete: 'Tem certeza que deseja eliminar este membro?',
       memberAdded: 'Membro adicionado com sucesso!',
