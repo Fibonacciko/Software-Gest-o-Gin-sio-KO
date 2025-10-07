@@ -546,6 +546,17 @@ const Payments = ({ language, translations }) => {
                           </div>
                           
                           <div>
+                            <Label htmlFor="payment_date">{t[language].paymentDate} *</Label>
+                            <Input
+                              id="payment_date"
+                              type="date"
+                              value={formData.payment_date}
+                              onChange={(e) => setFormData({...formData, payment_date: e.target.value})}
+                              required
+                            />
+                          </div>
+                          
+                          <div>
                             <Label htmlFor="description">{t[language].description}</Label>
                             <Textarea
                               id="description"
