@@ -278,19 +278,29 @@ const Payments = ({ language, translations }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    console.log('=== PAYMENT SUBMISSION DEBUG ===');
+    console.log('Form data:', formData);
+    console.log('API URL:', `${API}/payments`);
+    
     try {
-      await axios.post(`${API}/payments`, {
+      const response = await axios.post(`${API}/payments`, {
         ...formData,
         amount: parseFloat(formData.amount)
       });
       
+      console.log('Payment success response:', response);
       toast.success(t[language].paymentAdded);
       setShowAddDialog(false);
       resetForm();
       fetchPayments();
     } catch (error) {
-      console.error('Error adding payment:', error);
-      toast.error('Erro ao registar pagamento');
+      console.error('=== PAYMENT ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error response:', error.response);
+      console.error('Error data:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      toast.error(`Erro ao registar pagamento: ${error.response?.data?.detail || error.message}`);
     }
   };
 
