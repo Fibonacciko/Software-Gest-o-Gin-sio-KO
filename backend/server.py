@@ -52,7 +52,6 @@ class MemberStatus(str, Enum):
 class PaymentStatus(str, Enum):
     PAID = "paid"
     PENDING = "pending"
-    OVERDUE = "overdue"
 
 class ItemCategory(str, Enum):
     CLOTHING = "clothing"
