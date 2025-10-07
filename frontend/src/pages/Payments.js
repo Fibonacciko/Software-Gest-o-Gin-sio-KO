@@ -196,7 +196,6 @@ const Payments = ({ language, translations }) => {
       const params = new URLSearchParams();
       
       if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (selectedMember !== 'all') params.append('member_id', selectedMember);
       
       // Date filters
       const now = new Date();
@@ -240,15 +239,29 @@ const Payments = ({ language, translations }) => {
         })
       );
       
+      // Filter by modality if selected
+      let filteredPayments = paymentsWithMembers;
+      if (modalityFilter !== 'all') {
+        // Get attendance records for the modality
+        const attendanceResponse = await axios.get(`${API}/attendance?activity_id=${modalityFilter}`);
+        const memberIdsInModality = [...new Set(attendanceResponse.data.map(att => att.member_id))];
+        filteredPayments = paymentsWithMembers.filter(payment => 
+          memberIdsInModality.includes(payment.member_id)
+        );
+      }
+      
       // Filter by search term if provided
       if (searchTerm) {
-        paymentsWithMembers = paymentsWithMembers.filter(payment => 
+        filteredPayments = filteredPayments.filter(payment => 
           payment.member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           payment.description?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
       
-      setPayments(paymentsWithMembers);
+      // Sort by date (most recent first)
+      filteredPayments.sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
+      
+      setPayments(filteredPayments);
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast.error('Erro ao carregar pagamentos');
