@@ -203,16 +203,6 @@ const Attendance = ({ language, translations }) => {
         <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
           {t[language].attendance}
         </h1>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            onClick={() => setViewMode('list')}
-            className="btn-hover"
-          >
-            {t[language].listView}
-          </Button>
-        </div>
       </div>
 
       {/* Statistics */}
