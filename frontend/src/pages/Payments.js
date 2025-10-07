@@ -705,13 +705,12 @@ const Payments = ({ language, translations }) => {
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
-                <SelectValue placeholder={t[language].allStatuses} />
+                <SelectValue placeholder={t[language].status} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t[language].allStatuses}</SelectItem>
+                <SelectItem value="all">{t[language].status}</SelectItem>
                 <SelectItem value="paid">{t[language].paid}</SelectItem>
                 <SelectItem value="pending">{t[language].pending}</SelectItem>
-                <SelectItem value="overdue">{t[language].overdue}</SelectItem>
               </SelectContent>
             </Select>
             
@@ -727,15 +726,15 @@ const Payments = ({ language, translations }) => {
               </SelectContent>
             </Select>
             
-            <Select value={selectedMember} onValueChange={setSelectedMember}>
+            <Select value={modalityFilter} onValueChange={setModalityFilter}>
               <SelectTrigger>
-                <SelectValue placeholder={t[language].allMembers} />
+                <SelectValue placeholder={t[language].modalities} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t[language].allMembers}</SelectItem>
-                {members.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.name}
+                <SelectItem value="all">{t[language].modalities}</SelectItem>
+                {activities.map((activity) => (
+                  <SelectItem key={activity.id} value={activity.id}>
+                    {activity.name}
                   </SelectItem>
                 ))}
               </SelectContent>
