@@ -542,6 +542,20 @@ const Members = ({ language, translations }) => {
                 <SelectItem value="vip">{t[language].vip}</SelectItem>
               </SelectContent>
             </Select>
+            
+            <Select value={modalityFilter} onValueChange={setModalityFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t[language].modalities} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t[language].modalities}</SelectItem>
+                {activities.map((activity) => (
+                  <SelectItem key={activity.id} value={activity.id}>
+                    {activity.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
