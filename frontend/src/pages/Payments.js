@@ -369,6 +369,20 @@ const Payments = ({ language, translations }) => {
     setFilteredMembers(filtered);
   };
 
+  // Function to delete payment
+  const handleDeletePayment = async (paymentId) => {
+    if (window.confirm('Tem certeza que deseja eliminar este pagamento?')) {
+      try {
+        await axios.delete(`${API}/payments/${paymentId}`);
+        toast.success('Pagamento eliminado com sucesso');
+        fetchPayments();
+      } catch (error) {
+        console.error('Error deleting payment:', error);
+        toast.error('Erro ao eliminar pagamento');
+      }
+    }
+  };
+
   // Function to handle expense submission
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
