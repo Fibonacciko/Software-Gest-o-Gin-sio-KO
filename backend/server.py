@@ -168,6 +168,7 @@ class PaymentCreate(BaseModel):
     amount: float
     payment_method: PaymentMethod = PaymentMethod.CASH
     description: Optional[str] = None
+    payment_date: Optional[date] = None
 
 class InventoryItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
