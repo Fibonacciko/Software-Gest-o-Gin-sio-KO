@@ -65,8 +65,6 @@ const Attendance = ({ language, translations }) => {
       attendanceCalendar: 'Attendance Calendar',
       todayAttendance: "Today's Attendance",
       monthlyView: 'Monthly View',
-      listView: 'List',
-      calendarView: 'Calendar',
       selectDate: 'Select Date',
       allMembers: 'All Members',
       searchMembers: 'Search members...',
