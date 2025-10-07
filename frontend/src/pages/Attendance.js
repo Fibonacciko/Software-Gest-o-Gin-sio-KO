@@ -244,16 +244,14 @@ const Attendance = ({ language, translations }) => {
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {viewMode === 'list' && (
-              <div>
-                <Input
-                  type="date"
-                  value={selectedDate.toISOString().split('T')[0]}
-                  onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                  data-testid="date-selector"
-                />
-              </div>
-            )}
+            <div>
+              <Input
+                type="date"
+                value={selectedDate.toISOString().split('T')[0]}
+                onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                data-testid="date-selector"
+              />
+            </div>
             
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
