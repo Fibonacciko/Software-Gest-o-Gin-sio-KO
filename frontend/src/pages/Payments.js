@@ -112,7 +112,8 @@ const Payments = ({ language, translations }) => {
       enterAmount: 'Inserir valor...',
       paymentDescription: 'Descrição do pagamento...',
       expenseDescription: 'Descrição da despesa...',
-      selectCategory: 'Selecionar categoria...'
+      selectCategory: 'Selecionar categoria...',
+      paymentDate: 'Data do Pagamento'
     },
     en: {
       finances: 'Finance',
