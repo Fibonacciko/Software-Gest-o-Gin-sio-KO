@@ -49,7 +49,8 @@ const Payments = ({ language, translations }) => {
     member_id: '',
     amount: '',
     payment_method: 'cash',
-    description: ''
+    description: '',
+    payment_date: new Date().toISOString().split('T')[0]
   });
 
   const [expenseFormData, setExpenseFormData] = useState({
