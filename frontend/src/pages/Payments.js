@@ -160,7 +160,10 @@ const Payments = ({ language, translations }) => {
       membershipPayment: 'Membership Payment',
       selectMember: 'Select member...',
       enterAmount: 'Enter amount...',
-      paymentDescription: 'Payment description...'
+      paymentDescription: 'Payment description...',
+      expenseDescription: 'Expense description...',
+      selectCategory: 'Select category...',
+      paymentDate: 'Payment Date'
     }
   };
 
