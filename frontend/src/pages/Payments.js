@@ -19,7 +19,8 @@ import {
   Download,
   Edit,
   Eye,
-  Users
+  Users,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
