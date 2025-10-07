@@ -123,6 +123,7 @@ const Members = ({ language, translations }) => {
       memberDetails: 'Member Details',
       joinDate: 'Join Date',
       status: 'Status',
+      modalities: 'Modalities',
       qrCode: 'QR Code',
       confirmDelete: 'Are you sure you want to delete this member?',
       memberAdded: 'Member added successfully!',
