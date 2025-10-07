@@ -146,43 +146,6 @@ const Attendance = ({ language, translations }) => {
     }
   };
 
-  const fetchMonthlyAttendance = async () => {
-    try {
-      const year = selectedDate.getFullYear();
-      const month = selectedDate.getMonth() + 1;
-      
-      const response = await axios.get(`${API}/attendance?start_date=${year}-${month.toString().padStart(2, '0')}-01&end_date=${year}-${month.toString().padStart(2, '0')}-31`);
-      
-      // Group by date
-      const grouped = response.data.reduce((acc, att) => {
-        const date = att.check_in_date;
-        if (!acc[date]) acc[date] = [];
-        acc[date].push(att);
-        return acc;
-      }, {});
-      
-      setMonthlyAttendance(grouped);
-    } catch (error) {
-      console.error('Error fetching monthly attendance:', error);
-    }
-  };
-
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-  };
-
-  const handlePreviousMonth = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setMonth(newDate.getMonth() - 1);
-    setSelectedDate(newDate);
-  };
-
-  const handleNextMonth = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setMonth(newDate.getMonth() + 1);
-    setSelectedDate(newDate);
-  };
-
   const exportAttendance = () => {
     const csvContent = [
       ['Data', 'Membro', 'Hora', 'Método'],
