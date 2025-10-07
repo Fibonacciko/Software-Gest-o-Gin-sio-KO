@@ -293,26 +293,25 @@ const Attendance = ({ language, translations }) => {
       </Card>
 
       {/* Content */}
-      {viewMode === 'list' ? (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center">
-              <CalendarIcon className="mr-2" />
-              {t[language].attendanceList} - {selectedDate.toLocaleDateString('pt-PT')}
-            </CardTitle>
-            <Button 
-              variant="outline" 
-              onClick={exportAttendance}
-              className="btn-hover"
-              data-testid="export-btn"
-            >
-              <Download className="mr-2" size={16} />
-              {t[language].export}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center">
+            <CalendarIcon className="mr-2" />
+            {t[language].attendanceList} - {selectedDate.toLocaleDateString('pt-PT')}
+          </CardTitle>
+          <Button 
+            variant="outline" 
+            onClick={exportAttendance}
+            className="btn-hover"
+            data-testid="export-btn"
+          >
+            <Download className="mr-2" size={16} />
+            {t[language].export}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
                 {[1, 2, 3].map(i => (
                   <div key={i} className="animate-pulse flex items-center space-x-4 p-4">
                     <div className="rounded-full bg-gray-200 h-10 w-10"></div>
