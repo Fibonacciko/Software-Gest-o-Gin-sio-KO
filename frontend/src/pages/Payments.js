@@ -165,11 +165,21 @@ const Payments = ({ language, translations }) => {
     fetchMembers();
     fetchPayments();
     fetchExpenses(); // Staff can now access expenses too
+    fetchActivities();
   }, []);
 
   useEffect(() => {
     fetchPayments();
-  }, [statusFilter, dateFilter, selectedMember, searchTerm]);
+  }, [statusFilter, dateFilter, modalityFilter, searchTerm]);
+
+  const fetchActivities = async () => {
+    try {
+      const response = await axios.get(`${API}/activities`);
+      setActivities(response.data);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    }
+  };
 
   const fetchMembers = async () => {
     try {
