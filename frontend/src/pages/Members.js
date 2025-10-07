@@ -32,6 +32,7 @@ const API = `${BACKEND_URL}/api`;
 
 const Members = ({ language, translations }) => {
   const [members, setMembers] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -40,6 +41,7 @@ const Members = ({ language, translations }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [membershipFilter, setMembershipFilter] = useState('all');
+  const [modalityFilter, setModalityFilter] = useState('all');
 
   const [formData, setFormData] = useState({
     name: '',
