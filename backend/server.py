@@ -913,7 +913,12 @@ async def create_payment(
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     
-    payment = Payment(**payment_data.dict())
+    # Use provided date or current date
+    payment_dict = payment_data.dict()
+    if not payment_dict.get('payment_date'):
+        payment_dict['payment_date'] = date.today()
+    
+    payment = Payment(**payment_dict)
     payment_dict = prepare_for_mongo(payment.dict())
     await db.payments.insert_one(payment_dict)
     return payment
