@@ -32,6 +32,7 @@ const Payments = ({ language, translations }) => {
   const [payments, setPayments] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [members, setMembers] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
@@ -39,7 +40,7 @@ const Payments = ({ language, translations }) => {
   const [memberSearchTerm, setMemberSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
-  const [selectedMember, setSelectedMember] = useState('all');
+  const [modalityFilter, setModalityFilter] = useState('all');
   const [expenseCategory, setExpenseCategory] = useState('fixed');
   const [filteredMembers, setFilteredMembers] = useState([]);
 
