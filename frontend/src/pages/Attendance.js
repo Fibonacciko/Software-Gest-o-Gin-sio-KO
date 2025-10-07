@@ -114,11 +114,10 @@ const Attendance = ({ language, translations }) => {
       setLoading(true);
       const params = new URLSearchParams();
       
-      if (viewMode === 'list') {
-        const dateStr = selectedDate.toISOString().split('T')[0];
-        params.append('start_date', dateStr);
-        params.append('end_date', dateStr);
-      }
+      // Always filter by date
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      params.append('start_date', dateStr);
+      params.append('end_date', dateStr);
       
       if (selectedMember !== 'all') {
         params.append('member_id', selectedMember);
