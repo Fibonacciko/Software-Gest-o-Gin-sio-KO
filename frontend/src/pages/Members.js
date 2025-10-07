@@ -135,7 +135,21 @@ const Members = ({ language, translations }) => {
 
   useEffect(() => {
     fetchMembers();
+    fetchActivities();
   }, []);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [searchTerm, statusFilter, membershipFilter, modalityFilter]);
+
+  const fetchActivities = async () => {
+    try {
+      const response = await axios.get(`${API}/activities`);
+      setActivities(response.data);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    }
+  };
 
   const fetchMembers = async () => {
     try {
@@ -146,8 +160,17 @@ const Members = ({ language, translations }) => {
       if (statusFilter !== 'all') params.append('status', statusFilter);
       if (membershipFilter !== 'all') params.append('membership_type', membershipFilter);
       
-      const response = await axios.get(`${API}/members?${params}`);
-      setMembers(response.data);
+      let response = await axios.get(`${API}/members?${params}`);
+      let membersData = response.data;
+      
+      // Filter by modality if selected
+      if (modalityFilter !== 'all') {
+        const attendanceResponse = await axios.get(`${API}/attendance?activity_id=${modalityFilter}`);
+        const memberIdsInModality = [...new Set(attendanceResponse.data.map(att => att.member_id))];
+        membersData = membersData.filter(member => memberIdsInModality.includes(member.id));
+      }
+      
+      setMembers(membersData);
     } catch (error) {
       console.error('Error fetching members:', error);
       toast.error('Erro ao carregar membros');
