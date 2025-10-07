@@ -39,8 +39,6 @@ const Attendance = ({ language, translations }) => {
       attendanceCalendar: 'Calendário de Presenças',
       todayAttendance: 'Presenças de Hoje',
       monthlyView: 'Vista Mensal',
-      listView: 'Lista',
-      calendarView: 'Calendário',
       selectDate: 'Selecionar Data',
       allMembers: 'Todos os Membros',
       searchMembers: 'Procurar membros...',
