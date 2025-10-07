@@ -254,17 +254,8 @@ const Attendance = ({ language, translations }) => {
             variant={viewMode === 'list' ? 'default' : 'outline'}
             onClick={() => setViewMode('list')}
             className="btn-hover"
-            data-testid="list-view-btn"
           >
             {t[language].listView}
-          </Button>
-          <Button
-            variant={viewMode === 'calendar' ? 'default' : 'outline'}
-            onClick={() => setViewMode('calendar')}
-            className="btn-hover"
-            data-testid="calendar-view-btn"
-          >
-            {t[language].calendarView}
           </Button>
         </div>
       </div>
