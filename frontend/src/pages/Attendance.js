@@ -29,7 +29,6 @@ const Attendance = ({ language, translations }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMember, setSelectedMember] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('list'); // list or calendar
   const [monthlyAttendance, setMonthlyAttendance] = useState({});
   const [activityFilter, setActivityFilter] = useState('all');
 
