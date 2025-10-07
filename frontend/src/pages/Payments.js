@@ -796,6 +796,9 @@ const Payments = ({ language, translations }) => {
                     <th className="text-left p-4 font-medium text-gray-600">
                       {t[language].description}
                     </th>
+                    <th className="text-left p-4 font-medium text-gray-600">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -838,6 +841,16 @@ const Payments = ({ language, translations }) => {
                         <p className="text-sm text-gray-600 truncate max-w-xs">
                           {payment.description || '-'}
                         </p>
+                      </td>
+                      <td className="p-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeletePayment(payment.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
                       </td>
                     </tr>
                   ))}
