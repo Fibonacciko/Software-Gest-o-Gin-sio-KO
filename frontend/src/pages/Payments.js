@@ -68,8 +68,8 @@ const Payments = ({ language, translations }) => {
   const t = {
     pt: {
       finances: 'Finanças',
-      registerPayments: 'Registar os Pagamentos',
-      registerExpenses: 'Registar Despesas',
+      registerPayments: 'Pagamentos',
+      registerExpenses: 'Despesas',
       searchMembers: 'Procurar por nome ou número de sócio',
       fixedExpenses: 'Despesa Fixa',
       variableExpenses: 'Despesa Variável',
