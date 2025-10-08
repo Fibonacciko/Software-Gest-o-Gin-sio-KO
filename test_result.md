@@ -220,8 +220,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All financial operations verified and working"
-  stuck_tasks: []
+    - "New expenses functionality backend integration fix needed"
+  stuck_tasks:
+    - "New expenses functionality - Interface restructure and new features"
   test_all: false
   test_priority: "high_first"
 
