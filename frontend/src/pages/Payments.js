@@ -1252,6 +1252,7 @@ const Payments = ({ language, translations }) => {
             </div>
           </CardContent>
         </Card>
+        </>
         )}
 
         {/* Expenses Tab */}
