@@ -649,121 +649,240 @@ const Payments = ({ language, translations }) => {
 
       {/* Main Action Bars */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        {/* Register Payments Bar */}
+        {/* Revenues Section */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
-            <h2 className="text-lg font-bold mb-4 text-white">
-              {t[language].registerPayments}
-            </h2>
-            
-            {/* Member Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder={t[language].searchMembers}
-                value={memberSearchTerm}
-                onChange={(e) => handleMemberSearch(e.target.value)}
-                className="pl-10 bg-white text-black"
-              />
-            </div>
-            
-            {/* Member Results */}
-            {filteredMembers.length > 0 && (
-              <div className="mt-4 space-y-2 max-h-64 overflow-y-auto">
-                {filteredMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="bg-neutral-700 p-3 rounded-lg flex justify-between items-center"
-                  >
-                    <div className="text-white">
-                      <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-gray-300">#{member.member_number}</p>
-                    </div>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => setFormData({...formData, member_id: member.id})}
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">
+                {t[language].registerPayments}
+              </h2>
+              <div className="flex gap-3">
+                <Dialog open={showAddRevenueDialog} onOpenChange={setShowAddRevenueDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      size="sm"
+                    >
+                      <Plus className="mr-2" size={16} />
+                      {t[language].addRevenueBtn}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{t[language].addRevenue}</DialogTitle>
+                    </DialogHeader>
+                    
+                    <form onSubmit={handleRevenueSubmit} className="space-y-4">
+                      <div>
+                        <Label htmlFor="revenue_category">{t[language].selectCategory} *</Label>
+                        <Select 
+                          value={revenueFormData.category} 
+                          onValueChange={(value) => setRevenueFormData({...revenueFormData, category: value})}
                         >
-                          <CreditCard className="mr-2" size={14} />
-                          {t[language].addPayment}
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="plans">{t[language].plans}</SelectItem>
+                            <SelectItem value="personalTraining">{t[language].personalTraining}</SelectItem>
+                            <SelectItem value="subsidies">{t[language].subsidies}</SelectItem>
+                            <SelectItem value="revenueExtras">{t[language].revenueExtras}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="revenue_amount">{t[language].amount} (€) *</Label>
+                        <Input
+                          id="revenue_amount"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={revenueFormData.amount}
+                          onChange={(e) => setRevenueFormData({...revenueFormData, amount: e.target.value})}
+                          required
+                          placeholder={t[language].enterAmount}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="revenue_date">{t[language].revenueDate} *</Label>
+                        <Input
+                          id="revenue_date"
+                          type="date"
+                          value={revenueFormData.date}
+                          onChange={(e) => setRevenueFormData({...revenueFormData, date: e.target.value})}
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="revenue_description">{t[language].description}</Label>
+                        <Textarea
+                          id="revenue_description"
+                          value={revenueFormData.description}
+                          onChange={(e) => setRevenueFormData({...revenueFormData, description: e.target.value})}
+                          rows={3}
+                          placeholder={t[language].revenueDescription}
+                        />
+                      </div>
+                      
+                      <div className="flex justify-end gap-3 pt-4">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setShowAddRevenueDialog(false)}
+                        >
+                          {t[language].cancel}
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>{t[language].addPayment} - {member.name}</DialogTitle>
-                        </DialogHeader>
-                        
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                          <div>
-                            <Label htmlFor="amount">{t[language].amount} *</Label>
-                            <Input
-                              id="amount"
-                              type="number"
-                              step="0.01"
-                              value={formData.amount}
-                              onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                              required
-                              placeholder={t[language].enterAmount}
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="payment_method">{t[language].paymentMethod} *</Label>
-                            <Select 
-                              value={formData.payment_method} 
-                              onValueChange={(value) => setFormData({...formData, payment_method: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="cash">{t[language].cash}</SelectItem>
-                                <SelectItem value="card">{t[language].card}</SelectItem>
-                                <SelectItem value="transfer">{t[language].transfer}</SelectItem>
-                                <SelectItem value="mbway">{t[language].mbway}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="payment_date">{t[language].paymentDate} *</Label>
-                            <Input
-                              id="payment_date"
-                              type="date"
-                              value={formData.payment_date}
-                              onChange={(e) => setFormData({...formData, payment_date: e.target.value})}
-                              required
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="description">{t[language].description}</Label>
-                            <Textarea
-                              id="description"
-                              value={formData.description}
-                              onChange={(e) => setFormData({...formData, description: e.target.value})}
-                              rows={3}
-                              placeholder={t[language].paymentDescription}
-                            />
-                          </div>
-                          
-                          <div className="flex justify-end gap-3 pt-4">
-                            <Button type="button" variant="outline">
-                              {t[language].cancel}
-                            </Button>
-                            <Button type="submit">
-                              {t[language].save}
-                            </Button>
-                          </div>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                ))}
+                        <Button type="submit">
+                          {t[language].save}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={showViewRevenuesDialog} onOpenChange={setShowViewRevenuesDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      size="sm"
+                    >
+                      <Eye className="mr-2" size={16} />
+                      {t[language].viewRevenuesBtn}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>{t[language].viewRevenues}</DialogTitle>
+                    </DialogHeader>
+                    
+                    {/* Revenue Filters */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Pesquisar por descrição..."
+                          value={revenueSearchTerm}
+                          onChange={(e) => setRevenueSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      
+                      <Select value={revenueTypeFilter} onValueChange={setRevenueTypeFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t[language].revenueType} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os Tipos</SelectItem>
+                          <SelectItem value="plans">{t[language].plans}</SelectItem>
+                          <SelectItem value="personalTraining">{t[language].personalTraining}</SelectItem>
+                          <SelectItem value="subsidies">{t[language].subsidies}</SelectItem>
+                          <SelectItem value="revenueExtras">{t[language].revenueExtras}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      <Select value={revenueDateFilter} onValueChange={setRevenueDateFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t[language].revenueDate} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t[language].allDates}</SelectItem>
+                          <SelectItem value="thisMonth">{t[language].thisMonth}</SelectItem>
+                          <SelectItem value="lastMonth">{t[language].lastMonth}</SelectItem>
+                          <SelectItem value="thisYear">{t[language].thisYear}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Revenues Table */}
+                    {revenues && revenues.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].revenueDate}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].revenueType}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].revenueValue}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].description}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {revenues
+                              .filter(revenue => {
+                                // Apply filters
+                                if (revenueSearchTerm && !revenue.description?.toLowerCase().includes(revenueSearchTerm.toLowerCase())) {
+                                  return false;
+                                }
+                                if (revenueTypeFilter !== 'all' && revenue.category !== revenueTypeFilter) {
+                                  return false;
+                                }
+                                
+                                // Date filter
+                                if (revenueDateFilter !== 'all') {
+                                  const revenueDate = new Date(revenue.revenue_date || revenue.date);
+                                  const now = new Date();
+                                  
+                                  if (revenueDateFilter === 'thisMonth') {
+                                    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                                    if (revenueDate < startOfMonth) return false;
+                                  } else if (revenueDateFilter === 'lastMonth') {
+                                    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                                    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                                    if (revenueDate < startOfLastMonth || revenueDate > endOfLastMonth) return false;
+                                  } else if (revenueDateFilter === 'thisYear') {
+                                    const startOfYear = new Date(now.getFullYear(), 0, 1);
+                                    if (revenueDate < startOfYear) return false;
+                                  }
+                                }
+                                
+                                return true;
+                              })
+                              .map((revenue) => (
+                                <tr key={revenue.id} className="border-b hover:bg-gray-50">
+                                  <td className="p-4">
+                                    {new Date(revenue.revenue_date || revenue.date).toLocaleDateString('pt-PT')}
+                                  </td>
+                                  <td className="p-4">
+                                    <Badge className="bg-green-100 text-green-800">
+                                      {t[language][revenue.category] || revenue.category}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-4">
+                                    <span className="font-semibold">€{revenue.amount.toFixed(2)}</span>
+                                  </td>
+                                  <td className="p-4">
+                                    <p className="text-sm text-gray-600 truncate max-w-xs">
+                                      {revenue.description || '-'}
+                                    </p>
+                                  </td>
+                                  <td className="p-4">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteRevenue(revenue.id)}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <Trash2 size={16} />
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-600">{t[language].noRevenues}</p>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
