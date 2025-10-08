@@ -1611,6 +1611,7 @@ const Payments = ({ language, translations }) => {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Admin Actions - Only for Admin */}
       {isAdmin() && (
