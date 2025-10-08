@@ -238,6 +238,33 @@ class ExpenseCreate(BaseModel):
             raise ValueError("Amount must be a number")
         return v
 
+class Revenue(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    category: RevenueCategory
+    amount: float
+    description: Optional[str] = None
+    revenue_date: date = Field(default_factory=lambda: date.today())
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class RevenueCreate(BaseModel):
+    category: RevenueCategory
+    amount: float
+    description: Optional[str] = None
+    date: Optional[str] = None  # Accept string and convert in the endpoint
+    created_by: Optional[str] = None
+
+    @validator('amount')
+    def validate_amount(cls, v):
+        if isinstance(v, str):
+            try:
+                return float(v)
+            except ValueError:
+                raise ValueError("Amount must be a valid number")
+        elif not isinstance(v, (int, float)):
+            raise ValueError("Amount must be a number")
+        return v
+
 # Authentication functions
 def verify_password(plain_password, hashed_password):
     # Temporary SHA256 for testing
