@@ -136,7 +136,22 @@ const Payments = ({ language, translations }) => {
       expenseValue: 'Valor',
       noExpenses: 'Nenhuma despesa encontrada',
       deleteExpense: 'Eliminar despesa',
-      paymentDate: 'Data do Pagamento'
+      paymentDate: 'Data do Pagamento',
+      addRevenueBtn: 'Adicionar',
+      viewRevenuesBtn: 'Consultar',
+      revenues: 'Receitas',
+      viewRevenues: 'Consultar Receitas',
+      plans: 'Planos',
+      personalTraining: 'PT\'s',
+      subsidies: 'Subsídios',
+      revenueExtras: 'Extras',
+      revenueType: 'Tipo',
+      revenueDate: 'Data',
+      revenueValue: 'Valor',
+      noRevenues: 'Nenhuma receita encontrada',
+      deleteRevenue: 'Eliminar receita',
+      addRevenue: 'Registar Receita',
+      revenueDescription: 'Descrição da receita...'
     },
     en: {
       finances: 'Finance',
