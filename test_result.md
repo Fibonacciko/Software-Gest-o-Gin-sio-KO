@@ -178,3 +178,5 @@ test_plan:
 agent_communication:
     - agent: "main"
     - message: "Improved dark mode readability by significantly lightening all colors. Background changed from 5% to 18% lightness, cards from 8% to 22%, text contrast improved to 98%, and borders lightened to 35%. Gradients updated from black/orange-900 to gray-800/gray-700 across Dashboard, Sidebar, and Card components. The dark mode is now much lighter with better text contrast, making all information easier to read. Screenshots show the improved contrast between light and dark modes."
+    - agent: "main"
+    - message: "User reported 3 critical issues in Finanças: 1) Need to reset all financial data (payments/expenses) - backend endpoint admin/reset-financials already exists. 2) Delete payment button (trash icon) not working - handleDeletePayment function exists but may have issue. 3) Payment registration (Guardar button) not working - handleSubmit function exists with detailed logging but failing. All endpoints exist in backend, issue seems to be frontend-backend communication or authorization. Need to test authentication flow and API calls."
