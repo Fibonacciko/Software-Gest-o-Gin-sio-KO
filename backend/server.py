@@ -218,7 +218,7 @@ class ExpenseCreate(BaseModel):
     category: ExpenseCategory
     amount: float
     description: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[str] = None  # Accept string and convert in the endpoint
     created_by: Optional[str] = None
 
     @validator('amount')
@@ -230,18 +230,6 @@ class ExpenseCreate(BaseModel):
                 raise ValueError("Amount must be a valid number")
         elif not isinstance(v, (int, float)):
             raise ValueError("Amount must be a number")
-        return v
-    
-    @validator('date', pre=True)
-    def validate_date(cls, v):
-        if v is None:
-            return None
-        if isinstance(v, str):
-            try:
-                from datetime import datetime
-                return datetime.fromisoformat(v).date()
-            except ValueError:
-                raise ValueError("Invalid date format")
         return v
 
 # Authentication functions
