@@ -224,15 +224,19 @@ const Reports = ({ language, translations }) => {
       setLoading(true);
       
       // Fetch all data
-      const [membersRes, paymentsRes, attendanceRes] = await Promise.all([
+      const [membersRes, paymentsRes, attendanceRes, expensesRes, revenuesRes] = await Promise.all([
         axios.get(`${API}/members`),
         axios.get(`${API}/payments`),
-        axios.get(`${API}/attendance`)
+        axios.get(`${API}/attendance`),
+        axios.get(`${API}/expenses`),
+        axios.get(`${API}/revenues`)
       ]);
       
       setMembers(membersRes.data);
       setPayments(paymentsRes.data);
       setAttendance(attendanceRes.data);
+      setExpenses(expensesRes.data);
+      setRevenues(revenuesRes.data);
       
     } catch (error) {
       console.error('Error fetching data:', error);
