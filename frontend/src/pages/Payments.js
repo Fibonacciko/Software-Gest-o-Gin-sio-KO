@@ -881,7 +881,6 @@ const Payments = ({ language, translations }) => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Todos os Tipos</SelectItem>
-                          <SelectItem value="plans">{t[language].plans}</SelectItem>
                           <SelectItem value="personalTraining">{t[language].personalTraining}</SelectItem>
                           <SelectItem value="subsidies">{t[language].subsidies}</SelectItem>
                           <SelectItem value="revenueExtras">{t[language].revenueExtras}</SelectItem>
