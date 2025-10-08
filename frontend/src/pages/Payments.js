@@ -988,6 +988,145 @@ const Payments = ({ language, translations }) => {
           </CardContent>
         </Card>
 
+        {/* Memberships Section */}
+        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">
+                {t[language].memberships}
+              </h2>
+              <Dialog open={showMembershipDialog} onOpenChange={setShowMembershipDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    size="sm"
+                  >
+                    <CreditCard className="mr-2" size={16} />
+                    {t[language].registerMembership}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>{t[language].membershipPayments}</DialogTitle>
+                  </DialogHeader>
+                  
+                  <form onSubmit={handleMembershipSubmit} className="space-y-4">
+                    {/* Member Search */}
+                    <div>
+                      <Label htmlFor="member_search">{t[language].selectMemberForPayment} *</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="member_search"
+                          placeholder={t[language].searchMemberPlaceholder}
+                          value={membershipSearchTerm}
+                          onChange={(e) => handleMemberSearch(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      
+                      {/* Member Results */}
+                      {filteredMembersForPayment.length > 0 && (
+                        <div className="mt-2 max-h-40 overflow-y-auto border rounded-lg bg-white">
+                          {filteredMembersForPayment.map((member) => (
+                            <div
+                              key={member.id}
+                              className={`p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0 ${
+                                selectedMemberForPayment?.id === member.id ? 'bg-blue-50 border-blue-200' : ''
+                              }`}
+                              onClick={() => {
+                                setSelectedMemberForPayment(member);
+                                setMembershipSearchTerm(`${member.name} - #${member.member_number}`);
+                              }}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <p className="font-medium text-gray-900">{member.name}</p>
+                                  <p className="text-sm text-gray-600">#{member.member_number}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm text-gray-600">Status: {member.status || 'inactive'}</p>
+                                  <p className="text-xs text-gray-500">
+                                    Modalidade: {member.activity || 'N/A'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {selectedMemberForPayment && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                          <p className="font-medium text-blue-900">
+                            Membro selecionado: {selectedMemberForPayment.name}
+                          </p>
+                          <p className="text-sm text-blue-700">
+                            #{selectedMemberForPayment.member_number} - {selectedMemberForPayment.activity}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="membership_amount">{t[language].membershipAmount} (€) *</Label>
+                      <Input
+                        id="membership_amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={membershipFormData.amount}
+                        onChange={(e) => setMembershipFormData({...membershipFormData, amount: e.target.value})}
+                        required
+                        placeholder={t[language].enterAmount}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="membership_date">{t[language].membershipDate} *</Label>
+                      <Input
+                        id="membership_date"
+                        type="date"
+                        value={membershipFormData.payment_date}
+                        onChange={(e) => setMembershipFormData({...membershipFormData, payment_date: e.target.value})}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="membership_description">{t[language].description}</Label>
+                      <Textarea
+                        id="membership_description"
+                        value={membershipFormData.description}
+                        onChange={(e) => setMembershipFormData({...membershipFormData, description: e.target.value})}
+                        rows={3}
+                        placeholder={t[language].membershipDescription}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowMembershipDialog(false);
+                          setSelectedMemberForPayment(null);
+                          setMembershipSearchTerm('');
+                        }}
+                      >
+                        {t[language].cancel}
+                      </Button>
+                      <Button type="submit" disabled={!selectedMemberForPayment}>
+                        {t[language].save}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Expenses Section */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
