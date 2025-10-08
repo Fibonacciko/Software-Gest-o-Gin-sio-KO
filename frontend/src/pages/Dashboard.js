@@ -407,7 +407,50 @@ const Dashboard = ({ language, translations }) => {
         </div>
       </div>
 
-      {/* Removed Stats Cards as requested */}
+      {/* Attendance Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Total Attendance Count */}
+        <Card className="card-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="mr-2" />
+              Número Total de Presenças
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600">{totalAttendanceCount}</div>
+              <p className="text-sm text-gray-500">presenças hoje</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Attendance by Modality */}
+        <Card className="card-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="mr-2" />
+              Presenças por Modalidade
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {Object.keys(attendanceByModality).length > 0 ? (
+              <div className="space-y-3">
+                {Object.entries(attendanceByModality).map(([modality, count]) => (
+                  <div key={modality} className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{modality}</span>
+                    <Badge className="bg-blue-100 text-blue-800">
+                      {count} {count === 1 ? 'presença' : 'presenças'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center">Nenhuma modalidade registada hoje</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Quick Check-in Section */}
       <Card className="card-shadow">
