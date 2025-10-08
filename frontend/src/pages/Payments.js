@@ -91,6 +91,9 @@ const Payments = ({ language, translations }) => {
     payment_date: new Date().toISOString().split('T')[0]
   });
 
+  // Tab management
+  const [activeTab, setActiveTab] = useState('receitas');
+
   // Helper function to check if user is admin
   const isAdmin = () => {
     return user && user.role === 'admin';
