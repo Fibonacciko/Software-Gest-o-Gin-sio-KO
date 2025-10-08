@@ -946,6 +946,17 @@ async def get_payments(
     payments = await db.payments.find(filter_dict).sort("payment_date", -1).to_list(1000)
     return [Payment(**parse_from_mongo(payment)) for payment in payments]
 
+@api_router.delete("/payments/{payment_id}")
+async def delete_payment(
+    payment_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Delete a payment (Admin or Staff)"""
+    result = await db.payments.delete_one({"id": payment_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    return {"message": "Payment deleted successfully"}
+
 # Inventory Routes
 @api_router.post("/inventory", response_model=InventoryItem)
 async def create_inventory_item(
