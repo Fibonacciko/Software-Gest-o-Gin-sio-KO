@@ -1183,6 +1183,68 @@ async def delete_expense(
         raise HTTPException(status_code=404, detail="Expense not found")
     return {"message": "Expense deleted successfully"}
 
+# Revenue Routes (Admin/Staff only)
+@api_router.post("/revenues", response_model=Revenue)
+async def create_revenue(
+    revenue_data: RevenueCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Create a new revenue record (Admin or Staff)"""
+    revenue_dict = revenue_data.dict()
+    # Map 'date' field from input to 'revenue_date' in the model
+    if 'date' in revenue_dict and revenue_dict['date'] is not None:
+        # Convert string date to date object
+        if isinstance(revenue_dict['date'], str):
+            from datetime import datetime
+            revenue_dict['revenue_date'] = datetime.fromisoformat(revenue_dict['date']).date()
+        else:
+            revenue_dict['revenue_date'] = revenue_dict['date']
+        revenue_dict.pop('date')
+    elif 'date' in revenue_dict:
+        # Remove None date field so Revenue model can use its default
+        revenue_dict.pop('date')
+    
+    # Set created_by from current user if not provided
+    if 'created_by' not in revenue_dict or not revenue_dict['created_by']:
+        revenue_dict['created_by'] = current_user.id
+    
+    revenue = Revenue(**revenue_dict)
+    revenue_dict = prepare_for_mongo(revenue.dict())
+    await db.revenues.insert_one(revenue_dict)
+    return revenue
+
+@api_router.get("/revenues", response_model=List[Revenue])
+async def get_revenues(
+    category: Optional[RevenueCategory] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Get all revenues with optional filters (Admin or Staff)"""
+    filter_dict = {}
+    if category:
+        filter_dict['category'] = category
+    if start_date:
+        filter_dict['revenue_date'] = filter_dict.get('revenue_date', {})
+        filter_dict['revenue_date']['$gte'] = start_date.isoformat()
+    if end_date:
+        filter_dict['revenue_date'] = filter_dict.get('revenue_date', {})
+        filter_dict['revenue_date']['$lte'] = end_date.isoformat()
+    
+    revenues = await db.revenues.find(filter_dict).to_list(1000)
+    return [Revenue(**parse_from_mongo(revenue)) for revenue in revenues]
+
+@api_router.delete("/revenues/{revenue_id}")
+async def delete_revenue(
+    revenue_id: str,
+    current_user: User = Depends(require_admin)
+):
+    """Delete a revenue (Admin only)"""
+    result = await db.revenues.delete_one({"id": revenue_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Revenue not found")
+    return {"message": "Revenue deleted successfully"}
+
 # Dashboard & Reports
 @api_router.get("/dashboard")
 async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staff)):
