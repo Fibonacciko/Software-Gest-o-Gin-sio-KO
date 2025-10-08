@@ -479,6 +479,20 @@ const Payments = ({ language, translations }) => {
     }
   };
 
+  // Function to delete expense
+  const handleDeleteExpense = async (expenseId) => {
+    if (window.confirm('Tem certeza que deseja eliminar esta despesa?')) {
+      try {
+        await axios.delete(`${API}/expenses/${expenseId}`);
+        toast.success('Despesa eliminada com sucesso');
+        fetchExpenses();
+      } catch (error) {
+        console.error('Error deleting expense:', error);
+        toast.error('Erro ao eliminar despesa');
+      }
+    }
+  };
+
   // Function to reset all financial data (Admin only)
   const handleResetFinancialData = async () => {
     const confirmMessage = 'ATENÇÃO: Esta ação vai APAGAR PERMANENTEMENTE todos os dados financeiros (pagamentos, despesas, vendas). Esta operação NÃO pode ser desfeita. Tem certeza que deseja continuar?';
