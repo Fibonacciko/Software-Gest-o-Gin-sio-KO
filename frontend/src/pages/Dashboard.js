@@ -251,6 +251,19 @@ const Dashboard = ({ language, translations }) => {
     }
   };
 
+  const handleDeleteAttendance = async (attendanceId) => {
+    if (window.confirm('Tem certeza que deseja eliminar esta presença?')) {
+      try {
+        await axios.delete(`${API}/attendance/${attendanceId}`);
+        toast.success('Presença eliminada com sucesso');
+        fetchDashboardData();
+      } catch (error) {
+        console.error('Error deleting attendance:', error);
+        toast.error('Erro ao eliminar presença');
+      }
+    }
+  };
+
   const handleQuickCheckin = useCallback(async (memberId) => {
     console.log('🔍 Check-in initiated for member ID:', memberId);
     console.log('🔍 Selected activity:', selectedActivity);
