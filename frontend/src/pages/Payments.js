@@ -1036,16 +1036,17 @@ const Payments = ({ language, translations }) => {
               <h2 className="text-lg font-bold text-white">
                 {t[language].memberships}
               </h2>
-              <Dialog open={showMembershipDialog} onOpenChange={setShowMembershipDialog}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                    size="sm"
-                  >
-                    <CreditCard className="mr-2" size={16} />
-                    {t[language].registerMembership}
-                  </Button>
-                </DialogTrigger>
+              <div className="flex gap-3">
+                <Dialog open={showMembershipDialog} onOpenChange={setShowMembershipDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      size="sm"
+                    >
+                      <CreditCard className="mr-2" size={16} />
+                      {t[language].registerMembership}
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>{t[language].membershipPayments}</DialogTitle>
