@@ -590,7 +590,7 @@ const Payments = ({ language, translations }) => {
       toast.success('Receita registada com sucesso!');
       setShowAddRevenueDialog(false);
       setRevenueFormData({
-        category: 'plans',
+        category: 'personalTraining',
         amount: '',
         description: '',
         date: new Date().toISOString().split('T')[0]
