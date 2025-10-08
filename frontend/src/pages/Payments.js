@@ -75,7 +75,7 @@ const Payments = ({ language, translations }) => {
   const [revenueTypeFilter, setRevenueTypeFilter] = useState('all');
   const [revenueDateFilter, setRevenueDateFilter] = useState('all');
   const [revenueFormData, setRevenueFormData] = useState({
-    category: 'plans',
+    category: 'personalTraining',
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0]
