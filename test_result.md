@@ -104,6 +104,9 @@
 
 user_problem_statement: 
 1. Modo Dark - Tornar a tonalidade ligeiramente mais clara. Está demasiado escuro e há dificuldade em compreender toda a informação escrita.
+2. Finanças - Apagar todos os dados financeiros existentes em Produção (reset) - receitas e despesas.
+3. Finanças - "Ações" não funciona o "balde do lixo" para apagar pagamentos registados.
+4. Finanças - Quando registar "guardar" um pagamento, não está a ser efectuada com sucesso essa operação.
 
 frontend:
   - task: "Dark mode - Lighten colors for better readability"
