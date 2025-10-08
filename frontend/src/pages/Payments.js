@@ -1758,6 +1758,7 @@ const Payments = ({ language, translations }) => {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
