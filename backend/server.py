@@ -1495,6 +1495,9 @@ async def reset_financial_data(
         # Delete all expenses
         expenses_deleted = await db.expenses.delete_many({})
         
+        # Delete all revenues
+        revenues_deleted = await db.revenues.delete_many({})
+        
         # Delete all sales records
         sales_deleted = await db.sales.delete_many({})
         
@@ -1506,6 +1509,7 @@ async def reset_financial_data(
             "deleted": {
                 "payments": payments_deleted.deleted_count,
                 "expenses": expenses_deleted.deleted_count,
+                "revenues": revenues_deleted.deleted_count,
                 "sales": sales_deleted.deleted_count
             }
         }
