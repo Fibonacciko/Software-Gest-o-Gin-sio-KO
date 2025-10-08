@@ -452,7 +452,7 @@ const Payments = ({ language, translations }) => {
       });
       
       toast.success(t[language].expenseAdded);
-      setShowExpenseDialog(false);
+      setShowAddExpenseDialog(false);
       setExpenseFormData({
         category: 'rent',
         amount: '',
