@@ -183,14 +183,15 @@ const Reports = ({ language, translations }) => {
       totalStockValue: 'Total Stock Value',
       totalSoldValue: 'Total Sold Value',
       totalPurchaseValue: 'Total Purchase Value',
-      // Financial metrics
-      monthlyRevenue: 'Monthly Revenue',
-      extraRevenue: 'Extra Revenue',
-      fixedExpenses: 'Fixed Expenses', 
-      extraExpenses: 'Extra Expenses',
-      articleRevenue: 'Article Revenue',
-      articleExpenses: 'Article Expenses',
-      grossTotal: 'Gross Total',
+      // Financial metrics - New structure  
+      revenuePayments: 'Revenue Payments',
+      revenueExtras: 'Revenue Extras',
+      revenueArticles: 'Revenue Articles',
+      revenueEquipment: 'Revenue Equipment', 
+      expenseFixed: 'Fixed Expenses',
+      expenseVariable: 'Variable Expenses',
+      expenseArticles: 'Article Expenses',
+      expenseEquipment: 'Equipment Expenses',
       netTotal: 'Net Total',
       // Stock metrics
       articlesInStock: 'Articles in Stock',
