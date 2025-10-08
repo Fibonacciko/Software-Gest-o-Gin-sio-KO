@@ -258,7 +258,19 @@ const Payments = ({ language, translations }) => {
       noRevenues: 'No revenues found',
       deleteRevenue: 'Delete revenue',
       addRevenue: 'Add Revenue',
-      revenueDescription: 'Revenue description...'
+      revenueDescription: 'Revenue description...',
+      memberships: 'Memberships',
+      registerMembership: 'Register',
+      membershipPayments: 'Membership Payments',
+      searchMemberPlaceholder: 'Search by Member Number or Name...',
+      memberNumber: 'Member Number',
+      memberName: 'Member Name',
+      membershipAmount: 'Membership Amount',
+      membershipDate: 'Payment Date',
+      membershipDescription: 'Membership description...',
+      membershipAdded: 'Membership registered successfully!',
+      updateMemberStatus: 'Member status updated',
+      selectMemberForPayment: 'Select member for payment'
     }
   };
 
