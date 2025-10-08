@@ -440,6 +440,34 @@ const Payments = ({ language, translations }) => {
     }
   };
 
+  // Function to reset all financial data (Admin only)
+  const handleResetFinancialData = async () => {
+    const confirmMessage = 'ATENÇÃO: Esta ação vai APAGAR PERMANENTEMENTE todos os dados financeiros (pagamentos, despesas, vendas). Esta operação NÃO pode ser desfeita. Tem certeza que deseja continuar?';
+    
+    if (window.confirm(confirmMessage)) {
+      const doubleConfirm = 'Por favor, confirme novamente: Vai apagar TODOS os dados financeiros. Escreva "APAGAR" para confirmar:';
+      const userInput = prompt(doubleConfirm);
+      
+      if (userInput === 'APAGAR') {
+        try {
+          const response = await axios.post(`${API}/admin/reset-financials`);
+          toast.success(`Dados financeiros resetados com sucesso! Eliminados: ${response.data.deleted.payments} pagamentos, ${response.data.deleted.expenses} despesas, ${response.data.deleted.sales} vendas`);
+          
+          // Refresh all data
+          fetchPayments();
+          if (isAdmin()) {
+            fetchExpenses();
+          }
+        } catch (error) {
+          console.error('Error resetting financial data:', error);
+          toast.error(`Erro ao resetar dados financeiros: ${error.response?.data?.detail || error.message}`);
+        }
+      } else {
+        toast.info('Reset cancelado');
+      }
+    }
+  };
+
   const stats = getPaymentStats();
   
   // Enhanced stats calculation
