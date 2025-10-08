@@ -740,13 +740,15 @@ class GymManagementAPITester:
                 self.log_test("Staff POST Payments Test Setup", False, "Could not create test member")
                 return False, {}
         
-        # Create membership payment with staff token
+        # Create membership payment with staff token (use current date for status calculation)
+        from datetime import date
+        current_date = date.today().isoformat()
         membership_payment_data = {
             "member_id": self.created_member_id,
             "amount": 50.00,
             "payment_method": "membership",
             "description": "Test membership payment by staff",
-            "payment_date": "2025-01-08"
+            "payment_date": current_date
         }
         
         post_success, post_response = self.run_test("Staff POST /payments (Membership)", "POST", "payments", 200, membership_payment_data, staff_headers)
