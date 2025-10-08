@@ -874,8 +874,7 @@ class GymManagementAPITester:
         self.test_get_activities()
         self.test_create_activity()
         
-        # Member management tests
-        self.test_create_member()
+        # Member management tests (continued)
         self.test_get_members()
         self.test_get_member_by_id()
         self.test_search_members()
