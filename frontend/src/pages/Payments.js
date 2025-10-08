@@ -613,6 +613,73 @@ const Payments = ({ language, translations }) => {
     }
   };
 
+  // Membership payment functions
+  const handleMemberSearch = (searchTerm) => {
+    setMembershipSearchTerm(searchTerm);
+  };
+
+  const filteredMembersForPayment = members.filter((member) => {
+    if (!membershipSearchTerm) return false;
+    const searchLower = membershipSearchTerm.toLowerCase();
+    return (
+      member.name.toLowerCase().includes(searchLower) ||
+      member.member_number.toString().includes(searchLower)
+    );
+  });
+
+  const handleMembershipSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedMemberForPayment) {
+      toast.error('Por favor, selecione um membro');
+      return;
+    }
+
+    try {
+      // Create payment record
+      const paymentData = {
+        member_id: selectedMemberForPayment.id,
+        amount: parseFloat(membershipFormData.amount),
+        payment_method: 'membership', // Special category for memberships
+        description: membershipFormData.description || `Mensalidade ${selectedMemberForPayment.name}`,
+        payment_date: membershipFormData.payment_date,
+        status: 'paid'
+      };
+
+      await axios.post(`${API}/payments`, paymentData);
+
+      // Update member status to 'active' after payment
+      const updateData = {
+        ...selectedMemberForPayment,
+        status: 'active',
+        last_payment_date: membershipFormData.payment_date
+      };
+      
+      await axios.put(`${API}/members/${selectedMemberForPayment.id}`, updateData);
+
+      toast.success(t[language].membershipAdded);
+      toast.success(t[language].updateMemberStatus);
+      
+      // Reset form
+      setShowMembershipDialog(false);
+      setSelectedMemberForPayment(null);
+      setMembershipSearchTerm('');
+      setMembershipFormData({
+        amount: '',
+        description: '',
+        payment_date: new Date().toISOString().split('T')[0]
+      });
+
+      // Refresh data
+      fetchPayments();
+      fetchMembers();
+      
+    } catch (error) {
+      console.error('Error processing membership payment:', error);
+      toast.error('Erro ao registar mensalidade');
+    }
+  };
+
   // Function to reset all financial data (Admin only)
   const handleResetFinancialData = async () => {
     const confirmMessage = 'ATENÇÃO: Esta ação vai APAGAR PERMANENTEMENTE todos os dados financeiros (pagamentos, despesas, vendas). Esta operação NÃO pode ser desfeita. Tem certeza que deseja continuar?';
