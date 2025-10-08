@@ -160,6 +160,21 @@ frontend:
         - working: true
         - agent: "testing"
         - comment: "TESTED SUCCESSFULLY: Dark mode readability has been significantly improved. The interface is much lighter and easier to read with better contrast. All text is clearly visible, navigation is easy, and the overall user experience is greatly enhanced. The color adjustments are working perfectly."
+        - working: true
+        - agent: "testing"
+        - comment: "FINAL VERIFICATION: Dark mode continues to work excellently with improved readability and contrast. All interface elements are clearly visible and easy to read."
+
+  - task: "Admin financial reset functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Payments.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "VERIFIED WORKING: Admin section 'Administração' with 'Resetar Dados Financeiros' button is properly displayed for admin users. Button includes proper safety confirmations and connects to working backend endpoint for resetting all financial data."
 
   - task: "Payment creation backend endpoint"
     implemented: true
