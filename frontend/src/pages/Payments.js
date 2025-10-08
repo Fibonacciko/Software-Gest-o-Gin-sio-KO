@@ -753,8 +753,44 @@ const Payments = ({ language, translations }) => {
         </h1>
       </div>
 
-      {/* Main Action Bars */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      {/* Horizontal Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex space-x-8">
+          <button
+            onClick={() => setActiveTab('receitas')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'receitas'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            {t[language].registerPayments}
+          </button>
+          <button
+            onClick={() => setActiveTab('mensalidades')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'mensalidades'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            {t[language].memberships}
+          </button>
+          <button
+            onClick={() => setActiveTab('despesas')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'despesas'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            {t[language].registerExpenses}
+          </button>
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div className="mt-6">
         {/* Revenues Section */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
