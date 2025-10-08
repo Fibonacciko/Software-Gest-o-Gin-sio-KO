@@ -49,6 +49,8 @@ const Dashboard = ({ language, translations }) => {
   const [memberMedicalNotes, setMemberMedicalNotes] = useState('');
   const [editingNotes, setEditingNotes] = useState(false);
   const [editingMedical, setEditingMedical] = useState(false);
+  const [attendanceByModality, setAttendanceByModality] = useState({});
+  const [totalAttendanceCount, setTotalAttendanceCount] = useState(0);
 
   const t = {
     pt: {
