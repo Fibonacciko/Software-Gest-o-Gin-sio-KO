@@ -590,10 +590,11 @@ const Payments = ({ language, translations }) => {
       if (userInput === 'APAGAR') {
         try {
           const response = await axios.post(`${API}/admin/reset-financials`);
-          toast.success(`Dados financeiros resetados com sucesso! Eliminados: ${response.data.deleted.payments} pagamentos, ${response.data.deleted.expenses} despesas, ${response.data.deleted.sales} vendas`);
+          toast.success(`Dados financeiros resetados com sucesso! Eliminados: ${response.data.deleted.payments} pagamentos, ${response.data.deleted.expenses} despesas, ${response.data.deleted.revenues} receitas, ${response.data.deleted.sales} vendas`);
           
           // Refresh all data
           fetchPayments();
+          fetchRevenues();
           if (isAdmin()) {
             fetchExpenses();
           }
