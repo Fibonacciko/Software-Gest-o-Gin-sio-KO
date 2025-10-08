@@ -93,14 +93,15 @@ const Reports = ({ language, translations }) => {
       attendanceByDay: 'Presenças por Dia',
       topMembers: 'Membros Mais Ativos',
       noData: 'Nenhum dado disponível para o período selecionado',
-      // Financial metrics
-      monthlyRevenue: 'Receitas Mensalidades',
-      extraRevenue: 'Receitas Extras', 
-      fixedExpenses: 'Despesas Fixas',
-      extraExpenses: 'Despesas Extras',
-      articleRevenue: 'Receita Artigos',
-      articleExpenses: 'Despesa Artigos',
-      grossTotal: 'Total Bruto',
+      // Financial metrics - New structure
+      revenuePayments: 'Receitas Pagamentos',
+      revenueExtras: 'Receitas Extras',
+      revenueArticles: 'Receitas Artigos', 
+      revenueEquipment: 'Receitas Equipamentos',
+      expenseFixed: 'Despesas Fixas',
+      expenseVariable: 'Despesas Variáveis',
+      expenseArticles: 'Despesas Artigos',
+      expenseEquipment: 'Despesas Equipamentos',
       netTotal: 'Total Líquido',
       // Stock metrics
       articlesInStock: 'Artigos em Stock',
