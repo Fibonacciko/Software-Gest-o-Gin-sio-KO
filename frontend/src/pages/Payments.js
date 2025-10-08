@@ -93,6 +93,7 @@ const Payments = ({ language, translations }) => {
 
   // Tab management
   const [activeTab, setActiveTab] = useState('receitas');
+  const [showViewPaymentsDialog, setShowViewPaymentsDialog] = useState(false);
 
   // Helper function to check if user is admin
   const isAdmin = () => {
