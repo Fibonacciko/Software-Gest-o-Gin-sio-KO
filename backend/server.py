@@ -219,7 +219,7 @@ class ExpenseCreate(BaseModel):
     amount: float
     description: Optional[str] = None
     date: Optional[date] = None
-    created_by: str
+    created_by: Optional[str] = None
 
     @validator('amount')
     def validate_amount(cls, v):
