@@ -166,8 +166,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Dark mode - Lighten colors for better readability"
-  stuck_tasks: []
+    - "Financial reset endpoint - Delete all financial data"
+    - "Delete payment functionality"  
+    - "Payment registration functionality"
+  stuck_tasks: 
+    - "Payment registration functionality"
+    - "Delete payment functionality"
   test_all: false
   test_priority: "high_first"
 
