@@ -75,7 +75,7 @@ const Payments = ({ language, translations }) => {
   const t = {
     pt: {
       finances: 'Finanças',
-      registerPayments: 'Pagamentos',
+      registerPayments: 'Receitas',
       registerExpenses: 'Despesas',
       searchMembers: 'Procurar por nome ou número de sócio',
       fixedExpenses: 'Despesa Fixa',
