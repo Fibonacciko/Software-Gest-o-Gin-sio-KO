@@ -264,8 +264,12 @@ const Payments = ({ language, translations }) => {
         );
       }
       
-      // Sort by date (most recent first)
-      filteredPayments.sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
+      // Sort by date (most recent first) - handle missing dates
+      filteredPayments.sort((a, b) => {
+        const dateA = a.payment_date ? new Date(a.payment_date) : new Date(0);
+        const dateB = b.payment_date ? new Date(b.payment_date) : new Date(0);
+        return dateB - dateA;
+      });
       
       setPayments(filteredPayments);
     } catch (error) {
