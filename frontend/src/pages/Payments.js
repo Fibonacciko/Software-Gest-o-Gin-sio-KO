@@ -446,10 +446,7 @@ const Payments = ({ language, translations }) => {
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/expenses`, {
-        ...expenseFormData,
-        created_by: user.id
-      });
+      await axios.post(`${API}/expenses`, expenseFormData);
       
       toast.success(t[language].expenseAdded);
       setShowAddExpenseDialog(false);
