@@ -152,9 +152,24 @@ frontend:
         - agent: "main"
         - comment: "Lightened dark mode colors significantly for better readability. Changed: --background from 5% to 18% lightness, --card from 8% to 22%, --foreground to 98% for better text contrast, --border from 20% to 35%, --muted-foreground to 85%. Updated gradients from black/orange-900 to gray-800/gray-700 in Dashboard, Sidebar, and Card components. Dark mode is now much lighter and easier to read."
 
+  - task: "Payment creation backend endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+        - agent: "user"
+        - comment: "User reports payment save (Guardar) button not working - payment registration not being completed successfully"
+        - working: true
+        - agent: "testing"
+        - comment: "TESTED SUCCESSFULLY: POST /api/payments endpoint working perfectly. Created payment with amount=60.00, payment_method=mbway, member_id valid. Response includes all required fields (id, member_id, amount, payment_method, status, payment_date, description, created_at). Payment correctly appears in database with accurate data integrity. Admin_or_staff authentication working correctly. Backend endpoint is fully functional - issue must be in frontend communication."
+
   - task: "Payment registration functionality"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/frontend/src/pages/Payments.js"
     stuck_count: 2
     priority: "high"
@@ -163,6 +178,9 @@ frontend:
         - working: false
         - agent: "user"
         - comment: "User reports payment save (Guardar) button not working - payment registration not being completed successfully"
+        - working: "NA"
+        - agent: "testing"
+        - comment: "BACKEND ENDPOINT WORKING: Payment creation backend endpoint (POST /api/payments) is fully functional. Issue is likely in frontend-backend communication, authentication headers, or frontend form handling. Frontend testing required to identify the specific problem."
 
 metadata:
   created_by: "main_agent"
