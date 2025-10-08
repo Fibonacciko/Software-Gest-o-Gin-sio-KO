@@ -1021,7 +1021,7 @@ const Payments = ({ language, translations }) => {
                           id="member_search"
                           placeholder={t[language].searchMemberPlaceholder}
                           value={membershipSearchTerm}
-                          onChange={(e) => handleMemberSearch(e.target.value)}
+                          onChange={(e) => handleMembershipSearch(e.target.value)}
                           className="pl-10"
                         />
                       </div>
