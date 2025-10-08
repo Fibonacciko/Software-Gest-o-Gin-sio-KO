@@ -199,9 +199,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Payment registration functionality"
+    - "Delete payment functionality"
   stuck_tasks: 
-    - "Payment registration functionality"
+    - "Delete payment functionality"
   test_all: false
   test_priority: "high_first"
 
