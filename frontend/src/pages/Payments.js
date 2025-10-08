@@ -696,6 +696,7 @@ const Payments = ({ language, translations }) => {
           // Refresh all data
           fetchPayments();
           fetchRevenues();
+          fetchMembers(); // Refresh members data after reset
           if (isAdmin()) {
             fetchExpenses();
           }
