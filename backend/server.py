@@ -231,6 +231,18 @@ class ExpenseCreate(BaseModel):
         elif not isinstance(v, (int, float)):
             raise ValueError("Amount must be a number")
         return v
+    
+    @validator('date', pre=True)
+    def validate_date(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            try:
+                from datetime import datetime
+                return datetime.fromisoformat(v).date()
+            except ValueError:
+                raise ValueError("Invalid date format")
+        return v
 
 # Authentication functions
 def verify_password(plain_password, hashed_password):
