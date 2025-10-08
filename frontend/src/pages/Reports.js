@@ -50,6 +50,8 @@ const Reports = ({ language, translations }) => {
   const [members, setMembers] = useState([]);
   const [payments, setPayments] = useState([]);
   const [attendance, setAttendance] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [revenues, setRevenues] = useState([]);
 
   const t = {
     pt: {
