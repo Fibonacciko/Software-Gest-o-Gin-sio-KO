@@ -487,23 +487,49 @@ const Dashboard = ({ language, translations }) => {
         </CardHeader>
         <CardContent>
           {todayAttendance.length > 0 ? (
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {todayAttendance.map((attendance) => (
-                <div key={attendance.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{attendance.member?.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                  <Badge variant="outline">
-                    {attendance.method}
-                  </Badge>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2 font-medium text-gray-600 text-sm">Nome</th>
+                    <th className="text-left p-2 font-medium text-gray-600 text-sm">Status</th>
+                    <th className="text-left p-2 font-medium text-gray-600 text-sm">Hora do Check in</th>
+                    <th className="text-left p-2 font-medium text-gray-600 text-sm">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayAttendance.map((attendance) => (
+                    <tr key={attendance.id} className="border-b hover:bg-gray-50">
+                      <td className="p-2">
+                        <p className="font-medium text-sm">{attendance.member?.name || 'Membro eliminado'}</p>
+                      </td>
+                      <td className="p-2">
+                        <Badge className="bg-green-100 text-green-800 text-xs">
+                          Presente
+                        </Badge>
+                      </td>
+                      <td className="p-2">
+                        <p className="text-sm text-gray-600">
+                          {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </td>
+                      <td className="p-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteAttendance(attendance.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
             <p className="text-gray-500 text-center py-4">
