@@ -119,6 +119,7 @@ class Member(BaseModel):
     photo_url: Optional[str] = None
     qr_code: Optional[str] = None
     notes: Optional[str] = None
+    last_payment_date: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class MemberCreate(BaseModel):
