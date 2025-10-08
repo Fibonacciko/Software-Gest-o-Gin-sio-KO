@@ -194,6 +194,14 @@ class InventoryItemCreate(BaseModel):
     description: Optional[str] = None
 
 class ExpenseCategory(str, Enum):
+    RENT = "rent"
+    ENERGY = "energy"  
+    MAINTENANCE = "maintenance"
+    TEACHERS = "teachers"
+    EQUIPMENT = "equipment"
+    ARTICLES = "articles"
+    EXTRAS = "extras"
+    # Keep old categories for backward compatibility
     FIXED = "fixed"
     VARIABLE = "variable"
 
