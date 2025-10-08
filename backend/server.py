@@ -1102,6 +1102,11 @@ async def create_expense(
     elif 'date' in expense_dict:
         # Remove None date field so Expense model can use its default
         expense_dict.pop('date')
+    
+    # Set created_by from current user if not provided
+    if 'created_by' not in expense_dict or not expense_dict['created_by']:
+        expense_dict['created_by'] = current_user.id
+    
     expense = Expense(**expense_dict)
     expense_dict = prepare_for_mongo(expense.dict())
     await db.expenses.insert_one(expense_dict)
