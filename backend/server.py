@@ -995,7 +995,7 @@ async def get_payments(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     status: Optional[PaymentStatus] = None,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
     filter_dict = {}
     if member_id:
