@@ -1165,6 +1165,88 @@ const Payments = ({ language, translations }) => {
                   </form>
                 </DialogContent>
               </Dialog>
+
+              <Dialog open={showViewPaymentsDialog} onOpenChange={setShowViewPaymentsDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    <Eye className="mr-2" size={16} />
+                    Consultar
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>Consultar Pagamentos de Mensalidades</DialogTitle>
+                  </DialogHeader>
+                  
+                  {/* Payments Table - Staff View */}
+                  {payments && payments.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-4 font-medium text-gray-600">Nome do Membro</th>
+                            <th className="text-left p-4 font-medium text-gray-600">Método de Pagamento</th>
+                            <th className="text-left p-4 font-medium text-gray-600">Data do Pagamento</th>
+                            <th className="text-left p-4 font-medium text-gray-600">Status</th>
+                            <th className="text-left p-4 font-medium text-gray-600">Descrição</th>
+                            <th className="text-left p-4 font-medium text-gray-600">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {payments
+                            .filter(payment => payment.payment_method === 'membership')
+                            .map((payment) => {
+                              const member = members.find(m => m.id === payment.member_id);
+                              return (
+                                <tr key={payment.id} className="border-b hover:bg-gray-50">
+                                  <td className="p-4">
+                                    {member ? member.name : 'Membro eliminado'}
+                                  </td>
+                                  <td className="p-4">
+                                    <Badge className="bg-blue-100 text-blue-800">
+                                      Mensalidade
+                                    </Badge>
+                                  </td>
+                                  <td className="p-4">
+                                    {new Date(payment.payment_date).toLocaleDateString('pt-PT')}
+                                  </td>
+                                  <td className="p-4">
+                                    <Badge className={payment.status === 'paid' ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                                      {payment.status === 'paid' ? 'Pago' : 'Pendente'}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-4">
+                                    <p className="text-sm text-gray-600 truncate max-w-xs">
+                                      {payment.description || '-'}
+                                    </p>
+                                  </td>
+                                  <td className="p-4">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeletePayment(payment.id)}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <Trash2 size={16} />
+                                    </Button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <CreditCard size={48} className="mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-600">Nenhum pagamento de mensalidade encontrado</p>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>
