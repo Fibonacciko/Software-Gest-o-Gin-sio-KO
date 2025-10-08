@@ -787,13 +787,13 @@ class GymManagementAPITester:
         # Step 6: Member Status Update Verification
         print("\n🔍 Step 6: Member Status Update Verification...")
         
-        # Create another membership payment to test status update
+        # Create another membership payment to test status update (use current date)
         status_test_payment_data = {
             "member_id": self.created_member_id,
             "amount": 75.00,
             "payment_method": "membership",
             "description": "Membership payment for status test",
-            "payment_date": "2025-01-08"
+            "payment_date": current_date
         }
         
         status_payment_success, status_payment_response = self.run_test("Staff Membership Payment for Status", "POST", "payments", 200, status_test_payment_data, staff_headers)
