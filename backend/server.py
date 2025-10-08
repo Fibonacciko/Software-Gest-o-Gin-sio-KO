@@ -1098,7 +1098,13 @@ async def create_expense(
     expense_dict = expense_data.dict()
     # Map 'date' field from input to 'expense_date' in the model
     if 'date' in expense_dict and expense_dict['date'] is not None:
-        expense_dict['expense_date'] = expense_dict.pop('date')
+        # Convert string date to date object
+        if isinstance(expense_dict['date'], str):
+            from datetime import datetime
+            expense_dict['expense_date'] = datetime.fromisoformat(expense_dict['date']).date()
+        else:
+            expense_dict['expense_date'] = expense_dict['date']
+        expense_dict.pop('date')
     elif 'date' in expense_dict:
         # Remove None date field so Expense model can use its default
         expense_dict.pop('date')
