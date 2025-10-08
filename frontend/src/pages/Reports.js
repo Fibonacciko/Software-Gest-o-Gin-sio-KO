@@ -222,7 +222,7 @@ const Reports = ({ language, translations }) => {
     if (members.length > 0) {
       generateReport();
     }
-  }, [reportType, dateRange, startDate, endDate, members]);
+  }, [reportType, dateRange, startDate, endDate, members, expenses, revenues]);
 
   const fetchAllData = async () => {
     try {
