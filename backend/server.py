@@ -906,7 +906,7 @@ async def get_detailed_attendance(
 @api_router.post("/payments", response_model=Payment)
 async def create_payment(
     payment_data: PaymentCreate,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
     # Check if member exists
     member = await db.members.find_one({"id": payment_data.member_id})
