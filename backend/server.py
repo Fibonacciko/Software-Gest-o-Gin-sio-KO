@@ -221,6 +221,17 @@ class ExpenseCreate(BaseModel):
     date: Optional[date] = None
     created_by: str
 
+    @validator('amount')
+    def validate_amount(cls, v):
+        if isinstance(v, str):
+            try:
+                return float(v)
+            except ValueError:
+                raise ValueError("Amount must be a valid number")
+        elif not isinstance(v, (int, float)):
+            raise ValueError("Amount must be a number")
+        return v
+
 # Authentication functions
 def verify_password(plain_password, hashed_password):
     # Temporary SHA256 for testing
