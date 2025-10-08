@@ -173,6 +173,30 @@ const Dashboard = ({ language, translations }) => {
       
       setTodayAttendance(attendanceWithMembers);
       
+      // Calculate attendance by modality
+      const modalityStats = {};
+      let totalCount = 0;
+      
+      for (const att of attendanceWithMembers) {
+        if (att.activity_id) {
+          try {
+            const activityResponse = await axios.get(`${API}/activities/${att.activity_id}`);
+            const activityName = activityResponse.data.name;
+            modalityStats[activityName] = (modalityStats[activityName] || 0) + 1;
+            totalCount++;
+          } catch (error) {
+            modalityStats['Sem modalidade'] = (modalityStats['Sem modalidade'] || 0) + 1;
+            totalCount++;
+          }
+        } else {
+          modalityStats['Sem modalidade'] = (modalityStats['Sem modalidade'] || 0) + 1;
+          totalCount++;
+        }
+      }
+      
+      setAttendanceByModality(modalityStats);
+      setTotalAttendanceCount(totalCount);
+      
       console.log('Dashboard stats:', statsResponse.data);
       console.log('Dashboard today attendance:', attendanceWithMembers);
       console.log('🎯 Selected Activity State:', selectedActivity, 'Type:', typeof selectedActivity);
