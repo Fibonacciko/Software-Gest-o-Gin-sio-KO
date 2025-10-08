@@ -791,7 +791,8 @@ const Payments = ({ language, translations }) => {
 
       {/* Tab Content */}
       <div className="mt-6">
-        {/* Revenues Section */}
+        {/* Revenues Tab */}
+        {activeTab === 'receitas' && (
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
