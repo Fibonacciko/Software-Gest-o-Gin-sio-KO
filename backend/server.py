@@ -1357,6 +1357,37 @@ async def qr_checkin(
         "attendance": attendance
     }
 
+# Admin utility endpoints
+@api_router.post("/admin/reset-financials")
+async def reset_financial_data(
+    current_user: User = Depends(require_admin)
+):
+    """Reset all financial data - Admin only"""
+    try:
+        # Delete all payments
+        payments_deleted = await db.payments.delete_many({})
+        
+        # Delete all expenses
+        expenses_deleted = await db.expenses.delete_many({})
+        
+        # Delete all sales records
+        sales_deleted = await db.sales.delete_many({})
+        
+        # Reset sold quantities in inventory
+        await db.inventory.update_many({}, {"$set": {"sold_quantity": 0}})
+        
+        return {
+            "message": "Financial data reset successfully",
+            "deleted": {
+                "payments": payments_deleted.deleted_count,
+                "expenses": expenses_deleted.deleted_count,
+                "sales": sales_deleted.deleted_count
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error resetting financial data: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Advanced API endpoints
 
 # Removed: Advanced integrations endpoints (cache, rate limiter, websockets)
