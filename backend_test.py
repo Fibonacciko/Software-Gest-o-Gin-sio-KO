@@ -1038,6 +1038,9 @@ class GymManagementAPITester:
         # Member management tests (needed for financial operations)
         self.test_create_member()
         
+        # CRITICAL: Staff User Authorization Testing (MAIN REVIEW REQUEST)
+        self.test_staff_user_authorization()
+        
         # CRITICAL: Test the 3 specific financial operations from review request
         self.test_financial_operations_critical()
         
