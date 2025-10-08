@@ -230,7 +230,7 @@ test_plan:
     implemented: true
     working: false
     file: "/app/frontend/src/pages/Payments.js, /app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
@@ -240,6 +240,9 @@ test_plan:
         - working: false
         - agent: "testing"
         - comment: "BACKEND-FRONTEND CATEGORY MISMATCH IDENTIFIED: The new expenses functionality has a critical integration issue. Frontend implements 7 new expense categories (Renda, Energia, Manutenção, Professores, Equipamentos, Artigos, Extras) as requested, but backend ExpenseCategory enum in server.py lines 196-198 only supports 'fixed' and 'variable'. When user tries to create expense, frontend sends category like 'rent' but backend rejects with 422 Unprocessable Entity. Backend needs to be updated to support the new categories or frontend needs to map to existing categories. All UI functionality works perfectly - this is purely a data model mismatch issue."
+        - working: false
+        - agent: "testing"
+        - comment: "FINAL COMPREHENSIVE TESTING COMPLETED: ✅ BACKEND UPDATED: ExpenseCategory enum now includes all 7 new categories (RENT, ENERGY, MAINTENANCE, TEACHERS, EQUIPMENT, ARTICLES, EXTRAS) plus old ones for compatibility. ✅ UI FUNCTIONALITY: All expense UI components working perfectly - dialog opens, categories dropdown shows all 7 new options (Renda, Energia, Manutenção, Professores, Equipamentos, Artigos, Extras), form fields functional, view expenses table working. ✅ FINANCIAL STATISTICS: Monthly expenses and net revenue cards visible and integrated. ❌ CRITICAL ISSUE PERSISTS: Despite backend enum update, API still returns 422 error. Request data shows correct format: {category:rent, amount:800.00, description:..., date:2025-10-08, created_by:user_id}. Issue likely in data type validation (amount sent as string '800.00' vs float) or enum value mapping. Backend logs show 422 but no detailed error message. Requires main agent investigation of FastAPI validation error details."
 
 agent_communication:
     - agent: "main"
