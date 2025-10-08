@@ -108,6 +108,31 @@ user_problem_statement:
 3. Finanças - "Ações" não funciona o "balde do lixo" para apagar pagamentos registados.
 4. Finanças - Quando registar "guardar" um pagamento, não está a ser efectuada com sucesso essa operação.
 
+backend:
+  - task: "Financial reset endpoint - Delete all financial data"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+        - agent: "user"
+        - comment: "User requested admin endpoint to reset all financial data (receipts and expenses) in production"
+  
+  - task: "Delete payment functionality"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+        - agent: "user"
+        - comment: "User reports delete payment button (trash icon) in Actions column not working"
+
 frontend:
   - task: "Dark mode - Lighten colors for better readability"
     implemented: true
@@ -120,6 +145,18 @@ frontend:
         - working: "NA"
         - agent: "main"
         - comment: "Lightened dark mode colors significantly for better readability. Changed: --background from 5% to 18% lightness, --card from 8% to 22%, --foreground to 98% for better text contrast, --border from 20% to 35%, --muted-foreground to 85%. Updated gradients from black/orange-900 to gray-800/gray-700 in Dashboard, Sidebar, and Card components. Dark mode is now much lighter and easier to read."
+
+  - task: "Payment registration functionality"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/Payments.js"
+    stuck_count: 2
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+        - agent: "user"
+        - comment: "User reports payment save (Guardar) button not working - payment registration not being completed successfully"
 
 metadata:
   created_by: "main_agent"
