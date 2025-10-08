@@ -126,7 +126,7 @@ backend:
   
   - task: "Delete payment functionality"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py, /app/frontend/src/pages/Payments.js"
     stuck_count: 1
     priority: "high"
@@ -141,6 +141,9 @@ backend:
         - working: false
         - agent: "testing"
         - comment: "FRONTEND ISSUE IDENTIFIED: Backend DELETE endpoint works perfectly, but frontend trash buttons are not rendering properly. Root cause: Existing payments reference deleted member ID '55f7581f-433f-4124-826b-c66fe7f9ec64' which returns 404 errors. When member data is missing, the trash buttons don't render in the Actions column. Frontend needs to handle deleted member references gracefully to show delete buttons even when member is missing."
+        - working: true
+        - agent: "testing"
+        - comment: "FIXED AND VERIFIED: Button component import path corrected. All 6 payment rows now display proper trash/delete buttons with correct Trash2 SVG icons in Actions column. Tested with comprehensive UI verification - all buttons render correctly with proper lucide-trash2 icons. Delete functionality is now fully working in frontend."
 
 frontend:
   - task: "Dark mode - Lighten colors for better readability"
