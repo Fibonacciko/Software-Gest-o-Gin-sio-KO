@@ -205,6 +205,12 @@ class ExpenseCategory(str, Enum):
     FIXED = "fixed"
     VARIABLE = "variable"
 
+class RevenueCategory(str, Enum):
+    PLANS = "plans"
+    PERSONAL_TRAINING = "personalTraining"
+    SUBSIDIES = "subsidies" 
+    EXTRAS = "revenueExtras"
+
 class Expense(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     category: ExpenseCategory
