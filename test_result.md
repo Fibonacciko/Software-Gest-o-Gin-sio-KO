@@ -126,8 +126,8 @@ backend:
   
   - task: "Delete payment functionality"
     implemented: true
-    working: true
-    file: "/app/backend/server.py"
+    working: false
+    file: "/app/backend/server.py, /app/frontend/src/pages/Payments.js"
     stuck_count: 1
     priority: "high"
     needs_retesting: false
@@ -138,6 +138,9 @@ backend:
         - working: true
         - agent: "testing"
         - comment: "TESTED SUCCESSFULLY: DELETE /api/payments/{payment_id} endpoint working perfectly. Created test payment (ID: b1efcb7c-d8b9-4917-8f6b-aa3386b9c56d), successfully deleted it with 200 response 'Payment deleted successfully', and verified payment was actually removed from database. Admin_or_staff authentication working correctly."
+        - working: false
+        - agent: "testing"
+        - comment: "FRONTEND ISSUE IDENTIFIED: Backend DELETE endpoint works perfectly, but frontend trash buttons are not rendering properly. Root cause: Existing payments reference deleted member ID '55f7581f-433f-4124-826b-c66fe7f9ec64' which returns 404 errors. When member data is missing, the trash buttons don't render in the Actions column. Frontend needs to handle deleted member references gracefully to show delete buttons even when member is missing."
 
 frontend:
   - task: "Dark mode - Lighten colors for better readability"
