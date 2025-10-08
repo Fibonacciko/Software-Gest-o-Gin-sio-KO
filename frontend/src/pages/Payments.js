@@ -614,7 +614,7 @@ const Payments = ({ language, translations }) => {
   };
 
   // Membership payment functions
-  const handleMemberSearch = (searchTerm) => {
+  const handleMembershipSearch = (searchTerm) => {
     setMembershipSearchTerm(searchTerm);
   };
 
