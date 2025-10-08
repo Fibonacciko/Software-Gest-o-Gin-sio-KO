@@ -856,6 +856,12 @@ class GymManagementAPITester:
         print("-" * 50)
         self.test_authentication_on_endpoints()
         
+        # Member management tests (needed for financial operations)
+        self.test_create_member()
+        
+        # CRITICAL: Test the 3 specific financial operations from review request
+        self.test_financial_operations_critical()
+        
         # Review Request Test Cases
         self.test_expense_categories_backend()  # Test Case 3
         self.test_inventory_low_stock_consistency()  # Test Case 4
