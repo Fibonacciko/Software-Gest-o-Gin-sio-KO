@@ -14,7 +14,8 @@ import {
   Filter,
   Download,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ActivitySelector from '../components/ActivitySelector';
