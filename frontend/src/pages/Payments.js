@@ -254,6 +254,7 @@ const Payments = ({ language, translations }) => {
     fetchMembers();
     fetchPayments();
     fetchExpenses(); // Staff can now access expenses too
+    fetchRevenues(); // Fetch revenues too
     fetchActivities();
   }, []);
 
