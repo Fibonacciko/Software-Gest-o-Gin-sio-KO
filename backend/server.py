@@ -152,6 +152,7 @@ class PaymentMethod(str, Enum):
     CARD = "card"
     TRANSFER = "transfer"
     MBWAY = "mbway"
+    MEMBERSHIP = "membership"
 
 class Payment(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
