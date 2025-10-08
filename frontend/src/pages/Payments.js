@@ -165,7 +165,19 @@ const Payments = ({ language, translations }) => {
       noRevenues: 'Nenhuma receita encontrada',
       deleteRevenue: 'Eliminar receita',
       addRevenue: 'Registar Receita',
-      revenueDescription: 'Descrição da receita...'
+      revenueDescription: 'Descrição da receita...',
+      memberships: 'Mensalidades',
+      registerMembership: 'Registar',
+      membershipPayments: 'Pagamentos de Mensalidades',
+      searchMemberPlaceholder: 'Pesquisar por Nº Sócio ou Nome...',
+      memberNumber: 'Nº Sócio',
+      memberName: 'Nome do Membro',
+      membershipAmount: 'Valor da Mensalidade',
+      membershipDate: 'Data do Pagamento',
+      membershipDescription: 'Descrição da mensalidade...',
+      membershipAdded: 'Mensalidade registada com sucesso!',
+      updateMemberStatus: 'Status do membro atualizado',
+      selectMemberForPayment: 'Selecionar membro para pagamento'
     },
     en: {
       finances: 'Finance',
