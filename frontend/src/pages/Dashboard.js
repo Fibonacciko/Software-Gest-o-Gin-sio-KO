@@ -17,7 +17,8 @@ import {
   Edit3,
   FileText,
   Heart,
-  Save
+  Save,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
