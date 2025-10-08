@@ -67,6 +67,20 @@ const Payments = ({ language, translations }) => {
   const [expenseTypeFilter, setExpenseTypeFilter] = useState('all');
   const [expenseDateFilter, setExpenseDateFilter] = useState('all');
 
+  // New states for revenue management
+  const [showAddRevenueDialog, setShowAddRevenueDialog] = useState(false);
+  const [showViewRevenuesDialog, setShowViewRevenuesDialog] = useState(false);
+  const [revenues, setRevenues] = useState([]);
+  const [revenueSearchTerm, setRevenueSearchTerm] = useState('');
+  const [revenueTypeFilter, setRevenueTypeFilter] = useState('all');
+  const [revenueDateFilter, setRevenueDateFilter] = useState('all');
+  const [revenueFormData, setRevenueFormData] = useState({
+    category: 'plans',
+    amount: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0]
+  });
+
   // Helper function to check if user is admin
   const isAdmin = () => {
     return user && user.role === 'admin';
