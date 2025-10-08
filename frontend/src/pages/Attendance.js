@@ -379,6 +379,21 @@ const Attendance = ({ language, translations }) => {
                             {t[language][att.method] || att.method}
                           </Badge>
                         </td>
+                        <td className="p-4">
+                          <Badge className="bg-green-100 text-green-800">
+                            Presente
+                          </Badge>
+                        </td>
+                        <td className="p-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteAttendance(att.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
