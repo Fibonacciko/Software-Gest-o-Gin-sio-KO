@@ -54,11 +54,18 @@ const Payments = ({ language, translations }) => {
   });
 
   const [expenseFormData, setExpenseFormData] = useState({
-    category: 'fixed',
+    category: 'rent',
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0]
   });
+
+  // New states for expense management
+  const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
+  const [showViewExpensesDialog, setShowViewExpensesDialog] = useState(false);
+  const [expenseSearchTerm, setExpenseSearchTerm] = useState('');
+  const [expenseTypeFilter, setExpenseTypeFilter] = useState('all');
+  const [expenseDateFilter, setExpenseDateFilter] = useState('all');
 
   // Helper function to check if user is admin
   const isAdmin = () => {
