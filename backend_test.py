@@ -658,6 +658,164 @@ class GymManagementAPITester:
         
         return True, {}
 
+    def test_financial_operations_critical(self):
+        """Test critical financial operations reported by users as not working"""
+        print("\n🎯 CRITICAL FINANCIAL OPERATIONS TESTING")
+        print("-" * 50)
+        
+        success_count = 0
+        total_tests = 3
+        
+        # Test 1: Financial Reset Endpoint (HIGH PRIORITY)
+        print("\n🔍 Testing Financial Reset Endpoint...")
+        
+        # First create some test data to reset
+        if self.created_member_id:
+            # Create test payment
+            test_payment_data = {
+                "member_id": self.created_member_id,
+                "amount": 75.00,
+                "payment_method": "cash",
+                "description": "Test payment for reset"
+            }
+            payment_success, payment_response = self.run_test("Create Test Payment for Reset", "POST", "payments", 200, test_payment_data)
+            
+            # Create test expense
+            test_expense_data = {
+                "category": "fixed",
+                "amount": 200.0,
+                "description": "Test expense for reset",
+                "created_by": "fabio.guerreiro"
+            }
+            expense_success, expense_response = self.run_test("Create Test Expense for Reset", "POST", "expenses", 200, test_expense_data)
+        
+        # Test the reset endpoint
+        reset_success, reset_response = self.run_test("Financial Reset Endpoint", "POST", "admin/reset-financials", 200)
+        if reset_success and reset_response:
+            print(f"   Reset Response: {json.dumps(reset_response, indent=2, default=str)}")
+            
+            # Verify deletion counts
+            deleted_payments = reset_response.get('deleted', {}).get('payments', 0)
+            deleted_expenses = reset_response.get('deleted', {}).get('expenses', 0)
+            deleted_sales = reset_response.get('deleted', {}).get('sales', 0)
+            
+            print(f"   Deleted - Payments: {deleted_payments}, Expenses: {deleted_expenses}, Sales: {deleted_sales}")
+            
+            # Verify data is actually deleted
+            verify_payments, payments_after = self.run_test("Verify Payments Deleted", "GET", "payments", 200)
+            if verify_payments and len(payments_after) == 0:
+                self.log_test("Payments Actually Deleted", True, "All payments successfully deleted")
+            else:
+                self.log_test("Payments Actually Deleted", False, f"Still found {len(payments_after) if payments_after else 'unknown'} payments")
+            
+            verify_expenses, expenses_after = self.run_test("Verify Expenses Deleted", "GET", "expenses", 200)
+            if verify_expenses and len(expenses_after) == 0:
+                self.log_test("Expenses Actually Deleted", True, "All expenses successfully deleted")
+            else:
+                self.log_test("Expenses Actually Deleted", False, f"Still found {len(expenses_after) if expenses_after else 'unknown'} expenses")
+            
+            success_count += 1
+        
+        # Test 2: Payment Delete Endpoint (HIGH PRIORITY)
+        print("\n🔍 Testing Payment Delete Endpoint...")
+        
+        if self.created_member_id:
+            # Create a test payment to delete
+            delete_test_payment_data = {
+                "member_id": self.created_member_id,
+                "amount": 45.00,
+                "payment_method": "card",
+                "description": "Test payment for deletion"
+            }
+            
+            create_success, create_response = self.run_test("Create Payment for Delete Test", "POST", "payments", 200, delete_test_payment_data)
+            if create_success and create_response and 'id' in create_response:
+                payment_id_to_delete = create_response['id']
+                print(f"   Created payment ID for deletion: {payment_id_to_delete}")
+                
+                # Test the delete endpoint
+                delete_success, delete_response = self.run_test("Delete Payment Endpoint", "DELETE", f"payments/{payment_id_to_delete}", 200)
+                if delete_success:
+                    print(f"   Delete Response: {json.dumps(delete_response, indent=2, default=str)}")
+                    
+                    # Verify payment is actually deleted
+                    verify_success, all_payments = self.run_test("Verify Payment Deleted", "GET", "payments", 200)
+                    if verify_success:
+                        deleted_payment = next((p for p in all_payments if p.get('id') == payment_id_to_delete), None)
+                        if not deleted_payment:
+                            self.log_test("Payment Actually Deleted", True, "Payment successfully removed from database")
+                            success_count += 1
+                        else:
+                            self.log_test("Payment Actually Deleted", False, "Payment still exists in database after delete")
+                    else:
+                        self.log_test("Payment Delete Verification", False, "Could not verify payment deletion")
+                else:
+                    self.log_test("Payment Delete Failed", False, "Delete payment endpoint failed")
+            else:
+                self.log_test("Payment Delete Test Setup", False, "Could not create test payment for deletion")
+        else:
+            self.log_test("Payment Delete Test", False, "No member ID available for payment creation")
+        
+        # Test 3: Payment Creation Endpoint (HIGH PRIORITY)
+        print("\n🔍 Testing Payment Creation Endpoint...")
+        
+        if self.created_member_id:
+            # Test payment creation with various scenarios
+            creation_test_data = {
+                "member_id": self.created_member_id,
+                "amount": 60.00,
+                "payment_method": "mbway",
+                "description": "Mensalidade Premium - Teste Criação"
+            }
+            
+            creation_success, creation_response = self.run_test("Payment Creation Endpoint", "POST", "payments", 200, creation_test_data)
+            if creation_success and creation_response:
+                print(f"   Creation Response: {json.dumps(creation_response, indent=2, default=str)}")
+                
+                # Verify all required fields are present
+                required_fields = ['id', 'member_id', 'amount', 'payment_method', 'status', 'payment_date']
+                missing_fields = [field for field in required_fields if field not in creation_response]
+                
+                if not missing_fields:
+                    self.log_test("Payment Creation Fields", True, "All required fields present in response")
+                else:
+                    self.log_test("Payment Creation Fields", False, f"Missing fields: {missing_fields}")
+                
+                # Verify the payment appears in the payments list
+                verify_success, all_payments = self.run_test("Verify Payment in List", "GET", "payments", 200)
+                if verify_success:
+                    created_payment = next((p for p in all_payments if p.get('id') == creation_response.get('id')), None)
+                    if created_payment:
+                        self.log_test("Payment in Database", True, "Created payment found in database")
+                        
+                        # Verify payment data integrity
+                        if (created_payment.get('amount') == 60.00 and 
+                            created_payment.get('payment_method') == 'mbway' and
+                            created_payment.get('member_id') == self.created_member_id):
+                            self.log_test("Payment Data Integrity", True, "Payment data matches input")
+                            success_count += 1
+                        else:
+                            self.log_test("Payment Data Integrity", False, "Payment data does not match input")
+                    else:
+                        self.log_test("Payment in Database", False, "Created payment not found in database")
+                else:
+                    self.log_test("Payment Creation Verification", False, "Could not verify payment creation")
+            else:
+                self.log_test("Payment Creation Failed", False, "Payment creation endpoint failed")
+        else:
+            self.log_test("Payment Creation Test", False, "No member ID available for payment creation")
+        
+        # Summary
+        print(f"\n📊 CRITICAL FINANCIAL OPERATIONS SUMMARY")
+        print(f"   Tests Passed: {success_count}/{total_tests}")
+        
+        if success_count == total_tests:
+            self.log_test("Critical Financial Operations", True, "All critical financial operations working correctly")
+        else:
+            self.log_test("Critical Financial Operations", False, f"Only {success_count}/{total_tests} critical operations working")
+        
+        return success_count == total_tests, {}
+
     def test_delete_operations(self):
         """Test delete operations (cleanup)"""
         success_count = 0
