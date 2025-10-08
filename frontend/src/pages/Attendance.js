@@ -193,6 +193,19 @@ const Attendance = ({ language, translations }) => {
 
   const stats = getAttendanceStats();
 
+  const handleDeleteAttendance = async (attendanceId) => {
+    if (window.confirm('Tem certeza que deseja eliminar esta presença?')) {
+      try {
+        await axios.delete(`${API}/attendance/${attendanceId}`);
+        toast.success('Presença eliminada com sucesso');
+        fetchAttendance();
+      } catch (error) {
+        console.error('Error deleting attendance:', error);
+        toast.error('Erro ao eliminar presença');
+      }
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 fade-in">
       {/* Header */}
