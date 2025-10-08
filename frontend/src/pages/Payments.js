@@ -817,6 +817,29 @@ const Payments = ({ language, translations }) => {
         </CardContent>
       </Card>
 
+      {/* Admin Actions - Only for Admin */}
+      {isAdmin() && (
+        <Card className="card-shadow border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-gray-900 mb-1">Administração</h3>
+                <p className="text-sm text-gray-600">Ações administrativas - Usar com cuidado</p>
+              </div>
+              <Button
+                onClick={handleResetFinancialData}
+                variant="destructive"
+                size="sm"
+                className="bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="mr-2" size={16} />
+                Resetar Dados Financeiros
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recent Payments */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
