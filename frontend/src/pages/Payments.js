@@ -81,6 +81,16 @@ const Payments = ({ language, translations }) => {
     date: new Date().toISOString().split('T')[0]
   });
 
+  // New states for membership payments
+  const [showMembershipDialog, setShowMembershipDialog] = useState(false);
+  const [membershipSearchTerm, setMembershipSearchTerm] = useState('');
+  const [selectedMemberForPayment, setSelectedMemberForPayment] = useState(null);
+  const [membershipFormData, setMembershipFormData] = useState({
+    amount: '',
+    description: '',
+    payment_date: new Date().toISOString().split('T')[0]
+  });
+
   // Helper function to check if user is admin
   const isAdmin = () => {
     return user && user.role === 'admin';
