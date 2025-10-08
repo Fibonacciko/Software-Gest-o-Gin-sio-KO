@@ -323,6 +323,12 @@ const Attendance = ({ language, translations }) => {
                       <th className="text-left p-4 font-medium text-gray-600">
                         {t[language].method}
                       </th>
+                      <th className="text-left p-4 font-medium text-gray-600">
+                        Status
+                      </th>
+                      <th className="text-left p-4 font-medium text-gray-600">
+                        Ações
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
