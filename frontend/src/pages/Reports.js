@@ -832,61 +832,94 @@ const Reports = ({ language, translations }) => {
           </div>
           
           {reportData.type === 'financial' && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <StatCard
-                title={t[language].monthlyRevenue}
-                value={`€${reportData.stats.monthlyRevenue.toFixed(2)}`}
-                icon={DollarSign}
-                color="bg-blue-500"
-              />
-              <StatCard
-                title={t[language].extraRevenue}
-                value={`€${reportData.stats.extraRevenue.toFixed(2)}`}
-                icon={TrendingUp}
-                color="bg-green-500"
-              />
-              <StatCard
-                title={t[language].articleRevenue}
-                value={`€${reportData.stats.articleRevenue.toFixed(2)}`}
-                icon={Package}
-                color="bg-purple-500"
-              />
-              <StatCard
-                title={t[language].netTotal}
-                value={`€${reportData.stats.netTotal.toFixed(2)}`}
-                icon={Activity}
-                color="bg-orange-500"
-              />
-            </div>
-          )}
-          
-          {reportData.type === 'financial' && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <StatCard
-                title={t[language].fixedExpenses}
-                value={`€${reportData.stats.fixedExpenses.toFixed(2)}`}
-                icon={BarChart}
-                color="bg-red-500"
-              />
-              <StatCard
-                title={t[language].extraExpenses}
-                value={`€${reportData.stats.extraExpenses.toFixed(2)}`}
-                icon={Calendar}
-                color="bg-red-600"
-              />
-              <StatCard
-                title={t[language].articleExpenses}
-                value={`€${reportData.stats.articleExpenses.toFixed(2)}`}
-                icon={Package}
-                color="bg-red-700"
-              />
-              <StatCard
-                title={t[language].grossTotal}
-                value={`€${reportData.stats.grossTotal.toFixed(2)}`}
-                icon={TrendingUp}
-                color="bg-green-600"
-              />
-            </div>
+            <>
+              {/* RECEITAS Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">RECEITAS</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <StatCard
+                    title={t[language].revenuePayments}
+                    value={`€${reportData.stats.revenuePayments.toFixed(2)}`}
+                    icon={DollarSign}
+                    color="bg-green-500"
+                  />
+                  <StatCard
+                    title={t[language].revenueExtras}
+                    value={`€${reportData.stats.revenueExtras.toFixed(2)}`}
+                    icon={TrendingUp}
+                    color="bg-green-600"
+                  />
+                  <StatCard
+                    title={t[language].revenueArticles}
+                    value={`€${reportData.stats.revenueArticles.toFixed(2)}`}
+                    icon={Package}
+                    color="bg-green-700"
+                  />
+                  <StatCard
+                    title={t[language].revenueEquipment}
+                    value={`€${reportData.stats.revenueEquipment.toFixed(2)}`}
+                    icon={Activity}
+                    color="bg-green-800"
+                  />
+                </div>
+              </div>
+
+              {/* DESPESAS Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">DESPESAS</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <StatCard
+                    title={t[language].expenseFixed}
+                    value={`€${reportData.stats.expenseFixed.toFixed(2)}`}
+                    icon={BarChart}
+                    color="bg-red-500"
+                  />
+                  <StatCard
+                    title={t[language].expenseVariable}
+                    value={`€${reportData.stats.expenseVariable.toFixed(2)}`}
+                    icon={Calendar}
+                    color="bg-red-600"
+                  />
+                  <StatCard
+                    title={t[language].expenseArticles}
+                    value={`€${reportData.stats.expenseArticles.toFixed(2)}`}
+                    icon={Package}
+                    color="bg-red-700"
+                  />
+                  <StatCard
+                    title={t[language].expenseEquipment}
+                    value={`€${reportData.stats.expenseEquipment.toFixed(2)}`}
+                    icon={Activity}
+                    color="bg-red-800"
+                  />
+                </div>
+              </div>
+
+              {/* TOTAL LÍQUIDO Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">RESULTADO</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <StatCard
+                    title="Total Receitas"
+                    value={`€${reportData.stats.totalRevenues.toFixed(2)}`}
+                    icon={TrendingUp}
+                    color="bg-green-600"
+                  />
+                  <StatCard
+                    title="Total Despesas"
+                    value={`€${reportData.stats.totalExpenses.toFixed(2)}`}
+                    icon={BarChart}
+                    color="bg-red-600"
+                  />
+                  <StatCard
+                    title={t[language].netTotal}
+                    value={`€${reportData.stats.netTotal.toFixed(2)}`}
+                    icon={DollarSign}
+                    color={reportData.stats.netTotal >= 0 ? "bg-green-800" : "bg-red-800"}
+                  />
+                </div>
+              </div>
+            </>
           )}
           
           {reportData.type === 'payment' && (
