@@ -974,6 +974,18 @@ async def create_payment(
     payment = Payment(**payment_dict)
     payment_dict = prepare_for_mongo(payment.dict())
     await db.payments.insert_one(payment_dict)
+    
+    # If it's a membership payment, update member status to active
+    if payment.payment_method == PaymentMethod.MEMBERSHIP:
+        update_data = {
+            "status": "active",
+            "last_payment_date": payment.payment_date.isoformat()
+        }
+        await db.members.update_one(
+            {"id": payment_data.member_id}, 
+            {"$set": update_data}
+        )
+    
     return payment
 
 @api_router.get("/payments", response_model=List[Payment])
