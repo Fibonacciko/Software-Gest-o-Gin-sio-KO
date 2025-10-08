@@ -658,6 +658,185 @@ class GymManagementAPITester:
         
         return True, {}
 
+    def test_staff_user_authorization(self):
+        """Test Staff user authorization for payments functionality - CRITICAL REVIEW REQUEST TEST"""
+        print("\n🎯 CRITICAL: STAFF USER AUTHORIZATION TESTING")
+        print("-" * 60)
+        
+        # Store original admin token
+        original_admin_token = self.auth_token
+        original_admin_headers = self.auth_headers.copy()
+        
+        success_count = 0
+        total_tests = 5
+        
+        # Step 1: Create Staff User
+        print("\n🔍 Step 1: Creating Staff User...")
+        staff_user_data = {
+            "username": "staff.user",
+            "email": "staff@gym.com", 
+            "full_name": "Staff User Test",
+            "password": "staff123",
+            "role": "staff"
+        }
+        
+        create_success, create_response = self.run_test("Create Staff User", "POST", "users", 200, staff_user_data)
+        if not create_success:
+            self.log_test("Staff User Authorization Test", False, "Could not create staff user")
+            return False, {}
+        
+        staff_user_id = create_response.get('id') if create_response else None
+        print(f"   Created Staff User ID: {staff_user_id}")
+        
+        # Step 2: Staff User Authentication
+        print("\n🔍 Step 2: Staff User Authentication...")
+        staff_login_data = {
+            "username": "staff.user",
+            "password": "staff123"
+        }
+        
+        login_success, login_response = self.run_test("Staff User Login", "POST", "auth/login", 200, staff_login_data, {'Content-Type': 'application/json'})
+        if not login_success or not login_response or 'access_token' not in login_response:
+            self.log_test("Staff User Authorization Test", False, "Staff user login failed")
+            return False, {}
+        
+        # Set staff user token
+        staff_token = login_response['access_token']
+        staff_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {staff_token}'
+        }
+        
+        # Verify staff user details
+        staff_user = login_response.get('user', {})
+        if staff_user.get('role') == 'staff':
+            self.log_test("Staff User Role Verification", True, f"Staff user role confirmed: {staff_user.get('role')}")
+            success_count += 1
+        else:
+            self.log_test("Staff User Role Verification", False, f"Expected staff role, got: {staff_user.get('role')}")
+        
+        print(f"   Staff User: {staff_user.get('full_name')} (Role: {staff_user.get('role')})")
+        print(f"   Staff Token: {staff_token[:20]}...")
+        
+        # Step 3: Staff Access to GET /payments
+        print("\n🔍 Step 3: Staff Access to GET /payments...")
+        payments_success, payments_response = self.run_test("Staff GET /payments", "GET", "payments", 200, None, staff_headers)
+        if payments_success:
+            self.log_test("Staff GET Payments Access", True, "Staff user can access GET /payments (not 403 Forbidden)")
+            success_count += 1
+            print(f"   Staff can access payments list - Found {len(payments_response) if payments_response else 0} payments")
+        else:
+            self.log_test("Staff GET Payments Access", False, "Staff user cannot access GET /payments - returns 403 Forbidden")
+        
+        # Step 4: Staff Access to POST /payments (Membership Registration)
+        print("\n🔍 Step 4: Staff Access to POST /payments (Membership Registration)...")
+        
+        # First ensure we have a member to create payment for
+        if not self.created_member_id:
+            # Create a test member using admin token temporarily
+            self.auth_headers = original_admin_headers
+            member_success, member_response = self.test_create_member()
+            if not member_success:
+                self.log_test("Staff POST Payments Test Setup", False, "Could not create test member")
+                return False, {}
+        
+        # Create membership payment with staff token
+        membership_payment_data = {
+            "member_id": self.created_member_id,
+            "amount": 50.00,
+            "payment_method": "membership",
+            "description": "Test membership payment by staff",
+            "payment_date": "2025-01-08"
+        }
+        
+        post_success, post_response = self.run_test("Staff POST /payments (Membership)", "POST", "payments", 200, membership_payment_data, staff_headers)
+        if post_success and post_response:
+            self.log_test("Staff POST Payments Access", True, "Staff user can create payments (membership registration)")
+            success_count += 1
+            
+            created_payment_id = post_response.get('id')
+            print(f"   Staff created payment ID: {created_payment_id}")
+            
+            # Verify payment details
+            if (post_response.get('amount') == 50.00 and 
+                post_response.get('payment_method') == 'membership' and
+                post_response.get('member_id') == self.created_member_id):
+                self.log_test("Staff Payment Creation Details", True, "Payment created with correct details")
+            else:
+                self.log_test("Staff Payment Creation Details", False, "Payment details incorrect")
+        else:
+            self.log_test("Staff POST Payments Access", False, "Staff user cannot create payments - returns 403 Forbidden")
+            created_payment_id = None
+        
+        # Step 5: Staff Access to DELETE /payments
+        print("\n🔍 Step 5: Staff Access to DELETE /payments...")
+        
+        if created_payment_id:
+            delete_success, delete_response = self.run_test("Staff DELETE /payments", "DELETE", f"payments/{created_payment_id}", 200, None, staff_headers)
+            if delete_success:
+                self.log_test("Staff DELETE Payments Access", True, "Staff user can delete payments")
+                success_count += 1
+                print(f"   Staff successfully deleted payment: {created_payment_id}")
+            else:
+                self.log_test("Staff DELETE Payments Access", False, "Staff user cannot delete payments - returns 403 Forbidden")
+        else:
+            self.log_test("Staff DELETE Payments Test", False, "No payment ID available for deletion test")
+        
+        # Step 6: Member Status Update Verification
+        print("\n🔍 Step 6: Member Status Update Verification...")
+        
+        # Create another membership payment to test status update
+        status_test_payment_data = {
+            "member_id": self.created_member_id,
+            "amount": 75.00,
+            "payment_method": "membership",
+            "description": "Membership payment for status test",
+            "payment_date": "2025-01-08"
+        }
+        
+        status_payment_success, status_payment_response = self.run_test("Staff Membership Payment for Status", "POST", "payments", 200, status_test_payment_data, staff_headers)
+        if status_payment_success:
+            # Check member status after payment
+            member_success, member_response = self.run_test("Get Member After Membership Payment", "GET", f"members/{self.created_member_id}", 200, None, staff_headers)
+            if member_success and member_response:
+                member_status = member_response.get('status')
+                last_payment_date = member_response.get('last_payment_date')
+                
+                print(f"   Member status after membership payment: {member_status}")
+                print(f"   Last payment date: {last_payment_date}")
+                
+                if member_status == 'active':
+                    self.log_test("Member Status Update After Membership Payment", True, "Member status correctly updated to active")
+                    success_count += 1
+                else:
+                    self.log_test("Member Status Update After Membership Payment", False, f"Member status is {member_status}, expected active")
+                
+                if last_payment_date:
+                    self.log_test("Last Payment Date Update", True, f"Last payment date updated: {last_payment_date}")
+                else:
+                    self.log_test("Last Payment Date Update", False, "Last payment date not updated")
+        
+        # Cleanup: Delete staff user
+        print("\n🧹 Cleanup: Deleting Staff User...")
+        self.auth_headers = original_admin_headers  # Use admin token for cleanup
+        if staff_user_id:
+            self.run_test("Delete Staff User", "DELETE", f"users/{staff_user_id}", 200)
+        
+        # Restore original admin token
+        self.auth_token = original_admin_token
+        self.auth_headers = original_admin_headers
+        
+        # Summary
+        print(f"\n📊 STAFF USER AUTHORIZATION SUMMARY")
+        print(f"   Tests Passed: {success_count}/{total_tests}")
+        
+        if success_count == total_tests:
+            self.log_test("Staff User Authorization Complete", True, "All staff authorization tests passed - Staff users have proper access to payments functionality")
+            return True, {}
+        else:
+            self.log_test("Staff User Authorization Complete", False, f"Only {success_count}/{total_tests} staff authorization tests passed")
+            return False, {}
+
     def test_financial_operations_critical(self):
         """Test critical financial operations reported by users as not working"""
         print("\n🎯 CRITICAL FINANCIAL OPERATIONS TESTING")
