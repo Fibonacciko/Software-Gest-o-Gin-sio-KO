@@ -943,7 +943,7 @@ async def get_payments(
         filter_dict['payment_date'] = filter_dict.get('payment_date', {})
         filter_dict['payment_date']['$lte'] = end_date.isoformat()
     
-    payments = await db.payments.find(filter_dict).to_list(1000)
+    payments = await db.payments.find(filter_dict).sort("payment_date", -1).to_list(1000)
     return [Payment(**parse_from_mongo(payment)) for payment in payments]
 
 # Inventory Routes
