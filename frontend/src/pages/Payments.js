@@ -681,77 +681,246 @@ const Payments = ({ language, translations }) => {
           </CardContent>
         </Card>
 
-        {/* Register Expenses Bar */}
+        {/* Expenses Section */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
-            <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
-              <DialogTrigger asChild>
-                <h2 className="text-lg font-bold text-white cursor-pointer hover:text-gray-300 transition-colors">
-                  {t[language].registerExpenses}
-                </h2>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{t[language].addExpense}</DialogTitle>
-                </DialogHeader>
-                
-                <form onSubmit={handleExpenseSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="category">{t[language].selectCategory} *</Label>
-                    <Select 
-                      value={expenseFormData.category} 
-                      onValueChange={(value) => setExpenseFormData({...expenseFormData, category: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="fixed">{t[language].fixedExpenses}</SelectItem>
-                        <SelectItem value="variable">{t[language].variableExpenses}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="expense_amount">{t[language].amount} (€) *</Label>
-                    <Input
-                      id="expense_amount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={expenseFormData.amount}
-                      onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
-                      required
-                      placeholder={t[language].enterAmount}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="expense_description">{t[language].description}</Label>
-                    <Textarea
-                      id="expense_description"
-                      value={expenseFormData.description}
-                      onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
-                      rows={3}
-                      placeholder={t[language].expenseDescription}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end gap-3 pt-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">
+                {t[language].registerExpenses}
+              </h2>
+              <div className="flex gap-3">
+                <Dialog open={showAddExpenseDialog} onOpenChange={setShowAddExpenseDialog}>
+                  <DialogTrigger asChild>
                     <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setShowExpenseDialog(false)}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      size="sm"
                     >
-                      {t[language].cancel}
+                      <Plus className="mr-2" size={16} />
+                      {t[language].addExpenseBtn}
                     </Button>
-                    <Button type="submit">
-                      {t[language].save}
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{t[language].addExpense}</DialogTitle>
+                    </DialogHeader>
+                    
+                    <form onSubmit={handleExpenseSubmit} className="space-y-4">
+                      <div>
+                        <Label htmlFor="category">{t[language].selectCategory} *</Label>
+                        <Select 
+                          value={expenseFormData.category} 
+                          onValueChange={(value) => setExpenseFormData({...expenseFormData, category: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="rent">{t[language].rent}</SelectItem>
+                            <SelectItem value="energy">{t[language].energy}</SelectItem>
+                            <SelectItem value="maintenance">{t[language].maintenance}</SelectItem>
+                            <SelectItem value="teachers">{t[language].teachers}</SelectItem>
+                            <SelectItem value="equipment">{t[language].equipment}</SelectItem>
+                            <SelectItem value="articles">{t[language].articles}</SelectItem>
+                            <SelectItem value="extras">{t[language].extras}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="expense_amount">{t[language].amount} (€) *</Label>
+                        <Input
+                          id="expense_amount"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={expenseFormData.amount}
+                          onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
+                          required
+                          placeholder={t[language].enterAmount}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="expense_date">{t[language].expenseDate} *</Label>
+                        <Input
+                          id="expense_date"
+                          type="date"
+                          value={expenseFormData.date}
+                          onChange={(e) => setExpenseFormData({...expenseFormData, date: e.target.value})}
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="expense_description">{t[language].description}</Label>
+                        <Textarea
+                          id="expense_description"
+                          value={expenseFormData.description}
+                          onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
+                          rows={3}
+                          placeholder={t[language].expenseDescription}
+                        />
+                      </div>
+                      
+                      <div className="flex justify-end gap-3 pt-4">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setShowAddExpenseDialog(false)}
+                        >
+                          {t[language].cancel}
+                        </Button>
+                        <Button type="submit">
+                          {t[language].save}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={showViewExpensesDialog} onOpenChange={setShowViewExpensesDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      size="sm"
+                    >
+                      <Eye className="mr-2" size={16} />
+                      {t[language].viewExpensesBtn}
                     </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>{t[language].viewExpenses}</DialogTitle>
+                    </DialogHeader>
+                    
+                    {/* Expense Filters */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Pesquisar por descrição..."
+                          value={expenseSearchTerm}
+                          onChange={(e) => setExpenseSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      
+                      <Select value={expenseTypeFilter} onValueChange={setExpenseTypeFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t[language].expenseType} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os Tipos</SelectItem>
+                          <SelectItem value="rent">{t[language].rent}</SelectItem>
+                          <SelectItem value="energy">{t[language].energy}</SelectItem>
+                          <SelectItem value="maintenance">{t[language].maintenance}</SelectItem>
+                          <SelectItem value="teachers">{t[language].teachers}</SelectItem>
+                          <SelectItem value="equipment">{t[language].equipment}</SelectItem>
+                          <SelectItem value="articles">{t[language].articles}</SelectItem>
+                          <SelectItem value="extras">{t[language].extras}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      <Select value={expenseDateFilter} onValueChange={setExpenseDateFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t[language].expenseDate} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t[language].allDates}</SelectItem>
+                          <SelectItem value="thisMonth">{t[language].thisMonth}</SelectItem>
+                          <SelectItem value="lastMonth">{t[language].lastMonth}</SelectItem>
+                          <SelectItem value="thisYear">{t[language].thisYear}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Expenses Table */}
+                    {expenses && expenses.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].expenseDate}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].expenseType}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].expenseValue}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].description}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {expenses
+                              .filter(expense => {
+                                // Apply filters
+                                if (expenseSearchTerm && !expense.description?.toLowerCase().includes(expenseSearchTerm.toLowerCase())) {
+                                  return false;
+                                }
+                                if (expenseTypeFilter !== 'all' && expense.category !== expenseTypeFilter) {
+                                  return false;
+                                }
+                                
+                                // Date filter
+                                if (expenseDateFilter !== 'all') {
+                                  const expenseDate = new Date(expense.expense_date || expense.date);
+                                  const now = new Date();
+                                  
+                                  if (expenseDateFilter === 'thisMonth') {
+                                    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                                    if (expenseDate < startOfMonth) return false;
+                                  } else if (expenseDateFilter === 'lastMonth') {
+                                    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                                    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                                    if (expenseDate < startOfLastMonth || expenseDate > endOfLastMonth) return false;
+                                  } else if (expenseDateFilter === 'thisYear') {
+                                    const startOfYear = new Date(now.getFullYear(), 0, 1);
+                                    if (expenseDate < startOfYear) return false;
+                                  }
+                                }
+                                
+                                return true;
+                              })
+                              .map((expense) => (
+                                <tr key={expense.id} className="border-b hover:bg-gray-50">
+                                  <td className="p-4">
+                                    {new Date(expense.expense_date || expense.date).toLocaleDateString('pt-PT')}
+                                  </td>
+                                  <td className="p-4">
+                                    <Badge className="bg-blue-100 text-blue-800">
+                                      {t[language][expense.category] || expense.category}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-4">
+                                    <span className="font-semibold">€{expense.amount.toFixed(2)}</span>
+                                  </td>
+                                  <td className="p-4">
+                                    <p className="text-sm text-gray-600 truncate max-w-xs">
+                                      {expense.description || '-'}
+                                    </p>
+                                  </td>
+                                  <td className="p-4">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteExpense(expense.id)}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <Trash2 size={16} />
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-600">{t[language].noExpenses}</p>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
