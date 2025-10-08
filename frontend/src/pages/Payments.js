@@ -179,7 +179,23 @@ const Payments = ({ language, translations }) => {
       paymentDescription: 'Payment description...',
       expenseDescription: 'Expense description...',
       selectCategory: 'Select category...',
-      paymentDate: 'Payment Date'
+      paymentDate: 'Payment Date',
+      addExpenseBtn: 'Add',
+      viewExpensesBtn: 'View',
+      expenses: 'Expenses',
+      viewExpenses: 'View Expenses',
+      rent: 'Rent',
+      energy: 'Energy', 
+      maintenance: 'Maintenance',
+      teachers: 'Teachers',
+      equipment: 'Equipment',
+      articles: 'Articles',
+      extras: 'Extras',
+      expenseType: 'Type',
+      expenseDate: 'Date',
+      expenseValue: 'Value',
+      noExpenses: 'No expenses found',
+      deleteExpense: 'Delete expense'
     }
   };
 
