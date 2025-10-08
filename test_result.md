@@ -225,6 +225,21 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "New expenses functionality - Interface restructure and new features"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/Payments.js, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "COMPREHENSIVE NEW EXPENSES FUNCTIONALITY TESTING COMPLETED: ✅ INTERFACE CHANGES: Tab names successfully updated to 'Pagamentos' and 'Despesas' (instead of previous longer names). ✅ NEW EXPENSES SECTION: Both 'Adicionar' and 'Consultar' buttons are present and functional in expenses section. ✅ ADD EXPENSE DIALOG: Opens correctly with all required form fields (category dropdown, amount, date, description, save/cancel buttons). ✅ VIEW EXPENSES DIALOG: Opens with proper table structure including headers (Data, Tipo, Valor, Descrição, Ações), search functionality, and filter dropdowns. ✅ UI ELEMENTS: All buttons render correctly, dialogs open/close properly, responsive design works on mobile. ✅ ADMIN FEATURES: Financial statistics cards and admin reset section visible and working. ❌ CRITICAL BACKEND INTEGRATION ISSUE: Expense creation fails with 422 error due to category mismatch. Frontend sends new categories (rent, energy, maintenance, teachers, equipment, articles, extras) but backend ExpenseCategory enum only accepts 'fixed' or 'variable'. This prevents expense creation from working despite perfect UI implementation."
+        - working: false
+        - agent: "testing"
+        - comment: "BACKEND-FRONTEND CATEGORY MISMATCH IDENTIFIED: The new expenses functionality has a critical integration issue. Frontend implements 7 new expense categories (Renda, Energia, Manutenção, Professores, Equipamentos, Artigos, Extras) as requested, but backend ExpenseCategory enum in server.py lines 196-198 only supports 'fixed' and 'variable'. When user tries to create expense, frontend sends category like 'rent' but backend rejects with 422 Unprocessable Entity. Backend needs to be updated to support the new categories or frontend needs to map to existing categories. All UI functionality works perfectly - this is purely a data model mismatch issue."
+
 agent_communication:
     - agent: "main"
     - message: "Improved dark mode readability by significantly lightening all colors. Background changed from 5% to 18% lightness, cards from 8% to 22%, text contrast improved to 98%, and borders lightened to 35%. Gradients updated from black/orange-900 to gray-800/gray-700 across Dashboard, Sidebar, and Card components. The dark mode is now much lighter with better text contrast, making all information easier to read. Screenshots show the improved contrast between light and dark modes."
@@ -240,3 +255,5 @@ agent_communication:
     - message: "Fixed Button component import path issue and added admin financial reset functionality. Button component now properly imported from '../components/ui/button' which should resolve trash icon rendering issues. Added comprehensive admin section with 'Resetar Dados Financeiros' button that includes double confirmation dialogs for safety."
     - agent: "testing"
     - message: "FINAL VERIFICATION COMPLETE - ALL 3 FINANCIAL ISSUES FIXED: 1) ✅ ADMIN RESET SECTION: 'Administração' section with 'Resetar Dados Financeiros' button is visible and working perfectly for admin users. 2) ✅ TRASH BUTTONS FIXED: All 6 payment rows now show proper trash/delete buttons with correct Trash2 SVG icons in Actions column. Button component import fix resolved the rendering issue. 3) ✅ PAYMENT REGISTRATION WORKING: Guardar button successfully submits payments (API returns 200), payments appear in table, and revenue statistics update correctly. Minor UI issue: dialog doesn't auto-close after successful submission, but payment is created successfully. 4) ✅ DARK MODE: Excellent readability with improved contrast. All financial operations are now fully functional with correct login credentials (fabio.guerreiro/admin123)."
+    - agent: "testing"
+    - message: "NEW EXPENSES FUNCTIONALITY TESTING COMPLETED: Comprehensive testing of the newly implemented expenses functionality shows excellent UI implementation but critical backend integration issue. ✅ WORKING: Interface restructure (tab names updated), new expenses section with Adicionar/Consultar buttons, add expense dialog with all form fields, view expenses table with filters, responsive design, admin features. ❌ CRITICAL ISSUE: Backend ExpenseCategory enum only supports 'fixed'/'variable' but frontend implements 7 new categories (rent, energy, maintenance, teachers, equipment, articles, extras). This causes 422 errors on expense creation. Backend needs updating to support new categories or frontend needs category mapping. All UI functionality is perfect - this is purely a backend data model issue."
