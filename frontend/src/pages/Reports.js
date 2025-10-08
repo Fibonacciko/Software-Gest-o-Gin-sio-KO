@@ -337,60 +337,86 @@ const Reports = ({ language, translations }) => {
 
   const generateFinancialReport = async (start, end) => {
     try {
-      // Filter payments within date range
+      // Filter data within date range
       const filteredPayments = payments.filter(payment => {
         const payDate = new Date(payment.payment_date);
         return payDate >= start && payDate <= end && payment.status === 'paid';
       });
+
+      const filteredRevenues = revenues.filter(revenue => {
+        const revDate = new Date(revenue.revenue_date || revenue.date);
+        return revDate >= start && revDate <= end;
+      });
+
+      const filteredExpenses = expenses.filter(expense => {
+        const expDate = new Date(expense.expense_date || expense.date);
+        return expDate >= start && expDate <= end;
+      });
       
-      // Calculate financial metrics
-      const monthlyRevenue = filteredPayments
-        .filter(p => p.description && p.description.toLowerCase().includes('mensalidade'))
-        .reduce((sum, payment) => sum + payment.amount, 0);
+      // Calculate REVENUES according to new structure
+      const revenuePayments = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
       
-      const extraRevenue = filteredPayments
-        .filter(p => !p.description || !p.description.toLowerCase().includes('mensalidade'))
-        .reduce((sum, payment) => sum + payment.amount, 0);
+      const revenueExtras = filteredRevenues
+        .filter(r => r.category === 'revenueExtras')
+        .reduce((sum, revenue) => sum + revenue.amount, 0);
       
-      // Get inventory data for articles
-      const inventoryRes = await axios.get(`${API}/inventory`);
-      const inventory = inventoryRes.data;
+      const revenueArticles = filteredRevenues
+        .filter(r => r.category === 'articles')
+        .reduce((sum, revenue) => sum + revenue.amount, 0);
+        
+      const revenueEquipment = filteredRevenues
+        .filter(r => r.category === 'equipment')
+        .reduce((sum, revenue) => sum + revenue.amount, 0);
       
-      const articleRevenue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * item.price), 0);
-      const articleExpenses = inventory.reduce((sum, item) => sum + (item.quantity * (item.purchase_price || item.price * 0.6)), 0);
-      
-      // Mock expenses data (would need proper expenses system)
-      const fixedExpenses = 500; // Mock: rent, utilities, etc.
-      const extraExpenses = 200; // Mock: maintenance, equipment, etc.
+      // Calculate EXPENSES according to new structure  
+      const expenseFixed = filteredExpenses
+        .filter(e => ['rent', 'energy'].includes(e.category))
+        .reduce((sum, expense) => sum + expense.amount, 0);
+        
+      const expenseVariable = filteredExpenses
+        .filter(e => ['teachers', 'maintenance', 'extras'].includes(e.category))
+        .reduce((sum, expense) => sum + expense.amount, 0);
+        
+      const expenseArticles = filteredExpenses
+        .filter(e => e.category === 'articles')
+        .reduce((sum, expense) => sum + expense.amount, 0);
+        
+      const expenseEquipment = filteredExpenses
+        .filter(e => e.category === 'equipment')
+        .reduce((sum, expense) => sum + expense.amount, 0);
       
       // Calculate totals
-      const grossTotal = monthlyRevenue + extraRevenue + articleRevenue;
-      const netTotal = grossTotal - (fixedExpenses + extraExpenses + articleExpenses);
+      const totalRevenues = revenuePayments + revenueExtras + revenueArticles + revenueEquipment;
+      const totalExpenses = expenseFixed + expenseVariable + expenseArticles + expenseEquipment;
+      const netTotal = totalRevenues - totalExpenses;
       
       setReportData({
         type: 'financial',
         stats: { 
-          monthlyRevenue, 
-          extraRevenue, 
-          fixedExpenses, 
-          extraExpenses, 
-          articleRevenue, 
-          articleExpenses, 
-          grossTotal, 
+          revenuePayments,
+          revenueExtras,
+          revenueArticles,
+          revenueEquipment,
+          expenseFixed,
+          expenseVariable,
+          expenseArticles,
+          expenseEquipment,
+          totalRevenues,
+          totalExpenses,
           netTotal 
         },
         charts: { 
           revenues: {
-            [`${t[language || 'pt'].monthlyRevenue}`]: monthlyRevenue,
-            [`${t[language || 'pt'].extraRevenue}`]: extraRevenue,
-            [`${t[language || 'pt'].articleRevenue}`]: articleRevenue,
-            [`${t[language || 'pt'].grossTotal}`]: grossTotal
+            [`${t[language || 'pt'].revenuePayments}`]: revenuePayments,
+            [`${t[language || 'pt'].revenueExtras}`]: revenueExtras,
+            [`${t[language || 'pt'].revenueArticles}`]: revenueArticles,
+            [`${t[language || 'pt'].revenueEquipment}`]: revenueEquipment
           },
           expenses: {
-            [`${t[language || 'pt'].fixedExpenses}`]: fixedExpenses,
-            [`${t[language || 'pt'].extraExpenses}`]: extraExpenses,
-            [`${t[language || 'pt'].articleExpenses}`]: articleExpenses,
-            [`${t[language || 'pt'].netTotal}`]: netTotal
+            [`${t[language || 'pt'].expenseFixed}`]: expenseFixed,
+            [`${t[language || 'pt'].expenseVariable}`]: expenseVariable,
+            [`${t[language || 'pt'].expenseArticles}`]: expenseArticles,
+            [`${t[language || 'pt'].expenseEquipment}`]: expenseEquipment
           }
         }
       });
