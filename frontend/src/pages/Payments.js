@@ -140,7 +140,7 @@ const Payments = ({ language, translations }) => {
     },
     en: {
       finances: 'Finance',
-      registerPayments: 'Payments',
+      registerPayments: 'Revenues',
       registerExpenses: 'Expenses',
       searchMembers: 'Search by name or member number',
       salaries: 'Salaries',
