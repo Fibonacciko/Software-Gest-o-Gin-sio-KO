@@ -217,7 +217,22 @@ const Payments = ({ language, translations }) => {
       expenseDate: 'Date',
       expenseValue: 'Value',
       noExpenses: 'No expenses found',
-      deleteExpense: 'Delete expense'
+      deleteExpense: 'Delete expense',
+      addRevenueBtn: 'Add',
+      viewRevenuesBtn: 'View',
+      revenues: 'Revenues',
+      viewRevenues: 'View Revenues',
+      plans: 'Plans',
+      personalTraining: 'Personal Training',
+      subsidies: 'Subsidies',
+      revenueExtras: 'Extras',
+      revenueType: 'Type',
+      revenueDate: 'Date',
+      revenueValue: 'Value',
+      noRevenues: 'No revenues found',
+      deleteRevenue: 'Delete revenue',
+      addRevenue: 'Add Revenue',
+      revenueDescription: 'Revenue description...'
     }
   };
 
