@@ -534,6 +534,50 @@ const Payments = ({ language, translations }) => {
     }
   };
 
+  // Revenue management functions
+  const fetchRevenues = async () => {
+    try {
+      const response = await axios.get(`${API}/revenues`);
+      setRevenues(response.data);
+    } catch (error) {
+      console.error('Error fetching revenues:', error);
+    }
+  };
+
+  const handleRevenueSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API}/revenues`, revenueFormData);
+      
+      toast.success('Receita registada com sucesso!');
+      setShowAddRevenueDialog(false);
+      setRevenueFormData({
+        category: 'plans',
+        amount: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0]
+      });
+      
+      fetchRevenues();
+    } catch (error) {
+      console.error('Error adding revenue:', error);
+      toast.error('Erro ao registar receita');
+    }
+  };
+
+  const handleDeleteRevenue = async (revenueId) => {
+    if (window.confirm('Tem certeza que deseja eliminar esta receita?')) {
+      try {
+        await axios.delete(`${API}/revenues/${revenueId}`);
+        toast.success('Receita eliminada com sucesso');
+        fetchRevenues();
+      } catch (error) {
+        console.error('Error deleting revenue:', error);
+        toast.error('Erro ao eliminar receita');
+      }
+    }
+  };
+
   // Function to reset all financial data (Admin only)
   const handleResetFinancialData = async () => {
     const confirmMessage = 'ATENÇÃO: Esta ação vai APAGAR PERMANENTEMENTE todos os dados financeiros (pagamentos, despesas, vendas). Esta operação NÃO pode ser desfeita. Tem certeza que deseja continuar?';
