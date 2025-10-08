@@ -241,6 +241,7 @@ const Attendance = ({ language, translations }) => {
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
+              <label className="block text-xs text-gray-500 mb-1">Data</label>
               <Input
                 type="date"
                 value={selectedDate.toISOString().split('T')[0]}
@@ -249,40 +250,27 @@ const Attendance = ({ language, translations }) => {
               />
             </div>
             
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder={t[language].searchMembers}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-                data-testid="attendance-search"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Select value={selectedMember} onValueChange={setSelectedMember}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t[language].allMembers} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t[language].allMembers}</SelectItem>
-                  {members.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Modalidade</label>
-                <ActivitySelector
-                  value={activityFilter}
-                  onChange={setActivityFilter}
-                  placeholder="Todas as modalidades"
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Pesquisar</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder={t[language].searchMembers}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                  data-testid="attendance-search"
                 />
               </div>
+            </div>
+            
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Modalidade</label>
+              <ActivitySelector
+                value={activityFilter}
+                onChange={setActivityFilter}
+                placeholder="Todas as modalidades"
+              />
             </div>
           </div>
         </CardContent>
