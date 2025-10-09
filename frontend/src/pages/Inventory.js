@@ -40,7 +40,7 @@ const Inventory = ({ language, translations }) => {
 
   const [formData, setFormData] = useState({
     name: '',
-    category: 'clothing',
+    category: 'textil',
     size: '',
     color: '',
     quantity: '',
