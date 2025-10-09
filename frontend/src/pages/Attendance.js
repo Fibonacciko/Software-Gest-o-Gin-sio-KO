@@ -237,9 +237,9 @@ const Attendance = ({ language, translations }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-600 mb-1">
-                  {t[language].averageDaily}
+                  {t[language].totalMembersMonth}
                 </p>
-                <p className="text-lg font-bold text-gray-900">{stats.average}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.totalMembersMonth}</p>
               </div>
               <div className="p-2 rounded-full bg-purple-500">
                 <Clock size={18} className="text-white" />
