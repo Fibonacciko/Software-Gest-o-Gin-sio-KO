@@ -1153,7 +1153,8 @@ async def sell_inventory_item(
                 category="revenueExtras",  # Using extras category for stock sales
                 amount=total_revenue,
                 description=f"Venda de stock: {item['name']} (Qtd: {quantity_to_sell})",
-                revenue_date=date.today()
+                revenue_date=date.today(),
+                created_by=current_user.id
             )
             revenue_dict = prepare_for_mongo(revenue.dict())
             await db.revenues.insert_one(revenue_dict)
