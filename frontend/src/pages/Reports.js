@@ -1039,60 +1039,12 @@ const Reports = ({ language, translations }) => {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Atletas Ativos por Modalidade */}
+              {/* Gráficos de Modalidades */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Gráfico de Barras - Receitas por Modalidade */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Atletas Ativos por Modalidade</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {reportData.charts.activeMembersByModality && Object.keys(reportData.charts.activeMembersByModality).length > 0 ? (
-                      <div className="h-80">
-                        <Bar
-                          data={{
-                            labels: Object.keys(reportData.charts.activeMembersByModality),
-                            datasets: [{
-                              label: 'Nº de Atletas Ativos',
-                              data: Object.values(reportData.charts.activeMembersByModality),
-                              backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                              borderColor: 'rgba(59, 130, 246, 1)',
-                              borderWidth: 1
-                            }]
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                              legend: { display: false },
-                              tooltip: {
-                                callbacks: {
-                                  label: function(context) {
-                                    return `Atletas: ${context.parsed.y}`;
-                                  }
-                                }
-                              }
-                            },
-                            scales: {
-                              y: {
-                                beginAtZero: true,
-                                ticks: { stepSize: 1 }
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="p-8 text-center text-gray-600">
-                        Nenhum dado de modalidade disponível
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-                
-                {/* Receita de Mensalidades por Modalidade */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Receita de Mensalidades por Modalidade</CardTitle>
+                    <CardTitle>Análise Financeira Completa - Receitas de Mensalidades (€)</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {reportData.charts.revenueByModality && Object.keys(reportData.charts.revenueByModality).length > 0 ? (
@@ -1103,9 +1055,21 @@ const Reports = ({ language, translations }) => {
                             datasets: [{
                               label: 'Receita (€)',
                               data: Object.values(reportData.charts.revenueByModality),
-                              backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                              borderColor: 'rgba(34, 197, 94, 1)',
-                              borderWidth: 1
+                              backgroundColor: [
+                                'rgba(239, 68, 68, 0.8)',   // Boxe - vermelho
+                                'rgba(251, 146, 60, 0.8)',  // Kickboxing - laranja
+                                'rgba(168, 85, 247, 0.8)',  // Jiu-Jitsu - roxo
+                                'rgba(59, 130, 246, 0.8)',  // Musculação - azul
+                                'rgba(34, 197, 94, 0.8)'    // Receita Total - verde
+                              ],
+                              borderColor: [
+                                'rgba(239, 68, 68, 1)',
+                                'rgba(251, 146, 60, 1)',
+                                'rgba(168, 85, 247, 1)',
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(34, 197, 94, 1)'
+                              ],
+                              borderWidth: 2
                             }]
                           }}
                           options={{
@@ -1141,7 +1105,104 @@ const Reports = ({ language, translations }) => {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Gráfico Circular - Distribuição de Receitas por Modalidade */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Distribuição de Receitas de Mensalidades por Modalidade</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {reportData.charts.revenueByModality && Object.keys(reportData.charts.revenueByModality).length > 0 ? (
+                      <div className="h-80">
+                        <Pie
+                          data={{
+                            labels: Object.keys(reportData.charts.revenueByModality).filter(k => k !== 'Receita Total'),
+                            datasets: [{
+                              data: Object.entries(reportData.charts.revenueByModality)
+                                .filter(([key]) => key !== 'Receita Total')
+                                .map(([_, value]) => value),
+                              backgroundColor: [
+                                'rgba(239, 68, 68, 0.8)',   // Boxe - vermelho
+                                'rgba(251, 146, 60, 0.8)',  // Kickboxing - laranja
+                                'rgba(168, 85, 247, 0.8)',  // Jiu-Jitsu - roxo
+                                'rgba(59, 130, 246, 0.8)'   // Musculação - azul
+                              ],
+                              borderColor: [
+                                'rgba(239, 68, 68, 1)',
+                                'rgba(251, 146, 60, 1)',
+                                'rgba(168, 85, 247, 1)',
+                                'rgba(59, 130, 246, 1)'
+                              ],
+                              borderWidth: 2
+                            }]
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                              legend: {
+                                position: 'bottom',
+                                labels: { padding: 15 }
+                              },
+                              tooltip: {
+                                callbacks: {
+                                  label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                                  }
+                                }
+                              },
+                              datalabels: {
+                                display: true,
+                                color: '#000',
+                                font: {
+                                  weight: 'bold',
+                                  size: 10
+                                },
+                                formatter: function(value, context) {
+                                  const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                  return value > 0 ? percentage + '%' : '';
+                                }
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center text-gray-600">
+                        Nenhuma receita de mensalidades disponível
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
+              
+              {/* Card de Atletas Ativos por Modalidade */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Atletas Ativos por Modalidade</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {reportData.charts.activeMembersByModality && Object.keys(reportData.charts.activeMembersByModality).length > 0 ? (
+                      Object.entries(reportData.charts.activeMembersByModality).map(([activity, count]) => (
+                        <div key={activity} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <span className="font-medium">{activity}</span>
+                          <span className="text-sm font-semibold text-blue-600">{count} atletas</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-lg text-center text-gray-600">
+                        Nenhum dado de modalidade disponível
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
           
