@@ -897,10 +897,128 @@ const Payments = ({ language, translations }) => {
                     <DialogHeader>
                       <DialogTitle>{t[language].viewRevenues}</DialogTitle>
                     </DialogHeader>
-                    <div className="text-center py-8">
-                      <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-600">Consultar receitas funcionando</p>
+                    
+                    {/* Revenue Filters */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Pesquisar por descrição..."
+                          value={revenueSearchTerm}
+                          onChange={(e) => setRevenueSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      
+                      <Select value={revenueTypeFilter} onValueChange={setRevenueTypeFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t[language].revenueType} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os Tipos</SelectItem>
+                          <SelectItem value="personalTraining">{t[language].personalTraining}</SelectItem>
+                          <SelectItem value="subsidies">{t[language].subsidies}</SelectItem>
+                          <SelectItem value="revenueExtras">{t[language].revenueExtras}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      <Select value={revenueDateFilter} onValueChange={setRevenueDateFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t[language].revenueDate} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t[language].allDates}</SelectItem>
+                          <SelectItem value="thisMonth">{t[language].thisMonth}</SelectItem>
+                          <SelectItem value="lastMonth">{t[language].lastMonth}</SelectItem>
+                          <SelectItem value="thisYear">{t[language].thisYear}</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
+
+                    {/* Revenues Table */}
+                    {revenues && revenues.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].revenueDate}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].revenueType}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].revenueValue}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">{t[language].description}</th>
+                              <th className="text-left p-4 font-medium text-gray-600">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {revenues
+                              .filter(revenue => {
+                                // Apply filters
+                                if (revenueSearchTerm && !revenue.description?.toLowerCase().includes(revenueSearchTerm.toLowerCase())) {
+                                  return false;
+                                }
+                                if (revenueTypeFilter !== 'all' && revenue.category !== revenueTypeFilter) {
+                                  return false;
+                                }
+                                
+                                // Date filter
+                                if (revenueDateFilter !== 'all') {
+                                  const revenueDate = new Date(revenue.revenue_date || revenue.date);
+                                  const now = new Date();
+                                  
+                                  if (revenueDateFilter === 'thisMonth') {
+                                    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                                    if (revenueDate < startOfMonth) return false;
+                                  } else if (revenueDateFilter === 'lastMonth') {
+                                    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                                    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                                    if (revenueDate < startOfLastMonth || revenueDate > endOfLastMonth) return false;
+                                  } else if (revenueDateFilter === 'thisYear') {
+                                    const startOfYear = new Date(now.getFullYear(), 0, 1);
+                                    if (revenueDate < startOfYear) return false;
+                                  }
+                                }
+                                
+                                return true;
+                              })
+                              .map((revenue) => (
+                                <tr key={revenue.id} className="border-b hover:bg-gray-50">
+                                  <td className="p-4">
+                                    {revenue.revenue_date ? new Date(revenue.revenue_date).toLocaleDateString('pt-PT') : 
+                                     revenue.date ? new Date(revenue.date).toLocaleDateString('pt-PT') : 'N/A'}
+                                  </td>
+                                  <td className="p-4">
+                                    <Badge className="bg-green-100 text-green-800">
+                                      {t[language][revenue.category] || revenue.category}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-4">
+                                    <span className="font-semibold text-green-600">
+                                      €{revenue.amount?.toFixed(2)}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 text-sm text-gray-600">
+                                    {revenue.description || 'N/A'}
+                                  </td>
+                                  <td className="p-4">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleDeleteRevenue(revenue.id)}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 size={16} />
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-600">{t[language].noRevenues}</p>
+                      </div>
+                    )}
                   </DialogContent>
                 </Dialog>
               </div>
