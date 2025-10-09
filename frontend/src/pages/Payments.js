@@ -756,44 +756,56 @@ const Payments = ({ language, translations }) => {
         </h1>
       </div>
 
-      {/* Horizontal Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
-          <button
-            onClick={() => setActiveTab('receitas')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'receitas'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            {t[language].registerPayments}
-          </button>
-          <button
-            onClick={() => setActiveTab('mensalidades')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'mensalidades'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            {t[language].memberships}
-          </button>
-          <button
-            onClick={() => setActiveTab('despesas')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'despesas'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            {t[language].registerExpenses}
-          </button>
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      <div className="mt-6">
+      {/* Section Filter Bar - Similar to other pages */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Seção</label>
+              <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar seção..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="receitas">{t[language].registerPayments}</SelectItem>
+                  <SelectItem value="mensalidades">{t[language].memberships}</SelectItem>
+                  <SelectItem value="despesas">{t[language].registerExpenses}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os status..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="paid">Pago</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Período</label>
+              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar período..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="today">Hoje</SelectItem>
+                  <SelectItem value="thisWeek">Esta Semana</SelectItem>
+                  <SelectItem value="thisMonth">Este Mês</SelectItem>
+                  <SelectItem value="thisYear">Este Ano</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
         {/* Revenues Tab */}
         {activeTab === 'receitas' && (
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
