@@ -1029,41 +1029,105 @@ const Reports = ({ language, translations }) => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Atletas Ativos por Modalidade */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t[language].membersByActivity}</CardTitle>
+                    <CardTitle>Atletas Ativos por Modalidade</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {reportData.charts.membersByActivity && Object.keys(reportData.charts.membersByActivity).length > 0 ? (
-                        Object.entries(reportData.charts.membersByActivity).map(([activity, count]) => (
-                          <div key={activity} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <span className="font-medium">{activity}</span>
-                            <span className="text-sm font-semibold text-blue-600">{count}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-3 bg-gray-50 rounded-lg text-center text-gray-600">
-                          Nenhum dados de modalidade disponível
-                        </div>
-                      )}
-                    </div>
+                    {reportData.charts.activeMembersByModality && Object.keys(reportData.charts.activeMembersByModality).length > 0 ? (
+                      <div className="h-80">
+                        <Bar
+                          data={{
+                            labels: Object.keys(reportData.charts.activeMembersByModality),
+                            datasets: [{
+                              label: 'Nº de Atletas Ativos',
+                              data: Object.values(reportData.charts.activeMembersByModality),
+                              backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                              borderColor: 'rgba(59, 130, 246, 1)',
+                              borderWidth: 1
+                            }]
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                              legend: { display: false },
+                              tooltip: {
+                                callbacks: {
+                                  label: function(context) {
+                                    return `Atletas: ${context.parsed.y}`;
+                                  }
+                                }
+                              }
+                            },
+                            scales: {
+                              y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 }
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center text-gray-600">
+                        Nenhum dado de modalidade disponível
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
                 
+                {/* Receita de Mensalidades por Modalidade */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t[language].membersByPack}</CardTitle>
+                    <CardTitle>Receita de Mensalidades por Modalidade</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {reportData.charts.membersByPack && Object.entries(reportData.charts.membersByPack).map(([pack, count]) => (
-                        <div key={pack} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="font-medium">{pack}</span>
-                          <span className="text-sm font-semibold text-green-600">{count}</span>
-                        </div>
-                      ))}
-                    </div>
+                    {reportData.charts.revenueByModality && Object.keys(reportData.charts.revenueByModality).length > 0 ? (
+                      <div className="h-80">
+                        <Bar
+                          data={{
+                            labels: Object.keys(reportData.charts.revenueByModality),
+                            datasets: [{
+                              label: 'Receita (€)',
+                              data: Object.values(reportData.charts.revenueByModality),
+                              backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                              borderColor: 'rgba(34, 197, 94, 1)',
+                              borderWidth: 1
+                            }]
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                              legend: { display: false },
+                              tooltip: {
+                                callbacks: {
+                                  label: function(context) {
+                                    return `Receita: €${context.parsed.y.toFixed(2)}`;
+                                  }
+                                }
+                              }
+                            },
+                            scales: {
+                              y: {
+                                beginAtZero: true,
+                                ticks: {
+                                  callback: function(value) {
+                                    return '€' + value.toFixed(0);
+                                  }
+                                }
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center text-gray-600">
+                        Nenhuma receita de mensalidades disponível
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
