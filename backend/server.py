@@ -1048,7 +1048,7 @@ async def create_inventory_item(
             amount=total_cost,
             description=f"Compra de stock: {item.name} (Qtd: {item.quantity})",
             expense_date=date.today(),
-            expense_type="variable"
+            created_by=current_user.id
         )
         expense_dict = prepare_for_mongo(expense.dict())
         await db.expenses.insert_one(expense_dict)
