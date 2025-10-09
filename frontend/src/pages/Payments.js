@@ -1001,10 +1001,10 @@ const Payments = ({ language, translations }) => {
               <Dialog open={showViewExpensesDialog} onOpenChange={setShowViewExpensesDialog}>
                 <DialogTrigger asChild>
                   <Button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white w-full text-xs py-1 px-2 h-7"
+                    className="bg-blue-600 hover:bg-blue-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6"
                     size="sm"
                   >
-                    <Eye className="mr-1" size={12} />
+                    <Eye className="mr-0.5" size={10} />
                     {t[language].viewExpensesBtn}
                   </Button>
                 </DialogTrigger>
