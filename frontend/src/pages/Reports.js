@@ -540,28 +540,45 @@ const Reports = ({ language, translations }) => {
       const response = await axios.get(`${API}/inventory`);
       const inventory = response.data;
       
-      // Calculate the 4 specific stock metrics
+      // Separate by category
+      const textilItems = inventory.filter(item => item.category === 'textil' || item.category === 'clothing');
+      const equipmentItems = inventory.filter(item => item.category === 'equipment');
+      
+      // Prepare data for Textil chart
+      const textilChartData = textilItems.map(item => ({
+        name: item.name,
+        units: item.quantity || 0,
+        stock: (item.quantity || 0) * (item.purchase_price || 0), // Value in stock
+        revenue: (item.sold_quantity || 0) * (item.sale_price || item.price || 0)
+      }));
+      
+      // Prepare data for Equipment chart
+      const equipmentChartData = equipmentItems.map(item => ({
+        name: item.name,
+        units: item.quantity || 0,
+        stock: (item.quantity || 0) * (item.purchase_price || 0), // Value in stock
+        revenue: (item.sold_quantity || 0) * (item.sale_price || item.price || 0)
+      }));
+      
+      // Calculate overall metrics
       const articlesInStock = inventory.reduce((sum, item) => sum + item.quantity, 0);
-      const investedValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.purchase_price || item.price * 0.6)), 0);
-      const receivedValue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * item.price), 0);
+      const investedValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.purchase_price || 0)), 0);
+      const receivedValue = inventory.reduce((sum, item) => sum + ((item.sold_quantity || 0) * (item.sale_price || item.price || 0)), 0);
       const netValue = receivedValue - investedValue;
       
       setReportData({
         type: 'stock',
-        stats: { articlesInStock, investedValue, receivedValue, netValue },
+        stats: { 
+          articlesInStock, 
+          investedValue, 
+          receivedValue, 
+          netValue,
+          textilItemsCount: textilItems.length,
+          equipmentItemsCount: equipmentItems.length
+        },
         charts: { 
-          stockMetrics: {
-            [`${t[language || 'pt'].articlesInStock}`]: articlesInStock * 25, // Convert to euro equivalent for chart
-            [`${t[language || 'pt'].investedValue}`]: investedValue,
-            [`${t[language || 'pt'].receivedValue}`]: receivedValue,
-            [`${t[language || 'pt'].netValue}`]: netValue
-          },
-          valueBreakdown: {
-            [`${t[language || 'pt'].investedValue}`]: investedValue,
-            [`${t[language || 'pt'].receivedValue}`]: receivedValue,
-            [`${t[language || 'pt'].netValue}`]: netValue > 0 ? netValue : 0,
-            'Margem': receivedValue > 0 ? ((netValue / receivedValue) * 100) : 0
-          }
+          textilData: textilChartData,
+          equipmentData: equipmentChartData
         }
       });
     } catch (error) {
