@@ -758,14 +758,14 @@ const Payments = ({ language, translations }) => {
       </div>
 
       {/* 3 Section Windows - Horizontal Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-4xl">
         {/* Receitas Window */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-bold text-white mb-4 text-center">
+          <CardContent className="p-4">
+            <h2 className="text-sm font-bold text-white mb-3 text-center">
               {t[language].registerPayments}
             </h2>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <Dialog open={showAddRevenueDialog} onOpenChange={setShowAddRevenueDialog}>
                   <DialogTrigger asChild>
                     <Button 
