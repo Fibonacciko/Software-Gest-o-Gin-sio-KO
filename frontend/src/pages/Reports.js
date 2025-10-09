@@ -953,13 +953,13 @@ const Reports = ({ language, translations }) => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">RESULTADO</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <StatCard
-                    title="Total Receitas"
+                    title="Receita Total"
                     value={`€${reportData.stats.totalRevenues.toFixed(2)}`}
                     icon={TrendingUp}
                     color="bg-green-600"
                   />
                   <StatCard
-                    title="Total Despesas"
+                    title="Despesa Total"
                     value={`€${reportData.stats.totalExpenses.toFixed(2)}`}
                     icon={BarChart}
                     color="bg-red-600"
