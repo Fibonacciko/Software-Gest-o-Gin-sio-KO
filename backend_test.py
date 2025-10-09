@@ -839,6 +839,158 @@ class GymManagementAPITester:
             self.log_test("Staff User Authorization Complete", False, f"Only {success_count}/{total_tests} staff authorization tests passed")
             return False, {}
 
+    def test_member_activity_id_functionality(self):
+        """Test member registration and check-in functionality with activity_id field - REVIEW REQUEST"""
+        print("\n🎯 MEMBER ACTIVITY_ID FUNCTIONALITY TESTING - REVIEW REQUEST")
+        print("-" * 70)
+        
+        success_count = 0
+        total_tests = 4
+        
+        # Step 1: Get available activities first
+        print("\n🔍 Step 1: Getting available activities...")
+        activities_success, activities_response = self.run_test("Get Available Activities", "GET", "activities", 200)
+        if not activities_success or not activities_response or len(activities_response) == 0:
+            self.log_test("Member Activity ID Test", False, "No activities available for testing")
+            return False, {}
+        
+        # Use the first available activity
+        test_activity = activities_response[0]
+        test_activity_id = test_activity['id']
+        test_activity_name = test_activity['name']
+        print(f"   Using activity: {test_activity_name} (ID: {test_activity_id})")
+        
+        # Step 2: Test POST /api/members with activity_id field
+        print("\n🔍 Step 2: Testing POST /api/members with activity_id field...")
+        member_with_activity_data = {
+            "name": "Maria Santos Activity Test",
+            "email": "maria.activity@email.com",
+            "phone": "+351987654321",
+            "date_of_birth": "1985-03-20",
+            "nationality": "Portuguesa",
+            "profession": "Professora",
+            "address": "Avenida da Liberdade, 456, Porto",
+            "membership_type": "basic",
+            "activity_id": test_activity_id,  # Include activity_id
+            "notes": "Membro criado para teste de activity_id"
+        }
+        
+        create_success, create_response = self.run_test("Create Member with Activity ID", "POST", "members", 200, member_with_activity_data)
+        if create_success and create_response:
+            test_member_id = create_response.get('id')
+            returned_activity_id = create_response.get('activity_id')
+            
+            print(f"   Created member ID: {test_member_id}")
+            print(f"   Returned activity_id: {returned_activity_id}")
+            
+            if returned_activity_id == test_activity_id:
+                self.log_test("Member Creation with Activity ID", True, f"Member created with correct activity_id: {returned_activity_id}")
+                success_count += 1
+            else:
+                self.log_test("Member Creation with Activity ID", False, f"Expected activity_id {test_activity_id}, got {returned_activity_id}")
+        else:
+            self.log_test("Member Creation with Activity ID", False, "Failed to create member with activity_id")
+            return False, {}
+        
+        # Step 3: Test GET /api/members/{member_id} - Verify response includes activity_id
+        print("\n🔍 Step 3: Testing GET /api/members/{member_id} - Verify activity_id field...")
+        get_success, get_response = self.run_test("Get Member - Verify Activity ID", "GET", f"members/{test_member_id}", 200)
+        if get_success and get_response:
+            retrieved_activity_id = get_response.get('activity_id')
+            
+            print(f"   Retrieved activity_id: {retrieved_activity_id}")
+            
+            if retrieved_activity_id == test_activity_id:
+                self.log_test("Member Retrieval with Activity ID", True, f"Member retrieval includes correct activity_id: {retrieved_activity_id}")
+                success_count += 1
+            else:
+                self.log_test("Member Retrieval with Activity ID", False, f"Expected activity_id {test_activity_id}, got {retrieved_activity_id}")
+        else:
+            self.log_test("Member Retrieval with Activity ID", False, "Failed to retrieve member")
+        
+        # Step 4: Test PUT /api/members/{member_id} with activity_id field
+        print("\n🔍 Step 4: Testing PUT /api/members/{member_id} with activity_id field...")
+        
+        # Get a different activity for update test
+        different_activity = None
+        for activity in activities_response:
+            if activity['id'] != test_activity_id:
+                different_activity = activity
+                break
+        
+        if different_activity:
+            new_activity_id = different_activity['id']
+            new_activity_name = different_activity['name']
+            print(f"   Updating to activity: {new_activity_name} (ID: {new_activity_id})")
+            
+            update_data = {
+                "name": "Maria Santos Activity Test Updated",
+                "email": "maria.activity@email.com",
+                "phone": "+351987654321",
+                "date_of_birth": "1985-03-20",
+                "nationality": "Portuguesa",
+                "profession": "Professora Senior",
+                "address": "Avenida da Liberdade, 456, Porto",
+                "membership_type": "premium",
+                "activity_id": new_activity_id,  # Update activity_id
+                "notes": "Membro atualizado com nova activity_id"
+            }
+            
+            update_success, update_response = self.run_test("Update Member Activity ID", "PUT", f"members/{test_member_id}", 200, update_data)
+            if update_success and update_response:
+                updated_activity_id = update_response.get('activity_id')
+                
+                print(f"   Updated activity_id: {updated_activity_id}")
+                
+                if updated_activity_id == new_activity_id:
+                    self.log_test("Member Update with Activity ID", True, f"Member activity_id updated correctly to: {updated_activity_id}")
+                    success_count += 1
+                else:
+                    self.log_test("Member Update with Activity ID", False, f"Expected activity_id {new_activity_id}, got {updated_activity_id}")
+            else:
+                self.log_test("Member Update with Activity ID", False, "Failed to update member activity_id")
+        else:
+            self.log_test("Member Update with Activity ID", False, "No different activity available for update test")
+        
+        # Step 5: Test POST /api/attendance with activity_id
+        print("\n🔍 Step 5: Testing POST /api/attendance with activity_id...")
+        attendance_data = {
+            "member_id": test_member_id,
+            "activity_id": test_activity_id,  # Use original activity for attendance
+            "method": "manual"
+        }
+        
+        attendance_success, attendance_response = self.run_test("Create Attendance with Activity ID", "POST", "attendance", 200, attendance_data)
+        if attendance_success and attendance_response:
+            attendance_activity_id = attendance_response.get('activity_id')
+            attendance_id = attendance_response.get('id')
+            
+            print(f"   Created attendance ID: {attendance_id}")
+            print(f"   Attendance activity_id: {attendance_activity_id}")
+            
+            if attendance_activity_id == test_activity_id:
+                self.log_test("Attendance Creation with Activity ID", True, f"Attendance created with correct activity_id: {attendance_activity_id}")
+                success_count += 1
+            else:
+                self.log_test("Attendance Creation with Activity ID", False, f"Expected activity_id {test_activity_id}, got {attendance_activity_id}")
+        else:
+            self.log_test("Attendance Creation with Activity ID", False, "Failed to create attendance with activity_id")
+        
+        # Cleanup: Delete test member
+        print("\n🧹 Cleanup: Deleting test member...")
+        self.run_test("Delete Test Member", "DELETE", f"members/{test_member_id}", 200)
+        
+        # Summary
+        print(f"\n📊 MEMBER ACTIVITY_ID FUNCTIONALITY SUMMARY")
+        print(f"   Tests Passed: {success_count}/{total_tests}")
+        
+        if success_count == total_tests:
+            self.log_test("Member Activity ID Functionality Complete", True, "All member activity_id functionality tests passed")
+            return True, {}
+        else:
+            self.log_test("Member Activity ID Functionality Complete", False, f"Only {success_count}/{total_tests} activity_id tests passed")
+            return False, {}
+
     def test_financial_operations_critical(self):
         """Test critical financial operations reported by users as not working"""
         print("\n🎯 CRITICAL FINANCIAL OPERATIONS TESTING")
