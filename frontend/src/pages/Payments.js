@@ -770,7 +770,7 @@ const Payments = ({ language, translations }) => {
               </h2>
               <div className="flex flex-col gap-2 flex-1">
               <Button 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6 shadow-sm"
+                className="bg-slate-400 hover:bg-slate-500 text-white w-full text-[10px] py-0.5 px-1.5 h-6 shadow-sm"
                 size="sm"
                 onClick={() => setShowMembershipDialog(true)}
               >
@@ -778,7 +778,7 @@ const Payments = ({ language, translations }) => {
                 {t[language].registerMembership}
               </Button>
               <Button 
-                className="bg-indigo-600 hover:bg-indigo-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6 shadow-sm"
+                className="bg-slate-400 hover:bg-slate-500 text-white w-full text-[10px] py-0.5 px-1.5 h-6 shadow-sm"
                 size="sm"
                 onClick={() => setShowViewPaymentsDialog(true)}
               >
