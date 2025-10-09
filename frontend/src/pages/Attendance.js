@@ -393,8 +393,12 @@ const Attendance = ({ language, translations }) => {
                           </Badge>
                         </td>
                         <td className="p-4">
-                          <Badge className="bg-green-100 text-green-800">
-                            Presente
+                          <Badge className={
+                            att.member?.status === 'active' 
+                              ? "bg-green-100 text-green-800" 
+                              : "bg-red-100 text-red-800"
+                          }>
+                            {att.member?.status === 'active' ? 'Ativo' : 'Inativo'}
                           </Badge>
                         </td>
                         <td className="p-4">
