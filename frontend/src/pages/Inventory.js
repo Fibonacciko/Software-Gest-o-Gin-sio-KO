@@ -283,7 +283,7 @@ const Inventory = ({ language, translations }) => {
   const resetForm = () => {
     setFormData({
       name: '',
-      category: 'clothing',
+      category: 'textil',
       size: '',
       color: '',
       quantity: '',
