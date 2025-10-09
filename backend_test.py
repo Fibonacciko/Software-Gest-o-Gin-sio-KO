@@ -1189,10 +1189,13 @@ class GymManagementAPITester:
         print("-" * 50)
         self.test_authentication_on_endpoints()
         
+        # CRITICAL: Member Activity ID Functionality Testing (CURRENT REVIEW REQUEST)
+        self.test_member_activity_id_functionality()
+        
         # Member management tests (needed for financial operations)
         self.test_create_member()
         
-        # CRITICAL: Staff User Authorization Testing (MAIN REVIEW REQUEST)
+        # CRITICAL: Staff User Authorization Testing (PREVIOUS REVIEW REQUEST)
         self.test_staff_user_authorization()
         
         # CRITICAL: Test the 3 specific financial operations from review request
