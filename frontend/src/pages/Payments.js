@@ -988,6 +988,27 @@ const Payments = ({ language, translations }) => {
                     )}
                   </DialogContent>
                 </Dialog>
+
+                <Dialog open={showViewRevenuesDialog} onOpenChange={setShowViewRevenuesDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                      size="sm"
+                    >
+                      <Eye className="mr-2" size={16} />
+                      {t[language].viewRevenuesBtn}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>{t[language].viewRevenues}</DialogTitle>
+                    </DialogHeader>
+                    <div className="text-center py-8">
+                      <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-600">Consultar receitas funcionando</p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </CardContent>
