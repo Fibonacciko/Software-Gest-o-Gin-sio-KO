@@ -194,11 +194,18 @@ const Members = ({ language, translations }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Rename 'activity' to 'activity_id' for backend compatibility
+      const dataToSend = {
+        ...formData,
+        activity_id: formData.activity || null
+      };
+      delete dataToSend.activity;
+      
       if (editingMember) {
-        await axios.put(`${API}/members/${editingMember.id}`, formData);
+        await axios.put(`${API}/members/${editingMember.id}`, dataToSend);
         toast.success(t[language].memberUpdated);
       } else {
-        await axios.post(`${API}/members`, formData);
+        await axios.post(`${API}/members`, dataToSend);
         toast.success(t[language].memberAdded);
       }
       
