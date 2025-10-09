@@ -988,45 +988,8 @@ const Payments = ({ language, translations }) => {
                     )}
                   </DialogContent>
                 </Dialog>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        )}
 
-        {/* Memberships Section */}
-        {activeTab === 'mensalidades' && (
-        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">
-                {t[language].memberships}
-              </h2>
-              <div className="flex gap-3">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white" size="sm">
-                  <CreditCard className="mr-2" size={16} />
-                  {t[language].registerMembership}
-                </Button>
-                <Button className="bg-green-600 hover:bg-green-700 text-white" size="sm">
-                  <Eye className="mr-2" size={16} />
-                  Consultar
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        )}
-
-        {/* Expenses Section */}
-        {activeTab === 'despesas' && (
-        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">
-                {t[language].registerExpenses}
-              </h2>
-              <div className="flex gap-3">
-                <Dialog open={showAddExpenseDialog} onOpenChange={setShowAddExpenseDialog}>
+                <Dialog open={showViewRevenuesDialog} onOpenChange={setShowViewRevenuesDialog}>
                   <DialogTrigger asChild>
                     <Button 
                       className="bg-green-600 hover:bg-green-700 text-white"
