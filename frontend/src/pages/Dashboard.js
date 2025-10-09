@@ -582,36 +582,47 @@ const Dashboard = ({ language, translations }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {todayAttendance.map((attendance) => (
-                    <tr key={attendance.id} className="border-b hover:bg-gray-50">
-                      <td className="p-2">
-                        <p className="font-medium text-sm">{attendance.member?.name || 'Membro eliminado'}</p>
-                      </td>
-                      <td className="p-2">
-                        <Badge className="bg-green-100 text-green-800 text-xs">
-                          Presente
-                        </Badge>
-                      </td>
-                      <td className="p-2">
-                        <p className="text-sm text-gray-600">
-                          {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </td>
-                      <td className="p-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteAttendance(attendance.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {todayAttendance.map((attendance) => {
+                    const member = attendance.member;
+                    const memberStatus = member?.status || 'inactive';
+                    const isActive = memberStatus === 'active';
+                    
+                    return (
+                      <tr key={attendance.id} className="border-b hover:bg-gray-50">
+                        <td className="p-2">
+                          <p className="font-medium text-sm">{member?.name || 'Membro eliminado'}</p>
+                        </td>
+                        <td className="p-2">
+                          <Badge className={isActive ? "bg-green-100 text-green-800 text-xs" : "bg-red-100 text-red-800 text-xs"}>
+                            {isActive ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </td>
+                        <td className="p-2">
+                          <Badge className="bg-blue-100 text-blue-800 text-xs">
+                            {member?.activity || 'N/A'}
+                          </Badge>
+                        </td>
+                        <td className="p-2">
+                          <p className="text-sm text-gray-600">
+                            {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </td>
+                        <td className="p-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteAttendance(attendance.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
