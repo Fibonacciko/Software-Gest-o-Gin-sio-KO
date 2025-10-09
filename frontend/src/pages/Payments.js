@@ -762,10 +762,10 @@ const Payments = ({ language, translations }) => {
       {/* 3 Section Windows - Horizontal Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Mensalidades Window */}
-        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300">
           <CardContent className="p-4">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold text-white whitespace-nowrap">
+              <h2 className="text-sm font-bold text-blue-900 whitespace-nowrap">
                 {t[language].memberships}
               </h2>
               <div className="flex flex-col gap-2 flex-1">
