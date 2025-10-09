@@ -715,53 +715,52 @@ const Reports = ({ language, translations }) => {
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            {/* Bar Chart - Always in Euros */}
-            {reportData.charts && Object.keys(reportData.charts).length > 0 && (
+            {/* Bar Chart - Receitas vs Despesas */}
+            {reportData.stats && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Gráfico de Barras (€)</CardTitle>
+                  <CardTitle>Receitas vs Despesas (€)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Bar
                     data={{
-                      labels: Object.keys(Object.values(reportData.charts)[0] || {}),
+                      labels: ['Receitas Totais', 'Despesas Totais'],
                       datasets: [{
                         label: 'Valores (€)',
-                        data: Object.values(Object.values(reportData.charts)[0] || {}),
+                        data: [
+                          reportData.stats.totalRevenues || 0,
+                          reportData.stats.totalExpenses || 0
+                        ],
                         backgroundColor: [
-                          'rgba(54, 162, 235, 0.8)',
-                          'rgba(255, 99, 132, 0.8)', 
-                          'rgba(255, 206, 86, 0.8)',
-                          'rgba(75, 192, 192, 0.8)',
-                          'rgba(153, 102, 255, 0.8)',
-                          'rgba(255, 159, 64, 0.8)',
-                          'rgba(128, 90, 213, 0.8)',
-                          'rgba(16, 185, 129, 0.8)'
+                          'rgba(34, 197, 94, 0.8)',   // Green for revenues
+                          'rgba(239, 68, 68, 0.8)'    // Red for expenses
                         ],
                         borderColor: [
-                          'rgba(54, 162, 235, 1)',
-                          'rgba(255, 99, 132, 1)',
-                          'rgba(255, 206, 86, 1)',
-                          'rgba(75, 192, 192, 1)',
-                          'rgba(153, 102, 255, 1)',
-                          'rgba(255, 159, 64, 1)',
-                          'rgba(128, 90, 213, 1)',
-                          'rgba(16, 185, 129, 1)'
+                          'rgba(34, 197, 94, 1)',
+                          'rgba(239, 68, 68, 1)'
                         ],
-                        borderWidth: 1
+                        borderWidth: 2
                       }]
                     }}
                     options={{
                       responsive: true,
                       plugins: {
                         legend: {
-                          position: 'top',
+                          display: false,
                         },
-                        tooltip: {
-                          callbacks: {
-                            label: function(context) {
-                              return `${context.dataset.label}: €${context.parsed.y.toFixed(2)}`;
-                            }
+                        title: {
+                          display: true,
+                          text: 'Comparação Financeira'
+                        },
+                        datalabels: {
+                          display: true,
+                          color: '#000',
+                          font: {
+                            weight: 'bold',
+                            size: 14
+                          },
+                          formatter: function(value) {
+                            return '€' + value.toFixed(2);
                           }
                         }
                       },
@@ -770,7 +769,7 @@ const Reports = ({ language, translations }) => {
                           beginAtZero: true,
                           ticks: {
                             callback: function(value) {
-                              return '€' + value;
+                              return '€' + value.toFixed(2);
                             }
                           }
                         }
