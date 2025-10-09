@@ -226,10 +226,16 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All critical functionality verified and working"
+    - "Member activity_id field backend integration"
+    - "Member registration form saving activity_id"
+    - "Dashboard check-in using member's default activity"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+    - message: "Added activity_id field to Member and MemberCreate models in backend. Updated Dashboard check-in logic to use member's default activity_id if available, otherwise use selected activity. Member registration form already has ActivitySelector component integrated. Need to test if backend accepts and saves the activity_id field correctly."
 
   - task: "New expenses functionality - Interface restructure and new features"
     implemented: true
