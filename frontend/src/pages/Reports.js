@@ -850,7 +850,7 @@ const Reports = ({ language, translations }) => {
                         },
                         datalabels: {
                           display: true,
-                          color: '#fff',
+                          color: '#000',
                           font: {
                             weight: 'bold',
                             size: 10
