@@ -1357,6 +1357,8 @@ const Payments = ({ language, translations }) => {
           </Card>
         </div>
 
+        {/* Additional Financial Stats */}
+        <>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
           <Card className="card-shadow">
             <CardContent className="p-4">
