@@ -901,6 +901,7 @@ const Payments = ({ language, translations }) => {
                 <Eye className="mr-0.5" size={10} />
                 Consultar
               </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
