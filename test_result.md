@@ -249,7 +249,7 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-    - message: "Added activity_id field to Member and MemberCreate models in backend. Updated Dashboard check-in logic to use member's default activity_id if available, otherwise use selected activity. Member registration form already has ActivitySelector component integrated. Need to test if backend accepts and saves the activity_id field correctly."
+    - message: "FIXES IMPLEMENTED: 1) Members.js - Fixed handleSubmit to map 'activity' field to 'activity_id' before sending to backend. Fixed handleEdit to load 'activity_id' from member data. 2) Dashboard.js - Improved fetchDashboardData to fetch all activities first and map activity_id to activity name for display. Added sorting to todayAttendance by check_in_time (most recent first). Updated check-in logic to use member's default activity_id when available. Ready for comprehensive testing."
 
   - task: "New expenses functionality - Interface restructure and new features"
     implemented: true
