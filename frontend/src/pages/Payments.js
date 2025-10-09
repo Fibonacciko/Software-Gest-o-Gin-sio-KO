@@ -1065,7 +1065,7 @@ const Payments = ({ language, translations }) => {
                           <SelectItem value="maintenance">{t[language].maintenance}</SelectItem>
                           <SelectItem value="teachers">{t[language].teachers}</SelectItem>
                           <SelectItem value="equipment">{t[language].equipment}</SelectItem>
-                          <SelectItem value="articles">{t[language].articles}</SelectItem>
+                          <SelectItem value="textil">{t[language].textil}</SelectItem>
                           <SelectItem value="collaborators">{t[language].collaborators}</SelectItem>
                           <SelectItem value="extras">{t[language].extras}</SelectItem>
                         </SelectContent>
