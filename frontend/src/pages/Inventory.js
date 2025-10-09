@@ -93,7 +93,7 @@ const Inventory = ({ language, translations }) => {
       totalArticles: 'Total de Artigos',
       purchasePrice: 'Preço de Compra',
       salePrice: 'Preço de Venda',
-      totalStockValue: 'Valor Total em Stock',
+      totalStockValue: 'Valor Total do Investimento',
       totalSoldValue: 'Valor Total Vendido',
       netRevenue: 'Receita Líquida',
       monthlyRevenue: 'Receita do Mês',
