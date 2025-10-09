@@ -255,7 +255,7 @@ const Payments = ({ language, translations }) => {
       maintenance: 'Maintenance',
       teachers: 'Teachers',
       equipment: 'Equipment',
-      articles: 'Articles',
+      textil: 'Textil',
       collaborators: 'Collaborators',
       extras: 'Extras',
       expenseType: 'Type',
