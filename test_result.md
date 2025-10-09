@@ -161,19 +161,23 @@ backend:
 frontend:
   - task: "Member registration form - Save activity_id field"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "🎯 MEMBER REGISTRATION WITH MODALITY COMPREHENSIVE TESTING COMPLETED SUCCESSFULLY! ✅ MEMBER CREATION: Successfully created member 'Pedro Santos' with all required fields including modality selection. ✅ MODALITY SELECTION: ActivitySelector component working perfectly - user can select from available activities (Yoga, Boxe, Jiu-Jitsu, Pilates, Kickboxing, etc.). ✅ FORM SUBMISSION: Member registration form submits successfully with activity_id field properly mapped from 'activity' to 'activity_id' in handleSubmit function. ✅ DATA PERSISTENCE: Verified modality field persistence by editing the created member - modality field shows 'Boxe' correctly, confirming activity_id is saved and loaded properly. ✅ BACKEND INTEGRATION: Member appears in members table with proper data, edit functionality works, modality data is preserved. The member registration with activity_id field is fully operational and working as specified."
   
   - task: "Dashboard check-in - Use member's default activity_id"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/pages/Dashboard.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
@@ -184,6 +188,9 @@ frontend:
         - working: true
         - agent: "testing"
         - comment: "FINAL VERIFICATION: Dark mode continues to work excellently with improved readability and contrast. All interface elements are clearly visible and easy to read."
+        - working: true
+        - agent: "testing"
+        - comment: "🎯 DASHBOARD CHECK-IN WITH MODALITY COMPREHENSIVE TESTING COMPLETED SUCCESSFULLY! ✅ DASHBOARD COMPONENTS: 'Presenças por Modalidade' card displays modality names with attendance counts (Yoga: 3 presenças, Boxe: 4 presenças, N/A: 2 presenças, Jiu-Jitsu: 1 presença, Pilates: 1 presença, Kickboxing: 1 presença). ✅ TODAY'S ATTENDANCE TABLE: 'Presenças de Hoje' table shows proper columns (Nome, Status, Modalidade, Hora do Check in, Ações) with correct data - Status shows 'Inativo' badges, Modalidade shows activity names (Yoga, Boxe, N/A), sorted by most recent first. ✅ CHECK-IN INTERFACE: Modality selector working, member search functional, check-in buttons present and enabled. ✅ MODALITY DISPLAY: Dashboard correctly displays modality information from attendance records and member default activities. ✅ DATA INTEGRATION: fetchDashboardData function properly maps activity_id to activity names using activities API. Dashboard check-in functionality with modality display is fully operational and working as specified."
 
   - task: "Admin financial reset functionality"
     implemented: true
