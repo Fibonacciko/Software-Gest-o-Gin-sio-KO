@@ -1144,6 +1144,20 @@ async def sell_inventory_item(
         }
         await db.sales.insert_one(sale_record)
         
+        # Automatically create revenue for stock sale
+        # Determine revenue category based on item category - map to extras since there's no specific stock revenue category
+        total_revenue = quantity_to_sell * sale_price
+        
+        if total_revenue > 0:
+            revenue = Revenue(
+                category="revenueExtras",  # Using extras category for stock sales
+                amount=total_revenue,
+                description=f"Venda de stock: {item['name']} (Qtd: {quantity_to_sell})",
+                revenue_date=date.today()
+            )
+            revenue_dict = prepare_for_mongo(revenue.dict())
+            await db.revenues.insert_one(revenue_dict)
+        
         return {
             "message": "Sale recorded successfully",
             "item_name": item["name"],
