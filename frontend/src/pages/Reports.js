@@ -61,7 +61,7 @@ const Reports = ({ language, translations }) => {
       generateReport: 'Gerar Relatório',
       reportType: 'Tipo de Relatório',
       financialReport: 'Relatório Financeiro',
-      memberReport: 'Relatório de Membros',
+      memberReport: 'Relatório de Modalidades',
       stockReport: 'Relatório de Stock',
       dateRange: 'Período',
       thisMonth: 'Este Mês',
