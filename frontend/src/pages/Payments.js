@@ -757,66 +757,16 @@ const Payments = ({ language, translations }) => {
         </h1>
       </div>
 
-      {/* Section Filter Bar - Similar to other pages */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Seção</label>
-              <Select value={activeTab} onValueChange={setActiveTab}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar seção..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="receitas">{t[language].registerPayments}</SelectItem>
-                  <SelectItem value="mensalidades">{t[language].memberships}</SelectItem>
-                  <SelectItem value="despesas">{t[language].registerExpenses}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os status..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="paid">Pago</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Período</label>
-              <Select value={periodFilter} onValueChange={setPeriodFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar período..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="today">Hoje</SelectItem>
-                  <SelectItem value="thisWeek">Esta Semana</SelectItem>
-                  <SelectItem value="thisMonth">Este Mês</SelectItem>
-                  <SelectItem value="thisYear">Este Ano</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-        {/* Section Content */}
-        {activeTab === 'receitas' && (
+      {/* 3 Section Windows - Horizontal Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Receitas Window */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">
-                {t[language].registerPayments}
-              </h2>
-              <div className="flex gap-3">
-                <Dialog open={showAddRevenueDialog} onOpenChange={setShowAddRevenueDialog}>
+          <CardContent className="p-6">
+            <h2 className="text-lg font-bold text-white mb-4 text-center">
+              {t[language].registerPayments}
+            </h2>
+            <div className="flex flex-col gap-3">
+              <Dialog open={showAddRevenueDialog} onOpenChange={setShowAddRevenueDialog}>
                   <DialogTrigger asChild>
                     <Button 
                       className="bg-green-600 hover:bg-green-700 text-white"
