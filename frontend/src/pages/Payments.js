@@ -759,6 +759,35 @@ const Payments = ({ language, translations }) => {
 
       {/* 3 Section Windows - Horizontal Layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-4xl">
+        {/* Mensalidades Window */}
+        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-bold text-white whitespace-nowrap">
+                {t[language].memberships}
+              </h2>
+              <div className="flex flex-col gap-2 flex-1">
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6"
+                size="sm"
+                onClick={() => setShowMembershipDialog(true)}
+              >
+                <CreditCard className="mr-0.5" size={10} />
+                {t[language].registerMembership}
+              </Button>
+              <Button 
+                className="bg-green-600 hover:bg-green-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6"
+                size="sm"
+                onClick={() => setShowViewPaymentsDialog(true)}
+              >
+                <Eye className="mr-0.5" size={10} />
+                Consultar
+              </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Receitas Window */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
@@ -872,35 +901,6 @@ const Payments = ({ language, translations }) => {
                     </div>
                   </DialogContent>
                 </Dialog>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Mensalidades Window */}
-        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold text-white whitespace-nowrap">
-                {t[language].memberships}
-              </h2>
-              <div className="flex flex-col gap-2 flex-1">
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6"
-                size="sm"
-                onClick={() => setShowMembershipDialog(true)}
-              >
-                <CreditCard className="mr-0.5" size={10} />
-                {t[language].registerMembership}
-              </Button>
-              <Button 
-                className="bg-green-600 hover:bg-green-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6"
-                size="sm"
-                onClick={() => setShowViewPaymentsDialog(true)}
-              >
-                <Eye className="mr-0.5" size={10} />
-                Consultar
-              </Button>
               </div>
             </div>
           </CardContent>
