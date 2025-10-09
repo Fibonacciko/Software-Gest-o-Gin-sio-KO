@@ -791,10 +791,10 @@ const Payments = ({ language, translations }) => {
         </Card>
 
         {/* Receitas Window */}
-        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-300">
           <CardContent className="p-4">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-bold text-white whitespace-nowrap">
+              <h2 className="text-sm font-bold text-green-900 whitespace-nowrap">
                 {t[language].registerPayments}
               </h2>
               <div className="flex flex-col gap-2 flex-1">
