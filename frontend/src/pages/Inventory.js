@@ -743,7 +743,7 @@ const Inventory = ({ language, translations }) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t[language].allCategories}</SelectItem>
-                <SelectItem value="clothing">{t[language].clothing}</SelectItem>
+                <SelectItem value="textil">{t[language].textil}</SelectItem>
                 <SelectItem value="equipment">{t[language].equipment}</SelectItem>
               </SelectContent>
             </Select>
