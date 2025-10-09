@@ -371,18 +371,22 @@ const Reports = ({ language, translations }) => {
         .reduce((sum, revenue) => sum + revenue.amount, 0);
       
       // Calculate EXPENSES according to new structure  
+      // Despesa Fixa: Renda, Energia, Professores, Colaboradores
       const expenseFixed = filteredExpenses
-        .filter(e => ['rent', 'energy'].includes(e.category))
+        .filter(e => ['rent', 'energy', 'teachers', 'collaborators'].includes(e.category))
         .reduce((sum, expense) => sum + expense.amount, 0);
         
+      // Despesa Variável: Textil, Equipamentos, Manutenção, Extras
       const expenseVariable = filteredExpenses
-        .filter(e => ['teachers', 'maintenance', 'extras'].includes(e.category))
+        .filter(e => ['textil', 'articles', 'equipment', 'maintenance', 'extras'].includes(e.category))
         .reduce((sum, expense) => sum + expense.amount, 0);
         
+      // Despesa Textil (subset of variable for detailed view)
       const expenseArticles = filteredExpenses
         .filter(e => e.category === 'textil' || e.category === 'articles')
         .reduce((sum, expense) => sum + expense.amount, 0);
         
+      // Despesa Equipamentos (subset of variable for detailed view)
       const expenseEquipment = filteredExpenses
         .filter(e => e.category === 'equipment')
         .reduce((sum, expense) => sum + expense.amount, 0);
