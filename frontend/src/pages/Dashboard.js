@@ -299,18 +299,24 @@ const Dashboard = ({ language, translations }) => {
     console.log('🔍 Check-in initiated for member ID:', memberId);
     console.log('🔍 Selected activity:', selectedActivity);
     
-    if (!selectedActivity) {
-      console.log('❌ No activity selected');
-      toast.error('Por favor seleciona uma modalidade');
-      return;
-    }
-    
     try {
       console.log('📡 Fetching member details...');
       // First get member details
       const memberResponse = await axios.get(`${API}/members/${memberId}`);
       const member = memberResponse.data;
       console.log('✅ Member details fetched:', member.name);
+      console.log('✅ Member activity_id:', member.activity_id);
+      
+      // Use member's default activity if available, otherwise use selected activity
+      const activityToUse = member.activity_id || selectedActivity;
+      
+      if (!activityToUse) {
+        console.log('❌ No activity available (neither from member nor selected)');
+        toast.error('Por favor seleciona uma modalidade ou define uma modalidade padrão para o membro');
+        return;
+      }
+      
+      console.log('✅ Activity to use for check-in:', activityToUse);
       
       // Get member's attendance history for the calendar
       const year = new Date().getFullYear();
@@ -325,7 +331,7 @@ const Dashboard = ({ language, translations }) => {
       console.log('📡 Performing check-in API call...');
       const checkinPayload = {
         member_id: memberId,
-        activity_id: selectedActivity,
+        activity_id: activityToUse,
         method: 'manual'
       };
       console.log('📤 Check-in payload:', checkinPayload);
