@@ -778,7 +778,7 @@ const Payments = ({ language, translations }) => {
                 {t[language].registerMembership}
               </Button>
               <Button 
-                className="bg-purple-600 hover:bg-purple-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6 shadow-sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white w-full text-[10px] py-0.5 px-1.5 h-6 shadow-sm"
                 size="sm"
                 onClick={() => setShowViewPaymentsDialog(true)}
               >
