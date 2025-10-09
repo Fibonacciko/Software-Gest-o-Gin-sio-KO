@@ -1313,63 +1313,63 @@ const Payments = ({ language, translations }) => {
         )}
 
         {/* Financial Statistics - Only for Admin */}
-      {isAdmin() && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="card-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    {t[language].monthlyRevenue}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    €{enhancedStats.monthlyRevenue.toFixed(2)}
-                  </p>
+        {isAdmin() && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="card-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">
+                      {t[language].monthlyRevenue}
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      €{enhancedStats.monthlyRevenue.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-full bg-green-500">
+                    <DollarSign size={24} className="text-white" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-full bg-green-500">
-                  <DollarSign size={24} className="text-white" />
+              </CardContent>
+            </Card>
+            
+            <Card className="card-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">
+                      {t[language].monthlyExpenses}
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      €{enhancedStats.monthlyExpenses.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-full bg-red-500">
+                    <TrendingUp size={24} className="text-white" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="card-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    {t[language].monthlyExpenses}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    €{enhancedStats.monthlyExpenses.toFixed(2)}
-                  </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="card-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">
+                      {t[language].netRevenue}
+                    </p>
+                    <p className={`text-2xl font-bold ${enhancedStats.netRevenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      €{enhancedStats.netRevenue.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-full ${enhancedStats.netRevenue >= 0 ? 'bg-green-500' : 'bg-red-500'}`}>
+                    <TrendingUp size={24} className="text-white" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-full bg-red-500">
-                  <TrendingUp size={24} className="text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="card-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    {t[language].netRevenue}
-                  </p>
-                  <p className={`text-2xl font-bold ${enhancedStats.netRevenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    €{enhancedStats.netRevenue.toFixed(2)}
-                  </p>
-                </div>
-                <div className={`p-3 rounded-full ${enhancedStats.netRevenue >= 0 ? 'bg-green-500' : 'bg-red-500'}`}>
-                  <TrendingUp size={24} className="text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
       {/* Search and Filters */}
       <Card>
