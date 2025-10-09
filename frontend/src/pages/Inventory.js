@@ -354,25 +354,27 @@ const Inventory = ({ language, translations }) => {
     const outOfStockItems = inventory.filter(item => item.quantity === 0).length;
     
     // Admin-specific calculations
-    let totalStockValue = 0;
-    let totalSoldValue = 0;
-    let netRevenue = 0;
-    
+    let totalStockValue = 0; // Valor Total do Investimento (preço de compra)
+    let totalSoldValue = 0;  // Valor Total Vendido (preço de venda)
+    let netRevenue = 0;      // Receita Líquida (diferença entre preço de compra e venda)
+
     if (isAdmin()) {
+      // Valor Total do Investimento: preço de compra de todo o stock atual + vendido
       totalStockValue = inventory.reduce((sum, item) => 
-        sum + (item.quantity * (item.purchase_price || item.price)), 0
+        sum + ((item.purchase_price || item.price * 0.6) * (item.quantity + (item.sold_quantity || 0))), 0
       );
       
-      // These would come from sales data (to be implemented in backend)
+      // Valor Total Vendido: preço de venda * quantidade vendida
       totalSoldValue = inventory.reduce((sum, item) => 
-        sum + ((item.sold_quantity || 0) * item.price), 0
+        sum + (item.price * (item.sold_quantity || 0)), 0
       );
       
-      const totalPurchaseCost = inventory.reduce((sum, item) => 
-        sum + ((item.sold_quantity || 0) * (item.purchase_price || item.price)), 0
+      // Receita Líquida: diferença entre preço de venda e preço de compra dos itens vendidos
+      const totalPurchaseCostSold = inventory.reduce((sum, item) => 
+        sum + ((item.purchase_price || item.price * 0.6) * (item.sold_quantity || 0)), 0
       );
       
-      netRevenue = totalSoldValue - totalPurchaseCost;
+      netRevenue = totalSoldValue - totalPurchaseCostSold;
     }
     
     return { 
