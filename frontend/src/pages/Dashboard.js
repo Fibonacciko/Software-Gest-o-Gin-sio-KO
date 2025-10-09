@@ -147,21 +147,29 @@ const Dashboard = ({ language, translations }) => {
       const today = new Date().toISOString().split('T')[0];
       const attendanceResponse = await axios.get(`${API}/attendance?start_date=${today}&end_date=${today}`);
       
+      // Fetch all activities first
+      let activitiesMap = {};
+      try {
+        const activitiesResponse = await axios.get(`${API}/activities`);
+        activitiesResponse.data.forEach(act => {
+          activitiesMap[act.id] = act.name;
+        });
+      } catch (error) {
+        console.warn('Could not fetch activities:', error);
+      }
+      
       // Get member details for each attendance with better error handling
       const attendanceWithMembers = await Promise.all(
         attendanceResponse.data.map(async (att) => {
           try {
             const memberResponse = await axios.get(`${API}/members/${att.member_id}`);
             
-            // Get activity details if activity_id exists
-            let activityName = memberResponse.data.activity || 'Sem modalidade';
-            if (att.activity_id) {
-              try {
-                const activityResponse = await axios.get(`${API}/activities/${att.activity_id}`);
-                activityName = activityResponse.data.name;
-              } catch (activityError) {
-                console.warn(`Activity ${att.activity_id} not found`);
-              }
+            // Get activity name from attendance record's activity_id
+            let activityName = 'Sem modalidade';
+            if (att.activity_id && activitiesMap[att.activity_id]) {
+              activityName = activitiesMap[att.activity_id];
+            } else if (memberResponse.data.activity_id && activitiesMap[memberResponse.data.activity_id]) {
+              activityName = activitiesMap[memberResponse.data.activity_id];
             }
             
             return {
@@ -187,7 +195,12 @@ const Dashboard = ({ language, translations }) => {
         })
       );
       
-      setTodayAttendance(attendanceWithMembers);
+      // Sort by check-in time (most recent first)
+      const sortedAttendance = attendanceWithMembers.sort((a, b) => {
+        return new Date(b.check_in_time) - new Date(a.check_in_time);
+      });
+      
+      setTodayAttendance(sortedAttendance);
       
       // Calculate attendance by modality using member's activity
       const modalityStats = {};
