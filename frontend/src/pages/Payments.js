@@ -20,7 +20,9 @@ import {
   Edit,
   Eye,
   Users,
-  Trash2
+  Trash2,
+  Clock,
+  Receipt
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
