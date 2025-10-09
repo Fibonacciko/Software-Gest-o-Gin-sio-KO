@@ -109,11 +109,11 @@ user_problem_statement:
 backend:
   - task: "Add activity_id field to Member model"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: false
         - agent: "user"
@@ -121,6 +121,21 @@ backend:
         - working: true
         - agent: "testing"
         - comment: "TESTED SUCCESSFULLY: POST /api/admin/reset-financials endpoint working perfectly. Created test payments and expenses, then successfully deleted all financial data. Response shows deleted counts: payments=2, expenses=1, sales=0. Verified actual deletion by checking empty payments and expenses lists after reset. Admin authentication working correctly."
+        - working: true
+        - agent: "testing"
+        - comment: "🎯 MEMBER ACTIVITY_ID FUNCTIONALITY COMPREHENSIVE TESTING COMPLETED SUCCESSFULLY! ✅ POST /api/members with activity_id: Member created with correct activity_id field saved and returned in response. ✅ GET /api/members/{member_id}: Member retrieval includes correct activity_id field in response. ✅ PUT /api/members/{member_id} with activity_id: Member activity_id updated correctly from one activity to another. ✅ POST /api/attendance with activity_id: Attendance record created successfully with correct activity_id. All 4 critical backend tests passed (4/4). Backend activity_id functionality is fully operational and ready for frontend integration."
+
+  - task: "Member registration and check-in with activity_id backend integration"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "COMPREHENSIVE BACKEND INTEGRATION TESTING COMPLETED: ✅ Member Model: activity_id field properly defined as Optional[str] in both Member and MemberCreate models. ✅ Member Creation: POST /api/members accepts activity_id field and saves it correctly to database. ✅ Member Retrieval: GET /api/members/{member_id} returns activity_id field in response. ✅ Member Update: PUT /api/members/{member_id} successfully updates activity_id field. ✅ Attendance Integration: POST /api/attendance requires activity_id field and creates attendance records with correct activity association. ✅ Activities Available: GET /api/activities returns 15 available activities for selection. Backend is fully prepared for frontend activity_id integration."
   
   - task: "Delete payment functionality"
     implemented: true
