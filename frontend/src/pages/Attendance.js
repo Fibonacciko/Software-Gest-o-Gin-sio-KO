@@ -134,6 +134,13 @@ const Attendance = ({ language, translations }) => {
         );
       }
       
+      // Sort by check-in time (most recent first)
+      attendanceWithMembers.sort((a, b) => {
+        const timeA = new Date(a.check_in_time);
+        const timeB = new Date(b.check_in_time);
+        return timeB - timeA; // Descending order (most recent first)
+      });
+      
       setAttendance(attendanceWithMembers);
     } catch (error) {
       console.error('Error fetching attendance:', error);
