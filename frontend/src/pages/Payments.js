@@ -912,10 +912,10 @@ const Payments = ({ language, translations }) => {
               <Dialog open={showAddExpenseDialog} onOpenChange={setShowAddExpenseDialog}>
                 <DialogTrigger asChild>
                   <Button 
-                    className="bg-green-600 hover:bg-green-700 text-white w-full"
+                    className="bg-green-600 hover:bg-green-700 text-white w-full text-xs py-1 px-2 h-7"
                     size="sm"
                   >
-                    <Plus className="mr-1" size={14} />
+                    <Plus className="mr-1" size={12} />
                     {t[language].addExpenseBtn}
                   </Button>
                 </DialogTrigger>
