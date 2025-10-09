@@ -780,33 +780,32 @@ const Reports = ({ language, translations }) => {
               </Card>
             )}
 
-            {/* Pie Chart - Always in Percentages */}
-            {reportData.charts && Object.keys(reportData.charts).length > 1 && (
+            {/* Pie Chart - Categorias de Despesas */}
+            {reportData.stats && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Gráfico Circular (%)</CardTitle>
+                  <CardTitle>Despesas por Categoria</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Pie
                     data={{
-                      labels: Object.keys(Object.values(reportData.charts)[1] || {}),
+                      labels: ['Despesas Extras', 'Despesas Fixas', 'Despesas Variáveis'],
                       datasets: [{
-                        data: (() => {
-                          const chartData = Object.values(reportData.charts)[1] || {};
-                          const values = Object.values(chartData);
-                          const total = values.reduce((sum, val) => sum + val, 0);
-                          return values.map(val => total > 0 ? parseFloat(((val / total) * 100).toFixed(1)) : 0);
-                        })(),
-                        backgroundColor: [
-                          '#FF6384',
-                          '#36A2EB', 
-                          '#FFCE56',
-                          '#4BC0C0',
-                          '#9966FF',
-                          '#FF9F40',
-                          '#FF8C94',
-                          '#A8E6CF'
+                        data: [
+                          // Despesas Extras: subsídios + PT's (receitas extras na verdade)
+                          (reportData.stats.revenueExtras || 0) + (reportData.stats.revenuePersonalTraining || 0),
+                          // Despesas Fixas: renda + energia + professores  
+                          reportData.stats.expenseFixed || 0,
+                          // Despesas Variáveis: manutenção + equipamentos + artigos + extras
+                          reportData.stats.expenseVariable || 0
                         ],
+                        backgroundColor: [
+                          '#FF6384', // Pink for extras
+                          '#36A2EB', // Blue for fixed
+                          '#FFCE56'  // Yellow for variable
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
                       }]
                     }}
                     options={{
@@ -815,14 +814,31 @@ const Reports = ({ language, translations }) => {
                         legend: {
                           position: 'bottom',
                         },
+                        datalabels: {
+                          display: true,
+                          color: '#fff',
+                          font: {
+                            weight: 'bold',
+                            size: 12
+                          },
+                          formatter: function(value, context) {
+                            const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return percentage + '%';
+                          }
+                        },
                         tooltip: {
                           callbacks: {
                             label: function(context) {
-                              return `${context.label}: ${context.parsed}%`;
+                              const label = context.label;
+                              const value = context.parsed;
+                              const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                              return `${label}: €${value.toFixed(2)} (${percentage}%)`;
                             }
                           }
                         }
-                      },
+                      }
                     }}
                   />
                 </CardContent>
