@@ -129,7 +129,7 @@ const Reports = ({ language, translations }) => {
       generateReport: 'Generate Report',
       reportType: 'Report Type',
       financialReport: 'Financial Report',
-      memberReport: 'Member Report',
+      memberReport: 'Modalities Report',
       stockReport: 'Stock Report',
       dateRange: 'Date Range',
       thisMonth: 'This Month',
