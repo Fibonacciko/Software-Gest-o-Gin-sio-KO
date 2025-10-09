@@ -1209,6 +1209,134 @@ const Payments = ({ language, translations }) => {
         </Card>
       )}
 
+      {/* Membership Payment Dialog */}
+      <Dialog open={showMembershipDialog} onOpenChange={setShowMembershipDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t[language].registerMembership}</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleMembershipSubmit} className="space-y-4">
+            {/* Member Search */}
+            <div>
+              <Label>{t[language].selectMemberForPayment}</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder={t[language].searchMemberPlaceholder}
+                  value={membershipSearchTerm}
+                  onChange={(e) => setMembershipSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {/* Member Selection Dropdown */}
+              {membershipSearchTerm && (
+                <div className="mt-2 max-h-60 overflow-y-auto border rounded-md bg-white">
+                  {members
+                    .filter(m => 
+                      m.name.toLowerCase().includes(membershipSearchTerm.toLowerCase()) ||
+                      m.member_number?.toLowerCase().includes(membershipSearchTerm.toLowerCase())
+                    )
+                    .map(member => (
+                      <div
+                        key={member.id}
+                        onClick={() => {
+                          setSelectedMemberForPayment(member);
+                          setMembershipSearchTerm(`${member.member_number} - ${member.name}`);
+                        }}
+                        className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                      >
+                        <p className="font-medium">{member.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {t[language].memberNumber}: {member.member_number}
+                        </p>
+                      </div>
+                    ))
+                  }
+                </div>
+              )}
+            </div>
+
+            {/* Payment Amount */}
+            <div>
+              <Label htmlFor="membership_amount">{t[language].membershipAmount} (€) *</Label>
+              <Input
+                id="membership_amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={membershipFormData.amount}
+                onChange={(e) => setMembershipFormData({...membershipFormData, amount: e.target.value})}
+                required
+                placeholder={t[language].enterAmount}
+              />
+            </div>
+
+            {/* Payment Date */}
+            <div>
+              <Label htmlFor="membership_date">{t[language].membershipDate} *</Label>
+              <Input
+                id="membership_date"
+                type="date"
+                value={membershipFormData.payment_date}
+                onChange={(e) => setMembershipFormData({...membershipFormData, payment_date: e.target.value})}
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label htmlFor="membership_description">{t[language].description}</Label>
+              <Textarea
+                id="membership_description"
+                value={membershipFormData.description}
+                onChange={(e) => setMembershipFormData({...membershipFormData, description: e.target.value})}
+                rows={3}
+                placeholder={t[language].membershipDescription}
+              />
+            </div>
+
+            {/* Selected Member Info */}
+            {selectedMemberForPayment && (
+              <div className="p-4 bg-blue-50 rounded-md">
+                <p className="text-sm font-medium text-blue-900">
+                  Membro Selecionado: {selectedMemberForPayment.name}
+                </p>
+                <p className="text-xs text-blue-700">
+                  Nº Sócio: {selectedMemberForPayment.member_number}
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setShowMembershipDialog(false);
+                  setSelectedMemberForPayment(null);
+                  setMembershipSearchTerm('');
+                  setMembershipFormData({
+                    amount: '',
+                    description: '',
+                    payment_date: new Date().toISOString().split('T')[0]
+                  });
+                }}
+              >
+                {t[language].cancel}
+              </Button>
+              <Button 
+                type="submit"
+                disabled={!selectedMemberForPayment}
+              >
+                {t[language].save}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Recent Payments */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
