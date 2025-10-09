@@ -55,7 +55,7 @@ const Attendance = ({ language, translations }) => {
       attendanceStats: 'Estatísticas de Presença',
       totalAttendance: 'Total de Presenças',
       uniqueMembers: 'Membros Distintos',
-      averageDaily: 'Média Diária',
+      totalMembersMonth: 'Total Membros Mês',
       previousMonth: 'Mês Anterior',
       nextMonth: 'Próximo Mês',
       attendanceMarked: 'Presença com check-in'
