@@ -576,6 +576,7 @@ const Dashboard = ({ language, translations }) => {
                   <tr className="border-b">
                     <th className="text-left p-2 font-medium text-gray-600 text-sm">Nome</th>
                     <th className="text-left p-2 font-medium text-gray-600 text-sm">Status</th>
+                    <th className="text-left p-2 font-medium text-gray-600 text-sm">Modalidade</th>
                     <th className="text-left p-2 font-medium text-gray-600 text-sm">Hora do Check in</th>
                     <th className="text-left p-2 font-medium text-gray-600 text-sm">Ações</th>
                   </tr>
