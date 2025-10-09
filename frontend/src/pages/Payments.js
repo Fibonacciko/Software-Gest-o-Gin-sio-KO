@@ -161,6 +161,7 @@ const Payments = ({ language, translations }) => {
       teachers: 'Professores',
       equipment: 'Equipamentos',
       articles: 'Artigos',
+      collaborators: 'Colaboradores',
       extras: 'Extras',
       expenseType: 'Tipo',
       expenseDate: 'Data',
