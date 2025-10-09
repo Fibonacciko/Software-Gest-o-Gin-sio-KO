@@ -152,9 +152,24 @@ const Dashboard = ({ language, translations }) => {
         attendanceResponse.data.map(async (att) => {
           try {
             const memberResponse = await axios.get(`${API}/members/${att.member_id}`);
+            
+            // Get activity details if activity_id exists
+            let activityName = memberResponse.data.activity || 'Sem modalidade';
+            if (att.activity_id) {
+              try {
+                const activityResponse = await axios.get(`${API}/activities/${att.activity_id}`);
+                activityName = activityResponse.data.name;
+              } catch (activityError) {
+                console.warn(`Activity ${att.activity_id} not found`);
+              }
+            }
+            
             return {
               ...att,
-              member: memberResponse.data
+              member: {
+                ...memberResponse.data,
+                activity: activityName
+              }
             };
           } catch (error) {
             console.warn(`Member ${att.member_id} not found, likely deleted`);
@@ -164,7 +179,8 @@ const Dashboard = ({ language, translations }) => {
                 name: 'Membro eliminado', 
                 id: att.member_id,
                 member_number: 'N/A',
-                phone: 'N/A'
+                phone: 'N/A',
+                activity: 'N/A'
               }
             };
           }
