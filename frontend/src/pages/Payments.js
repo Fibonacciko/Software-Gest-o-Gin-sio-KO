@@ -873,6 +873,7 @@ const Payments = ({ language, translations }) => {
                   </DialogContent>
                 </Dialog>
               </div>
+            </div>
           </CardContent>
         </Card>
 
