@@ -487,9 +487,12 @@ const Reports = ({ language, translations }) => {
       const revenueByModality = {};
       let totalRevenue = 0;
       
-      // Get membership payments
+      // Get all payments
       const paymentsRes = await axios.get(`${API}/payments`);
-      const membershipPayments = paymentsRes.data.filter(p => p.payment_type === 'membership');
+      // Filter membership payments (payment_method = 'membership' or status = 'paid')
+      const membershipPayments = paymentsRes.data.filter(p => 
+        p.payment_method === 'membership' || p.status === 'paid'
+      );
       
       // Initialize all specific modalities with 0
       specificModalities.forEach(modalityName => {
