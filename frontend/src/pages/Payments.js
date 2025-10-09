@@ -1370,9 +1370,8 @@ const Payments = ({ language, translations }) => {
             </Card>
           </div>
         )}
-      </div>
 
-      {/* Search and Filters */}
+        {/* Search and Filters */}
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
