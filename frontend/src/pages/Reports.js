@@ -1251,6 +1251,219 @@ const Reports = ({ language, translations }) => {
               />
             </div>
           )}
+
+          {/* Stock Charts - Textil and Equipment */}
+          {reportData.type === 'stock' && reportData.charts && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              {/* Textil Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Artigos Textil - Análise Detalhada</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {reportData.charts.textilData && reportData.charts.textilData.length > 0 ? (
+                    <div className="h-96">
+                      <Bar
+                        data={{
+                          labels: reportData.charts.textilData.map(item => item.name),
+                          datasets: [
+                            {
+                              label: 'Nº Unidades',
+                              data: reportData.charts.textilData.map(item => item.units),
+                              backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                              borderColor: 'rgba(59, 130, 246, 1)',
+                              borderWidth: 1,
+                              yAxisID: 'y'
+                            },
+                            {
+                              label: 'Valor Stock (€)',
+                              data: reportData.charts.textilData.map(item => item.stock),
+                              backgroundColor: 'rgba(251, 146, 60, 0.8)',
+                              borderColor: 'rgba(251, 146, 60, 1)',
+                              borderWidth: 1,
+                              yAxisID: 'y1'
+                            },
+                            {
+                              label: 'Receita (€)',
+                              data: reportData.charts.textilData.map(item => item.revenue),
+                              backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                              borderColor: 'rgba(34, 197, 94, 1)',
+                              borderWidth: 1,
+                              yAxisID: 'y1'
+                            }
+                          ]
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          interaction: {
+                            mode: 'index',
+                            intersect: false
+                          },
+                          plugins: {
+                            legend: {
+                              position: 'top'
+                            },
+                            tooltip: {
+                              callbacks: {
+                                label: function(context) {
+                                  let label = context.dataset.label || '';
+                                  if (label) {
+                                    label += ': ';
+                                  }
+                                  if (context.parsed.y !== null) {
+                                    if (label.includes('€')) {
+                                      label += '€' + context.parsed.y.toFixed(2);
+                                    } else {
+                                      label += context.parsed.y;
+                                    }
+                                  }
+                                  return label;
+                                }
+                              }
+                            }
+                          },
+                          scales: {
+                            y: {
+                              type: 'linear',
+                              display: true,
+                              position: 'left',
+                              title: {
+                                display: true,
+                                text: 'Unidades'
+                              },
+                              beginAtZero: true
+                            },
+                            y1: {
+                              type: 'linear',
+                              display: true,
+                              position: 'right',
+                              title: {
+                                display: true,
+                                text: 'Valor (€)'
+                              },
+                              beginAtZero: true,
+                              grid: {
+                                drawOnChartArea: false
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-gray-600">
+                      Nenhum artigo textil disponível
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Equipment Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Artigos Equipamento - Análise Detalhada</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {reportData.charts.equipmentData && reportData.charts.equipmentData.length > 0 ? (
+                    <div className="h-96">
+                      <Bar
+                        data={{
+                          labels: reportData.charts.equipmentData.map(item => item.name),
+                          datasets: [
+                            {
+                              label: 'Nº Unidades',
+                              data: reportData.charts.equipmentData.map(item => item.units),
+                              backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                              borderColor: 'rgba(59, 130, 246, 1)',
+                              borderWidth: 1,
+                              yAxisID: 'y'
+                            },
+                            {
+                              label: 'Valor Stock (€)',
+                              data: reportData.charts.equipmentData.map(item => item.stock),
+                              backgroundColor: 'rgba(251, 146, 60, 0.8)',
+                              borderColor: 'rgba(251, 146, 60, 1)',
+                              borderWidth: 1,
+                              yAxisID: 'y1'
+                            },
+                            {
+                              label: 'Receita (€)',
+                              data: reportData.charts.equipmentData.map(item => item.revenue),
+                              backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                              borderColor: 'rgba(34, 197, 94, 1)',
+                              borderWidth: 1,
+                              yAxisID: 'y1'
+                            }
+                          ]
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          interaction: {
+                            mode: 'index',
+                            intersect: false
+                          },
+                          plugins: {
+                            legend: {
+                              position: 'top'
+                            },
+                            tooltip: {
+                              callbacks: {
+                                label: function(context) {
+                                  let label = context.dataset.label || '';
+                                  if (label) {
+                                    label += ': ';
+                                  }
+                                  if (context.parsed.y !== null) {
+                                    if (label.includes('€')) {
+                                      label += '€' + context.parsed.y.toFixed(2);
+                                    } else {
+                                      label += context.parsed.y;
+                                    }
+                                  }
+                                  return label;
+                                }
+                              }
+                            }
+                          },
+                          scales: {
+                            y: {
+                              type: 'linear',
+                              display: true,
+                              position: 'left',
+                              title: {
+                                display: true,
+                                text: 'Unidades'
+                              },
+                              beginAtZero: true
+                            },
+                            y1: {
+                              type: 'linear',
+                              display: true,
+                              position: 'right',
+                              title: {
+                                display: true,
+                                text: 'Valor (€)'
+                              },
+                              beginAtZero: true,
+                              grid: {
+                                drawOnChartArea: false
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-gray-600">
+                      Nenhum artigo de equipamento disponível
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       ) : (
         <Card>
