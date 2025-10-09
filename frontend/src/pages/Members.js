@@ -505,6 +505,84 @@ const Members = ({ language, translations }) => {
         </Dialog>
       </div>
 
+      {/* Member Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="card-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  Total de Membros
+                </p>
+                <p className="text-lg font-bold text-gray-900">{members.length}</p>
+              </div>
+              <div className="p-2 rounded-full bg-blue-500">
+                <Users size={18} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  Membros Ativos
+                </p>
+                <p className="text-lg font-bold text-green-600">
+                  {members.filter(m => m.status === 'active').length}
+                </p>
+              </div>
+              <div className="p-2 rounded-full bg-green-500">
+                <UserCheck size={18} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  Membros Inativos
+                </p>
+                <p className="text-lg font-bold text-red-600">
+                  {members.filter(m => m.status !== 'active').length}
+                </p>
+              </div>
+              <div className="p-2 rounded-full bg-red-500">
+                <UserX size={18} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  Novos este Mês
+                </p>
+                <p className="text-lg font-bold text-purple-600">
+                  {members.filter(m => {
+                    const joinDate = new Date(m.join_date);
+                    const now = new Date();
+                    return joinDate.getMonth() === now.getMonth() && 
+                           joinDate.getFullYear() === now.getFullYear();
+                  }).length}
+                </p>
+              </div>
+              <div className="p-2 rounded-full bg-purple-500">
+                <TrendingUp size={18} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
