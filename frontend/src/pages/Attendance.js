@@ -81,7 +81,7 @@ const Attendance = ({ language, translations }) => {
       attendanceStats: 'Attendance Statistics',
       totalAttendance: 'Total Attendance',
       uniqueMembers: 'Unique Members',
-      averageDaily: 'Daily Average',
+      totalMembersMonth: 'Total Members Month',
       previousMonth: 'Previous Month',
       nextMonth: 'Next Month',
       attendanceMarked: 'Attendance marked'
