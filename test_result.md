@@ -241,9 +241,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Member activity_id field backend integration"
-    - "Member registration form saving activity_id"
-    - "Dashboard check-in using member's default activity"
+    - "Frontend member registration form saving activity_id"
+    - "Frontend dashboard check-in using member's default activity"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
