@@ -466,30 +466,35 @@ const Reports = ({ language, translations }) => {
       const activitiesRes = await axios.get(`${API}/activities`);
       const activities = activitiesRes.data;
       
+      // Define specific modalities to show
+      const specificModalities = ['Boxe', 'Kickboxing', 'Jiu-Jitsu', 'Musculação'];
+      
       // Count active members per modality
       const activeMembersByModality = {};
       const activeMembers = members.filter(m => m.status === 'active');
       
-      activities.forEach(activity => {
-        // Count active members with this activity_id
-        const count = activeMembers.filter(m => m.activity_id === activity.id).length;
-        if (count > 0) {
-          activeMembersByModality[activity.name] = count;
+      specificModalities.forEach(modalityName => {
+        const activity = activities.find(a => a.name === modalityName);
+        if (activity) {
+          const count = activeMembers.filter(m => m.activity_id === activity.id).length;
+          activeMembersByModality[modalityName] = count;
+        } else {
+          activeMembersByModality[modalityName] = 0;
         }
       });
       
-      // Add members without modality
-      const membersWithoutModality = activeMembers.filter(m => !m.activity_id).length;
-      if (membersWithoutModality > 0) {
-        activeMembersByModality['Sem Modalidade'] = membersWithoutModality;
-      }
-      
       // Calculate revenue from membership payments per modality
       const revenueByModality = {};
+      let totalRevenue = 0;
       
       // Get membership payments
       const paymentsRes = await axios.get(`${API}/payments`);
       const membershipPayments = paymentsRes.data.filter(p => p.payment_type === 'membership');
+      
+      // Initialize all specific modalities with 0
+      specificModalities.forEach(modalityName => {
+        revenueByModality[modalityName] = 0;
+      });
       
       // For each payment, find the member and their modality
       for (const payment of membershipPayments) {
@@ -497,13 +502,18 @@ const Reports = ({ language, translations }) => {
         if (member && member.activity_id) {
           // Find activity name
           const activity = activities.find(a => a.id === member.activity_id);
-          const modalityName = activity ? activity.name : 'Sem Modalidade';
+          const modalityName = activity ? activity.name : null;
           
-          revenueByModality[modalityName] = (revenueByModality[modalityName] || 0) + payment.amount;
-        } else if (member && !member.activity_id) {
-          revenueByModality['Sem Modalidade'] = (revenueByModality['Sem Modalidade'] || 0) + payment.amount;
+          // Only count if it's one of the specific modalities
+          if (modalityName && specificModalities.includes(modalityName)) {
+            revenueByModality[modalityName] = (revenueByModality[modalityName] || 0) + payment.amount;
+            totalRevenue += payment.amount;
+          }
         }
       }
+      
+      // Add Receita Total
+      revenueByModality['Receita Total'] = totalRevenue;
       
       const totalMembers = members.length;
       const totalActiveMembers = activeMembers.length;
@@ -512,7 +522,8 @@ const Reports = ({ language, translations }) => {
         type: 'member',
         stats: { 
           totalMembers, 
-          activeMembers: totalActiveMembers 
+          activeMembers: totalActiveMembers,
+          totalRevenue
         },
         charts: { 
           activeMembersByModality,
