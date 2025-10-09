@@ -203,10 +203,11 @@ class ExpenseCategory(str, Enum):
     MAINTENANCE = "maintenance"
     TEACHERS = "teachers"
     EQUIPMENT = "equipment"
-    ARTICLES = "articles"
+    TEXTIL = "textil"
     COLLABORATORS = "collaborators"
     EXTRAS = "extras"
     # Keep old categories for backward compatibility
+    ARTICLES = "articles"  # Deprecated, use TEXTIL
     FIXED = "fixed"
     VARIABLE = "variable"
 
