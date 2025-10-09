@@ -462,54 +462,61 @@ const Reports = ({ language, translations }) => {
 
   const generateMemberReport = async () => {
     try {
-      const totalMembers = members.length;
-      const activeMembers = members.filter(member => member.status === 'active').length;
+      // Get all activities/modalities
+      const activitiesRes = await axios.get(`${API}/activities`);
+      const activities = activitiesRes.data;
       
-      // Get attendance data to group members by activity/modality
-      const attendanceRes = await axios.get(`${API}/attendance`);
-      const attendanceData = attendanceRes.data;
+      // Count active members per modality
+      const activeMembersByModality = {};
+      const activeMembers = members.filter(m => m.status === 'active');
       
-      // Group members by activity/modality
-      const membersByActivity = attendanceData.reduce((acc, att) => {
-        const activity = att.activity?.name || 'Sem modalidade';
-        if (!acc[activity]) {
-          acc[activity] = new Set();
+      activities.forEach(activity => {
+        // Count active members with this activity_id
+        const count = activeMembers.filter(m => m.activity_id === activity.id).length;
+        if (count > 0) {
+          activeMembersByModality[activity.name] = count;
         }
-        acc[activity].add(att.member_id);
-        return acc;
-      }, {});
-      
-      // Define specific modalities to show
-      const specificModalities = ['Boxe', 'Kickboxing', 'Jiu-Jitsu', 'Pilates', 'Yoga'];
-      
-      // Create metrics for specific modalities only (mock some data for visualization)
-      const modalityMetrics = {};
-      specificModalities.forEach((modality, index) => {
-        // Get real data if available, otherwise mock some data for demo
-        const realCount = membersByActivity[modality] ? membersByActivity[modality].size : 0;
-        // Add mock data for visualization (in production, this would be real data)
-        modalityMetrics[modality] = realCount > 0 ? realCount * 150 : (index + 1) * 180; // Mock euro values for visualization
       });
+      
+      // Add members without modality
+      const membersWithoutModality = activeMembers.filter(m => !m.activity_id).length;
+      if (membersWithoutModality > 0) {
+        activeMembersByModality['Sem Modalidade'] = membersWithoutModality;
+      }
+      
+      // Calculate revenue from membership payments per modality
+      const revenueByModality = {};
+      
+      // Get membership payments
+      const paymentsRes = await axios.get(`${API}/payments`);
+      const membershipPayments = paymentsRes.data.filter(p => p.payment_type === 'membership');
+      
+      // For each payment, find the member and their modality
+      for (const payment of membershipPayments) {
+        const member = members.find(m => m.id === payment.member_id);
+        if (member && member.activity_id) {
+          // Find activity name
+          const activity = activities.find(a => a.id === member.activity_id);
+          const modalityName = activity ? activity.name : 'Sem Modalidade';
+          
+          revenueByModality[modalityName] = (revenueByModality[modalityName] || 0) + payment.amount;
+        } else if (member && !member.activity_id) {
+          revenueByModality['Sem Modalidade'] = (revenueByModality['Sem Modalidade'] || 0) + payment.amount;
+        }
+      }
+      
+      const totalMembers = members.length;
+      const totalActiveMembers = activeMembers.length;
       
       setReportData({
         type: 'member',
-        stats: { totalMembers, activeMembers },
+        stats: { 
+          totalMembers, 
+          activeMembers: totalActiveMembers 
+        },
         charts: { 
-          modalityMetrics: modalityMetrics,
-          membersByActivity: Object.keys(membersByActivity).reduce((acc, activity) => {
-            if (specificModalities.includes(activity)) {
-              acc[activity] = membersByActivity[activity].size;
-            }
-            return acc;
-          }, {}),
-          membersByPack: members.reduce((acc, member) => {
-            const pack = member.membership_type || 'unknown';
-            const packName = pack === 'basic' ? 'Básico' : 
-                            pack === 'premium' ? 'Premium' : 
-                            pack === 'vip' ? 'VIP' : 'Desconhecido';
-            acc[packName] = (acc[packName] || 0) + 1;
-            return acc;
-          }, {})
+          activeMembersByModality,
+          revenueByModality
         }
       });
     } catch (error) {
