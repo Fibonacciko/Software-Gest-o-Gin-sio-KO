@@ -204,6 +204,7 @@ class ExpenseCategory(str, Enum):
     TEACHERS = "teachers"
     EQUIPMENT = "equipment"
     ARTICLES = "articles"
+    COLLABORATORS = "collaborators"
     EXTRAS = "extras"
     # Keep old categories for backward compatibility
     FIXED = "fixed"
