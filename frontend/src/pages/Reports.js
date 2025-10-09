@@ -739,8 +739,8 @@ const Reports = ({ language, translations }) => {
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            {/* Bar Chart - Receita, Despesa, Total Líquido */}
-            {reportData.stats && (
+            {/* Bar Chart - Receita, Despesa, Total Líquido - APENAS RELATÓRIO FINANCEIRO */}
+            {reportData.type === 'financial' && reportData.stats && (
               <Card>
                 <CardHeader>
                   <CardTitle>Análise Financeira Completa (€)</CardTitle>
