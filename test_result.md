@@ -107,13 +107,13 @@ user_problem_statement:
 2. Painel Principal - Check-in não está registrando a modalidade do membro corretamente
 
 backend:
-  - task: "Financial reset endpoint - Delete all financial data"
+  - task: "Add activity_id field to Member model"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: false
         - agent: "user"
