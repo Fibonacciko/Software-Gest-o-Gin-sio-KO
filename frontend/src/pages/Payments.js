@@ -995,7 +995,7 @@ const Payments = ({ language, translations }) => {
                       className="bg-blue-600 hover:bg-blue-700 text-white w-full"
                       size="sm"
                     >
-                      <Eye className="mr-2" size={16} />
+                      <Eye className="mr-1" size={14} />
                       {t[language].viewRevenuesBtn}
                     </Button>
                   </DialogTrigger>
