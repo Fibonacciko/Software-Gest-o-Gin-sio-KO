@@ -55,6 +55,7 @@ const Members = ({ language, translations }) => {
     profession: '',
     address: '',
     membership_type: 'basic',
+    activity: '',
     photo_url: '',
     notes: ''
   });
