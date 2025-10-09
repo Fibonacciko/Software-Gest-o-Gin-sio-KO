@@ -93,9 +93,10 @@ const Payments = ({ language, translations }) => {
     payment_date: new Date().toISOString().split('T')[0]
   });
 
-  // Tab management
+  // Section and filter management
   const [activeTab, setActiveTab] = useState('receitas');
   const [showViewPaymentsDialog, setShowViewPaymentsDialog] = useState(false);
+  const [periodFilter, setPeriodFilter] = useState('all');
 
   // Helper function to check if user is admin
   const isAdmin = () => {
