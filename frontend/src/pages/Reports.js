@@ -363,7 +363,7 @@ const Reports = ({ language, translations }) => {
         .reduce((sum, revenue) => sum + revenue.amount, 0);
       
       const revenueArticles = filteredRevenues
-        .filter(r => r.category === 'articles')
+        .filter(r => r.category === 'textil' || r.category === 'articles')
         .reduce((sum, revenue) => sum + revenue.amount, 0);
         
       const revenueEquipment = filteredRevenues
