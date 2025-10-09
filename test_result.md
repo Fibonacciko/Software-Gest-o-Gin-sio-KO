@@ -144,13 +144,21 @@ backend:
         - comment: "FIXED AND VERIFIED: Button component import path corrected. All 6 payment rows now display proper trash/delete buttons with correct Trash2 SVG icons in Actions column. Tested with comprehensive UI verification - all buttons render correctly with proper lucide-trash2 icons. Delete functionality is now fully working in frontend."
 
 frontend:
-  - task: "Dark mode - Lighten colors for better readability"
+  - task: "Member registration form - Save activity_id field"
     implemented: true
-    working: true
-    file: "/app/frontend/src/index.css, /app/frontend/src/components/ui/card.jsx, /app/frontend/src/components/Sidebar.js, /app/frontend/src/pages/Dashboard.js"
+    working: false
+    file: "/app/frontend/src/pages/Members.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
+  
+  - task: "Dashboard check-in - Use member's default activity_id"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/Dashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
     status_history:
         - working: "NA"
         - agent: "main"
