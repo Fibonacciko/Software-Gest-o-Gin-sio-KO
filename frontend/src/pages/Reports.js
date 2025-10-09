@@ -789,29 +789,48 @@ const Reports = ({ language, translations }) => {
               </Card>
             )}
 
-            {/* Pie Chart - Categorias de Despesas */}
+            {/* Pie Chart - Análise Financeira Detalhada */}
             {reportData.stats && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Despesas por Categoria</CardTitle>
+                  <CardTitle>Distribuição Financeira Completa</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Pie
                     data={{
-                      labels: ['Despesas Extras', 'Despesas Fixas', 'Despesas Variáveis'],
+                      labels: [
+                        'Despesa Total',
+                        'Despesa Extra', 
+                        'Despesa Artigos',
+                        'Despesa Equipamentos',
+                        'Receita Artigos',
+                        'Receita Equipamentos',
+                        'Receita Mensalidades',
+                        'Receita Extras',
+                        'Total Líquido'
+                      ],
                       datasets: [{
                         data: [
-                          // Despesas Extras: subsídios + PT's (receitas extras na verdade)
-                          (reportData.stats.revenueExtras || 0) + (reportData.stats.revenuePersonalTraining || 0),
-                          // Despesas Fixas: renda + energia + professores  
-                          reportData.stats.expenseFixed || 0,
-                          // Despesas Variáveis: manutenção + equipamentos + artigos + extras
-                          reportData.stats.expenseVariable || 0
+                          reportData.stats.totalExpenses || 0,
+                          reportData.stats.expenseVariable || 0,
+                          reportData.stats.expenseArticles || 0,
+                          reportData.stats.expenseEquipment || 0,
+                          reportData.stats.revenueArticles || 0,
+                          reportData.stats.revenueEquipment || 0,
+                          reportData.stats.revenuePayments || 0,
+                          reportData.stats.revenueExtras || 0,
+                          Math.abs(reportData.stats.netTotal || 0)
                         ],
                         backgroundColor: [
-                          '#FF6384', // Pink for extras
-                          '#36A2EB', // Blue for fixed
-                          '#FFCE56'  // Yellow for variable
+                          '#DC2626', // Red for total expenses
+                          '#EF4444', // Light red for extra expenses
+                          '#F87171', // Pink for article expenses
+                          '#FCA5A5', // Light pink for equipment expenses
+                          '#34D399', // Green for article revenue
+                          '#6EE7B7', // Light green for equipment revenue
+                          '#10B981', // Dark green for membership revenue
+                          '#A7F3D0', // Very light green for extra revenue
+                          reportData.stats.netTotal >= 0 ? '#3B82F6' : '#F97316' // Blue for positive, orange for negative net
                         ],
                         borderWidth: 2,
                         borderColor: '#fff'
@@ -822,18 +841,24 @@ const Reports = ({ language, translations }) => {
                       plugins: {
                         legend: {
                           position: 'bottom',
+                          labels: {
+                            boxWidth: 12,
+                            font: {
+                              size: 10
+                            }
+                          }
                         },
                         datalabels: {
                           display: true,
                           color: '#fff',
                           font: {
                             weight: 'bold',
-                            size: 12
+                            size: 10
                           },
                           formatter: function(value, context) {
                             const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
                             const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return percentage + '%';
+                            return value > 0 ? percentage + '%' : '';
                           }
                         },
                         tooltip: {
