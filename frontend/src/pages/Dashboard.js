@@ -202,11 +202,11 @@ const Dashboard = ({ language, translations }) => {
       
       setTodayAttendance(sortedAttendance);
       
-      // Calculate attendance by modality using member's activity
+      // Calculate attendance by modality using attendance's activity
       const modalityStats = {};
       let totalCount = 0;
       
-      for (const att of attendanceWithMembers) {
+      for (const att of sortedAttendance) {
         const memberModality = att.member?.activity || 'Sem modalidade';
         modalityStats[memberModality] = (modalityStats[memberModality] || 0) + 1;
         totalCount++;
