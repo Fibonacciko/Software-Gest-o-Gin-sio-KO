@@ -113,6 +113,7 @@ class Member(BaseModel):
     profession: str
     address: str
     membership_type: MembershipType
+    activity_id: Optional[str] = None  # Default activity/modality for the member
     status: MemberStatus = MemberStatus.ACTIVE
     join_date: date = Field(default_factory=lambda: date.today())
     expiry_date: Optional[date] = None
@@ -131,6 +132,7 @@ class MemberCreate(BaseModel):
     profession: str
     address: str
     membership_type: MembershipType
+    activity_id: Optional[str] = None  # Default activity/modality for the member
     photo_url: Optional[str] = None
     notes: Optional[str] = None
 
