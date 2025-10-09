@@ -811,8 +811,8 @@ const Reports = ({ language, translations }) => {
               </Card>
             )}
 
-            {/* Pie Chart - Análise Financeira Detalhada */}
-            {reportData.stats && (
+            {/* Pie Chart - Análise Financeira Detalhada - APENAS RELATÓRIO FINANCEIRO */}
+            {reportData.type === 'financial' && reportData.stats && (
               <Card>
                 <CardHeader>
                   <CardTitle>Distribuição Financeira Completa</CardTitle>
