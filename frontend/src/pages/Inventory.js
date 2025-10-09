@@ -154,7 +154,7 @@ const Inventory = ({ language, translations }) => {
       totalArticles: 'Total Articles',
       purchasePrice: 'Purchase Price',
       salePrice: 'Sale Price',
-      totalStockValue: 'Total Stock Value',
+      totalStockValue: 'Total Investment Value',
       totalSoldValue: 'Total Sold Value',
       netRevenue: 'Net Revenue',
       monthlyRevenue: 'Monthly Revenue',
