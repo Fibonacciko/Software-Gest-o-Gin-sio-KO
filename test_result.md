@@ -247,9 +247,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Frontend member registration form saving activity_id"
-    - "Frontend dashboard check-in using member's default activity"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -257,6 +255,8 @@ test_plan:
 agent_communication:
     - agent: "main"
     - message: "FIXES IMPLEMENTED: 1) Members.js - Fixed handleSubmit to map 'activity' field to 'activity_id' before sending to backend. Fixed handleEdit to load 'activity_id' from member data. 2) Dashboard.js - Improved fetchDashboardData to fetch all activities first and map activity_id to activity name for display. Added sorting to todayAttendance by check_in_time (most recent first). Updated check-in logic to use member's default activity_id when available. Ready for comprehensive testing."
+    - agent: "testing"
+    - message: "🎉 COMPREHENSIVE MEMBER REGISTRATION AND DASHBOARD CHECK-IN TESTING COMPLETED SUCCESSFULLY! 🎉 ✅ MEMBER REGISTRATION WITH MODALITY: Successfully tested complete member registration workflow including modality selection via ActivitySelector, form submission with activity_id field mapping, and data persistence verification. Created test member 'Pedro Santos' with 'Boxe' modality - confirmed modality field saves and loads correctly in edit mode. ✅ DASHBOARD CHECK-IN FUNCTIONALITY: Verified 'Presenças por Modalidade' card shows modality names with counts, 'Presenças de Hoje' table displays Status (Ativo/Inativo) and Modalidade columns with proper data, attendance records sorted by most recent first. ✅ MODALITY INTEGRATION: Dashboard correctly maps activity_id to activity names, displays modality information from both attendance records and member default activities. ✅ UI COMPONENTS: All interface elements working - ActivitySelector component, member search, check-in buttons, modality display badges. Both frontend tasks are fully operational and working as specified in the review request."
 
   - task: "New expenses functionality - Interface restructure and new features"
     implemented: true
