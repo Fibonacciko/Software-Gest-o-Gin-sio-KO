@@ -1429,6 +1429,7 @@ const Payments = ({ language, translations }) => {
             </CardContent>
           </Card>
         </div>
+      )}
 
       {/* Search and Filters */}
       <Card>
