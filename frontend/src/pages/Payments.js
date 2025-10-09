@@ -1353,6 +1353,79 @@ const Payments = ({ language, translations }) => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Additional Financial Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+          <Card className="card-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">
+                    Total Pagamentos
+                  </p>
+                  <p className="text-lg font-bold text-blue-600">{payments.length}</p>
+                </div>
+                <div className="p-2 rounded-full bg-blue-500">
+                  <CreditCard size={16} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">
+                    Pagamentos Pendentes
+                  </p>
+                  <p className="text-lg font-bold text-yellow-600">
+                    {payments.filter(p => p.status === 'pending').length}
+                  </p>
+                </div>
+                <div className="p-2 rounded-full bg-yellow-500">
+                  <Clock size={16} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">
+                    Total Despesas
+                  </p>
+                  <p className="text-lg font-bold text-red-600">
+                    {isAdmin() ? expenses.length : 'N/A'}
+                  </p>
+                </div>
+                <div className="p-2 rounded-full bg-red-500">
+                  <Receipt size={16} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">
+                    Total Receitas
+                  </p>
+                  <p className="text-lg font-bold text-purple-600">
+                    {isAdmin() ? revenues.length : 'N/A'}
+                  </p>
+                </div>
+                <div className="p-2 rounded-full bg-purple-500">
+                  <TrendingUp size={16} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Search and Filters */}
