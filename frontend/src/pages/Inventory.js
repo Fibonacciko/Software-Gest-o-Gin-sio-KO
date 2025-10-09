@@ -403,16 +403,24 @@ const Inventory = ({ language, translations }) => {
       </div>
 
       {/* Action Bars */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Add Article Bar */}
-        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300">
           <CardContent className="p-4">
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <h2 className="text-lg font-bold text-white cursor-pointer hover:text-gray-300 transition-colors">
-                  {t[language].addItem}
-                </h2>
-              </DialogTrigger>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-bold text-blue-900 whitespace-nowrap">
+                {t[language].addItem}
+              </h2>
+              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-slate-400 hover:bg-slate-500 text-white text-[11px] py-1 px-3 h-7 shadow-sm"
+                    size="sm"
+                  >
+                    <Plus className="mr-1" size={12} />
+                    Adicionar
+                  </Button>
+                </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
