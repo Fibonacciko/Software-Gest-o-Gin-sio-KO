@@ -380,7 +380,7 @@ const Reports = ({ language, translations }) => {
         .reduce((sum, expense) => sum + expense.amount, 0);
         
       const expenseArticles = filteredExpenses
-        .filter(e => e.category === 'articles')
+        .filter(e => e.category === 'textil' || e.category === 'articles')
         .reduce((sum, expense) => sum + expense.amount, 0);
         
       const expenseEquipment = filteredExpenses
