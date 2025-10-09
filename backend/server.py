@@ -54,8 +54,9 @@ class PaymentStatus(str, Enum):
     PENDING = "pending"
 
 class ItemCategory(str, Enum):
-    CLOTHING = "clothing"
+    TEXTIL = "textil"
     EQUIPMENT = "equipment"
+    CLOTHING = "clothing"  # Deprecated, use TEXTIL
 
 class UserRole(str, Enum):
     ADMIN = "admin"
