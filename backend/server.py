@@ -1037,6 +1037,22 @@ async def create_inventory_item(
     item = InventoryItem(**item_data.dict())
     item_dict = prepare_for_mongo(item.dict())
     await db.inventory.insert_one(item_dict)
+    
+    # Automatically create expense for stock purchase
+    expense_category = "textil" if item.category in ["textil", "clothing"] else "equipment"
+    total_cost = item.purchase_price * item.quantity if item.purchase_price and item.quantity else 0
+    
+    if total_cost > 0:
+        expense = Expense(
+            category=expense_category,
+            amount=total_cost,
+            description=f"Compra de stock: {item.name} (Qtd: {item.quantity})",
+            expense_date=date.today(),
+            expense_type="variable"
+        )
+        expense_dict = prepare_for_mongo(expense.dict())
+        await db.expenses.insert_one(expense_dict)
+    
     return item
 
 @api_router.get("/inventory", response_model=List[InventoryItem])
