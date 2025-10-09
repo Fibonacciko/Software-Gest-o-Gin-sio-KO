@@ -1063,11 +1063,90 @@ const Payments = ({ language, translations }) => {
                     </Select>
                   </div>
 
-                  {/* Expenses Table - Placeholder for now */}
-                  <div className="text-center py-8">
-                    <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600">Consultar despesas funcionando</p>
-                  </div>
+                  {/* Expenses Table */}
+                  {expenses && expenses.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-4 font-medium text-gray-600">{t[language].expenseDate}</th>
+                            <th className="text-left p-4 font-medium text-gray-600">{t[language].expenseType}</th>
+                            <th className="text-left p-4 font-medium text-gray-600">{t[language].expenseValue}</th>
+                            <th className="text-left p-4 font-medium text-gray-600">{t[language].description}</th>
+                            <th className="text-left p-4 font-medium text-gray-600">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {expenses
+                            .filter(expense => {
+                              // Apply filters
+                              if (expenseSearchTerm && !expense.description?.toLowerCase().includes(expenseSearchTerm.toLowerCase())) {
+                                return false;
+                              }
+                              if (expenseTypeFilter !== 'all' && expense.category !== expenseTypeFilter) {
+                                return false;
+                              }
+                              
+                              // Date filter
+                              if (expenseDateFilter !== 'all') {
+                                const expenseDate = new Date(expense.expense_date || expense.date);
+                                const now = new Date();
+                                
+                                if (expenseDateFilter === 'thisMonth') {
+                                  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                                  if (expenseDate < startOfMonth) return false;
+                                } else if (expenseDateFilter === 'lastMonth') {
+                                  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                                  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                                  if (expenseDate < startOfLastMonth || expenseDate > endOfLastMonth) return false;
+                                } else if (expenseDateFilter === 'thisYear') {
+                                  const startOfYear = new Date(now.getFullYear(), 0, 1);
+                                  if (expenseDate < startOfYear) return false;
+                                }
+                              }
+                              
+                              return true;
+                            })
+                            .map((expense) => (
+                              <tr key={expense.id} className="border-b hover:bg-gray-50">
+                                <td className="p-4">
+                                  {expense.expense_date ? new Date(expense.expense_date).toLocaleDateString('pt-PT') : 
+                                   expense.date ? new Date(expense.date).toLocaleDateString('pt-PT') : 'N/A'}
+                                </td>
+                                <td className="p-4">
+                                  <Badge className="bg-orange-100 text-orange-800">
+                                    {t[language][expense.category] || expense.category}
+                                  </Badge>
+                                </td>
+                                <td className="p-4">
+                                  <span className="font-semibold text-red-600">
+                                    €{expense.amount?.toFixed(2)}
+                                  </span>
+                                </td>
+                                <td className="p-4 text-sm text-gray-600">
+                                  {expense.description || 'N/A'}
+                                </td>
+                                <td className="p-4">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeleteExpense(expense.id)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-600">{t[language].noExpenses}</p>
+                    </div>
+                  )}
                 </DialogContent>
               </Dialog>
             </div>
