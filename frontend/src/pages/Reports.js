@@ -98,11 +98,11 @@ const Reports = ({ language, translations }) => {
       // Financial metrics - New structure
       revenuePayments: 'Receitas Pagamentos',
       revenueExtras: 'Receitas Extras',
-      revenueArticles: 'Receitas Artigos', 
+      revenueArticles: 'Receitas Textil', 
       revenueEquipment: 'Receitas Equipamentos',
       expenseFixed: 'Despesas Fixas',
       expenseVariable: 'Despesas Variáveis',
-      expenseArticles: 'Despesas Artigos',
+      expenseArticles: 'Despesas Textil',
       expenseEquipment: 'Despesas Equipamentos',
       netTotal: 'Total Líquido',
       // Stock metrics
