@@ -166,11 +166,11 @@ const Reports = ({ language, translations }) => {
       // Financial metrics - New structure  
       revenuePayments: 'Revenue Payments',
       revenueExtras: 'Revenue Extras',
-      revenueArticles: 'Revenue Articles',
+      revenueArticles: 'Revenue Textil',
       revenueEquipment: 'Revenue Equipment', 
       expenseFixed: 'Fixed Expenses',
       expenseVariable: 'Variable Expenses',
-      expenseArticles: 'Article Expenses',
+      expenseArticles: 'Textil Expenses',
       expenseEquipment: 'Equipment Expenses',
       netTotal: 'Net Total',
       // Stock metrics
@@ -188,11 +188,11 @@ const Reports = ({ language, translations }) => {
       // Financial metrics - New structure  
       revenuePayments: 'Revenue Payments',
       revenueExtras: 'Revenue Extras',
-      revenueArticles: 'Revenue Articles',
+      revenueArticles: 'Revenue Textil',
       revenueEquipment: 'Revenue Equipment', 
       expenseFixed: 'Fixed Expenses',
       expenseVariable: 'Variable Expenses',
-      expenseArticles: 'Article Expenses',
+      expenseArticles: 'Textil Expenses',
       expenseEquipment: 'Equipment Expenses',
       netTotal: 'Net Total',
       // Stock metrics
