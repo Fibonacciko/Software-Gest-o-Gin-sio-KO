@@ -333,6 +333,7 @@ const Inventory = ({ language, translations }) => {
 
   const getCategoryIcon = (category) => {
     switch (category) {
+      case 'textil':
       case 'clothing': return <Shirt size={16} className="text-blue-600" />;
       case 'equipment': return <Package size={16} className="text-green-600" />;
       default: return <Package size={16} className="text-gray-600" />;
