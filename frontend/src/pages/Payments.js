@@ -1042,18 +1042,18 @@ const Payments = ({ language, translations }) => {
 
         {/* Despesas Window */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-bold text-white mb-4 text-center">
+          <CardContent className="p-4">
+            <h2 className="text-sm font-bold text-white mb-3 text-center">
               {t[language].registerExpenses}
             </h2>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <Dialog open={showAddExpenseDialog} onOpenChange={setShowAddExpenseDialog}>
                 <DialogTrigger asChild>
                   <Button 
                     className="bg-green-600 hover:bg-green-700 text-white w-full"
                     size="sm"
                   >
-                    <Plus className="mr-2" size={16} />
+                    <Plus className="mr-1" size={14} />
                     {t[language].addExpenseBtn}
                   </Button>
                 </DialogTrigger>
