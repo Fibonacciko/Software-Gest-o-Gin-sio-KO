@@ -1223,9 +1223,199 @@ const Payments = ({ language, translations }) => {
             </div>
           </CardContent>
         </Card>
-        )}
 
-        {/* Financial Statistics - Only for Admin */}
+        {/* Mensalidades Window */}
+        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-bold text-white mb-4 text-center">
+              {t[language].memberships}
+            </h2>
+            <div className="flex flex-col gap-3">
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                size="sm"
+                onClick={() => setShowMembershipDialog(true)}
+              >
+                <CreditCard className="mr-2" size={16} />
+                {t[language].registerMembership}
+              </Button>
+              <Button 
+                className="bg-green-600 hover:bg-green-700 text-white w-full"
+                size="sm"
+                onClick={() => setShowViewPaymentsDialog(true)}
+              >
+                <Eye className="mr-2" size={16} />
+                Consultar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Despesas Window */}
+        <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-bold text-white mb-4 text-center">
+              {t[language].registerExpenses}
+            </h2>
+            <div className="flex flex-col gap-3">
+              <Dialog open={showAddExpenseDialog} onOpenChange={setShowAddExpenseDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700 text-white w-full"
+                    size="sm"
+                  >
+                    <Plus className="mr-2" size={16} />
+                    {t[language].addExpenseBtn}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t[language].addExpense}</DialogTitle>
+                  </DialogHeader>
+                  
+                  <form onSubmit={handleExpenseSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="category">{t[language].selectCategory} *</Label>
+                      <Select 
+                        value={expenseFormData.category} 
+                        onValueChange={(value) => setExpenseFormData({...expenseFormData, category: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="rent">{t[language].rent}</SelectItem>
+                          <SelectItem value="energy">{t[language].energy}</SelectItem>
+                          <SelectItem value="maintenance">{t[language].maintenance}</SelectItem>
+                          <SelectItem value="teachers">{t[language].teachers}</SelectItem>
+                          <SelectItem value="equipment">{t[language].equipment}</SelectItem>
+                          <SelectItem value="articles">{t[language].articles}</SelectItem>
+                          <SelectItem value="extras">{t[language].extras}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="expense_amount">{t[language].amount} (€) *</Label>
+                      <Input
+                        id="expense_amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenseFormData.amount}
+                        onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
+                        required
+                        placeholder={t[language].enterAmount}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="expense_date">{t[language].expenseDate} *</Label>
+                      <Input
+                        id="expense_date"
+                        type="date"
+                        value={expenseFormData.date}
+                        onChange={(e) => setExpenseFormData({...expenseFormData, date: e.target.value})}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="expense_description">{t[language].description}</Label>
+                      <Textarea
+                        id="expense_description"
+                        value={expenseFormData.description}
+                        onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
+                        rows={3}
+                        placeholder={t[language].expenseDescription}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setShowAddExpenseDialog(false)}
+                      >
+                        {t[language].cancel}
+                      </Button>
+                      <Button type="submit">
+                        {t[language].save}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={showViewExpensesDialog} onOpenChange={setShowViewExpensesDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                    size="sm"
+                  >
+                    <Eye className="mr-2" size={16} />
+                    {t[language].viewExpensesBtn}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>{t[language].viewExpenses}</DialogTitle>
+                  </DialogHeader>
+                  
+                  {/* Expense Filters */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Pesquisar por descrição..."
+                        value={expenseSearchTerm}
+                        onChange={(e) => setExpenseSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    <Select value={expenseTypeFilter} onValueChange={setExpenseTypeFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t[language].expenseType} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os Tipos</SelectItem>
+                        <SelectItem value="rent">{t[language].rent}</SelectItem>
+                        <SelectItem value="energy">{t[language].energy}</SelectItem>
+                        <SelectItem value="maintenance">{t[language].maintenance}</SelectItem>
+                        <SelectItem value="teachers">{t[language].teachers}</SelectItem>
+                        <SelectItem value="equipment">{t[language].equipment}</SelectItem>
+                        <SelectItem value="articles">{t[language].articles}</SelectItem>
+                        <SelectItem value="extras">{t[language].extras}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={expenseDateFilter} onValueChange={setExpenseDateFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t[language].expenseDate} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t[language].allDates}</SelectItem>
+                        <SelectItem value="thisMonth">{t[language].thisMonth}</SelectItem>
+                        <SelectItem value="lastMonth">{t[language].lastMonth}</SelectItem>
+                        <SelectItem value="thisYear">{t[language].thisYear}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Expenses Table - Placeholder for now */}
+                  <div className="text-center py-8">
+                    <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Consultar despesas funcionando</p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Financial Statistics - Only for Admin */}
         {isAdmin() && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="card-shadow">
