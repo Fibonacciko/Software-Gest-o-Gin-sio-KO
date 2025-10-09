@@ -760,7 +760,7 @@ const Payments = ({ language, translations }) => {
       </div>
 
       {/* 3 Section Windows - Horizontal Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-4xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Mensalidades Window */}
         <Card className="bg-neutral-800/80 dark:bg-neutral-900/80 text-white border-orange-200/30">
           <CardContent className="p-4">
