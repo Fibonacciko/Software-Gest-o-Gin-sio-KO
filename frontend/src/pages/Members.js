@@ -21,7 +21,10 @@ import {
   MapPin,
   Calendar,
   Briefcase,
-  Flag
+  Flag,
+  UserCheck,
+  UserX,
+  TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
