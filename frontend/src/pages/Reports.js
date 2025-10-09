@@ -35,7 +35,8 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels
 );
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
