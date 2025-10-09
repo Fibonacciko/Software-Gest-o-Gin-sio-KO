@@ -434,6 +434,16 @@ const Members = ({ language, translations }) => {
               </div>
               
               <div>
+                <Label htmlFor="activity">Modalidade</Label>
+                <ActivitySelector
+                  value={formData.activity}
+                  onChange={(value) => setFormData({...formData, activity: value})}
+                  placeholder="Selecionar modalidade..."
+                  data-testid="member-activity"
+                />
+              </div>
+              
+              <div>
                 <Label htmlFor="photo_url">Foto do Membro</Label>
                 <div className="space-y-3">
                   {/* Photo Preview */}
