@@ -801,9 +801,9 @@ const Reports = ({ language, translations }) => {
                       labels: [
                         'Despesa Total',
                         'Despesa Extra', 
-                        'Despesa Artigos',
+                        'Despesa Textil',
                         'Despesa Equipamentos',
-                        'Receita Artigos',
+                        'Receita Textil',
                         'Receita Equipamentos',
                         'Receita Mensalidades',
                         'Receita Extras',
