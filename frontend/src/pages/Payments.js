@@ -883,19 +883,19 @@ const Payments = ({ language, translations }) => {
             </h2>
             <div className="flex flex-col gap-2">
               <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                className="bg-blue-600 hover:bg-blue-700 text-white w-full text-xs py-1 px-2 h-7"
                 size="sm"
                 onClick={() => setShowMembershipDialog(true)}
               >
-                <CreditCard className="mr-1" size={14} />
+                <CreditCard className="mr-1" size={12} />
                 {t[language].registerMembership}
               </Button>
               <Button 
-                className="bg-green-600 hover:bg-green-700 text-white w-full"
+                className="bg-green-600 hover:bg-green-700 text-white w-full text-xs py-1 px-2 h-7"
                 size="sm"
                 onClick={() => setShowViewPaymentsDialog(true)}
               >
-                <Eye className="mr-1" size={14} />
+                <Eye className="mr-1" size={12} />
                 Consultar
               </Button>
             </div>
