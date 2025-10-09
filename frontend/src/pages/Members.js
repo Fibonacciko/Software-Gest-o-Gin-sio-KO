@@ -230,7 +230,7 @@ const Members = ({ language, translations }) => {
       profession: member.profession || '',
       address: member.address || '',
       membership_type: member.membership_type || 'basic',
-      activity: member.activity || '',
+      activity: member.activity_id || '',  // Load activity_id from backend
       photo_url: member.photo_url || '',
       notes: member.notes || ''
     });
