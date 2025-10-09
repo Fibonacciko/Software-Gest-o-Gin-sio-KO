@@ -107,9 +107,9 @@ const Reports = ({ language, translations }) => {
       netTotal: 'Total Líquido',
       // Stock metrics
       articlesInStock: 'Artigos em Stock',
-      investedValue: 'Valor Investido',
-      receivedValue: 'Valor Recebido',
-      netValue: 'Valor Líquido',
+      investedValue: 'Despesa Total',
+      receivedValue: 'Receita Total',
+      netValue: 'Total Líquido',
       totalMembers: 'Membros Totais',
       membersByActivity: 'Membros por Modalidade',
       membersByPack: 'Membros por Pack',
