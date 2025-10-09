@@ -166,11 +166,10 @@ const Attendance = ({ language, translations }) => {
     const total = attendance.length;
     const uniqueMembers = new Set(attendance.map(att => att.member_id)).size;
     
-    // Calculate daily average for current month only
+    // Calculate Total Membros Mês - unique members who attended this month
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
-    const currentDay = today.getDate(); // Current day of the month
     
     // Filter attendance for current month only
     const currentMonthAttendance = attendance.filter(att => {
@@ -179,15 +178,15 @@ const Attendance = ({ language, translations }) => {
              attendanceDate.getFullYear() === currentYear;
     });
     
-    // Calculate average based on current month data and elapsed days
-    const average = currentDay > 0 ? (currentMonthAttendance.length / currentDay).toFixed(1) : '0.0';
+    // Count unique members who attended this month
+    const uniqueMembersThisMonth = new Set(currentMonthAttendance.map(att => att.member_id)).size;
     
     return { 
       total, 
       uniqueMembers, 
-      average,
+      totalMembersMonth: uniqueMembersThisMonth,
       currentMonthTotal: currentMonthAttendance.length,
-      elapsedDays: currentDay
+      elapsedDays: today.getDate()
     };
   };
 
