@@ -717,29 +717,36 @@ const Reports = ({ language, translations }) => {
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            {/* Bar Chart - Receitas vs Despesas */}
+            {/* Bar Chart - Receita, Despesa, Total Líquido */}
             {reportData.stats && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Receitas vs Despesas (€)</CardTitle>
+                  <CardTitle>Análise Financeira Completa (€)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Bar
                     data={{
-                      labels: ['Receitas Totais', 'Despesas Totais'],
+                      labels: ['Receita Total', 'Despesa Total', 'Total Líquido'],
                       datasets: [{
                         label: 'Valores (€)',
                         data: [
                           reportData.stats.totalRevenues || 0,
-                          reportData.stats.totalExpenses || 0
+                          reportData.stats.totalExpenses || 0,
+                          reportData.stats.netTotal || 0
                         ],
                         backgroundColor: [
                           'rgba(34, 197, 94, 0.8)',   // Green for revenues
-                          'rgba(239, 68, 68, 0.8)'    // Red for expenses
+                          'rgba(239, 68, 68, 0.8)',   // Red for expenses
+                          reportData.stats.netTotal >= 0 
+                            ? 'rgba(59, 130, 246, 0.8)'  // Blue for positive net
+                            : 'rgba(249, 115, 22, 0.8)'  // Orange for negative net
                         ],
                         borderColor: [
                           'rgba(34, 197, 94, 1)',
-                          'rgba(239, 68, 68, 1)'
+                          'rgba(239, 68, 68, 1)',
+                          reportData.stats.netTotal >= 0 
+                            ? 'rgba(59, 130, 246, 1)'
+                            : 'rgba(249, 115, 22, 1)'
                         ],
                         borderWidth: 2
                       }]
@@ -752,7 +759,7 @@ const Reports = ({ language, translations }) => {
                         },
                         title: {
                           display: true,
-                          text: 'Comparação Financeira'
+                          text: 'Visão Geral Financeira'
                         },
                         datalabels: {
                           display: true,
