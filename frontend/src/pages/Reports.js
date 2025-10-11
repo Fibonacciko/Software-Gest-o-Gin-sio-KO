@@ -54,6 +54,11 @@ const Reports = ({ language, translations }) => {
   const [attendance, setAttendance] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [revenues, setRevenues] = useState([]);
+  
+  // Comparison states
+  const [enableComparison, setEnableComparison] = useState(false);
+  const [comparisonYear, setComparisonYear] = useState(new Date().getFullYear() - 1);
+  const [comparisonData, setComparisonData] = useState(null);
 
   const t = {
     pt: {
