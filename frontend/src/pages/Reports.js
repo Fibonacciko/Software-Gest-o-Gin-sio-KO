@@ -573,77 +573,130 @@ const Reports = ({ language, translations }) => {
     });
   };
 
-  const generateMemberReport = async () => {
-    try {
-      // Get all activities/modalities
-      const activitiesRes = await axios.get(`${API}/activities`);
-      const activities = activitiesRes.data;
-      
-      // Define specific modalities to show
-      const specificModalities = ['Boxe', 'Kickboxing', 'Jiu-Jitsu', 'Musculação'];
-      
-      // Count active members per modality
-      const activeMembersByModality = {};
-      const activeMembers = members.filter(m => m.status === 'active');
-      
-      specificModalities.forEach(modalityName => {
-        const activity = activities.find(a => a.name === modalityName);
-        if (activity) {
-          const count = activeMembers.filter(m => m.activity_id === activity.id).length;
-          activeMembersByModality[modalityName] = count;
-        } else {
-          activeMembersByModality[modalityName] = 0;
-        }
-      });
-      
-      // Calculate revenue from membership payments per modality
-      const revenueByModality = {};
-      let totalRevenue = 0;
-      
-      // Get all payments
-      const paymentsRes = await axios.get(`${API}/payments`);
-      // Filter membership payments (payment_method = 'membership')
-      const membershipPayments = paymentsRes.data.filter(p => 
-        p.payment_method === 'membership' && p.status === 'paid'
-      );
-      
-      // Initialize all specific modalities with 0
-      specificModalities.forEach(modalityName => {
-        revenueByModality[modalityName] = 0;
-      });
-      
-      // For each payment, find the member and their modality
-      for (const payment of membershipPayments) {
-        const member = members.find(m => m.id === payment.member_id);
-        if (member && member.activity_id) {
-          // Find activity name
-          const activity = activities.find(a => a.id === member.activity_id);
-          const modalityName = activity ? activity.name : null;
-          
-          // Only count if it's one of the specific modalities
-          if (modalityName && specificModalities.includes(modalityName)) {
-            revenueByModality[modalityName] = (revenueByModality[modalityName] || 0) + payment.amount;
-            totalRevenue += payment.amount;
-          }
+  // Helper function to calculate modality data for a specific period
+  const calculateModalityData = async (start, end, membersData, paymentsData) => {
+    // Get all activities/modalities
+    const activitiesRes = await axios.get(`${API}/activities`);
+    const activities = activitiesRes.data;
+    
+    // Define specific modalities to show
+    const specificModalities = ['Boxe', 'Kickboxing', 'Jiu-Jitsu', 'Musculação'];
+    
+    // Count active members per modality (snapshot at end date)
+    const activeMembersByModality = {};
+    const activeMembers = membersData.filter(m => m.status === 'active');
+    
+    specificModalities.forEach(modalityName => {
+      const activity = activities.find(a => a.name === modalityName);
+      if (activity) {
+        const count = activeMembers.filter(m => m.activity_id === activity.id).length;
+        activeMembersByModality[modalityName] = count;
+      } else {
+        activeMembersByModality[modalityName] = 0;
+      }
+    });
+    
+    // Calculate revenue from membership payments per modality for the period
+    const revenueByModality = {};
+    let totalRevenue = 0;
+    
+    // Filter payments within date range
+    const filteredPayments = paymentsData.filter(p => {
+      const payDate = new Date(p.payment_date);
+      return payDate >= start && payDate <= end && p.payment_method === 'membership' && p.status === 'paid';
+    });
+    
+    // Initialize all specific modalities with 0
+    specificModalities.forEach(modalityName => {
+      revenueByModality[modalityName] = 0;
+    });
+    
+    // For each payment, find the member and their modality
+    for (const payment of filteredPayments) {
+      const member = membersData.find(m => m.id === payment.member_id);
+      if (member && member.activity_id) {
+        // Find activity name
+        const activity = activities.find(a => a.id === member.activity_id);
+        const modalityName = activity ? activity.name : null;
+        
+        // Only count if it's one of the specific modalities
+        if (modalityName && specificModalities.includes(modalityName)) {
+          revenueByModality[modalityName] = (revenueByModality[modalityName] || 0) + payment.amount;
+          totalRevenue += payment.amount;
         }
       }
+    }
+    
+    const totalMembers = membersData.length;
+    const totalActiveMembers = activeMembers.length;
+    
+    return {
+      totalMembers,
+      totalActiveMembers,
+      totalRevenue,
+      activeMembersByModality,
+      revenueByModality
+    };
+  };
+
+  const generateMemberReport = async () => {
+    try {
+      const { start, end } = getDateRange();
       
-      // Add Receita Total
-      revenueByModality['Receita Total'] = totalRevenue;
+      // Calculate current period data
+      const currentData = await calculateModalityData(start, end, members, payments);
       
-      const totalMembers = members.length;
-      const totalActiveMembers = activeMembers.length;
+      // Calculate comparison data if enabled
+      let comparisonDataResult = null;
+      let comparisons = null;
+      let alerts = [];
+      
+      if (enableComparison) {
+        const yearDiff = new Date().getFullYear() - comparisonYear;
+        const compStart = new Date(start);
+        compStart.setFullYear(compStart.getFullYear() - yearDiff);
+        const compEnd = new Date(end);
+        compEnd.setFullYear(compEnd.getFullYear() - yearDiff);
+        
+        comparisonDataResult = await calculateModalityData(compStart, compEnd, members, payments);
+        
+        // Calculate comparisons for each metric
+        comparisons = {
+          totalActiveMembers: calculateComparison(currentData.totalActiveMembers, comparisonDataResult.totalActiveMembers),
+          totalRevenue: calculateComparison(currentData.totalRevenue, comparisonDataResult.totalRevenue)
+        };
+        
+        // Generate alerts
+        alerts = [
+          ...generateAlerts(comparisons.totalActiveMembers, 'Membros Ativos'),
+          ...generateAlerts(comparisons.totalRevenue, 'Receita de Mensalidades')
+        ];
+        
+        // Calculate projection
+        comparisons.projection = {
+          totalActiveMembers: Math.round(calculateProjection(currentData.totalActiveMembers, comparisonDataResult.totalActiveMembers)),
+          totalRevenue: calculateProjection(currentData.totalRevenue, comparisonDataResult.totalRevenue)
+        };
+      }
       
       setReportData({
         type: 'member',
         stats: { 
-          totalMembers, 
-          activeMembers: totalActiveMembers,
-          totalRevenue
+          totalMembers: currentData.totalMembers, 
+          activeMembers: currentData.totalActiveMembers,
+          totalRevenue: currentData.totalRevenue
         },
+        comparison: enableComparison ? {
+          data: comparisonDataResult,
+          comparisons,
+          alerts
+        } : null,
         charts: { 
-          activeMembersByModality,
-          revenueByModality
+          activeMembersByModality: currentData.activeMembersByModality,
+          revenueByModality: {
+            ...currentData.revenueByModality,
+            'Receita Total': currentData.totalRevenue
+          }
         }
       });
     } catch (error) {
