@@ -422,23 +422,58 @@ const Reports = ({ language, translations }) => {
     });
   };
 
+  // Helper function to calculate financial data for a specific period
+  const calculateFinancialData = (start, end, paymentsData, revenuesData, expensesData) => {
+    const filteredPayments = paymentsData.filter(payment => {
+      const payDate = new Date(payment.payment_date);
+      return payDate >= start && payDate <= end && payment.status === 'paid';
+    });
+
+    const filteredRevenues = revenuesData.filter(revenue => {
+      const revDate = new Date(revenue.revenue_date || revenue.date);
+      return revDate >= start && revDate <= end;
+    });
+
+    const filteredExpenses = expensesData.filter(expense => {
+      const expDate = new Date(expense.expense_date || expense.date);
+      return expDate >= start && expDate <= end;
+    });
+    
+    // Calculate REVENUES
+    const revenuePayments = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    const revenueExtras = filteredRevenues.filter(r => r.category === 'revenueExtras').reduce((sum, revenue) => sum + revenue.amount, 0);
+    const revenueArticles = filteredRevenues.filter(r => r.category === 'textil').reduce((sum, revenue) => sum + revenue.amount, 0);
+    const revenueEquipment = filteredRevenues.filter(r => r.category === 'equipment').reduce((sum, revenue) => sum + revenue.amount, 0);
+    const totalRevenue = revenuePayments + revenueExtras + revenueArticles + revenueEquipment;
+    
+    // Calculate EXPENSES
+    const expenseFixed = filteredExpenses.filter(e => ['rent', 'energy'].includes(e.category)).reduce((sum, expense) => sum + expense.amount, 0);
+    const expenseVariable = filteredExpenses.filter(e => ['maintenance', 'teachers', 'collaborators', 'extras'].includes(e.category)).reduce((sum, expense) => sum + expense.amount, 0);
+    const expenseArticles = filteredExpenses.filter(e => e.category === 'textil').reduce((sum, expense) => sum + expense.amount, 0);
+    const expenseEquipment = filteredExpenses.filter(e => e.category === 'equipment').reduce((sum, expense) => sum + expense.amount, 0);
+    const totalExpense = expenseFixed + expenseVariable + expenseArticles + expenseEquipment;
+    
+    const netTotal = totalRevenue - totalExpense;
+    
+    return {
+      revenuePayments,
+      revenueExtras,
+      revenueArticles,
+      revenueEquipment,
+      totalRevenue,
+      expenseFixed,
+      expenseVariable,
+      expenseArticles,
+      expenseEquipment,
+      totalExpense,
+      netTotal
+    };
+  };
+
   const generateFinancialReport = async (start, end) => {
     try {
-      // Filter data within date range
-      const filteredPayments = payments.filter(payment => {
-        const payDate = new Date(payment.payment_date);
-        return payDate >= start && payDate <= end && payment.status === 'paid';
-      });
-
-      const filteredRevenues = revenues.filter(revenue => {
-        const revDate = new Date(revenue.revenue_date || revenue.date);
-        return revDate >= start && revDate <= end;
-      });
-
-      const filteredExpenses = expenses.filter(expense => {
-        const expDate = new Date(expense.expense_date || expense.date);
-        return expDate >= start && expDate <= end;
-      });
+      // Calculate current period data
+      const currentData = calculateFinancialData(start, end, payments, revenues, expenses);
       
       // Calculate REVENUES according to new structure
       const revenuePayments = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
