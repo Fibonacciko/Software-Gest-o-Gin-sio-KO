@@ -1761,6 +1761,110 @@ const Reports = ({ language, translations }) => {
               </Card>
             </div>
           )}
+          
+          {/* Comparison Table */}
+          {reportData.comparison && reportData.type === 'financial' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tabela Comparativa - {new Date().getFullYear()} vs {comparisonYear}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gray-300">
+                        <th className="text-left p-3 font-semibold">{t[language].metric || 'Métrica'}</th>
+                        <th className="text-right p-3 font-semibold">{t[language].currentPeriod}</th>
+                        <th className="text-right p-3 font-semibold">{t[language].previousPeriod}</th>
+                        <th className="text-right p-3 font-semibold">{t[language].variation}</th>
+                        <th className="text-right p-3 font-semibold">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b hover:bg-gray-50">
+                        <td className="p-3 font-medium">{t[language].totalRevenue}</td>
+                        <td className="text-right p-3 text-green-600 font-semibold">
+                          €{reportData.stats.totalRevenue?.toFixed(2)}
+                        </td>
+                        <td className="text-right p-3 text-gray-600">
+                          €{reportData.comparison.data.totalRevenue?.toFixed(2)}
+                        </td>
+                        <td className={`text-right p-3 font-semibold ${
+                          reportData.comparison.comparisons.totalRevenue.absolute >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {reportData.comparison.comparisons.totalRevenue.absolute >= 0 ? '+' : ''}
+                          €{reportData.comparison.comparisons.totalRevenue.absolute?.toFixed(2)}
+                        </td>
+                        <td className={`text-right p-3 font-semibold ${
+                          reportData.comparison.comparisons.totalRevenue.percentage >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {reportData.comparison.comparisons.totalRevenue.percentage >= 0 ? '+' : ''}
+                          {reportData.comparison.comparisons.totalRevenue.percentage?.toFixed(1)}%
+                        </td>
+                      </tr>
+                      
+                      <tr className="border-b hover:bg-gray-50">
+                        <td className="p-3 font-medium">{t[language].totalExpense}</td>
+                        <td className="text-right p-3 text-red-600 font-semibold">
+                          €{reportData.stats.totalExpense?.toFixed(2)}
+                        </td>
+                        <td className="text-right p-3 text-gray-600">
+                          €{reportData.comparison.data.totalExpense?.toFixed(2)}
+                        </td>
+                        <td className={`text-right p-3 font-semibold ${
+                          reportData.comparison.comparisons.totalExpense.absolute >= 0 ? 'text-red-600' : 'text-green-600'
+                        }`}>
+                          {reportData.comparison.comparisons.totalExpense.absolute >= 0 ? '+' : ''}
+                          €{reportData.comparison.comparisons.totalExpense.absolute?.toFixed(2)}
+                        </td>
+                        <td className={`text-right p-3 font-semibold ${
+                          reportData.comparison.comparisons.totalExpense.percentage >= 0 ? 'text-red-600' : 'text-green-600'
+                        }`}>
+                          {reportData.comparison.comparisons.totalExpense.percentage >= 0 ? '+' : ''}
+                          {reportData.comparison.comparisons.totalExpense.percentage?.toFixed(1)}%
+                        </td>
+                      </tr>
+                      
+                      <tr className="border-b-2 border-gray-300 bg-blue-50 hover:bg-blue-100">
+                        <td className="p-3 font-bold">{t[language].netRevenue}</td>
+                        <td className={`text-right p-3 font-bold ${
+                          reportData.stats.netTotal >= 0 ? 'text-blue-600' : 'text-orange-600'
+                        }`}>
+                          €{reportData.stats.netTotal?.toFixed(2)}
+                        </td>
+                        <td className="text-right p-3 text-gray-600 font-semibold">
+                          €{reportData.comparison.data.netTotal?.toFixed(2)}
+                        </td>
+                        <td className={`text-right p-3 font-bold ${
+                          reportData.comparison.comparisons.netTotal.absolute >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {reportData.comparison.comparisons.netTotal.absolute >= 0 ? '+' : ''}
+                          €{reportData.comparison.comparisons.netTotal.absolute?.toFixed(2)}
+                        </td>
+                        <td className={`text-right p-3 font-bold ${
+                          reportData.comparison.comparisons.netTotal.percentage >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {reportData.comparison.comparisons.netTotal.percentage >= 0 ? '+' : ''}
+                          {reportData.comparison.comparisons.netTotal.percentage?.toFixed(1)}%
+                        </td>
+                      </tr>
+                      
+                      {reportData.comparison.comparisons.projection && (
+                        <tr className="bg-purple-50">
+                          <td className="p-3 font-medium text-purple-700">
+                            {t[language].projection} - {t[language].nextPeriod}
+                          </td>
+                          <td className="text-right p-3 text-purple-600 font-semibold" colSpan="4">
+                            {t[language].netRevenue}: €{reportData.comparison.comparisons.projection.netTotal?.toFixed(2)}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       ) : (
         <Card>
