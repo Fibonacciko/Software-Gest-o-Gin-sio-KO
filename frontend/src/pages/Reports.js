@@ -887,10 +887,9 @@ const Reports = ({ language, translations }) => {
                   onChange={(e) => setEndDate(e.target.value)}
                   data-testid="end-date"
                 />
-                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
