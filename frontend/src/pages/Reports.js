@@ -526,16 +526,16 @@ const Reports = ({ language, translations }) => {
         } : null,
         charts: { 
           revenues: {
-            [`${t[language || 'pt'].revenuePayments}`]: revenuePayments,
-            [`${t[language || 'pt'].revenueExtras}`]: revenueExtras,
-            [`${t[language || 'pt'].revenueArticles}`]: revenueArticles,
-            [`${t[language || 'pt'].revenueEquipment}`]: revenueEquipment
+            [`${t[language || 'pt'].revenuePayments}`]: currentData.revenuePayments,
+            [`${t[language || 'pt'].revenueExtras}`]: currentData.revenueExtras,
+            [`${t[language || 'pt'].revenueArticles}`]: currentData.revenueArticles,
+            [`${t[language || 'pt'].revenueEquipment}`]: currentData.revenueEquipment
           },
           expenses: {
-            [`${t[language || 'pt'].expenseFixed}`]: expenseFixed,
-            [`${t[language || 'pt'].expenseVariable}`]: expenseVariable,
-            [`${t[language || 'pt'].expenseArticles}`]: expenseArticles,
-            [`${t[language || 'pt'].expenseEquipment}`]: expenseEquipment
+            [`${t[language || 'pt'].expenseFixed}`]: currentData.expenseFixed,
+            [`${t[language || 'pt'].expenseVariable}`]: currentData.expenseVariable,
+            [`${t[language || 'pt'].expenseArticles}`]: currentData.expenseArticles,
+            [`${t[language || 'pt'].expenseEquipment}`]: currentData.expenseEquipment
           }
         }
       });
