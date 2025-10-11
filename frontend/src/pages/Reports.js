@@ -513,18 +513,15 @@ const Reports = ({ language, translations }) => {
       setReportData({
         type: 'financial',
         stats: { 
-          revenuePayments,
-          revenueExtras,
-          revenueArticles,
-          revenueEquipment,
-          expenseFixed,
-          expenseVariable,
-          expenseArticles,
-          expenseEquipment,
-          totalRevenues,
-          totalExpenses,
-          netTotal 
+          ...currentData,
+          totalRevenues: currentData.totalRevenue,
+          totalExpenses: currentData.totalExpense
         },
+        comparison: enableComparison ? {
+          data: comparisonDataResult,
+          comparisons,
+          alerts
+        } : null,
         charts: { 
           revenues: {
             [`${t[language || 'pt'].revenuePayments}`]: revenuePayments,
