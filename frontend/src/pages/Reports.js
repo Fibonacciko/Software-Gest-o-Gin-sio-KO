@@ -225,6 +225,7 @@ const Reports = ({ language, translations }) => {
       bestMonth: 'Best month',
       projection: 'Projection',
       nextPeriod: 'Next Period',
+      metric: 'Metric',
       // Financial metrics - New structure  
       revenuePayments: 'Revenue Payments',
       revenueExtras: 'Revenue Extras',
