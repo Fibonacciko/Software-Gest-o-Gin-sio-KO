@@ -1538,6 +1538,81 @@ const Payments = ({ language, translations }) => {
         </DialogContent>
       </Dialog>
 
+      {/* View Membership Payments Dialog */}
+      <Dialog open={showViewPaymentsDialog} onOpenChange={setShowViewPaymentsDialog}>
+        <DialogContent className="max-w-6xl">
+          <DialogHeader>
+            <DialogTitle>{t[language].membershipPayments}</DialogTitle>
+          </DialogHeader>
+          
+          {/* Payments Table */}
+          {payments && payments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-4 font-medium text-gray-600">{t[language].memberNumber}</th>
+                    <th className="text-left p-4 font-medium text-gray-600">{t[language].memberName}</th>
+                    <th className="text-left p-4 font-medium text-gray-600">{t[language].amount}</th>
+                    <th className="text-left p-4 font-medium text-gray-600">{t[language].paymentDate}</th>
+                    <th className="text-left p-4 font-medium text-gray-600">{t[language].status}</th>
+                    <th className="text-left p-4 font-medium text-gray-600">{t[language].description}</th>
+                    {isAdmin() && <th className="text-left p-4 font-medium text-gray-600">Ações</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments
+                    .filter(payment => payment.payment_method === 'membership')
+                    .map((payment) => (
+                      <tr key={payment.id} className="border-b hover:bg-gray-50">
+                        <td className="p-4">
+                          {payment.member?.member_number || 'N/A'}
+                        </td>
+                        <td className="p-4">
+                          {payment.member?.name || 'Membro eliminado'}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-semibold text-green-600">
+                            €{payment.amount?.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('pt-PT') : 'N/A'}
+                        </td>
+                        <td className="p-4">
+                          <Badge variant={getStatusVariant(payment.status)}>
+                            {t[language][payment.status] || payment.status}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-sm text-gray-600">
+                          {payment.description || 'N/A'}
+                        </td>
+                        {isAdmin() && (
+                          <td className="p-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeletePayment(payment.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <DollarSign size={48} className="mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-600">{t[language].noPayments}</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Recent Payments */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
