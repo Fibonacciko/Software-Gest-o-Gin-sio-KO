@@ -755,29 +755,64 @@ const Reports = ({ language, translations }) => {
               </Select>
             </div>
             
-            {dateRange === 'custom' && (
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t[language].startDate}
-                  </label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    data-testid="start-date"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t[language].endDate}
-                  </label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    data-testid="end-date"
-                  />
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="enable-comparison"
+                checked={enableComparison}
+                onChange={(e) => setEnableComparison(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="enable-comparison" className="text-sm font-medium text-gray-700">
+                {t[language].compareHomologous}
+              </label>
+            </div>
+          </div>
+          
+          {/* Comparison Year Selector */}
+          {enableComparison && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t[language].comparisonYear}
+              </label>
+              <Select value={comparisonYear.toString()} onValueChange={(val) => setComparisonYear(parseInt(val))}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[...Array(5)].map((_, i) => {
+                    const year = new Date().getFullYear() - i - 1;
+                    return <SelectItem key={year} value={year.toString()}>{year}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {/* Custom Date Range */}
+          {dateRange === 'custom' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t[language].startDate}
+                </label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  data-testid="start-date"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t[language].endDate}
+                </label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  data-testid="end-date"
+                />
                 </div>
               </div>
             )}
