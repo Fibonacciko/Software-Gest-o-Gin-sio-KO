@@ -1124,13 +1124,18 @@ const Payments = ({ language, translations }) => {
                 </DialogContent>
               </Dialog>
 
-              {/* "Consultar Despesas" button - Disabled for Staff users */}
-              <Dialog open={showViewExpensesDialog} onOpenChange={setShowViewExpensesDialog}>
+              {/* "Consultar Despesas" button - Non-clickable for Staff users */}
+              <Dialog open={showViewExpensesDialog} onOpenChange={(open) => {
+                // Only allow opening if user is Admin
+                if (open && !isAdmin()) {
+                  return;
+                }
+                setShowViewExpensesDialog(open);
+              }}>
                 <DialogTrigger asChild>
                   <Button 
-                    className="bg-slate-400 hover:bg-slate-500 text-white w-full text-[10px] py-0.5 px-1.5 h-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-slate-400 hover:bg-slate-500 text-white w-full text-[10px] py-0.5 px-1.5 h-6"
                     size="sm"
-                    disabled={!isAdmin()}
                   >
                     <Eye className="mr-0.5" size={10} />
                     {t[language].viewExpensesBtn}
