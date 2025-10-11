@@ -319,13 +319,13 @@ async def main():
     # Criar membros
     members = await create_members(db, activity_map, num_members=100)
     
-    # Criar stock items
-    stock_items = await create_stock_items(db)
-    
     # === OUTUBRO 2024 (Período Anterior) ===
     print("\n" + "=" * 60)
     print("📅 PERÍODO ANTERIOR: OUTUBRO 2024")
     print("=" * 60)
+    
+    # Stock com menos vendas (80% do normal)
+    await create_stock_items(db, 2024, sold_quantity_multiplier=0.8)
     
     await create_payments(db, members, 2024, 10)
     await create_expenses(db, 2024, 10)
@@ -336,6 +336,9 @@ async def main():
     print("\n" + "=" * 60)
     print("📅 PERÍODO ATUAL: OUTUBRO 2025")
     print("=" * 60)
+    
+    # Stock com mais vendas (120% do normal)
+    await create_stock_items(db, 2025, sold_quantity_multiplier=1.2)
     
     await create_payments(db, members, 2025, 10)
     await create_expenses(db, 2025, 10)
