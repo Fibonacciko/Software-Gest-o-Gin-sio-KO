@@ -292,6 +292,52 @@ const Reports = ({ language, translations }) => {
     }
   };
 
+  // Helper function to calculate comparison metrics
+  const calculateComparison = (current, previous) => {
+    if (!previous || previous === 0) {
+      return {
+        absolute: current,
+        percentage: current > 0 ? 100 : 0,
+        trend: current > 0 ? 'increase' : 'stable'
+      };
+    }
+    
+    const absolute = current - previous;
+    const percentage = ((absolute / previous) * 100);
+    let trend = 'stable';
+    
+    if (percentage > 5) trend = 'increase';
+    else if (percentage < -5) trend = 'decrease';
+    
+    return { absolute, percentage, trend };
+  };
+
+  // Helper function to generate alerts
+  const generateAlerts = (comparison, metric) => {
+    const alerts = [];
+    
+    if (comparison.percentage > 20) {
+      alerts.push({
+        type: 'success',
+        message: `${t[language].significantGrowth}: ${metric} +${comparison.percentage.toFixed(1)}%`
+      });
+    } else if (comparison.percentage < -20) {
+      alerts.push({
+        type: 'warning',
+        message: `${t[language].significantDecline}: ${metric} ${comparison.percentage.toFixed(1)}%`
+      });
+    }
+    
+    return alerts;
+  };
+
+  // Helper function to calculate projection
+  const calculateProjection = (current, previous) => {
+    if (!previous || previous === 0) return current;
+    const growthRate = (current - previous) / previous;
+    return current * (1 + growthRate);
+  };
+
   const getDateRange = () => {
     const now = new Date();
     let start, end;
