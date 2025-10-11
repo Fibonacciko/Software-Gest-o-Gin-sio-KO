@@ -746,25 +746,34 @@ const Reports = ({ language, translations }) => {
   const generateStockReport = async () => {
     try {
       const response = await axios.get(`${API}/inventory`);
-      const inventory = response.data;
+      const allInventory = response.data;
+      
+      // Filter inventory by year based on created_at
+      const currentYear = new Date().getFullYear();
+      const currentInventory = allInventory.filter(item => {
+        if (item.created_at) {
+          const itemYear = new Date(item.created_at).getFullYear();
+          return itemYear === currentYear;
+        }
+        return true; // Include items without created_at
+      });
       
       // Calculate current period data
-      const currentData = calculateStockData(inventory);
+      const currentData = calculateStockData(currentInventory);
       
-      // For stock, comparison is simpler - we compare current stock state
-      // In real scenario, you'd track historical stock data
+      // For comparison, filter by comparison year
       let comparisonDataResult = null;
       let comparisons = null;
       let alerts = [];
       
       if (enableComparison) {
-        // Since we don't have historical stock data, we'll simulate 
-        // by reducing values by 10-20% for demonstration
-        // In production, you'd fetch actual historical data
-        const historicalInventory = inventory.map(item => ({
-          ...item,
-          sold_quantity: Math.floor((item.sold_quantity || 0) * 0.8)
-        }));
+        const historicalInventory = allInventory.filter(item => {
+          if (item.created_at) {
+            const itemYear = new Date(item.created_at).getFullYear();
+            return itemYear === comparisonYear;
+          }
+          return false;
+        });
         
         comparisonDataResult = calculateStockData(historicalInventory);
         
