@@ -1728,7 +1728,98 @@ const Reports = ({ language, translations }) => {
 
           {/* Stock Charts - Textil and Equipment */}
           {reportData.type === 'stock' && reportData.charts && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <>
+              {/* Comparison Cards for Stock */}
+              {reportData.comparison && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  {/* Invested Value Card */}
+                  <Card className="border-blue-200">
+                    <CardContent className="p-4">
+                      <div className="text-sm text-gray-600 mb-1">Valor Investido</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        €{reportData.stats.investedValue?.toFixed(2) || '0.00'}
+                      </div>
+                      {reportData.comparison.comparisons.investedValue && (
+                        <div className={`text-sm font-medium mt-2 flex items-center gap-1 ${
+                          reportData.comparison.comparisons.investedValue.trend === 'increase' ? 'text-red-600' :
+                          reportData.comparison.comparisons.investedValue.trend === 'decrease' ? 'text-green-600' :
+                          'text-gray-600'
+                        }`}>
+                          {reportData.comparison.comparisons.investedValue.trend === 'increase' ? '↑' :
+                           reportData.comparison.comparisons.investedValue.trend === 'decrease' ? '↓' : '→'}
+                          <span>
+                            {reportData.comparison.comparisons.investedValue.percentage > 0 ? '+' : ''}
+                            {reportData.comparison.comparisons.investedValue.percentage.toFixed(1)}% 
+                          </span>
+                          <span className="text-gray-500">{t[language].vsLastYear}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Received Value Card */}
+                  <Card className="border-green-200">
+                    <CardContent className="p-4">
+                      <div className="text-sm text-gray-600 mb-1">Valor Vendido</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        €{reportData.stats.receivedValue?.toFixed(2) || '0.00'}
+                      </div>
+                      {reportData.comparison.comparisons.receivedValue && (
+                        <div className={`text-sm font-medium mt-2 flex items-center gap-1 ${
+                          reportData.comparison.comparisons.receivedValue.trend === 'increase' ? 'text-green-600' :
+                          reportData.comparison.comparisons.receivedValue.trend === 'decrease' ? 'text-red-600' :
+                          'text-gray-600'
+                        }`}>
+                          {reportData.comparison.comparisons.receivedValue.trend === 'increase' ? '↑' :
+                           reportData.comparison.comparisons.receivedValue.trend === 'decrease' ? '↓' : '→'}
+                          <span>
+                            {reportData.comparison.comparisons.receivedValue.percentage > 0 ? '+' : ''}
+                            {reportData.comparison.comparisons.receivedValue.percentage.toFixed(1)}%
+                          </span>
+                          <span className="text-gray-500">{t[language].vsLastYear}</span>
+                        </div>
+                      )}
+                      {reportData.comparison.comparisons.projection && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {t[language].projection}: €{reportData.comparison.comparisons.projection.receivedValue?.toFixed(2)}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Net Value Card */}
+                  <Card className="border-purple-200">
+                    <CardContent className="p-4">
+                      <div className="text-sm text-gray-600 mb-1">Margem de Lucro</div>
+                      <div className={`text-2xl font-bold ${reportData.stats.netValue >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                        €{reportData.stats.netValue?.toFixed(2) || '0.00'}
+                      </div>
+                      {reportData.comparison.comparisons.netValue && (
+                        <div className={`text-sm font-medium mt-2 flex items-center gap-1 ${
+                          reportData.comparison.comparisons.netValue.trend === 'increase' ? 'text-green-600' :
+                          reportData.comparison.comparisons.netValue.trend === 'decrease' ? 'text-red-600' :
+                          'text-gray-600'
+                        }`}>
+                          {reportData.comparison.comparisons.netValue.trend === 'increase' ? '↑' :
+                           reportData.comparison.comparisons.netValue.trend === 'decrease' ? '↓' : '→'}
+                          <span>
+                            {reportData.comparison.comparisons.netValue.percentage > 0 ? '+' : ''}
+                            {reportData.comparison.comparisons.netValue.percentage.toFixed(1)}%
+                          </span>
+                          <span className="text-gray-500">{t[language].vsLastYear}</span>
+                        </div>
+                      )}
+                      {reportData.comparison.comparisons.projection && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {t[language].projection}: €{reportData.comparison.comparisons.projection.netValue?.toFixed(2)}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
               {/* Textil Chart */}
               <Card>
                 <CardHeader>
