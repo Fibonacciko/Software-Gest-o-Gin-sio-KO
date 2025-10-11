@@ -225,33 +225,46 @@ async def create_revenues_extras(db, year, month):
     print(f"✅ {len(revenues)} receitas extras criadas - Total: €{total_revenue:.2f}")
     return revenues
 
-async def create_stock_items(db):
-    """Cria items de stock"""
-    print("\n📦 Criando items de stock...")
+async def create_stock_items(db, year, sold_quantity_multiplier=1.0):
+    """Cria items de stock com vendas históricas"""
+    print(f"\n📦 Criando items de stock para {year}...")
     
     items = [
-        {"name": "T-shirt Ginásio KO", "category": "textil", "price": 15.00, "purchase_price": 8.00, "quantity": 50},
-        {"name": "Calção de Treino", "category": "textil", "price": 20.00, "purchase_price": 10.00, "quantity": 30},
-        {"name": "Luvas de Boxe", "category": "equipment", "price": 35.00, "purchase_price": 18.00, "quantity": 20},
-        {"name": "Protetor Bucal", "category": "equipment", "price": 10.00, "purchase_price": 4.00, "quantity": 40},
-        {"name": "Bandas Elásticas", "category": "equipment", "price": 12.00, "purchase_price": 6.00, "quantity": 25},
+        {"name": "T-shirt Ginásio KO", "category": "textil", "price": 15.00, "purchase_price": 8.00, "quantity": 50, "base_sold": 25},
+        {"name": "Calção de Treino", "category": "textil", "price": 20.00, "purchase_price": 10.00, "quantity": 30, "base_sold": 15},
+        {"name": "Luvas de Boxe", "category": "equipment", "price": 35.00, "purchase_price": 18.00, "quantity": 20, "base_sold": 12},
+        {"name": "Protetor Bucal", "category": "equipment", "price": 10.00, "purchase_price": 4.00, "quantity": 40, "base_sold": 30},
+        {"name": "Bandas Elásticas", "category": "equipment", "price": 12.00, "purchase_price": 6.00, "quantity": 25, "base_sold": 18},
     ]
     
     stock_items = []
     for item in items:
+        # Calculate sold quantity with variation
+        sold_qty = int(item['base_sold'] * sold_quantity_multiplier)
+        
         stock_item = {
             "id": str(uuid.uuid4()),
             "name": item['name'],
             "category": item['category'],
             "price": item['price'],
+            "sale_price": item['price'],  # Add sale_price
             "purchase_price": item['purchase_price'],
             "quantity": item['quantity'],
-            "created_at": datetime.now().isoformat()
+            "sold_quantity": sold_qty,
+            "created_at": datetime(year, 1, 1).isoformat()
         }
         stock_items.append(stock_item)
     
     await db.stock.insert_many(stock_items)
+    
+    total_invested = sum(item['quantity'] * item['purchase_price'] for item in items)
+    total_sold = sum(int(item['base_sold'] * sold_quantity_multiplier) * item['price'] for item in items)
+    
     print(f"✅ {len(stock_items)} items de stock criados")
+    print(f"   Valor investido: €{total_invested:.2f}")
+    print(f"   Valor vendido: €{total_sold:.2f}")
+    print(f"   Margem: €{total_sold - total_invested:.2f}")
+    
     return stock_items
 
 async def create_attendance(db, members, year, month):
