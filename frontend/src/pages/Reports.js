@@ -902,6 +902,112 @@ const Reports = ({ language, translations }) => {
         </Card>
       ) : reportData ? (
         <div className="space-y-6">
+          
+          {/* Comparison Cards - Show alerts and key metrics */}
+          {reportData.comparison && reportData.comparison.alerts && reportData.comparison.alerts.length > 0 && (
+            <div className="space-y-3">
+              {reportData.comparison.alerts.map((alert, idx) => (
+                <Card key={idx} className={alert.type === 'success' ? 'border-green-500 bg-green-50' : 'border-orange-500 bg-orange-50'}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      {alert.type === 'success' ? (
+                        <span className="text-2xl">📈</span>
+                      ) : (
+                        <span className="text-2xl">⚠️</span>
+                      )}
+                      <span className="font-medium">{alert.message}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          
+          {/* Comparison Summary Cards */}
+          {reportData.comparison && reportData.type === 'financial' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Total Revenue Card */}
+              <Card className="border-green-200">
+                <CardContent className="p-4">
+                  <div className="text-sm text-gray-600 mb-1">{t[language].totalRevenue}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    €{reportData.stats.totalRevenue?.toFixed(2) || '0.00'}
+                  </div>
+                  {reportData.comparison.comparisons.totalRevenue && (
+                    <div className={`text-sm font-medium mt-2 flex items-center gap-1 ${
+                      reportData.comparison.comparisons.totalRevenue.trend === 'increase' ? 'text-green-600' :
+                      reportData.comparison.comparisons.totalRevenue.trend === 'decrease' ? 'text-red-600' :
+                      'text-gray-600'
+                    }`}>
+                      {reportData.comparison.comparisons.totalRevenue.trend === 'increase' ? '↑' :
+                       reportData.comparison.comparisons.totalRevenue.trend === 'decrease' ? '↓' : '→'}
+                      <span>
+                        {reportData.comparison.comparisons.totalRevenue.percentage > 0 ? '+' : ''}
+                        {reportData.comparison.comparisons.totalRevenue.percentage.toFixed(1)}% 
+                      </span>
+                      <span className="text-gray-500">{t[language].vsLastYear}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* Total Expense Card */}
+              <Card className="border-red-200">
+                <CardContent className="p-4">
+                  <div className="text-sm text-gray-600 mb-1">{t[language].totalExpense}</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    €{reportData.stats.totalExpense?.toFixed(2) || '0.00'}
+                  </div>
+                  {reportData.comparison.comparisons.totalExpense && (
+                    <div className={`text-sm font-medium mt-2 flex items-center gap-1 ${
+                      reportData.comparison.comparisons.totalExpense.trend === 'increase' ? 'text-red-600' :
+                      reportData.comparison.comparisons.totalExpense.trend === 'decrease' ? 'text-green-600' :
+                      'text-gray-600'
+                    }`}>
+                      {reportData.comparison.comparisons.totalExpense.trend === 'increase' ? '↑' :
+                       reportData.comparison.comparisons.totalExpense.trend === 'decrease' ? '↓' : '→'}
+                      <span>
+                        {reportData.comparison.comparisons.totalExpense.percentage > 0 ? '+' : ''}
+                        {reportData.comparison.comparisons.totalExpense.percentage.toFixed(1)}%
+                      </span>
+                      <span className="text-gray-500">{t[language].vsLastYear}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* Net Total Card */}
+              <Card className="border-blue-200">
+                <CardContent className="p-4">
+                  <div className="text-sm text-gray-600 mb-1">{t[language].netRevenue}</div>
+                  <div className={`text-2xl font-bold ${reportData.stats.netTotal >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                    €{reportData.stats.netTotal?.toFixed(2) || '0.00'}
+                  </div>
+                  {reportData.comparison.comparisons.netTotal && (
+                    <div className={`text-sm font-medium mt-2 flex items-center gap-1 ${
+                      reportData.comparison.comparisons.netTotal.trend === 'increase' ? 'text-green-600' :
+                      reportData.comparison.comparisons.netTotal.trend === 'decrease' ? 'text-red-600' :
+                      'text-gray-600'
+                    }`}>
+                      {reportData.comparison.comparisons.netTotal.trend === 'increase' ? '↑' :
+                       reportData.comparison.comparisons.netTotal.trend === 'decrease' ? '↓' : '→'}
+                      <span>
+                        {reportData.comparison.comparisons.netTotal.percentage > 0 ? '+' : ''}
+                        {reportData.comparison.comparisons.netTotal.percentage.toFixed(1)}%
+                      </span>
+                      <span className="text-gray-500">{t[language].vsLastYear}</span>
+                    </div>
+                  )}
+                  {reportData.comparison.comparisons.projection && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {t[language].projection}: €{reportData.comparison.comparisons.projection.netTotal?.toFixed(2)}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
