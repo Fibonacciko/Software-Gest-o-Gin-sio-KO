@@ -263,7 +263,7 @@ const Reports = ({ language, translations }) => {
     if (members.length > 0) {
       generateReport();
     }
-  }, [reportType, dateRange, startDate, endDate, members, expenses, revenues]);
+  }, [reportType, dateRange, startDate, endDate, members, expenses, revenues, enableComparison, comparisonYear]);
 
   const fetchAllData = async () => {
     try {
