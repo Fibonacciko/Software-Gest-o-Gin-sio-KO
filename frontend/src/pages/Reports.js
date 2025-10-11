@@ -1015,13 +1015,59 @@ const Reports = ({ language, translations }) => {
             {reportData.type === 'financial' && reportData.stats && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Análise Financeira Completa (€)</CardTitle>
+                  <CardTitle>
+                    Análise Financeira Completa (€)
+                    {reportData.comparison && (
+                      <span className="text-sm font-normal text-gray-500 ml-2">
+                        vs {comparisonYear}
+                      </span>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Bar
                     data={{
                       labels: ['Receita Total', 'Despesa Total', 'Total Líquido'],
-                      datasets: [{
+                      datasets: reportData.comparison ? [
+                        {
+                          label: `${new Date().getFullYear()} (Atual)`,
+                          data: [
+                            reportData.stats.totalRevenues || 0,
+                            reportData.stats.totalExpenses || 0,
+                            reportData.stats.netTotal || 0
+                          ],
+                          backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            reportData.stats.netTotal >= 0 ? 'rgba(59, 130, 246, 0.8)' : 'rgba(249, 115, 22, 0.8)'
+                          ],
+                          borderColor: [
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(239, 68, 68, 1)',
+                            reportData.stats.netTotal >= 0 ? 'rgba(59, 130, 246, 1)' : 'rgba(249, 115, 22, 1)'
+                          ],
+                          borderWidth: 2
+                        },
+                        {
+                          label: `${comparisonYear} (Anterior)`,
+                          data: [
+                            reportData.comparison.data.totalRevenue || 0,
+                            reportData.comparison.data.totalExpense || 0,
+                            reportData.comparison.data.netTotal || 0
+                          ],
+                          backgroundColor: [
+                            'rgba(34, 197, 94, 0.4)',
+                            'rgba(239, 68, 68, 0.4)',
+                            reportData.comparison.data.netTotal >= 0 ? 'rgba(59, 130, 246, 0.4)' : 'rgba(249, 115, 22, 0.4)'
+                          ],
+                          borderColor: [
+                            'rgba(34, 197, 94, 0.6)',
+                            'rgba(239, 68, 68, 0.6)',
+                            reportData.comparison.data.netTotal >= 0 ? 'rgba(59, 130, 246, 0.6)' : 'rgba(249, 115, 22, 0.6)'
+                          ],
+                          borderWidth: 2
+                        }
+                      ] : [{
                         label: 'Valores (€)',
                         data: [
                           reportData.stats.totalRevenues || 0,
@@ -1029,18 +1075,14 @@ const Reports = ({ language, translations }) => {
                           reportData.stats.netTotal || 0
                         ],
                         backgroundColor: [
-                          'rgba(34, 197, 94, 0.8)',   // Green for revenues
-                          'rgba(239, 68, 68, 0.8)',   // Red for expenses
-                          reportData.stats.netTotal >= 0 
-                            ? 'rgba(59, 130, 246, 0.8)'  // Blue for positive net
-                            : 'rgba(249, 115, 22, 0.8)'  // Orange for negative net
+                          'rgba(34, 197, 94, 0.8)',
+                          'rgba(239, 68, 68, 0.8)',
+                          reportData.stats.netTotal >= 0 ? 'rgba(59, 130, 246, 0.8)' : 'rgba(249, 115, 22, 0.8)'
                         ],
                         borderColor: [
                           'rgba(34, 197, 94, 1)',
                           'rgba(239, 68, 68, 1)',
-                          reportData.stats.netTotal >= 0 
-                            ? 'rgba(59, 130, 246, 1)'
-                            : 'rgba(249, 115, 22, 1)'
+                          reportData.stats.netTotal >= 0 ? 'rgba(59, 130, 246, 1)' : 'rgba(249, 115, 22, 1)'
                         ],
                         borderWidth: 2
                       }]
