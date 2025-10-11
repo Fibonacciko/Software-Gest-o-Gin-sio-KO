@@ -140,6 +140,7 @@ const Reports = ({ language, translations }) => {
       bestMonth: 'Melhor mês',
       projection: 'Projeção',
       nextPeriod: 'Próximo Período',
+      metric: 'Métrica',
       premium: 'Premium',
       vip: 'VIP',
       active: 'Ativo',
