@@ -1407,6 +1407,71 @@ const Reports = ({ language, translations }) => {
                 />
               </div>
               
+              {/* Comparison Cards for Modalities */}
+              {reportData.comparison && reportData.type === 'member' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Active Members Card */}
+                  <Card className="border-blue-200">
+                    <CardContent className="p-4">
+                      <div className="text-sm text-gray-600 mb-1">Membros Ativos</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {reportData.stats.activeMembers}
+                      </div>
+                      {reportData.comparison.comparisons.totalActiveMembers && (
+                        <div className={`text-sm font-medium mt-2 flex items-center gap-1 ${
+                          reportData.comparison.comparisons.totalActiveMembers.trend === 'increase' ? 'text-green-600' :
+                          reportData.comparison.comparisons.totalActiveMembers.trend === 'decrease' ? 'text-red-600' :
+                          'text-gray-600'
+                        }`}>
+                          {reportData.comparison.comparisons.totalActiveMembers.trend === 'increase' ? '↑' :
+                           reportData.comparison.comparisons.totalActiveMembers.trend === 'decrease' ? '↓' : '→'}
+                          <span>
+                            {reportData.comparison.comparisons.totalActiveMembers.percentage > 0 ? '+' : ''}
+                            {reportData.comparison.comparisons.totalActiveMembers.percentage.toFixed(1)}% 
+                          </span>
+                          <span className="text-gray-500">{t[language].vsLastYear}</span>
+                        </div>
+                      )}
+                      {reportData.comparison.comparisons.projection && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {t[language].projection}: {reportData.comparison.comparisons.projection.totalActiveMembers}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Revenue Card */}
+                  <Card className="border-green-200">
+                    <CardContent className="p-4">
+                      <div className="text-sm text-gray-600 mb-1">Receita de Mensalidades</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        €{reportData.stats.totalRevenue?.toFixed(2) || '0.00'}
+                      </div>
+                      {reportData.comparison.comparisons.totalRevenue && (
+                        <div className={`text-sm font-medium mt-2 flex items-center gap-1 ${
+                          reportData.comparison.comparisons.totalRevenue.trend === 'increase' ? 'text-green-600' :
+                          reportData.comparison.comparisons.totalRevenue.trend === 'decrease' ? 'text-red-600' :
+                          'text-gray-600'
+                        }`}>
+                          {reportData.comparison.comparisons.totalRevenue.trend === 'increase' ? '↑' :
+                           reportData.comparison.comparisons.totalRevenue.trend === 'decrease' ? '↓' : '→'}
+                          <span>
+                            {reportData.comparison.comparisons.totalRevenue.percentage > 0 ? '+' : ''}
+                            {reportData.comparison.comparisons.totalRevenue.percentage.toFixed(1)}%
+                          </span>
+                          <span className="text-gray-500">{t[language].vsLastYear}</span>
+                        </div>
+                      )}
+                      {reportData.comparison.comparisons.projection && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {t[language].projection}: €{reportData.comparison.comparisons.projection.totalRevenue?.toFixed(2)}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              
               {/* Gráficos de Modalidades */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico de Barras - Receitas por Modalidade */}
