@@ -2028,6 +2028,7 @@ const Reports = ({ language, translations }) => {
                 </CardContent>
               </Card>
             </div>
+            </>
           )}
           
           {/* Comparison Table */}
