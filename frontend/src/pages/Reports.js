@@ -475,46 +475,40 @@ const Reports = ({ language, translations }) => {
       // Calculate current period data
       const currentData = calculateFinancialData(start, end, payments, revenues, expenses);
       
-      // Calculate REVENUES according to new structure
-      const revenuePayments = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+      // Calculate comparison data if enabled
+      let comparisonDataResult = null;
+      let comparisons = null;
+      let alerts = [];
       
-      const revenueExtras = filteredRevenues
-        .filter(r => r.category === 'revenueExtras')
-        .reduce((sum, revenue) => sum + revenue.amount, 0);
-      
-      const revenueArticles = filteredRevenues
-        .filter(r => r.category === 'textil' || r.category === 'articles')
-        .reduce((sum, revenue) => sum + revenue.amount, 0);
+      if (enableComparison) {
+        const yearDiff = new Date().getFullYear() - comparisonYear;
+        const compStart = new Date(start);
+        compStart.setFullYear(compStart.getFullYear() - yearDiff);
+        const compEnd = new Date(end);
+        compEnd.setFullYear(compEnd.getFullYear() - yearDiff);
         
-      const revenueEquipment = filteredRevenues
-        .filter(r => r.category === 'equipment')
-        .reduce((sum, revenue) => sum + revenue.amount, 0);
-      
-      // Calculate EXPENSES according to new structure  
-      // Despesa Fixa: Renda, Energia, Professores, Colaboradores
-      const expenseFixed = filteredExpenses
-        .filter(e => ['rent', 'energy', 'teachers', 'collaborators'].includes(e.category))
-        .reduce((sum, expense) => sum + expense.amount, 0);
+        comparisonDataResult = calculateFinancialData(compStart, compEnd, payments, revenues, expenses);
         
-      // Despesa Variável: Textil, Equipamentos, Manutenção, Extras
-      const expenseVariable = filteredExpenses
-        .filter(e => ['textil', 'articles', 'equipment', 'maintenance', 'extras'].includes(e.category))
-        .reduce((sum, expense) => sum + expense.amount, 0);
+        // Calculate comparisons for each metric
+        comparisons = {
+          totalRevenue: calculateComparison(currentData.totalRevenue, comparisonDataResult.totalRevenue),
+          totalExpense: calculateComparison(currentData.totalExpense, comparisonDataResult.totalExpense),
+          netTotal: calculateComparison(currentData.netTotal, comparisonDataResult.netTotal),
+          revenuePayments: calculateComparison(currentData.revenuePayments, comparisonDataResult.revenuePayments)
+        };
         
-      // Despesa Textil (subset of variable for detailed view)
-      const expenseArticles = filteredExpenses
-        .filter(e => e.category === 'textil' || e.category === 'articles')
-        .reduce((sum, expense) => sum + expense.amount, 0);
+        // Generate alerts
+        alerts = [
+          ...generateAlerts(comparisons.totalRevenue, t[language].totalRevenue),
+          ...generateAlerts(comparisons.netTotal, t[language].netRevenue)
+        ];
         
-      // Despesa Equipamentos (subset of variable for detailed view)
-      const expenseEquipment = filteredExpenses
-        .filter(e => e.category === 'equipment')
-        .reduce((sum, expense) => sum + expense.amount, 0);
-      
-      // Calculate totals
-      const totalRevenues = revenuePayments + revenueExtras + revenueArticles + revenueEquipment;
-      const totalExpenses = expenseFixed + expenseVariable + expenseArticles + expenseEquipment;
-      const netTotal = totalRevenues - totalExpenses;
+        // Calculate projection
+        comparisons.projection = {
+          totalRevenue: calculateProjection(currentData.totalRevenue, comparisonDataResult.totalRevenue),
+          netTotal: calculateProjection(currentData.netTotal, comparisonDataResult.netTotal)
+        };
+      }
       
       setReportData({
         type: 'financial',
