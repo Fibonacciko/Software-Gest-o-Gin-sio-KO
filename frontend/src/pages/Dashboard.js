@@ -319,10 +319,6 @@ const Dashboard = ({ language, translations }) => {
     }
   }, []);
   
-  useEffect(() => {
-    calculateAlerts();
-  }, [calculateAlerts]);
-
   const fetchFilteredMembers = async () => {
     try {
       const response = await axios.get(`${API}/members?search=${searchTerm}`);
