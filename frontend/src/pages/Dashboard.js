@@ -517,6 +517,81 @@ const Dashboard = ({ language, translations }) => {
         </div>
       </div>
 
+      {/* Alerts Section */}
+      {(birthdayAlerts.length > 0 || anniversaryAlerts.length > 0) && (
+        <div className="mb-6">
+          <Card className="card-shadow border-l-4 border-l-orange-500">
+            <CardHeader>
+              <CardTitle className="flex items-center text-orange-600">
+                <Heart className="mr-2" />
+                {t[language].alerts}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Birthday Alerts */}
+                {birthdayAlerts.length > 0 && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
+                      🎂 {t[language].birthdays}
+                    </h3>
+                    <div className="space-y-2">
+                      {birthdayAlerts.map(member => (
+                        <div key={member.id} className="flex items-center justify-between bg-white p-3 rounded shadow-sm">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                              🎉
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{member.name}</p>
+                              <p className="text-sm text-gray-600">
+                                {t[language].birthdayToday} ({member.age} {t[language].yearsOld})
+                              </p>
+                            </div>
+                          </div>
+                          <Badge className="bg-blue-100 text-blue-800">
+                            #{member.member_number}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Membership Anniversary Alerts */}
+                {anniversaryAlerts.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 className="font-semibold text-green-900 mb-3 flex items-center">
+                      🏆 {t[language].membershipAnniversaries}
+                    </h3>
+                    <div className="space-y-2">
+                      {anniversaryAlerts.map(member => (
+                        <div key={member.id} className="flex items-center justify-between bg-white p-3 rounded shadow-sm">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                              ⭐
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{member.name}</p>
+                              <p className="text-sm text-gray-600">
+                                {t[language].completesYear} ({member.yearsOfMembership} {member.yearsOfMembership === 1 ? 'ano' : 'anos'})
+                              </p>
+                            </div>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800">
+                            #{member.member_number}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Attendance Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Total Attendance Count */}
