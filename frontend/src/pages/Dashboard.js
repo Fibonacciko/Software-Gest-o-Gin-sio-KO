@@ -253,6 +253,10 @@ const Dashboard = ({ language, translations }) => {
       console.log('Dashboard stats:', statsResponse.data);
       console.log('Dashboard today attendance:', attendanceWithMembers);
       console.log('🎯 Selected Activity State:', selectedActivity, 'Type:', typeof selectedActivity);
+      
+      // Calculate alerts after loading data
+      await calculateAlerts();
+      
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Erro ao carregar dados do painel');
