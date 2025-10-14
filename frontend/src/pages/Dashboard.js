@@ -257,6 +257,61 @@ const Dashboard = ({ language, translations }) => {
     }
   };
 
+  const calculateAlerts = useCallback(async () => {
+    try {
+      // Fetch all members
+      const response = await axios.get(`${API}/members`);
+      const allMembers = response.data;
+      
+      const today = new Date();
+      const todayMonth = today.getMonth() + 1; // 1-12
+      const todayDay = today.getDate();
+      const todayYear = today.getFullYear();
+      
+      // Birthday alerts
+      const birthdays = allMembers.filter(member => {
+        if (!member.date_of_birth) return false;
+        
+        const birthDate = new Date(member.date_of_birth);
+        const birthMonth = birthDate.getMonth() + 1;
+        const birthDay = birthDate.getDate();
+        
+        return birthMonth === todayMonth && birthDay === todayDay;
+      }).map(member => {
+        const birthDate = new Date(member.date_of_birth);
+        const age = todayYear - birthDate.getFullYear();
+        return { ...member, age };
+      });
+      
+      // Membership anniversary alerts (1 year)
+      const anniversaries = allMembers.filter(member => {
+        if (!member.membership_start) return false;
+        
+        const startDate = new Date(member.membership_start);
+        const startMonth = startDate.getMonth() + 1;
+        const startDay = startDate.getDate();
+        const yearsSince = todayYear - startDate.getFullYear();
+        
+        // Check if it's exactly 1 year (or multiples of 1 year)
+        return yearsSince >= 1 && startMonth === todayMonth && startDay === todayDay;
+      }).map(member => {
+        const startDate = new Date(member.membership_start);
+        const yearsOfMembership = todayYear - startDate.getFullYear();
+        return { ...member, yearsOfMembership };
+      });
+      
+      setBirthdayAlerts(birthdays);
+      setAnniversaryAlerts(anniversaries);
+      
+    } catch (error) {
+      console.error('Error calculating alerts:', error);
+    }
+  }, []);
+  
+  useEffect(() => {
+    calculateAlerts();
+  }, [calculateAlerts]);
+
   const fetchFilteredMembers = async () => {
     try {
       const response = await axios.get(`${API}/members?search=${searchTerm}`);
