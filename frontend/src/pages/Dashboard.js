@@ -164,7 +164,7 @@ const Dashboard = ({ language, translations }) => {
       setStats(statsResponse.data);
       
       // Fetch recent members
-      const membersResponse = await axios.get(`${API}/members?limit=5`);
+      const membersResponse = await axios.get(`${API}/members`);
       setRecentMembers(membersResponse.data.slice(0, 5));
       
       // Fetch today's attendance
