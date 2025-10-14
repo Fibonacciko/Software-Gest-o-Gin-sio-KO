@@ -300,6 +300,9 @@ const Dashboard = ({ language, translations }) => {
         return { ...member, yearsOfMembership };
       });
       
+      console.log('🎂 Birthday alerts:', birthdays);
+      console.log('🏆 Anniversary alerts:', anniversaries);
+      
       setBirthdayAlerts(birthdays);
       setAnniversaryAlerts(anniversaries);
       
