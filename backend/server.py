@@ -750,6 +750,7 @@ async def get_members(
     status: Optional[MemberStatus] = None,
     membership_type: Optional[MembershipType] = None,
     search: Optional[str] = None,
+    limit: Optional[int] = None,
     current_user: User = Depends(require_admin_or_staff)
 ):
     filter_dict = {}
@@ -763,7 +764,9 @@ async def get_members(
             {'member_number': {'$regex': search, '$options': 'i'}}  # Search by member number
         ]
     
-    members = await db.members.find(filter_dict).to_list(1000)
+    # Use provided limit or default to None (fetch all)
+    fetch_limit = limit if limit is not None else None
+    members = await db.members.find(filter_dict).to_list(fetch_limit)
     
     # Calculate status for each member based on payments
     result_members = []
