@@ -764,8 +764,8 @@ async def get_members(
             {'member_number': {'$regex': search, '$options': 'i'}}  # Search by member number
         ]
     
-    # Use provided limit or default to None (fetch all)
-    fetch_limit = limit if limit is not None else None
+    # Use provided limit or default to large number to fetch all
+    fetch_limit = limit if limit is not None else 10000
     members = await db.members.find(filter_dict).to_list(fetch_limit)
     
     # Calculate status for each member based on payments
