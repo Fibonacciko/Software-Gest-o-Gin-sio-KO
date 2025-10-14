@@ -581,7 +581,7 @@ const Dashboard = ({ language, translations }) => {
                             <div>
                               <p className="font-medium text-gray-900">{member.name}</p>
                               <p className="text-sm text-gray-600">
-                                {t[language].completesYear} ({member.yearsOfMembership} {member.yearsOfMembership === 1 ? 'ano' : 'anos'})
+                                {member.yearsOfMembership} {member.yearsOfMembership === 1 ? t[language].year : t[language].years} - {t[language].completesYear}
                               </p>
                             </div>
                           </div>
