@@ -267,9 +267,11 @@ const Dashboard = ({ language, translations }) => {
 
   const calculateAlerts = useCallback(async () => {
     try {
-      // Fetch all members
-      const response = await axios.get(`${API}/members`);
+      // Fetch all members without limit
+      const response = await axios.get(`${API}/members?limit=1000`);
       const allMembers = response.data;
+      
+      console.log('📊 Total members fetched for alerts:', allMembers.length);
       
       const today = new Date();
       const todayMonth = today.getMonth() + 1; // 1-12
