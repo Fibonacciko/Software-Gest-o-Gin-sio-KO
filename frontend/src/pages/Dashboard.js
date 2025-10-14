@@ -267,8 +267,8 @@ const Dashboard = ({ language, translations }) => {
 
   const calculateAlerts = useCallback(async () => {
     try {
-      // Fetch all members without limit
-      const response = await axios.get(`${API}/members?limit=1000`);
+      // Fetch all members (no limit = fetch all)
+      const response = await axios.get(`${API}/members`);
       const allMembers = response.data;
       
       console.log('📊 Total members fetched for alerts:', allMembers.length);
