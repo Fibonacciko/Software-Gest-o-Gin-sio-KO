@@ -1025,10 +1025,35 @@ async def delete_payment(
     payment_id: str,
     current_user: User = Depends(require_admin_or_staff)
 ):
-    """Delete a payment (Admin or Staff)"""
+    """Delete a payment (Admin or Staff) and update member status if needed"""
+    # Find the payment first
+    payment = await db.payments.find_one({"id": payment_id})
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    # Delete the payment
     result = await db.payments.delete_one({"id": payment_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Payment not found")
+    
+    # If this was a membership payment, check if member should become inactive
+    if payment.get('payment_method') == 'membership' and payment.get('member_id'):
+        member_id = payment['member_id']
+        
+        # Check if member has any other paid membership payments
+        remaining_payments = await db.payments.find_one({
+            "member_id": member_id,
+            "payment_method": "membership",
+            "status": "paid"
+        })
+        
+        # If no more paid membership payments, update member status to inactive
+        if not remaining_payments:
+            await db.members.update_one(
+                {"id": member_id},
+                {"$set": {"status": "inactive"}}
+            )
+    
     return {"message": "Payment deleted successfully"}
 
 # Inventory Routes
