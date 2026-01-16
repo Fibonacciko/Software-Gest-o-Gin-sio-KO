@@ -221,21 +221,11 @@ const Dashboard = ({ language, translations }) => {
       
       // Sort by check-in time (most recent first)
       const sortedAttendance = attendanceWithMembers.sort((a, b) => {
-        return new Date(b.check_in_time) - new Date(a.check_in_time);
+        return new Date(b.check_in_date + ' ' + b.check_in_time) - new Date(a.check_in_date + ' ' + a.check_in_time);
       });
       
-      // Remove duplicates - keep only the most recent check-in per member
-      const uniqueAttendance = [];
-      const seenMembers = new Set();
-      
-      for (const att of sortedAttendance) {
-        if (!seenMembers.has(att.member_id)) {
-          uniqueAttendance.push(att);
-          seenMembers.add(att.member_id);
-        }
-      }
-      
-      setTodayAttendance(uniqueAttendance);
+      // Show all check-ins (allow multiple check-ins per member per day)
+      setTodayAttendance(sortedAttendance);
       
       // Calculate attendance by modality using attendance's activity
       const modalityStats = {};
