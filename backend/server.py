@@ -917,6 +917,17 @@ async def get_member_attendance(
     attendance_records = await db.attendance.find(filter_dict).to_list(1000)
     return [Attendance(**parse_from_mongo(record)) for record in attendance_records]
 
+@api_router.delete("/attendance/{attendance_id}")
+async def delete_attendance(
+    attendance_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Delete an attendance record (Admin or Staff)"""
+    result = await db.attendance.delete_one({"id": attendance_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    return {"message": "Attendance deleted successfully"}
+
 @api_router.get("/attendance/detailed")
 async def get_detailed_attendance(
     member_id: Optional[str] = None,
