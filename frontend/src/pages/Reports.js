@@ -705,10 +705,13 @@ const Reports = ({ language, translations }) => {
   };
 
   // Helper function to calculate stock data
-  const calculateStockData = (inventoryData) => {
+  const calculateStockData = (inventoryData, salesData = []) => {
     // Separate by category
     const textilItems = inventoryData.filter(item => item.category === 'textil' || item.category === 'clothing');
     const equipmentItems = inventoryData.filter(item => item.category === 'equipment');
+    
+    // Calculate revenue from sales data (more accurate for period comparisons)
+    const salesRevenue = salesData.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
     
     // Prepare data for charts
     const textilChartData = textilItems.map(item => ({
@@ -728,7 +731,10 @@ const Reports = ({ language, translations }) => {
     // Calculate overall metrics
     const articlesInStock = inventoryData.reduce((sum, item) => sum + (item.quantity || 0), 0);
     const investedValue = inventoryData.reduce((sum, item) => sum + ((item.quantity || 0) * (item.purchase_price || 0)), 0);
-    const receivedValue = inventoryData.reduce((sum, item) => sum + ((item.sold_quantity || 0) * (item.sale_price || item.price || 0)), 0);
+    // Use sales data for receivedValue when available, otherwise fallback to sold_quantity
+    const receivedValue = salesData.length > 0 
+      ? salesRevenue 
+      : inventoryData.reduce((sum, item) => sum + ((item.sold_quantity || 0) * (item.sale_price || item.price || 0)), 0);
     const netValue = receivedValue - investedValue;
     
     return {
