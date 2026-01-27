@@ -295,7 +295,7 @@ const Dashboard = ({ language, translations }) => {
         // Check if it's exactly 1 year (or multiples of 1 year)
         return yearsSince >= 1 && startMonth === todayMonth && startDay === todayDay;
       }).map(member => {
-        const startDate = new Date(member.membership_start);
+        const startDate = new Date(member.join_date);
         const yearsOfMembership = todayYear - startDate.getFullYear();
         return { ...member, yearsOfMembership };
       });
