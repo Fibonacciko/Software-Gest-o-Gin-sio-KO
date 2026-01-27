@@ -1210,6 +1210,25 @@ async def sell_inventory_item(
         print(f"Error selling item: {str(e)}")
         raise HTTPException(status_code=500, detail="Error recording sale")
 
+@api_router.get("/sales")
+async def get_sales(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Get all sales records with optional date filtering"""
+    filter_dict = {}
+    
+    if start_date or end_date:
+        filter_dict['sale_date'] = {}
+        if start_date:
+            filter_dict['sale_date']['$gte'] = start_date.isoformat()
+        if end_date:
+            filter_dict['sale_date']['$lte'] = end_date.isoformat() + "T23:59:59"
+    
+    sales = await db.sales.find(filter_dict).sort("sale_date", -1).to_list(1000)
+    return [parse_from_mongo(sale) for sale in sales]
+
 # Expense Routes
 @api_router.post("/expenses", response_model=Expense)
 async def create_expense(
