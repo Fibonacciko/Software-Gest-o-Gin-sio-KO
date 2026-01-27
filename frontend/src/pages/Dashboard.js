@@ -798,8 +798,10 @@ const Dashboard = ({ language, translations }) => {
                           <Button
                             variant="ghost"
                             size="sm"
+                            data-testid={`delete-attendance-${attendance.id}`}
                             onClick={() => handleDeleteAttendance(attendance.id)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                            title="Eliminar presença"
                           >
                             <Trash2 size={14} />
                           </Button>
