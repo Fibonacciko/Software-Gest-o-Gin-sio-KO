@@ -754,6 +754,10 @@ const Reports = ({ language, translations }) => {
       const response = await axios.get(`${API}/inventory`);
       const allInventory = response.data;
       
+      // Fetch sales data for accurate period comparisons
+      const salesResponse = await axios.get(`${API}/sales`);
+      const allSales = salesResponse.data;
+      
       // Filter inventory by year based on created_at
       const currentYear = new Date().getFullYear();
       const currentInventory = allInventory.filter(item => {
@@ -764,8 +768,17 @@ const Reports = ({ language, translations }) => {
         return true; // Include items without created_at
       });
       
-      // Calculate current period data
-      const currentData = calculateStockData(currentInventory);
+      // Filter sales by year
+      const currentYearSales = allSales.filter(sale => {
+        if (sale.sale_date) {
+          const saleYear = new Date(sale.sale_date).getFullYear();
+          return saleYear === currentYear;
+        }
+        return false;
+      });
+      
+      // Calculate current period data with sales
+      const currentData = calculateStockData(currentInventory, currentYearSales);
       
       // For comparison, filter by comparison year
       let comparisonDataResult = null;
@@ -781,7 +794,16 @@ const Reports = ({ language, translations }) => {
           return false;
         });
         
-        comparisonDataResult = calculateStockData(historicalInventory);
+        // Filter sales for comparison year
+        const comparisonYearSales = allSales.filter(sale => {
+          if (sale.sale_date) {
+            const saleYear = new Date(sale.sale_date).getFullYear();
+            return saleYear === comparisonYear;
+          }
+          return false;
+        });
+        
+        comparisonDataResult = calculateStockData(historicalInventory, comparisonYearSales);
         
         // Calculate comparisons
         comparisons = {
