@@ -285,9 +285,9 @@ const Dashboard = ({ language, translations }) => {
       
       // Membership anniversary alerts (1 year)
       const anniversaries = allMembers.filter(member => {
-        if (!member.membership_start) return false;
+        if (!member.join_date) return false;
         
-        const startDate = new Date(member.membership_start);
+        const startDate = new Date(member.join_date);
         const startMonth = startDate.getMonth() + 1;
         const startDay = startDate.getDate();
         const yearsSince = todayYear - startDate.getFullYear();
