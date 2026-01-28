@@ -1701,63 +1701,6 @@ async def startup_db():
     
     logger.info("✅ Application initialized successfully")
 
-# TEMPORARY: Reset admin password endpoint - REMOVE AFTER USE
-@api_router.post("/reset-admin-password")
-async def reset_admin_password():
-    """Temporary endpoint to reset admin password - REMOVE AFTER USE"""
-    try:
-        # Update admin password to 'admin123'
-        result = await db.users.update_one(
-            {"username": "fabio.guerreiro"},
-            {"$set": {"password_hash": get_password_hash("admin123")}}
-        )
-        
-        if result.modified_count > 0:
-            return {"message": "Password reset to 'admin123' for fabio.guerreiro"}
-        
-        # If user doesn't exist, create it
-        admin_exists = await db.users.find_one({"username": "fabio.guerreiro"})
-        if not admin_exists:
-            admin_user = User(
-                username="fabio.guerreiro",
-                email="admin@gym.com",
-                full_name="Fábio Guerreiro",
-                role=UserRole.ADMIN
-            )
-            admin_dict = prepare_for_mongo(admin_user.dict())
-            admin_dict["password_hash"] = get_password_hash("admin123")
-            await db.users.insert_one(admin_dict)
-            return {"message": "Admin user created with password 'admin123'"}
-        
-        return {"message": "No changes made"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# TEMPORARY: Reset any user password - REMOVE AFTER USE
-@api_router.post("/reset_password/{username}")
-async def reset_user_password(username: str, new_password: str = "admin123"):
-    """Temporary endpoint to reset any user password - REMOVE AFTER USE"""
-    try:
-        # Check if user exists
-        user = await db.users.find_one({"username": username})
-        if not user:
-            raise HTTPException(status_code=404, detail=f"User '{username}' not found")
-        
-        # Update password
-        result = await db.users.update_one(
-            {"username": username},
-            {"$set": {"password_hash": get_password_hash(new_password)}}
-        )
-        
-        if result.modified_count > 0:
-            return {"message": f"Password reset to '{new_password}' for user '{username}'"}
-        
-        return {"message": "No changes made"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
