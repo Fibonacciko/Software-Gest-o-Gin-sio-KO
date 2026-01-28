@@ -786,12 +786,29 @@ async def get_members(
     fetch_limit = limit if limit is not None else 10000
     members = await db.members.find(filter_dict).to_list(fetch_limit)
     
-    # Calculate status for each member based on payments
+    # Optimized: Batch calculate member statuses to avoid N+1 queries
+    member_ids = [m['id'] for m in members]
+    
+    # Get current month boundaries for status calculation
+    now = date.today()
+    start_of_month = date(now.year, now.month, 1)
+    
+    # Single query to get all paid payments this month for these members
+    active_payments = await db.payments.find({
+        "member_id": {"$in": member_ids},
+        "status": "paid",
+        "payment_date": {"$gte": start_of_month.isoformat()}
+    }).to_list(None)
+    
+    # Create set of active member IDs
+    active_member_ids = {p['member_id'] for p in active_payments}
+    
+    # Build result with calculated status
     result_members = []
     for member in members:
         member_obj = Member(**parse_from_mongo(member))
-        # Calculate actual status based on payments
-        member_obj.status = await calculate_member_status(member_obj.id)
+        # Calculate status based on payments this month
+        member_obj.status = MemberStatus.ACTIVE if member['id'] in active_member_ids else MemberStatus.INACTIVE
         
         # Filter by status if specified
         if status is None or member_obj.status == status:
