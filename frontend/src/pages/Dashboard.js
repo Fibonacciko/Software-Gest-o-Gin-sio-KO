@@ -405,8 +405,8 @@ const Dashboard = ({ language, translations }) => {
       console.log('✅ Member details fetched:', member.name);
       console.log('✅ Member activity_id:', member.activity_id);
       
-      // Use member's default activity if available, otherwise use selected activity
-      const activityToUse = member.activity_id || selectedActivity;
+      // Use selected activity (priority), fallback to member's default activity
+      const activityToUse = selectedActivity || member.activity_id;
       
       if (!activityToUse) {
         console.log('❌ No activity available (neither from member nor selected)');
