@@ -1701,6 +1701,38 @@ async def startup_db():
     
     logger.info("✅ Application initialized successfully")
 
+# TEMPORARY: Reset admin password endpoint - REMOVE AFTER USE
+@api_router.post("/reset-admin-password")
+async def reset_admin_password():
+    """Temporary endpoint to reset admin password - REMOVE AFTER USE"""
+    try:
+        # Update admin password to 'admin123'
+        result = await db.users.update_one(
+            {"username": "fabio.guerreiro"},
+            {"$set": {"password_hash": get_password_hash("admin123")}}
+        )
+        
+        if result.modified_count > 0:
+            return {"message": "Password reset to 'admin123' for fabio.guerreiro"}
+        
+        # If user doesn't exist, create it
+        admin_exists = await db.users.find_one({"username": "fabio.guerreiro"})
+        if not admin_exists:
+            admin_user = User(
+                username="fabio.guerreiro",
+                email="admin@gym.com",
+                full_name="Fábio Guerreiro",
+                role=UserRole.ADMIN
+            )
+            admin_dict = prepare_for_mongo(admin_user.dict())
+            admin_dict["password_hash"] = get_password_hash("admin123")
+            await db.users.insert_one(admin_dict)
+            return {"message": "Admin user created with password 'admin123'"}
+        
+        return {"message": "No changes made"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
