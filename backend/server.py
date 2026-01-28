@@ -31,6 +31,16 @@ db = client[os.environ['DB_NAME']]
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# Root-level health check for Kubernetes (required for deployment)
+@app.get("/health")
+async def root_health_check():
+    """Root health check endpoint for Kubernetes probes"""
+    try:
+        await db.command("ping")
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}
+
 # Security - Read from environment
 SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-dev-key-not-for-production')
 ALGORITHM = "HS256"
