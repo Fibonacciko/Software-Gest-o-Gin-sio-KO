@@ -464,6 +464,24 @@ async def create_default_activities():
 async def root():
     return {"message": "Gym Management API is running", "version": "1.0.0"}
 
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint for deployment readiness"""
+    try:
+        # Test database connection
+        await db.command("ping")
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e)
+        }
+
 # Activities/Modalidades Routes
 @api_router.get("/activities", response_model=List[Activity])
 async def get_activities(current_user: User = Depends(require_admin_or_staff)):
