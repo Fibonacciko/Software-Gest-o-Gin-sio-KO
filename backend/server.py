@@ -43,6 +43,7 @@ async def root_health_check():
 
 # TEMPORARY: Fix modalidades in production - REMOVE AFTER USE
 @app.post("/fix-modalidades")
+@app.get("/fix-modalidades")
 async def fix_modalidades():
     """Temporary endpoint to fix modalidades - REMOVE AFTER USE"""
     try:
