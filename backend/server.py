@@ -837,13 +837,23 @@ async def get_member_by_number(
 @api_router.put("/members/{member_id}", response_model=Member)
 async def update_member(
     member_id: str,
-    member_data: MemberCreate,
+    member_data: MemberUpdate,
     current_user: User = Depends(require_admin_or_staff)
 ):
-    member_dict = prepare_for_mongo(member_data.dict())
+    # Get only the fields that were actually provided (not None)
+    update_dict = {k: v for k, v in member_data.dict().items() if v is not None}
+    
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    # Convert date fields to ISO format strings for MongoDB
+    for date_field in ['date_of_birth', 'join_date', 'expiry_date']:
+        if date_field in update_dict and update_dict[date_field]:
+            update_dict[date_field] = update_dict[date_field].isoformat()
+    
     result = await db.members.update_one(
         {"id": member_id},
-        {"$set": member_dict}
+        {"$set": update_dict}
     )
     
     if result.matched_count == 0:
