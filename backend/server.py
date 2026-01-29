@@ -41,6 +41,44 @@ async def root_health_check():
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}
 
+# TEMPORARY: Fix modalidades in production - REMOVE AFTER USE
+@app.post("/fix-modalidades")
+async def fix_modalidades():
+    """Temporary endpoint to fix modalidades - REMOVE AFTER USE"""
+    try:
+        # 1. Delete all "Teste Modalidade" duplicates
+        delete_result = await db.activities.delete_many({"name": "Teste Modalidade"})
+        deleted_count = delete_result.deleted_count
+        
+        # 2. Check if PT exists, if not create it
+        pt_exists = await db.activities.find_one({"name": {"$regex": "PT", "$options": "i"}})
+        pt_created = False
+        
+        if not pt_exists:
+            pt_activity = {
+                "id": str(uuid4()),
+                "name": "PT - Treino Personalizado",
+                "color": "#9333ea",
+                "description": "Personal Training / Treino Personalizado",
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.activities.insert_one(pt_activity)
+            pt_created = True
+        
+        # 3. Get current list of activities
+        activities = await db.activities.find({"is_active": True}, {"_id": 0, "name": 1}).to_list(100)
+        activity_names = [a["name"] for a in activities]
+        
+        return {
+            "message": "Modalidades fixed",
+            "deleted_teste_modalidade": deleted_count,
+            "pt_created": pt_created,
+            "current_activities": activity_names
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 # Security - Read from environment
 SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-dev-key-not-for-production')
 ALGORITHM = "HS256"
