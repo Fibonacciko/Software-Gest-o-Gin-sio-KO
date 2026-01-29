@@ -503,16 +503,23 @@ async def delete_activity(
     activity_id: str,
     current_user: User = Depends(require_admin)
 ):
-    # Soft delete - mark as inactive instead of deleting
-    result = await db.activities.update_one(
-        {"id": activity_id},
-        {"$set": {"is_active": False}}
-    )
-    
-    if result.matched_count == 0:
+    """Delete an activity by ID (Admin only)"""
+    result = await db.activities.delete_one({"id": activity_id})
+    if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Activity not found")
-    
-    return {"message": "Activity deactivated successfully"}
+    return {"message": "Activity deleted successfully"}
+
+@api_router.delete("/activities/by-name/{activity_name}")
+async def delete_activities_by_name(
+    activity_name: str,
+    current_user: User = Depends(require_admin)
+):
+    """Delete all activities with a specific name (Admin only)"""
+    result = await db.activities.delete_many({"name": activity_name})
+    return {
+        "message": f"Deleted {result.deleted_count} activities with name '{activity_name}'",
+        "deleted_count": result.deleted_count
+    }
 
 # Authentication Routes
 @api_router.post("/auth/login", response_model=Token)
