@@ -283,19 +283,20 @@ const Dashboard = ({ language, translations }) => {
         return { ...member, age };
       });
       
-      // Membership anniversary alerts (1 year)
+      // Membership anniversary alerts - uses join_date field
+      // This is for annual renewal reminders (1 year or more since joining)
       const anniversaries = allMembers.filter(member => {
-        if (!member.membership_start) return false;
+        if (!member.join_date) return false;
         
-        const startDate = new Date(member.membership_start);
+        const startDate = new Date(member.join_date);
         const startMonth = startDate.getMonth() + 1;
         const startDay = startDate.getDate();
         const yearsSince = todayYear - startDate.getFullYear();
         
-        // Check if it's exactly 1 year (or multiples of 1 year)
+        // Check if it's exactly 1 year (or multiples of 1 year) since joining
         return yearsSince >= 1 && startMonth === todayMonth && startDay === todayDay;
       }).map(member => {
-        const startDate = new Date(member.membership_start);
+        const startDate = new Date(member.join_date);
         const yearsOfMembership = todayYear - startDate.getFullYear();
         return { ...member, yearsOfMembership };
       });
