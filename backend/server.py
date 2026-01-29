@@ -137,6 +137,23 @@ class MemberCreate(BaseModel):
     photo_url: Optional[str] = None
     notes: Optional[str] = None
 
+class MemberUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    nationality: Optional[str] = None
+    profession: Optional[str] = None
+    address: Optional[str] = None
+    membership_type: Optional[MembershipType] = None
+    activity_id: Optional[str] = None
+    status: Optional[MemberStatus] = None
+    join_date: Optional[date] = None
+    expiry_date: Optional[date] = None
+    photo_url: Optional[str] = None
+    notes: Optional[str] = None
+    medical_notes: Optional[str] = None
+
 class Attendance(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     member_id: str
