@@ -382,15 +382,22 @@ const Dashboard = ({ language, translations }) => {
   };
 
   const handleDeleteAttendance = async (attendanceId) => {
+    console.log('🗑️ Delete attendance requested for ID:', attendanceId);
     if (window.confirm('Tem certeza que deseja eliminar esta presença?')) {
       try {
-        await axios.delete(`${API}/attendance/${attendanceId}`);
+        console.log('🗑️ Sending DELETE request...');
+        const response = await axios.delete(`${API}/attendance/${attendanceId}`);
+        console.log('🗑️ Delete response:', response.data);
         toast.success('Presença eliminada com sucesso');
         fetchDashboardData();
       } catch (error) {
-        console.error('Error deleting attendance:', error);
-        toast.error('Erro ao eliminar presença');
+        console.error('🗑️ Error deleting attendance:', error);
+        console.error('🗑️ Error response:', error.response?.data);
+        console.error('🗑️ Error status:', error.response?.status);
+        toast.error(`Erro ao eliminar presença: ${error.response?.data?.detail || error.message}`);
       }
+    } else {
+      console.log('🗑️ Delete cancelled by user');
     }
   };
 
