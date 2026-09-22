@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
+import os
 import requests
 import json
 
 # Test the sarcastic motivational notes system
-base_url = "https://traintrack-23.preview.emergentagent.com"
+base_url = os.environ.get("KO_API_URL", "http://localhost:8001")
 api_url = f"{base_url}/api"
 
 print("🔥 TESTING SARCASTIC MOTIVATIONAL NOTES SYSTEM")

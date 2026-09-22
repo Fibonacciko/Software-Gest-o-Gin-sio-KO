@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
+import os
 import requests
 import json
 
 # Test the mobile profile endpoint
-base_url = "https://traintrack-23.preview.emergentagent.com"
+base_url = os.environ.get("KO_API_URL", "http://localhost:8001")
 api_url = f"{base_url}/api"
 
 # First login to get auth token

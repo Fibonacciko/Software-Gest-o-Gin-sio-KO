@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
+import os
 import requests
 import sys
 import json
 from datetime import datetime
 
 class QuickVerificationTester:
-    def __init__(self, base_url="https://traintrack-23.preview.emergentagent.com"):
+    def __init__(self, base_url=os.environ.get("KO_API_URL", "http://localhost:8001")):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.auth_token = None
