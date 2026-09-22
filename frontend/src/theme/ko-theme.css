@@ -76,9 +76,9 @@
   --gradient-logo: radial-gradient(circle, var(--ko-primary-golden) 0%, var(--ko-amber-600) 100%);
   
   /* Gradientes dinâmicos para fundos de páginas */
-  --gradient-page-bg: linear-gradient(145deg, #FFFBEB 0%, #FEF3C7 20%, #FFFFFF 50%, #FFF8F1 80%, #FAF9F7 100%);
-  --gradient-card-bg: linear-gradient(145deg, #FFFFFF 0%, #FFFBEB 100%);
-  --gradient-sidebar: linear-gradient(180deg, #FFFFFF 0%, #FEF3C7 100%);
+  --gradient-page-bg: linear-gradient(145deg, #FFF8F1 0%, #FEECDC 20%, #FFFFFF 50%, #FED7AA 80%, #FFF8F1 100%);
+  --gradient-card-bg: linear-gradient(145deg, #FFFFFF 0%, #FEECDC 100%);
+  --gradient-sidebar: linear-gradient(180deg, #FFFFFF 0%, #FEECDC 100%);
   --gradient-header: linear-gradient(90deg, var(--ko-primary-orange) 0%, var(--ko-orange-700) 100%);
   
   /* Gradientes para elementos interativos */

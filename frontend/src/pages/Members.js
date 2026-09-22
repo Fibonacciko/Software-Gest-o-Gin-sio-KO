@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
+import ActivitySelector from '../components/ActivitySelector';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -50,6 +51,7 @@ const Members = ({ language, translations }) => {
     profession: '',
     address: '',
     membership_type: 'basic',
+    activity_id: '',
     photo_url: '',
     notes: ''
   });
@@ -193,6 +195,7 @@ const Members = ({ language, translations }) => {
       profession: member.profession || '',
       address: member.address || '',
       membership_type: member.membership_type || 'basic',
+      activity_id: member.activity_id || '',
       photo_url: member.photo_url || '',
       notes: member.notes || ''
     });
@@ -233,6 +236,7 @@ const Members = ({ language, translations }) => {
       profession: '',
       address: '',
       membership_type: 'basic',
+      activity_id: '',
       photo_url: '',
       notes: ''
     });
@@ -383,6 +387,16 @@ const Members = ({ language, translations }) => {
                     <SelectItem value="vip">{t[language].vip}</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label>Modalidade</Label>
+                <ActivitySelector
+                  value={formData.activity_id}
+                  onChange={(value) => setFormData({...formData, activity_id: value})}
+                  placeholder="Selecionar modalidade"
+                />
+                <p className="text-xs text-gray-400 mt-1">Modalidade subscrita pelo membro. O check-in usa sempre esta modalidade.</p>
               </div>
               
               <div>
@@ -706,6 +720,15 @@ const Members = ({ language, translations }) => {
                     <p className="text-sm text-gray-500 mt-2">Para check-in na app móvel</p>
                   </div>
                 )}
+              {/* Estado NFC */}
+              <div className="text-center p-6 bg-gray-50 rounded-lg">
+                <h4 className="font-medium mb-2">NFC</h4>
+                {selectedMember.nfc_tag_id ? (
+                  <p className="text-sm text-gray-600">Telemovel/cartao associado</p>
+                ) : (
+                  <p className="text-sm text-gray-500">Ainda sem NFC associado. E associado automaticamente no Painel Principal na primeira utilizacao (Check-in NFC).</p>
+                )}
+              </div>
               </div>
 
               {/* Right Column - Attendance Calendar */}

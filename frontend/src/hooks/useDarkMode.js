@@ -65,9 +65,9 @@ const useDarkMode = () => {
       root.style.setProperty('--border-strong', 'var(--ko-neutral-400)');
       
       // Restaurar gradientes originais
-      root.style.setProperty('--gradient-card-bg', 'linear-gradient(145deg, #FFFFFF 0%, #FFFBEB 100%)');
+      root.style.setProperty('--gradient-card-bg', 'linear-gradient(145deg, #FFFFFF 0%, #FEECDC 100%)');
       root.style.setProperty('--gradient-input', 'linear-gradient(145deg, #FFFFFF 0%, #FFF8F1 100%)');
-      root.style.setProperty('--gradient-hover', 'linear-gradient(145deg, var(--ko-orange-50) 0%, var(--ko-amber-50) 100%)');
+      root.style.setProperty('--gradient-hover', 'linear-gradient(145deg, var(--ko-orange-50) 0%, var(--ko-orange-100) 100%)');
       
       // Restaurar sombras originais
       root.style.setProperty('--shadow-sm', '0 1px 2px 0 rgba(120, 113, 108, 0.1)');

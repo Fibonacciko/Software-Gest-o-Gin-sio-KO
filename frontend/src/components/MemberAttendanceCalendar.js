@@ -150,15 +150,17 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
               className="rounded-md border w-full"
               modifiers={modifiers}
               components={{
-                Day: ({ date, modifiers }) => {
+                Day: ({ date }) => {
+            const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+            const isToday = date.toDateString() === new Date().toDateString();
                   const attendanceForDate = getAttendanceForDate(date);
                   const hasAttendance = attendanceForDate.length > 0;
                   
                   return (
                     <div className="relative w-full h-full">
                       <div className={`w-full h-full flex items-center justify-center text-sm ${
-                        modifiers.selected ? 'bg-blue-600 text-white rounded-md' :
-                        modifiers.today ? 'bg-blue-100 text-blue-900 rounded-md' : ''
+                        isSelected ? 'bg-blue-600 text-white rounded-md' :
+              isToday ? 'bg-blue-100 text-blue-900 rounded-md' : ''
                       }`}>
                         {date.getDate()}
                         {hasAttendance && (

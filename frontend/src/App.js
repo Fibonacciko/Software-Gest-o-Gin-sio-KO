@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
@@ -106,7 +106,7 @@ function App() {
       dashboard: 'Painel',
       members: 'Membros',
       attendance: 'Presenças',
-      payments: 'Pagamentos',
+      payments: 'Finanças',
       inventory: 'Stock',
       reports: 'Relatórios',
       settings: 'Configurações'
@@ -115,7 +115,7 @@ function App() {
       dashboard: 'Dashboard',
       members: 'Members',
       attendance: 'Attendance',
-      payments: 'Payments',
+      payments: 'Finances',
       inventory: 'Inventory',
       reports: 'Reports',
       settings: 'Settings'
@@ -124,7 +124,6 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
         <div className="min-h-screen" style={{ background: 'var(--background-primary)' }}>
           {/* Offline Indicator */}
           {!isOnline && (
@@ -136,7 +135,7 @@ function App() {
             </div>
           )}
           
-          <Sidebar />
+        <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} language={language} setLanguage={setLanguage} translations={translations[language]} />
           <div className="lg:ml-64" style={{ paddingTop: !isOnline ? '40px' : '0' }}>
                 <Routes>
                   <Route path="/login" element={<Login />} />
@@ -207,7 +206,6 @@ function App() {
           
           <Toaster />
         </div>
-      </Router>
     </AuthProvider>
   );
 }

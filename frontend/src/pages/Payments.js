@@ -35,6 +35,14 @@ const Payments = ({ language, translations }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedMember, setSelectedMember] = useState('all');
+  const [expenses, setExpenses] = useState([]);
+  const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
+  const [expenseFormData, setExpenseFormData] = useState({
+    description: '',
+    amount: '',
+    expense_date: '',
+    category: ''
+  });
 
   const [formData, setFormData] = useState({
     member_id: '',
@@ -45,8 +53,9 @@ const Payments = ({ language, translations }) => {
 
   const t = {
     pt: {
-      payments: 'Gestão de Pagamentos',
+      payments: 'Gestão de Finanças',
       addPayment: 'Registar Pagamento',
+      addExpense: 'Registar Despesa',
       searchPayments: 'Procurar pagamentos...',
       allStatuses: 'Todos os Status',
       paid: 'Pago',
@@ -66,17 +75,27 @@ const Payments = ({ language, translations }) => {
       mbway: 'MBWay',
       description: 'Descrição',
       paymentDate: 'Data do Pagamento',
+    category: 'Categoria',
+    selectCategory: 'Selecionar categoria',
+    categoryRent: 'Renda',
+    categorySalaries: 'Salários',
+    categoryEquipment: 'Equipamento',
+    categoryMaintenance: 'Manutenção',
+    categoryMarketing: 'Marketing',
+    categoryUtilities: 'Serviços (água, luz, etc.)',
+    categoryOther: 'Outros',
       status: 'Status',
       save: 'Guardar',
       cancel: 'Cancelar',
       view: 'Ver',
       edit: 'Editar',
-      totalRevenue: 'Receita Total',
+      totalRevenue: 'Receitas',
       monthlyRevenue: 'Receita Mensal',
-      pendingPayments: 'Pagamentos Pendentes',
+      pendingPayments: 'Despesas',
       recentPayments: 'Pagamentos Recentes',
       noPayments: 'Nenhum pagamento encontrado',
       paymentAdded: 'Pagamento registado com sucesso!',
+      expenseAdded: 'Despesa registada com sucesso!',
       export: 'Exportar',
       paymentDetails: 'Detalhes do Pagamento',
       membershipPayment: 'Pagamento de Membership',
@@ -85,8 +104,9 @@ const Payments = ({ language, translations }) => {
       paymentDescription: 'Descrição do pagamento...'
     },
     en: {
-      payments: 'Payment Management',
+      payments: 'Finance Management',
       addPayment: 'Add Payment',
+      addExpense: 'Add Expense',
       searchPayments: 'Search payments...',
       allStatuses: 'All Statuses',
       paid: 'Paid',
@@ -106,17 +126,27 @@ const Payments = ({ language, translations }) => {
       mbway: 'MBWay',
       description: 'Description',
       paymentDate: 'Payment Date',
+    category: 'Category',
+    selectCategory: 'Select category',
+    categoryRent: 'Rent',
+    categorySalaries: 'Salaries',
+    categoryEquipment: 'Equipment',
+    categoryMaintenance: 'Maintenance',
+    categoryMarketing: 'Marketing',
+    categoryUtilities: 'Utilities',
+    categoryOther: 'Other',
       status: 'Status',
       save: 'Save',
       cancel: 'Cancel',
       view: 'View',
       edit: 'Edit',
-      totalRevenue: 'Total Revenue',
+      totalRevenue: 'Revenue',
       monthlyRevenue: 'Monthly Revenue',
-      pendingPayments: 'Pending Payments',
+      pendingPayments: 'Expenses',
       recentPayments: 'Recent Payments',
       noPayments: 'No payments found',
       paymentAdded: 'Payment added successfully!',
+      expenseAdded: 'Expense added successfully!',
       export: 'Export',
       paymentDetails: 'Payment Details',
       membershipPayment: 'Membership Payment',
@@ -129,6 +159,7 @@ const Payments = ({ language, translations }) => {
   useEffect(() => {
     fetchMembers();
     fetchPayments();
+    fetchExpenses();
   }, []);
 
   useEffect(() => {
@@ -141,6 +172,15 @@ const Payments = ({ language, translations }) => {
       setMembers(response.data);
     } catch (error) {
       console.error('Error fetching members:', error);
+    }
+  };
+
+  const fetchExpenses = async () => {
+    try {
+      const response = await axios.get(`${API}/expenses`);
+      setExpenses(response.data);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
     }
   };
 
@@ -238,6 +278,40 @@ const Payments = ({ language, translations }) => {
     });
   };
 
+  const handleAddExpense = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        description: expenseFormData.description,
+        amount: parseFloat(expenseFormData.amount)
+      };
+      if (expenseFormData.expense_date) {
+        payload.expense_date = expenseFormData.expense_date;
+      }
+      if (expenseFormData.category) {
+        payload.category = expenseFormData.category;
+      }
+      await axios.post(`${API}/expenses`, payload);
+
+      toast.success(t[language].expenseAdded);
+      setShowAddExpenseDialog(false);
+      resetExpenseForm();
+      fetchExpenses();
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      toast.error('Erro ao registar despesa');
+    }
+  };
+
+  const resetExpenseForm = () => {
+    setExpenseFormData({
+      description: '',
+      amount: '',
+      expense_date: '',
+      category: ''
+    });
+  };
+
   const getStatusVariant = (status) => {
     switch (status) {
       case 'paid': return 'default';
@@ -270,7 +344,9 @@ const Payments = ({ language, translations }) => {
     
     const pendingCount = payments.filter(p => p.status === 'pending').length;
     
-    return { totalRevenue, monthlyRevenue, pendingCount };
+    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+    return { totalRevenue, monthlyRevenue, pendingCount, totalExpenses };
   };
 
   const exportPayments = () => {
@@ -305,17 +381,7 @@ const Payments = ({ language, translations }) => {
         </h1>
         
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
-            <Button 
-              className="btn-hover"
-              onClick={resetForm}
-              data-testid="add-payment-btn"
-            >
-              <Plus className="mr-2" size={16} />
-              {t[language].addPayment}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
+        <DialogContent>
             <DialogHeader>
               <DialogTitle>{t[language].addPayment}</DialogTitle>
             </DialogHeader>
@@ -402,7 +468,84 @@ const Payments = ({ language, translations }) => {
         </Dialog>
       </div>
 
-      {/* Statistics */}
+      <Dialog open={showAddExpenseDialog} onOpenChange={setShowAddExpenseDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t[language].addExpense}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleAddExpense} className="space-y-4">
+          <div>
+            <Label htmlFor="expense-description">{t[language].description} *</Label>
+            <Textarea
+              id="expense-description"
+              value={expenseFormData.description}
+              onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
+              required
+              placeholder={t[language].paymentDescription}
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="expense-amount">{t[language].amount} (€) *</Label>
+            <Input
+              id="expense-amount"
+              type="number"
+              step="0.01"
+              min="0"
+              value={expenseFormData.amount}
+              onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
+              required
+              placeholder={t[language].enterAmount}
+              data-testid="expense-amount"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="expense-date">{t[language].paymentDate}</Label>
+            <Input
+              id="expense-date"
+              type="date"
+              value={expenseFormData.expense_date}
+              onChange={(e) => setExpenseFormData({...expenseFormData, expense_date: e.target.value})}
+            />
+          </div>
+
+                    <div>
+            <Label htmlFor="expense-category">{t[language].category}</Label>
+            <Select value={expenseFormData.category} onValueChange={(value) => setExpenseFormData({...expenseFormData, category: value})}>
+              <SelectTrigger id="expense-category" data-testid="expense-category">
+                <SelectValue placeholder={t[language].selectCategory} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rent">{t[language].categoryRent}</SelectItem>
+                <SelectItem value="salaries">{t[language].categorySalaries}</SelectItem>
+                <SelectItem value="equipment">{t[language].categoryEquipment}</SelectItem>
+                <SelectItem value="maintenance">{t[language].categoryMaintenance}</SelectItem>
+                <SelectItem value="marketing">{t[language].categoryMarketing}</SelectItem>
+                <SelectItem value="utilities">{t[language].categoryUtilities}</SelectItem>
+                <SelectItem value="other">{t[language].categoryOther}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowAddExpenseDialog(false)}
+            >
+              {t[language].cancel}
+            </Button>
+            <Button type="submit" data-testid="save-expense-btn">
+              {t[language].save}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+
+{/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="card-shadow">
           <CardContent className="p-6">
@@ -414,6 +557,15 @@ const Payments = ({ language, translations }) => {
                 <p className="text-2xl font-bold text-gray-900">
                   €{stats.totalRevenue.toFixed(2)}
                 </p>
+                <Button
+                  size="sm"
+                  className="btn-hover mt-2"
+                  onClick={() => { resetForm(); setShowAddDialog(true); }}
+                  data-testid="add-payment-btn"
+                >
+                  <Plus className="mr-1" size={14} />
+                  {t[language].addPayment}
+                </Button>
               </div>
               <div className="p-3 rounded-full bg-green-500">
                 <DollarSign size={24} className="text-white" />
@@ -447,7 +599,17 @@ const Payments = ({ language, translations }) => {
                 <p className="text-sm font-medium text-gray-600 mb-1">
                   {t[language].pendingPayments}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pendingCount}</p>
+                <p className="text-2xl font-bold text-gray-900">€{stats.totalExpenses.toFixed(2)}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="btn-hover mt-2"
+                  onClick={() => { resetExpenseForm(); setShowAddExpenseDialog(true); }}
+                  data-testid="add-expense-btn"
+                >
+                  <Plus className="mr-1" size={14} />
+                  {t[language].addExpense}
+                </Button>
               </div>
               <div className="p-3 rounded-full bg-orange-500">
                 <CreditCard size={24} className="text-white" />
@@ -622,6 +784,7 @@ const Payments = ({ language, translations }) => {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 };

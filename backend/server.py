@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, date, timezone, timedelta, time
@@ -244,7 +244,7 @@ class MobilePaymentRequest(BaseModel):
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     username: str
-    email: EmailStr
+    email: Optional[EmailStr] = None
     full_name: str
     role: UserRole
     is_active: bool = True
@@ -253,10 +253,17 @@ class User(BaseModel):
 
 class UserCreate(BaseModel):
     username: str
-    email: EmailStr
+    email: Optional[EmailStr] = None
     full_name: str
     password: str
     role: UserRole = UserRole.STAFF
+
+    @field_validator('email', mode='before')
+    @classmethod
+    def empty_email_to_none(cls, v):
+        if v == '' or v is None:
+            return None
+        return v
 
 class UserLogin(BaseModel):
     username: str
@@ -283,6 +290,8 @@ class Member(BaseModel):
     expiry_date: Optional[date] = None
     photo_url: Optional[str] = None
     qr_code: Optional[str] = None
+    nfc_tag_id: Optional[str] = None
+    activity_id: Optional[str] = None
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -297,6 +306,7 @@ class MemberCreate(BaseModel):
     membership_type: MembershipType
     photo_url: Optional[str] = None
     notes: Optional[str] = None
+    activity_id: Optional[str] = None
 
 class Attendance(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -327,6 +337,20 @@ class PaymentCreate(BaseModel):
     amount: float
     payment_method: PaymentMethod = PaymentMethod.CASH
     description: Optional[str] = None
+
+class Expense(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    description: str
+    amount: float
+    expense_date: date = Field(default_factory=lambda: date.today())
+    category: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ExpenseCreate(BaseModel):
+    description: str
+    amount: float
+    expense_date: Optional[date] = None
+    category: Optional[str] = None
 
 class InventoryItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -507,6 +531,31 @@ def require_admin_or_staff(current_user: User = Depends(get_current_active_user)
             detail="Staff or Admin access required"
         )
     return current_user
+
+class AuditLog(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    username: str
+    action: str
+    entity_type: str
+    entity_id: Optional[str] = None
+    details: Optional[str] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+async def log_audit(current_user: User, action: str, entity_type: str, entity_id: Optional[str] = None, details: Optional[str] = None):
+    try:
+        log_entry = AuditLog(
+            user_id=current_user.id,
+            username=current_user.username,
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            details=details
+        )
+        log_dict = prepare_for_mongo(log_entry.dict())
+        await db.audit_logs.insert_one(log_dict)
+    except Exception as e:
+        logger.error(f"Failed to write audit log: {e}")
 
 # Initialize admin user on startup
 async def create_admin_user():
@@ -1047,10 +1096,11 @@ async def create_user(
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    # Check if email already exists
-    existing_email = await db.users.find_one({"email": user_data.email})
-    if existing_email:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    # Check if email already exists (only if email provided)
+    if user_data.email:
+        existing_email = await db.users.find_one({"email": user_data.email})
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Email already registered")
     
     user = User(
         username=user_data.username,
@@ -1064,6 +1114,7 @@ async def create_user(
     user_dict["password_hash"] = get_password_hash(user_data.password)
     
     await db.users.insert_one(user_dict)
+    await log_audit(current_user, "create", "user", entity_id=user.id, details=f"Criou utilizador {user.username} ({user.role})")
     return user
 
 @api_router.get("/users", response_model=List[User])
@@ -1092,6 +1143,7 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     updated_user = await db.users.find_one({"id": user_id})
+    await log_audit(current_user, "update", "user", entity_id=user_id, details=f"Atualizou utilizador {user_id}")
     return User(**parse_from_mongo(updated_user))
 
 @api_router.put("/users/{user_id}/toggle-status")
@@ -1113,6 +1165,7 @@ async def toggle_user_status(
         {"$set": {"is_active": new_status}}
     )
     
+    await log_audit(current_user, "update", "user", entity_id=user_id, details=f"Alterou estado de utilizador {user_id} para {'ativo' if new_status else 'inativo'}")
     return {"message": f"User {'activated' if new_status else 'deactivated'} successfully"}
 
 @api_router.delete("/users/{user_id}")
@@ -1136,6 +1189,7 @@ async def delete_user(
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
     
+    await log_audit(current_user, "delete", "user", entity_id=user_id, details=f"Eliminou utilizador {user.get('username', user_id)}")
     return {"message": "User deleted successfully"}
 
 # Helper functions
@@ -1392,6 +1446,7 @@ async def create_member(
                        member_id=member.id, 
                        member_number=member_number)
         
+        await log_audit(current_user, "create", "member", entity_id=member.id, details=f"Criou membro {member.name}")
         return member
         
     except Exception as e:
@@ -1461,6 +1516,7 @@ async def update_member(
         raise HTTPException(status_code=404, detail="Member not found")
     
     updated_member = await db.members.find_one({"id": member_id})
+    await log_audit(current_user, "update", "member", entity_id=member_id, details=f"Atualizou membro {member_id}")
     return Member(**parse_from_mongo(updated_member))
 
 @api_router.delete("/members/{member_id}")
@@ -1471,6 +1527,7 @@ async def delete_member(
     result = await db.members.delete_one({"id": member_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Member not found")
+    await log_audit(current_user, "delete", "member", entity_id=member_id, details=f"Eliminou membro {member_id}")
     return {"message": "Member deleted successfully"}
 
 # Attendance Routes
@@ -1606,6 +1663,7 @@ async def create_payment(
     payment = Payment(**payment_data.dict())
     payment_dict = prepare_for_mongo(payment.dict())
     await db.payments.insert_one(payment_dict)
+    await log_audit(current_user, "create", "payment", entity_id=payment.id, details=f"Registou pagamento de {payment.amount} EUR")
     return payment
 
 @api_router.get("/payments", response_model=List[Payment])
@@ -1631,6 +1689,38 @@ async def get_payments(
     payments = await db.payments.find(filter_dict).to_list(1000)
     return [Payment(**parse_from_mongo(payment)) for payment in payments]
 
+# Expense Routes (Admin only)
+@api_router.post("/expenses", response_model=Expense)
+async def create_expense(
+    expense_data: ExpenseCreate,
+    current_user: User = Depends(require_admin)
+):
+    expense_dict_in = expense_data.dict()
+    if not expense_dict_in.get('expense_date'):
+        expense_dict_in['expense_date'] = date.today()
+    expense = Expense(**expense_dict_in)
+    expense_dict = prepare_for_mongo(expense.dict())
+    await db.expenses.insert_one(expense_dict)
+    await log_audit(current_user, "create", "expense", entity_id=expense.id, details=f"Registou despesa de {expense.amount} EUR - {expense.description}")
+    return expense
+
+@api_router.get("/expenses", response_model=List[Expense])
+async def get_expenses(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin)
+):
+    filter_dict = {}
+    if start_date:
+        filter_dict['expense_date'] = filter_dict.get('expense_date', {})
+        filter_dict['expense_date']['$gte'] = start_date.isoformat()
+    if end_date:
+        filter_dict['expense_date'] = filter_dict.get('expense_date', {})
+        filter_dict['expense_date']['$lte'] = end_date.isoformat()
+
+    expenses = await db.expenses.find(filter_dict).to_list(1000)
+    return [Expense(**parse_from_mongo(expense)) for expense in expenses]
+
 # Inventory Routes
 @api_router.post("/inventory", response_model=InventoryItem)
 async def create_inventory_item(
@@ -1640,6 +1730,7 @@ async def create_inventory_item(
     item = InventoryItem(**item_data.dict())
     item_dict = prepare_for_mongo(item.dict())
     await db.inventory.insert_one(item_dict)
+    await log_audit(current_user, "create", "inventory", entity_id=item.id, details=f"Criou artigo de stock {item.name}")
     return item
 
 @api_router.get("/inventory", response_model=List[InventoryItem])
@@ -1670,6 +1761,7 @@ async def update_inventory_item(
         raise HTTPException(status_code=404, detail="Item not found")
     
     updated_item = await db.inventory.find_one({"id": item_id})
+    await log_audit(current_user, "update", "inventory", entity_id=item_id, details=f"Atualizou artigo de stock {item_id}")
     return InventoryItem(**parse_from_mongo(updated_item))
 
 @api_router.delete("/inventory/{item_id}")
@@ -1680,7 +1772,32 @@ async def delete_inventory_item(
     result = await db.inventory.delete_one({"id": item_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
+    await log_audit(current_user, "delete", "inventory", entity_id=item_id, details=f"Eliminou artigo de stock {item_id}")
     return {"message": "Item deleted successfully"}
+
+# Audit Log Routes (Admin only)
+@api_router.get("/audit-logs", response_model=List[AuditLog])
+async def get_audit_logs(
+    entity_type: Optional[str] = None,
+    action: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin)
+):
+    filter_dict = {}
+    if entity_type:
+        filter_dict['entity_type'] = entity_type
+    if action:
+        filter_dict['action'] = action
+    if start_date or end_date:
+        filter_dict['timestamp'] = {}
+        if start_date:
+            filter_dict['timestamp']['$gte'] = datetime.combine(start_date, datetime.min.time()).replace(tzinfo=timezone.utc).isoformat()
+        if end_date:
+            filter_dict['timestamp']['$lte'] = datetime.combine(end_date, datetime.max.time()).replace(tzinfo=timezone.utc).isoformat()
+
+    logs = await db.audit_logs.find(filter_dict).sort("timestamp", -1).to_list(500)
+    return [AuditLog(**parse_from_mongo(log)) for log in logs]
 
 # Dashboard & Reports
 @api_router.get("/dashboard")
@@ -1758,6 +1875,87 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
     except Exception as e:
         gym_logger.error("Dashboard stats generation failed", error=e, user_id=current_user.id)
         raise HTTPException(status_code=500, detail="Failed to generate dashboard statistics")
+
+
+@api_router.get("/dashboard/alerts")
+@api_rate_limit()
+async def get_dashboard_alerts(request: Request, current_user: User = Depends(require_admin_or_staff)):
+    """Alertas do Painel Principal: aniversarios de membros e renovacao anual do seguro (aniversario de inscricao)"""
+    try:
+        today = date.today()
+        members = await db.members.find({"status": "active"}).to_list(5000)
+
+        def to_date(value):
+            if isinstance(value, datetime):
+                return value.date()
+            if isinstance(value, date):
+                return value
+            if isinstance(value, str):
+                try:
+                    return datetime.fromisoformat(value).date()
+                except (ValueError, TypeError):
+                    return None
+            return None
+
+        def next_occurrence(month, day, base):
+            year = base.year
+            try:
+                occ = date(year, month, day)
+            except ValueError:
+                occ = date(year, month, 28)
+            if occ < base:
+                try:
+                    occ = date(year + 1, month, day)
+                except ValueError:
+                    occ = date(year + 1, month, 28)
+            return occ
+
+        birthdays_today = []
+        birthdays_upcoming = []
+        insurance_due_today = []
+        insurance_upcoming = []
+
+        for m in members:
+            dob = to_date(m.get("date_of_birth"))
+            jd = to_date(m.get("join_date"))
+
+            if dob:
+                occ = next_occurrence(dob.month, dob.day, today)
+                days_until = (occ - today).days
+                age = occ.year - dob.year
+                entry = {"id": m["id"], "name": m["name"], "member_number": m.get("member_number"), "age": age}
+                if days_until == 0:
+                    birthdays_today.append(entry)
+                elif 0 < days_until <= 7:
+                    entry["date"] = occ.isoformat()
+                    entry["days_until"] = days_until
+                    birthdays_upcoming.append(entry)
+
+            if jd:
+                occ = next_occurrence(jd.month, jd.day, today)
+                years = occ.year - jd.year
+                if years > 0:
+                    days_until = (occ - today).days
+                    entry = {"id": m["id"], "name": m["name"], "member_number": m.get("member_number"), "years": years}
+                    if days_until == 0:
+                        insurance_due_today.append(entry)
+                    elif 0 < days_until <= 30:
+                        entry["date"] = occ.isoformat()
+                        entry["days_until"] = days_until
+                        insurance_upcoming.append(entry)
+
+        birthdays_upcoming.sort(key=lambda x: x["days_until"])
+        insurance_upcoming.sort(key=lambda x: x["days_until"])
+
+        return {
+            "birthdays_today": birthdays_today,
+            "birthdays_upcoming": birthdays_upcoming,
+            "insurance_due_today": insurance_due_today,
+            "insurance_upcoming": insurance_upcoming,
+        }
+    except Exception as e:
+        gym_logger.error("Dashboard alerts generation failed", error=e, user_id=current_user.id)
+        raise HTTPException(status_code=500, detail="Failed to generate dashboard alerts")
 
 @api_router.get("/reports/attendance")
 async def get_attendance_report(
@@ -1946,6 +2144,63 @@ async def qr_checkin(
     )
     attendance = await create_attendance(attendance_data)
     
+    return {
+        "message": "Check-in successful",
+        "member": Member(**parse_from_mongo(member)),
+        "attendance": attendance
+    }
+
+
+# NFC Tag check-in
+@api_router.put("/members/{member_id}/nfc")
+async def assign_member_nfc_tag(
+    member_id: str,
+    payload: dict,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Associar ou atualizar o cartao/pulseira NFC de um membro"""
+    nfc_tag_id = (payload.get("nfc_tag_id") or "").strip()
+    if not nfc_tag_id:
+        raise HTTPException(status_code=400, detail="nfc_tag_id e obrigatorio")
+
+    member = await db.members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+
+    existing = await db.members.find_one({"nfc_tag_id": nfc_tag_id, "id": {"$ne": member_id}})
+    if existing:
+        raise HTTPException(status_code=400, detail="Este cartao NFC ja esta associado a outro membro")
+
+    await db.members.update_one({"id": member_id}, {"$set": {"nfc_tag_id": nfc_tag_id}})
+    updated_member = await db.members.find_one({"id": member_id})
+    return Member(**parse_from_mongo(updated_member))
+
+
+@api_router.post("/checkin/nfc")
+async def nfc_checkin(
+    payload: dict,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Check-in atraves de cartao/pulseira NFC"""
+    tag_id = (payload.get("tag_id") or "").strip()
+    if not tag_id:
+        raise HTTPException(status_code=400, detail="tag_id e obrigatorio")
+
+    member = await db.members.find_one({"nfc_tag_id": tag_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Cartao NFC nao reconhecido")
+
+    activity_id = payload.get("activity_id") or member.get("activity_id")
+    if not activity_id:
+        raise HTTPException(status_code=400, detail="Este membro nao tem modalidade definida. Edite a ficha do membro.")
+
+    attendance_data = AttendanceCreate(
+        member_id=member["id"],
+        activity_id=activity_id,
+        method="nfc"
+    )
+    attendance = await create_attendance(attendance_data)
+
     return {
         "message": "Check-in successful",
         "member": Member(**parse_from_mongo(member)),

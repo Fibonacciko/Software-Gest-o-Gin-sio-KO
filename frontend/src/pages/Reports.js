@@ -12,7 +12,9 @@ import {
   Users,
   DollarSign,
   Package,
-  Activity
+  Activity,
+  Printer,
+  TrendingDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +31,7 @@ const Reports = ({ language, translations }) => {
   const [members, setMembers] = useState([]);
   const [payments, setPayments] = useState([]);
   const [attendance, setAttendance] = useState([]);
+  const [expenses, setExpenses] = useState([]);
 
   const t = {
     pt: {
@@ -62,6 +65,9 @@ const Reports = ({ language, translations }) => {
       totalPayments: 'Total de Pagamentos',
       averagePayment: 'Pagamento Médio',
       pendingPayments: 'Pagamentos Pendentes',
+    totalExpenses: 'Despesas Totais',
+    netProfit: 'Lucro Líquido',
+    print: 'Imprimir',
       totalItems: 'Total de Items',
       totalValue: 'Valor Total',
       lowStockItems: 'Items com Stock Baixo',
@@ -108,6 +114,9 @@ const Reports = ({ language, translations }) => {
       totalPayments: 'Total Payments',
       averagePayment: 'Average Payment',
       pendingPayments: 'Pending Payments',
+    totalExpenses: 'Total Expenses',
+    netProfit: 'Net Profit',
+    print: 'Print',
       totalItems: 'Total Items',
       totalValue: 'Total Value',
       lowStockItems: 'Low Stock Items',
@@ -140,15 +149,17 @@ const Reports = ({ language, translations }) => {
       setLoading(true);
       
       // Fetch all data
-      const [membersRes, paymentsRes, attendanceRes] = await Promise.all([
+      const [membersRes, paymentsRes, attendanceRes, expensesRes] = await Promise.all([
         axios.get(`${API}/members`),
         axios.get(`${API}/payments`),
-        axios.get(`${API}/attendance`)
+        axios.get(`${API}/attendance`),
+        axios.get(`${API}/expenses`).catch(() => ({ data: [] }))
       ]);
       
       setMembers(membersRes.data);
       setPayments(paymentsRes.data);
       setAttendance(attendanceRes.data);
+      setExpenses(expensesRes.data);
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -273,10 +284,27 @@ const Reports = ({ language, translations }) => {
         return acc;
       }, {});
     
+    const filteredExpenses = expenses.filter(expense => {
+      const expDate = new Date(expense.expense_date);
+      return expDate >= start && expDate <= end;
+    });
+    const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const netProfit = totalRevenue - totalExpenses;
+    const expensesByMonth = filteredExpenses.reduce((acc, expense) => {
+      const month = new Date(expense.expense_date).toLocaleDateString('pt-PT', { month: 'short' });
+      acc[month] = (acc[month] || 0) + expense.amount;
+      return acc;
+    }, {});
+    const expensesByCategory = filteredExpenses.reduce((acc, expense) => {
+      const cat = expense.category || 'other';
+      acc[cat] = (acc[cat] || 0) + expense.amount;
+      return acc;
+    }, {});
+
     setReportData({
       type: 'payment',
-      stats: { totalPayments, totalRevenue, averagePayment, pendingPayments },
-      charts: { revenueByMonth }
+      stats: { totalPayments, totalRevenue, averagePayment, pendingPayments, totalExpenses, netProfit },
+      charts: { revenueByMonth, expensesByMonth, expensesByCategory }
     });
   };
 
@@ -352,7 +380,18 @@ const Reports = ({ language, translations }) => {
           ['Total de Pagamentos', reportData.stats.totalPayments],
           ['Receita Total', reportData.stats.totalRevenue.toFixed(2)],
           ['Pagamento Médio', reportData.stats.averagePayment.toFixed(2)],
-          ['Pagamentos Pendentes', reportData.stats.pendingPayments]
+          ['Pagamentos Pendentes', reportData.stats.pendingPayments],
+        ['Despesas Totais', reportData.stats.totalExpenses.toFixed(2)],
+        ['Lucro Liquido', reportData.stats.netProfit.toFixed(2)],
+        [''],
+        ['Receita por Mes'],
+        ...Object.entries(reportData.charts.revenueByMonth).map(([m, v]) => [m, v.toFixed(2)]),
+        [''],
+        ['Despesas por Mes'],
+        ...Object.entries(reportData.charts.expensesByMonth).map(([m, v]) => [m, v.toFixed(2)]),
+        [''],
+        ['Despesas por Categoria'],
+        ...Object.entries(reportData.charts.expensesByCategory).map(([c, v]) => [c, v.toFixed(2)])
         ].map(row => row.join(',')).join('\n');
         break;
       default:
@@ -392,7 +431,8 @@ const Reports = ({ language, translations }) => {
         </h1>
         
         {reportData && (
-          <Button 
+          <>
+        <Button 
             onClick={exportReport}
             className="btn-hover"
             data-testid="export-report-btn"
@@ -400,6 +440,16 @@ const Reports = ({ language, translations }) => {
             <Download className="mr-2" size={16} />
             {t[language].export}
           </Button>
+          <Button
+            onClick={() => window.print()}
+            variant="outline"
+            className="btn-hover ml-2"
+            data-testid="print-report-btn"
+          >
+            <Printer className="mr-2" size={16} />
+            {t[language].print}
+          </Button>
+          </>
         )}
       </div>
 
@@ -524,7 +574,7 @@ const Reports = ({ language, translations }) => {
                             {member.count} presenças
                           </span>
                         </div>
-                      ))}
+      ))}
                     </div>
                   ) : (
                     <p className="text-gray-500 text-center py-4">{t[language].noData}</p>
@@ -560,7 +610,19 @@ const Reports = ({ language, translations }) => {
                 icon={Calendar}
                 color="bg-orange-500"
               />
-            </div>
+            <StatCard
+            title={t[language].totalExpenses}
+            value={`€${reportData.stats.totalExpenses.toFixed(2)}`}
+            icon={TrendingDown}
+            color="bg-red-500"
+          />
+          <StatCard
+            title={t[language].netProfit}
+            value={`€${reportData.stats.netProfit.toFixed(2)}`}
+            icon={DollarSign}
+            color={reportData.stats.netProfit >= 0 ? "bg-emerald-500" : "bg-red-600"}
+          />
+          </div>
           )}
           
           {reportData.type === 'member' && (
