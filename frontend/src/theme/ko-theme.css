@@ -51,6 +51,11 @@
   
   /* Variáveis de aplicação */
   --background-primary: var(--gradient-page-bg);
+
+  /* Ondas do fundo animado (tema claro) */
+  --wave-strong: rgba(184, 101, 27, 0.16);
+  --wave-soft: rgba(249, 168, 82, 0.13);
+  --wave-faint: rgba(255, 214, 160, 0.16);
   --background-secondary: var(--gradient-card-bg);
   --background-elevated: var(--gradient-input);
   --background-sidebar: var(--gradient-sidebar);
@@ -164,4 +169,11 @@
   border-radius: 0.375rem;
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+/* Ondas do fundo animado (tema escuro): mais discretas para nao lavar o preto */
+body.dark-mode {
+  --wave-strong: rgba(184, 101, 27, 0.22);
+  --wave-soft: rgba(232, 140, 42, 0.12);
+  --wave-faint: rgba(120, 72, 24, 0.18);
 }

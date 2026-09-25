@@ -257,7 +257,7 @@ const Inventory = ({ language, translations }) => {
     switch (category) {
       case 'clothing': return <Shirt size={16} className="text-blue-600" />;
       case 'equipment': return <Package size={16} className="text-green-600" />;
-      default: return <Package size={16} className="text-gray-600" />;
+      default: return <Package size={16} className="text-gray-600 dark:text-gray-300" />;
     }
   };
 
@@ -286,7 +286,7 @@ const Inventory = ({ language, translations }) => {
     <div className="p-6 space-y-6 fade-in">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-0">
           {t[language].inventory}
         </h1>
         
@@ -423,10 +423,10 @@ const Inventory = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].totalItems}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalItems}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalItems}</p>
               </div>
               <div className="p-3 rounded-full bg-blue-500">
                 <Package size={24} className="text-white" />
@@ -439,10 +439,10 @@ const Inventory = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].totalValue}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   €{stats.totalValue.toFixed(2)}
                 </p>
               </div>
@@ -457,10 +457,10 @@ const Inventory = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].lowStock}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.lowStockItems}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.lowStockItems}</p>
               </div>
               <div className="p-3 rounded-full bg-yellow-500">
                 <AlertTriangle size={24} className="text-white" />
@@ -473,10 +473,10 @@ const Inventory = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].outOfStock}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.outOfStockItems}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.outOfStockItems}</p>
               </div>
               <div className="p-3 rounded-full bg-red-500">
                 <Minus size={24} className="text-white" />
@@ -491,7 +491,7 @@ const Inventory = ({ language, translations }) => {
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <Input
                 placeholder={t[language].searchItems}
                 value={searchTerm}
@@ -548,7 +548,7 @@ const Inventory = ({ language, translations }) => {
                           {getCategoryIcon(item.category)}
                           <div>
                             <h3 className="font-semibold text-lg">{item.name}</h3>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                               {t[language][item.category]}
                             </p>
                           </div>
@@ -577,25 +577,25 @@ const Inventory = ({ language, translations }) => {
                       <div className="space-y-2 mb-4">
                         {item.size && (
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">{t[language].size}:</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-300">{t[language].size}:</span>
                             <span className="text-sm font-medium">{item.size}</span>
                           </div>
                         )}
                         {item.color && (
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">{t[language].color}:</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-300">{t[language].color}:</span>
                             <span className="text-sm font-medium">{item.color}</span>
                           </div>
                         )}
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">{t[language].price}:</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-300">{t[language].price}:</span>
                           <span className="text-sm font-semibold">€{item.price.toFixed(2)}</span>
                         </div>
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">{t[language].stockLevel}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{t[language].stockLevel}</p>
                           <div className="flex items-center space-x-2">
                             <span className="text-xl font-bold">{item.quantity}</span>
                             <Badge className={stockStatus.color}>
@@ -609,7 +609,7 @@ const Inventory = ({ language, translations }) => {
                       
                       {item.description && (
                         <div className="mt-4 pt-4 border-t">
-                          <p className="text-sm text-gray-600">{item.description}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
                         </div>
                       )}
                     </CardContent>
@@ -619,8 +619,8 @@ const Inventory = ({ language, translations }) => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Package size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">{t[language].noItems}</p>
+              <Package size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+              <p className="text-gray-600 dark:text-gray-300">{t[language].noItems}</p>
             </div>
           )}
         </CardContent>

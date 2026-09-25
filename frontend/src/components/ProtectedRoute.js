@@ -7,10 +7,10 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">A carregar...</p>
+          <p className="text-gray-600 dark:text-gray-300">A carregar...</p>
         </div>
       </div>
     );
@@ -22,13 +22,13 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   if (requiredRole && !hasAccess(requiredRole)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-neutral-900">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Acesso Negado</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             Não tens permissão para aceder a esta área.
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Contacta o administrador se precisas de acesso.
           </p>
         </div>

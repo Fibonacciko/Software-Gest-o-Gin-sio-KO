@@ -174,7 +174,7 @@ const UserManagement = ({ language = 'pt' }) => {
   );
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--background-primary)' }}>
+    <div className="min-h-screen">
       <div className="p-6 space-y-6 fade-in">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           <h1 className="text-3xl font-bold mb-4 lg:mb-0 ko-text-primary">

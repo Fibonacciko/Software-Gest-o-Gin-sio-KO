@@ -28,6 +28,8 @@ const Attendance = ({ language, translations }) => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedMember, setSelectedMember] = useState('all');
+  const [monthlyTotal, setMonthlyTotal] = useState(0);
+  const [monthlyUniqueMembers, setMonthlyUniqueMembers] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('list'); // list or calendar
   const [monthlyAttendance, setMonthlyAttendance] = useState({});
@@ -55,7 +57,7 @@ const Attendance = ({ language, translations }) => {
       qrCode: 'QR Code',
       export: 'Exportar',
       attendanceStats: 'Estatísticas de Presença',
-      totalAttendance: 'Total de Presenças',
+      totalAttendance: 'Total de Presenças do Mês',
       uniqueMembers: 'Membros Únicos',
       averageDaily: 'Média Diária',
       previousMonth: 'Mês Anterior',
@@ -83,7 +85,7 @@ const Attendance = ({ language, translations }) => {
       qrCode: 'QR Code',
       export: 'Export',
       attendanceStats: 'Attendance Statistics',
-      totalAttendance: 'Total Attendance',
+      totalAttendance: 'Monthly Attendance',
       uniqueMembers: 'Unique Members',
       averageDaily: 'Daily Average',
       previousMonth: 'Previous Month',
@@ -95,10 +97,12 @@ const Attendance = ({ language, translations }) => {
   useEffect(() => {
     fetchMembers();
     fetchAttendance();
+    fetchMonthlyTotal();
   }, []);
 
   useEffect(() => {
     fetchAttendance();
+    fetchMonthlyTotal();
   }, [selectedDate, selectedMember, activityFilter]);
 
   useEffect(() => {
@@ -106,6 +110,37 @@ const Attendance = ({ language, translations }) => {
       fetchMonthlyAttendance();
     }
   }, [selectedDate, viewMode]);
+
+  const toInputDate = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const monthLabel = (d) => {
+    const texto = d.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  };
+
+  const monthRange = (base) => {
+    const inicio = new Date(base.getFullYear(), base.getMonth(), 1);
+    // Primeiro dia do mes seguinte: evita datas invalidas como 31 de setembro
+    const fim = new Date(base.getFullYear(), base.getMonth() + 1, 1);
+    const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return { inicio: iso(inicio), fim: iso(fim) };
+  };
+
+  const fetchMonthlyTotal = async () => {
+    try {
+      const { inicio, fim } = monthRange(selectedDate);
+      const params = new URLSearchParams({ start_date: inicio, end_date: fim });
+      if (selectedMember !== 'all') params.append('member_id', selectedMember);
+      if (activityFilter !== 'all') params.append('activity_id', activityFilter);
+
+      const response = await axios.get(`${API}/attendance?${params}`);
+      setMonthlyTotal(response.data.length);
+      setMonthlyUniqueMembers(new Set(response.data.map((att) => att.member_id)).size);
+    } catch (error) {
+      console.error('Error fetching monthly total:', error);
+    }
+  };
 
   const fetchMembers = async () => {
     try {
@@ -122,7 +157,7 @@ const Attendance = ({ language, translations }) => {
       const params = new URLSearchParams();
       
       if (viewMode === 'list') {
-        const dateStr = selectedDate.toISOString().split('T')[0];
+        const dateStr = toInputDate(selectedDate);
         params.append('start_date', dateStr);
         params.append('end_date', dateStr);
       }
@@ -156,14 +191,15 @@ const Attendance = ({ language, translations }) => {
 
   const fetchMonthlyAttendance = async () => {
     try {
-      const year = selectedDate.getFullYear();
-      const month = selectedDate.getMonth() + 1;
-      
-      const response = await axios.get(`${API}/attendance?start_date=${year}-${month.toString().padStart(2, '0')}-01&end_date=${year}-${month.toString().padStart(2, '0')}-31`);
+      const { inicio, fim } = monthRange(selectedDate);
+
+      // A versao "detailed" ja traz o membro, para o calendario mostrar os nomes
+      const response = await axios.get(`${API}/attendance/detailed?start_date=${inicio}&end_date=${fim}`);
       
       // Group by date
       const grouped = response.data.reduce((acc, att) => {
-        const date = att.check_in_date;
+        // check_in_date vem como 2026-09-25T00:00:00+00:00
+        const date = String(att.check_in_date).split('T')[0];
         if (!acc[date]) acc[date] = [];
         acc[date].push(att);
         return acc;
@@ -176,6 +212,8 @@ const Attendance = ({ language, translations }) => {
   };
 
   const handleDateSelect = (date) => {
+    // Clicar no dia ja selecionado devolve undefined e deixava a pagina sem data
+    if (!date || isNaN(new Date(date).getTime())) return;
     setSelectedDate(date);
   };
 
@@ -206,18 +244,16 @@ const Attendance = ({ language, translations }) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `presencas_${selectedDate.toISOString().split('T')[0]}.csv`;
+    a.download = `presencas_${toInputDate(selectedDate)}.csv`;
     a.click();
   };
 
   const getAttendanceStats = () => {
-    const total = attendance.length;
-    const uniqueMembers = new Set(attendance.map(att => att.member_id)).size;
-    const today = new Date();
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    const average = (total / daysInMonth).toFixed(1);
-    
-    return { total, uniqueMembers, average };
+    const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
+    // Both cards describe the month of the selected date, not the day being listed
+    const average = (monthlyTotal / daysInMonth).toFixed(1);
+
+    return { total: monthlyTotal, uniqueMembers: monthlyUniqueMembers, average };
   };
 
   const stats = getAttendanceStats();
@@ -226,7 +262,7 @@ const Attendance = ({ language, translations }) => {
     <div className="p-6 space-y-6 fade-in">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-0">
           {t[language].attendance}
         </h1>
         
@@ -256,10 +292,14 @@ const Attendance = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].totalAttendance}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {monthLabel(selectedDate)}
+                  {stats.uniqueMembers > 0 ? ` · ${stats.uniqueMembers} ${stats.uniqueMembers === 1 ? 'membro' : 'membros'}` : ''}
+                </p>
               </div>
               <div className="p-3 rounded-full bg-blue-500">
                 <Users size={24} className="text-white" />
@@ -272,10 +312,10 @@ const Attendance = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].averageDaily}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.average}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.average}</p>
               </div>
               <div className="p-3 rounded-full bg-purple-500">
                 <Clock size={24} className="text-white" />
@@ -293,15 +333,19 @@ const Attendance = ({ language, translations }) => {
               <div>
                 <Input
                   type="date"
-                  value={selectedDate.toISOString().split('T')[0]}
-                  onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                  value={toInputDate(selectedDate)}
+                  onChange={(e) => {
+                    const nova = new Date(e.target.value);
+                    // Enquanto se escreve, o campo passa por valores invalidos
+                    if (!isNaN(nova.getTime())) setSelectedDate(nova);
+                  }}
                   data-testid="date-selector"
                 />
               </div>
             )}
             
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <Input
                 placeholder={t[language].searchMembers}
                 value={searchTerm}
@@ -327,7 +371,7 @@ const Attendance = ({ language, translations }) => {
               </Select>
               
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Modalidade</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Modalidade</label>
                 <ActivitySelector
                   value={activityFilter}
                   onChange={setActivityFilter}
@@ -375,16 +419,16 @@ const Attendance = ({ language, translations }) => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-4 font-medium text-gray-600">
+                      <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                         {t[language].memberName}
                       </th>
-                      <th className="text-left p-4 font-medium text-gray-600">
+                      <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                         {t[language].checkInTime}
                       </th>
-                      <th className="text-left p-4 font-medium text-gray-600">
+                      <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                         {t[language].activity}
                       </th>
-                      <th className="text-left p-4 font-medium text-gray-600">
+                      <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                         {t[language].method}
                       </th>
                     </tr>
@@ -406,13 +450,13 @@ const Attendance = ({ language, translations }) => {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-500">{att.member.phone}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{att.member.phone}</p>
                             </div>
                           </div>
                         </td>
                         <td className="p-4">
                           <div className="flex items-center">
-                            <Clock size={16} className="text-gray-400 mr-2" />
+                            <Clock size={16} className="text-gray-400 dark:text-gray-500 mr-2" />
                             {new Date(att.check_in_time).toLocaleTimeString('pt-PT', {
                               hour: '2-digit',
                               minute: '2-digit'
@@ -444,8 +488,8 @@ const Attendance = ({ language, translations }) => {
               </div>
             ) : (
               <div className="text-center py-8">
-                <CalendarIcon size={48} className="mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600">{t[language].noAttendance}</p>
+                <CalendarIcon size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+                <p className="text-gray-600 dark:text-gray-300">{t[language].noAttendance}</p>
               </div>
             )}
           </CardContent>
@@ -488,7 +532,7 @@ const Attendance = ({ language, translations }) => {
                 className="rounded-md border w-full"
                 modifiers={{
                   hasAttendance: (date) => {
-                    const dateStr = date.toISOString().split('T')[0];
+                    const dateStr = toInputDate(date);
                     return monthlyAttendance[dateStr] && monthlyAttendance[dateStr].length > 0;
                   }
                 }}
@@ -507,19 +551,19 @@ const Attendance = ({ language, translations }) => {
                 <h4 className="font-medium mb-3">
                   {t[language].attendanceMarked} - {selectedDate.toLocaleDateString('pt-PT')}
                 </h4>
-                {monthlyAttendance[selectedDate.toISOString().split('T')[0]] ? (
+                {monthlyAttendance[toInputDate(selectedDate)] ? (
                   <div className="space-y-2">
-                    {monthlyAttendance[selectedDate.toISOString().split('T')[0]].map((att) => (
-                      <div key={att.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    {monthlyAttendance[toInputDate(selectedDate)].map((att) => (
+                      <div key={att.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                         <span className="font-medium">{att.member?.name || 'Carregando...'}</span>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
                           {new Date(att.check_in_time).toLocaleTimeString('pt-PT')}
                         </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                     {t[language].noAttendance}
                   </p>
                 )}

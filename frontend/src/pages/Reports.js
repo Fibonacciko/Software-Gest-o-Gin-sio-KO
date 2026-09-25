@@ -21,6 +21,22 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Nomes das categorias de despesa, tal como aparecem no formulario das Financas
+const EXPENSE_CATEGORY_LABELS = {
+  rent: 'Renda',
+  salaries: 'Salários',
+  accountant: 'Contabilista',
+  technology: 'Tecnologia',
+  energy: 'Energia',
+  infrastructure: 'Infraestruturas',
+  merchandise: 'Merchandise',
+  marketing: 'Marketing',
+  licenses: 'Licenças',
+  fnb: 'F&B'
+};
+
+const expenseCategoryLabel = (id) => EXPENSE_CATEGORY_LABELS[id] || id;
+
 const Reports = ({ language, translations }) => {
   const [loading, setLoading] = useState(true);
   const [reportType, setReportType] = useState('attendance');
@@ -391,7 +407,7 @@ const Reports = ({ language, translations }) => {
         ...Object.entries(reportData.charts.expensesByMonth).map(([m, v]) => [m, v.toFixed(2)]),
         [''],
         ['Despesas por Categoria'],
-        ...Object.entries(reportData.charts.expensesByCategory).map(([c, v]) => [c, v.toFixed(2)])
+        ...Object.entries(reportData.charts.expensesByCategory).map(([c, v]) => [expenseCategoryLabel(c), v.toFixed(2)])
         ].map(row => row.join(',')).join('\n');
         break;
       default:
@@ -411,8 +427,8 @@ const Reports = ({ language, translations }) => {
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{title}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
           </div>
           <div className={`p-3 rounded-full ${color}`}>
             <Icon size={24} className="text-white" />
@@ -426,7 +442,7 @@ const Reports = ({ language, translations }) => {
     <div className="p-6 space-y-6 fade-in">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-0">
           {t[language].reports}
         </h1>
         
@@ -461,7 +477,7 @@ const Reports = ({ language, translations }) => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 {t[language].reportType}
               </label>
               <Select value={reportType} onValueChange={setReportType}>
@@ -478,7 +494,7 @@ const Reports = ({ language, translations }) => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 {t[language].dateRange}
               </label>
               <Select value={dateRange} onValueChange={setDateRange}>
@@ -498,7 +514,7 @@ const Reports = ({ language, translations }) => {
             {dateRange === 'custom' && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     {t[language].startDate}
                   </label>
                   <Input
@@ -509,7 +525,7 @@ const Reports = ({ language, translations }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     {t[language].endDate}
                   </label>
                   <Input
@@ -530,7 +546,7 @@ const Reports = ({ language, translations }) => {
         <Card>
           <CardContent className="p-12 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">A carregar dados...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-300">A carregar dados...</p>
           </CardContent>
         </Card>
       ) : reportData ? (
@@ -568,7 +584,7 @@ const Reports = ({ language, translations }) => {
                   {reportData.charts.topMembers.length > 0 ? (
                     <div className="space-y-3">
                       {reportData.charts.topMembers.map((member, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                           <span className="font-medium">{member.member}</span>
                           <span className="text-sm font-semibold text-blue-600">
                             {member.count} presenças
@@ -577,7 +593,7 @@ const Reports = ({ language, translations }) => {
       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-center py-4">{t[language].noData}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-center py-4">{t[language].noData}</p>
                   )}
                 </CardContent>
               </Card>
@@ -650,7 +666,7 @@ const Reports = ({ language, translations }) => {
                   <CardContent>
                     <div className="space-y-3">
                       {Object.entries(reportData.charts.membersByType).map(([type, count]) => (
-                        <div key={type} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div key={type} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                           <span className="font-medium">{t[language][type] || type}</span>
                           <span className="text-sm font-semibold text-blue-600">{count}</span>
                         </div>
@@ -666,7 +682,7 @@ const Reports = ({ language, translations }) => {
                   <CardContent>
                     <div className="space-y-3">
                       {Object.entries(reportData.charts.membersByStatus).map(([status, count]) => (
-                        <div key={status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div key={status} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                           <span className="font-medium">{t[language][status] || status}</span>
                           <span className="text-sm font-semibold text-green-600">{count}</span>
                         </div>
@@ -708,7 +724,7 @@ const Reports = ({ language, translations }) => {
                 <CardContent>
                   <div className="space-y-3">
                     {Object.entries(reportData.charts.itemsByCategory).map(([category, count]) => (
-                      <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={category} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                         <span className="font-medium">{t[language][category] || category}</span>
                         <span className="text-sm font-semibold text-blue-600">{count}</span>
                       </div>
@@ -722,8 +738,8 @@ const Reports = ({ language, translations }) => {
       ) : (
         <Card>
           <CardContent className="p-12 text-center">
-            <BarChart size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600">Selecione um tipo de relatório para começar</p>
+            <BarChart size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+            <p className="text-gray-600 dark:text-gray-300">Selecione um tipo de relatório para começar</p>
           </CardContent>
         </Card>
       )}

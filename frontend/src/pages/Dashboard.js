@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
+import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
 import { 
   Users, 
   UserCheck, 
@@ -13,7 +15,10 @@ import {
   Plus,
   Search,
   QrCode,
-  Activity
+  Activity,
+  StickyNote,
+  Save,
+  ArrowLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,8 +34,11 @@ const Dashboard = ({ language, translations }) => {
     today_attendance: 0,
     monthly_revenue: 0
   });
-  const [recentMembers, setRecentMembers] = useState([]);
   const [todayAttendance, setTodayAttendance] = useState([]);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberNotes, setMemberNotes] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [checkinChoiceMember, setCheckinChoiceMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkinMemberId, setCheckinMemberId] = useState('');
   const [qrMode, setQrMode] = useState(false);
@@ -57,8 +65,14 @@ const Dashboard = ({ language, translations }) => {
       searchMember: 'Procurar membro...',
       checkinSuccess: 'Check-in realizado com sucesso!',
       memberNotFound: 'Membro não encontrado',
-      recentMembers: 'Membros Recentes',
       todayAttendanceList: 'Presenças de Hoje',
+      selectMemberHint: 'Seleciona uma presença para veres o calendário e as notas do membro',
+      backToAttendance: 'Voltar às presenças',
+      memberNotes: 'Notas do Membro',
+      notesPlaceholder: 'Escreve aqui as notas deste membro...',
+      saveNotes: 'Guardar Notas',
+      notesSaved: 'Notas guardadas com sucesso!',
+      notesError: 'Erro ao guardar as notas',
       noAttendance: 'Nenhuma presença registada hoje',
       qrCheckin: 'Check-in QR',
       manualCheckin: 'Check-in Manual',
@@ -77,8 +91,14 @@ const Dashboard = ({ language, translations }) => {
       searchMember: 'Search member...',
       checkinSuccess: 'Check-in successful!',
       memberNotFound: 'Member not found',
-      recentMembers: 'Recent Members',
       todayAttendanceList: "Today's Attendance",
+      selectMemberHint: "Select an attendance to see the member's calendar and notes",
+      backToAttendance: 'Back to attendance',
+      memberNotes: 'Member Notes',
+      notesPlaceholder: "Write this member's notes here...",
+      saveNotes: 'Save Notes',
+      notesSaved: 'Notes saved successfully!',
+      notesError: 'Error saving notes',
       noAttendance: 'No attendance recorded today',
       qrCheckin: 'QR Check-in',
       manualCheckin: 'Manual Check-in',
@@ -123,10 +143,6 @@ const Dashboard = ({ language, translations }) => {
       const activitiesResponse = await axios.get(`${API}/activities`);
       setActivities(activitiesResponse.data);
       
-      // Fetch recent members
-      const membersResponse = await axios.get(`${API}/members?limit=5`);
-      setRecentMembers(membersResponse.data.slice(0, 5));
-      
       // Fetch today's attendance
       const today = new Date().toISOString().split('T')[0];
       // Use tomorrow as the upper bound because check_in_date is stored as a full
@@ -170,6 +186,57 @@ const Dashboard = ({ language, translations }) => {
     }
   };
 
+  const loadMemberProfile = async (memberId) => {
+    try {
+      // Fetch the full record so the notes shown are always the stored ones
+      const response = await axios.get(`${API}/members/${memberId}`);
+      setSelectedMember(response.data);
+      setMemberNotes(response.data.notes || '');
+    } catch (error) {
+      console.error('Error fetching member:', error);
+      toast.error('Erro ao carregar dados do membro');
+    }
+  };
+
+  const handleSelectAttendanceMember = async (member) => {
+    if (!member?.id || member.name === 'Membro eliminado') return;
+    if (selectedMember?.id === member.id) {
+      setSelectedMember(null);
+      setMemberNotes('');
+      return;
+    }
+    await loadMemberProfile(member.id);
+  };
+
+  const handleSaveNotes = async () => {
+    if (!selectedMember) return;
+    try {
+      setSavingNotes(true);
+      // The API replaces the whole member payload, so resend every field
+      await axios.put(`${API}/members/${selectedMember.id}`, {
+        name: selectedMember.name,
+        email: selectedMember.email || null,
+        phone: selectedMember.phone,
+        date_of_birth: selectedMember.date_of_birth,
+        nationality: selectedMember.nationality,
+        profession: selectedMember.profession,
+        address: selectedMember.address,
+        membership_type: selectedMember.membership_type,
+        photo_url: selectedMember.photo_url || null,
+        activity_id: selectedMember.activity_id || null,
+        activity_ids: selectedMember.activity_ids || [],
+        notes: memberNotes
+      });
+      setSelectedMember({ ...selectedMember, notes: memberNotes });
+      toast.success(t[language].notesSaved);
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast.error(t[language].notesError);
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
   const fetchFilteredMembers = async () => {
     try {
       const response = await axios.get(`${API}/members?search=${searchTerm}`);
@@ -208,9 +275,14 @@ const Dashboard = ({ language, translations }) => {
     const cleanTagId = (tagId || '').trim();
     if (!cleanTagId) return;
     try {
-      await axios.post(`${API}/checkin/nfc`, { tag_id: cleanTagId });
+      const response = await axios.post(`${API}/checkin/nfc`, { tag_id: cleanTagId });
       toast.success('Check-in por cartao realizado com sucesso!');
       setUnrecognizedTag('');
+
+      if (response.data?.member?.id) {
+        await loadMemberProfile(response.data.member.id);
+      }
+
       fetchDashboardData();
     } catch (error) {
       console.error('Error on card checkin:', error);
@@ -239,8 +311,11 @@ const Dashboard = ({ language, translations }) => {
     if (!unrecognizedTag) return;
     try {
       await axios.put(`${API}/members/${memberId}/nfc`, { nfc_tag_id: unrecognizedTag });
-      await axios.post(`${API}/checkin/nfc`, { tag_id: unrecognizedTag });
+      const response = await axios.post(`${API}/checkin/nfc`, { tag_id: unrecognizedTag });
       toast.success('Cartao associado e check-in realizado com sucesso!');
+      if (response.data?.member?.id) {
+        await loadMemberProfile(response.data.member.id);
+      }
       setUnrecognizedTag('');
       setSearchTerm('');
       setFilteredMembers([]);
@@ -251,23 +326,44 @@ const Dashboard = ({ language, translations }) => {
     }
   };
 
-  const handleQuickCheckin = async (member) => {
-    if (!member || !member.activity_id) {
+  const getMemberActivityIds = (member) => {
+    if (member?.activity_ids?.length) return member.activity_ids;
+    return member?.activity_id ? [member.activity_id] : [];
+  };
+
+  const handleQuickCheckin = async (member, activityId = null) => {
+    const memberActivities = getMemberActivityIds(member);
+
+    if (!member || memberActivities.length === 0) {
       toast.error('Este membro nao tem modalidade definida. Edita a ficha do membro em Membros.');
       return;
     }
 
+    // With several modalities subscribed, the staff picks the one being attended
+    if (!activityId && memberActivities.length > 1) {
+      setCheckinChoiceMember(member);
+      return;
+    }
+
+    const chosenActivity = activityId || memberActivities[0];
+
     try {
       await axios.post(`${API}/attendance`, {
         member_id: member.id,
-        activity_id: member.activity_id,
+        activity_id: chosenActivity,
         method: 'manual'
       });
+
+      setCheckinChoiceMember(null);
 
       toast.success(t[language].checkinSuccess);
       setCheckinMemberId('');
       setSearchTerm('');
       setFilteredMembers([]);
+
+      // Show the profile of whoever just checked in, in place of the list
+      await loadMemberProfile(member.id);
+
       fetchDashboardData(); // Refresh data
     } catch (error) {
       console.error('Error during check-in:', error);
@@ -351,7 +447,7 @@ const Dashboard = ({ language, translations }) => {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--background-primary)' }}>
+    <div className="min-h-screen">
       <div className="p-6 space-y-6 fade-in">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
@@ -386,7 +482,7 @@ const Dashboard = ({ language, translations }) => {
         />
         <StatCard
           title={t[language].todayAttendance}
-          value={stats.today_attendance}
+          value={todayAttendance.length}
           icon={Calendar}
           color="ko-golden"
         />
@@ -524,8 +620,8 @@ const Dashboard = ({ language, translations }) => {
           </div>
 
         {nfcMode ? (
-          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg space-y-3">
-            <Activity className="mx-auto text-gray-400 mb-2" size={48} />
+          <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg space-y-3">
+            <Activity className="mx-auto text-gray-400 dark:text-gray-500 mb-2" size={48} />
             <p style={{ color: 'var(--text-secondary)' }}>
               {nfcScanning ? 'A aguardar leitura do cartao NFC...' : 'Aproxime o cartao/pulseira NFC do membro'}
             </p>
@@ -631,7 +727,7 @@ const Dashboard = ({ language, translations }) => {
                             #{member.member_number}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500">{member.phone}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{member.phone}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge 
@@ -654,84 +750,186 @@ const Dashboard = ({ language, translations }) => {
               )}
             </div>
           ) : (
-            <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-              <QrCode size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600 mb-2">Funcionalidade QR em desenvolvimento</p>
-              <p className="text-sm text-gray-500">Será implementada na app móvel</p>
+            <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+              <QrCode size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+              <p className="text-gray-600 dark:text-gray-300 mb-2">Funcionalidade QR em desenvolvimento</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Será implementada na app móvel</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Members */}
-        <Card className="card-shadow">
+      {/* Modality picker, shown when the member subscribes to more than one */}
+      {checkinChoiceMember && (
+        <Card className="card-shadow" style={{ border: '1px solid var(--ko-primary-orange)' }}>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Users className="mr-2" />
-              {t[language].recentMembers}
+            <CardTitle className="flex items-center text-base">
+              <Activity className="mr-2" size={18} />
+              Modalidade do check-in — {checkinChoiceMember.name}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {recentMembers.length > 0 ? (
-              <div className="space-y-3">
-                {recentMembers.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-gray-500">{member.membership_type}</p>
-                    </div>
-                    <Badge 
-                      variant={member.status === 'active' ? 'default' : 'secondary'}
-                    >
-                      {member.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">Nenhum membro registado</p>
-            )}
+          <CardContent className="space-y-3">
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Este membro tem varias modalidades. Escolhe a modalidade desta presenca:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {getMemberActivityIds(checkinChoiceMember).map((id) => {
+                const activity = activities.find((a) => a.id === id);
+                return (
+                  <Button
+                    key={id}
+                    variant="outline"
+                    onClick={() => handleQuickCheckin(checkinChoiceMember, id)}
+                    style={{ borderColor: activity?.color, color: activity?.color }}
+                    data-testid={`checkin-activity-${id}`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full mr-2"
+                      style={{ backgroundColor: activity?.color || '#9CA3AF' }}
+                    />
+                    {activity ? activity.name : 'Modalidade'}
+                  </Button>
+                );
+              })}
+              <Button variant="ghost" onClick={() => setCheckinChoiceMember(null)}>
+                Cancelar
+              </Button>
+            </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* Today's Attendance */}
-        <Card className="card-shadow">
-          <CardHeader>
-            <CardTitle className="flex items-center">
+      {/* Today's attendance, replaced by the member profile once one is picked */}
+      <Card className="card-shadow">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center">
               <Calendar className="mr-2" />
-              {t[language].todayAttendanceList}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {todayAttendance.length > 0 ? (
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {todayAttendance.map((attendance) => (
-                  <div key={attendance.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              {selectedMember ? `Perfil de ${selectedMember.name}` : t[language].todayAttendanceList}
+            </span>
+            {selectedMember && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setSelectedMember(null); setMemberNotes(''); }}
+                data-testid="back-to-attendance"
+              >
+                <ArrowLeft className="mr-2" size={16} />
+                {t[language].backToAttendance}
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {selectedMember ? (
+            <div className="space-y-6">
+              {/* Short profile summary */}
+              <div className="flex flex-wrap items-center gap-4 p-4 rounded-lg" style={{ background: 'var(--background-elevated)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
+                    <Users size={24} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{selectedMember.name}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      N.º {selectedMember.member_number} · {selectedMember.phone}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={selectedMember.status === 'active' ? 'default' : 'secondary'}>
+                    {selectedMember.status}
+                  </Badge>
+                  <Badge variant="outline">{selectedMember.membership_type}</Badge>
+                  {getMemberActivityIds(selectedMember).map((id) => {
+                    const activity = activities.find((a) => a.id === id);
+                    if (!activity) return null;
+                    return (
+                      <Badge key={id} variant="outline" style={{ borderColor: activity.color, color: activity.color }}>
+                        {activity.name}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <MemberAttendanceCalendar
+                  memberId={selectedMember.id}
+                  language={language}
+                />
+
+                <Card className="card-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-base">
+                      <StickyNote className="mr-2" size={18} />
+                      {t[language].memberNotes}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Textarea
+                      value={memberNotes}
+                      onChange={(e) => setMemberNotes(e.target.value)}
+                      placeholder={t[language].notesPlaceholder}
+                      rows={10}
+                      data-testid="dashboard-member-notes"
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleSaveNotes}
+                        disabled={savingNotes}
+                        className="btn-hover"
+                        style={{ backgroundColor: 'var(--button-primary-bg)', color: 'white' }}
+                        data-testid="save-member-notes"
+                      >
+                        <Save className="mr-2" size={16} />
+                        {t[language].saveNotes}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          ) : todayAttendance.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+              {todayAttendance.map((attendance) => {
+                const activity = activities.find((a) => a.id === attendance.activity_id);
+                return (
+                  <button
+                    key={attendance.id}
+                    type="button"
+                    onClick={() => handleSelectAttendanceMember(attendance.member)}
+                    className="flex items-center justify-between p-3 rounded-lg text-left transition-all duration-200 hover:opacity-80"
+                    style={{
+                      background: 'var(--background-elevated)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-light)'
+                    }}
+                    data-testid={`attendance-${attendance.id}`}
+                  >
                     <div>
                       <p className="font-medium">{attendance.member?.name}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                         {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
+                        {activity ? ` · ${activity.name}` : ''}
                       </p>
                     </div>
-                    <Badge variant="outline">
-                      {attendance.method}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-4">
-                {t[language].noAttendance}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                    <Badge variant="outline">{attendance.method}</Badge>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-6">
+              {t[language].noAttendance}
+            </p>
+          )}
+        </CardContent>
+      </Card>
       </div>
     </div>
   );

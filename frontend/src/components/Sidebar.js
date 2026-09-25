@@ -31,7 +31,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
     { path: '/', icon: Home, label: translations.dashboard },
     { path: '/members', icon: Users, label: translations.members },
     { path: '/attendance', icon: Calendar, label: translations.attendance },
-    ...(isAdmin() ? [{ path: '/payments', icon: CreditCard, label: translations.payments }] : []),
+    { path: '/payments', icon: CreditCard, label: translations.payments },
     { path: '/inventory', icon: Package, label: translations.inventory },
     ...(isAdmin() ? [{ path: '/reports', icon: BarChart, label: translations.reports }] : []),
     ...(isAdmin() ? [{ path: '/users', icon: Shield, label: 'Utilizadores' }] : []),
@@ -55,9 +55,11 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
         <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
           {isOpen && (
             <div className="flex items-center space-x-2 fade-in">
-              <div className="w-8 h-8 rounded-full ko-bg-primary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">KO</span>
-              </div>
+              <img
+                src="/ko-logo.png"
+                alt="KO Gym"
+                className="w-9 h-9 rounded-full object-contain"
+              />
               <h1 className="text-xl font-bold ko-text-primary">
                 Gym Manager
               </h1>
@@ -98,13 +100,15 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.target.style.backgroundColor = 'var(--ko-neutral-100)';
+                        // --ko-neutral-100 is a fixed light grey: with white text
+                        // in dark mode the item became unreadable on hover
+                        e.target.style.background = 'var(--gradient-hover)';
                         e.target.style.color = 'var(--text-primary)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
-                        e.target.style.backgroundColor = 'transparent';
+                        e.target.style.background = 'transparent';
                         e.target.style.color = 'var(--text-secondary)';
                       }
                     }}
@@ -113,7 +117,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                     <Icon 
                       size={20} 
                       className={`transition-colors ${
-                        isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
+                        isActive ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700'
                       }`} 
                     />
                     {isOpen && (
@@ -132,7 +136,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
         {isOpen && (
           <div className="absolute bottom-6 left-4 right-4 space-y-3">
             {/* User Info */}
-            <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   {user?.role === 'admin' ? 
@@ -141,10 +145,10 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                   }
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {user?.full_name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {user?.role === 'admin' ? 'Administrador' : 'Staff'}
                   </p>
                 </div>
@@ -152,10 +156,10 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
             </div>
             
             {/* Language switcher */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
               <div className="flex items-center">
-                <Globe size={16} className="text-gray-500 mr-2" />
-                <span className="text-sm text-gray-600">Idioma</span>
+                <Globe size={16} className="text-gray-500 dark:text-gray-400 mr-2" />
+                <span className="text-sm text-gray-600 dark:text-gray-300">Idioma</span>
               </div>
               <select
                 value={language}

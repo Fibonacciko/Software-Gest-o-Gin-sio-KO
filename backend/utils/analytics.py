@@ -151,8 +151,10 @@ class AnalyticsEngine:
         thirty_days_ago = now - timedelta(days=30)
         
         # Presenças hoje
+        # check_in_date is stored as a full ISO datetime (YYYY-MM-DDT00:00:00+00:00),
+        # so an exact match against a plain date string never hits
         today_attendance = await self.db.attendance.count_documents({
-            "check_in_date": today.isoformat()
+            "check_in_date": {"$regex": f"^{today.isoformat()}"}
         })
         
         # Presenças nos últimos 30 dias

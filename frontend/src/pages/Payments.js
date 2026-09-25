@@ -35,6 +35,7 @@ const Payments = ({ language, translations }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedMember, setSelectedMember] = useState('all');
+  const [memberSearch, setMemberSearch] = useState('');
   const [expenses, setExpenses] = useState([]);
   const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
   const [expenseFormData, setExpenseFormData] = useState({
@@ -44,9 +45,12 @@ const Payments = ({ language, translations }) => {
     category: ''
   });
 
+  const todayISO = () => new Date().toISOString().split('T')[0];
+
   const [formData, setFormData] = useState({
     member_id: '',
     amount: '',
+    payment_date: todayISO(),
     payment_method: 'cash',
     description: ''
   });
@@ -78,12 +82,15 @@ const Payments = ({ language, translations }) => {
     category: 'Categoria',
     selectCategory: 'Selecionar categoria',
     categoryRent: 'Renda',
-    categorySalaries: 'Salários',
-    categoryEquipment: 'Equipamento',
-    categoryMaintenance: 'Manutenção',
-    categoryMarketing: 'Marketing',
-    categoryUtilities: 'Serviços (água, luz, etc.)',
-    categoryOther: 'Outros',
+    categorySalaries: 'Salários (Prof., colaboradores)',
+    categoryAccountant: 'Contabilista',
+    categoryTechnology: 'Tecnologia (Hostinger, Site, Meta, etc.)',
+    categoryEnergy: 'Energia (Luz, Gás, Água)',
+    categoryInfrastructure: 'Infraestruturas (Obras)',
+    categoryMerchandise: 'Merchandise',
+    categoryMarketing: 'Marketing (Redes sociais, multimédia)',
+    categoryLicenses: 'Licenças (Seguros)',
+    categoryFnb: 'F&B (Alimentos e bebidas)',
       status: 'Status',
       save: 'Guardar',
       cancel: 'Cancelar',
@@ -129,12 +136,15 @@ const Payments = ({ language, translations }) => {
     category: 'Category',
     selectCategory: 'Select category',
     categoryRent: 'Rent',
-    categorySalaries: 'Salaries',
-    categoryEquipment: 'Equipment',
-    categoryMaintenance: 'Maintenance',
-    categoryMarketing: 'Marketing',
-    categoryUtilities: 'Utilities',
-    categoryOther: 'Other',
+    categorySalaries: 'Salaries (teachers, staff)',
+    categoryAccountant: 'Accountant',
+    categoryTechnology: 'Technology (Hostinger, website, Meta, etc.)',
+    categoryEnergy: 'Energy (electricity, gas, water)',
+    categoryInfrastructure: 'Infrastructure (works)',
+    categoryMerchandise: 'Merchandise',
+    categoryMarketing: 'Marketing (social media, multimedia)',
+    categoryLicenses: 'Licences (insurance)',
+    categoryFnb: 'F&B (food and drinks)',
       status: 'Status',
       save: 'Save',
       cancel: 'Cancel',
@@ -253,10 +263,17 @@ const Payments = ({ language, translations }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.member_id) {
+      toast.error('Escolhe o aluno na lista.');
+      return;
+    }
+
     try {
       await axios.post(`${API}/payments`, {
         ...formData,
-        amount: parseFloat(formData.amount)
+        amount: parseFloat(formData.amount),
+        payment_date: formData.payment_date || null
       });
       
       toast.success(t[language].paymentAdded);
@@ -270,9 +287,11 @@ const Payments = ({ language, translations }) => {
   };
 
   const resetForm = () => {
+    setMemberSearch('');
     setFormData({
       member_id: '',
       amount: '',
+      payment_date: todayISO(),
       payment_method: 'cash',
       description: ''
     });
@@ -327,7 +346,7 @@ const Payments = ({ language, translations }) => {
       case 'card': return 'bg-blue-100 text-blue-800';
       case 'transfer': return 'bg-purple-100 text-purple-800';
       case 'mbway': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800 dark:text-gray-100';
     }
   };
 
@@ -372,11 +391,24 @@ const Payments = ({ language, translations }) => {
 
   const stats = getPaymentStats();
 
+  // Members matching the search box: by name (any letters) or by member number
+  const getSearchedMembers = () => {
+    const term = memberSearch.trim().toLowerCase();
+    if (!term) return members;
+    return members.filter((member) =>
+      member.name?.toLowerCase().includes(term) ||
+      String(member.member_number || '').toLowerCase().includes(term) ||
+      member.phone?.toLowerCase().includes(term)
+    );
+  };
+
+  const getSelectedMemberObject = () => members.find((m) => m.id === formData.member_id);
+
   return (
     <div className="p-6 space-y-6 fade-in">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4 lg:mb-0">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-0">
           {t[language].payments}
         </h1>
         
@@ -388,22 +420,54 @@ const Payments = ({ language, translations }) => {
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="member_id">{t[language].member} *</Label>
-                <Select 
-                  value={formData.member_id} 
-                  onValueChange={(value) => setFormData({...formData, member_id: value})}
-                >
-                  <SelectTrigger data-testid="payment-member">
-                    <SelectValue placeholder={t[language].selectMember} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.name} - {member.membership_type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="member_search">{t[language].member} *</Label>
+
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                  <Input
+                    id="member_search"
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="Procurar por nome ou numero do aluno..."
+                    className="pl-9"
+                    autoComplete="off"
+                    data-testid="payment-member-search"
+                  />
+                </div>
+
+                <div className="mt-2 border rounded-lg max-h-48 overflow-y-auto" data-testid="payment-member-list">
+                  {getSearchedMembers().length > 0 ? (
+                    getSearchedMembers().map((member) => {
+                      const selected = formData.member_id === member.id;
+                      return (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => setFormData({...formData, member_id: member.id})}
+                          className={`w-full text-left px-3 py-2 flex items-center justify-between border-b last:border-b-0 transition-colors ${
+                            selected ? 'font-medium' : 'hover:bg-gray-50'
+                          }`}
+                          style={{ background: selected ? 'rgba(184, 101, 27, 0.18)' : 'transparent', color: 'var(--text-primary)' }}
+                          data-testid={`payment-member-${member.id}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Badge variant="outline">{member.member_number}</Badge>
+                            <span>{member.name}</span>
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{member.membership_type}</span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Nenhum aluno encontrado</p>
+                  )}
+                </div>
+
+                {formData.member_id && getSelectedMemberObject() && (
+                  <p className="text-sm mt-2" style={{ color: 'var(--ko-primary-orange)' }}>
+                    Aluno selecionado: <strong>{getSelectedMemberObject().name}</strong> (n.º {getSelectedMemberObject().member_number})
+                  </p>
+                )}
               </div>
               
               <div>
@@ -421,6 +485,18 @@ const Payments = ({ language, translations }) => {
                 />
               </div>
               
+              <div>
+                <Label htmlFor="payment_date">{t[language].paymentDate} *</Label>
+                <Input
+                  id="payment_date"
+                  type="date"
+                  value={formData.payment_date}
+                  onChange={(e) => setFormData({...formData, payment_date: e.target.value})}
+                  required
+                  data-testid="payment-date"
+                />
+              </div>
+
               <div>
                 <Label htmlFor="payment_method">{t[language].paymentMethod} *</Label>
                 <Select 
@@ -475,6 +551,27 @@ const Payments = ({ language, translations }) => {
         </DialogHeader>
         <form onSubmit={handleAddExpense} className="space-y-4">
           <div>
+            <Label htmlFor="expense-category">{t[language].category}</Label>
+            <Select value={expenseFormData.category} onValueChange={(value) => setExpenseFormData({...expenseFormData, category: value})}>
+              <SelectTrigger id="expense-category" data-testid="expense-category">
+                <SelectValue placeholder={t[language].selectCategory} />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="rent">{t[language].categoryRent}</SelectItem>
+                <SelectItem value="salaries">{t[language].categorySalaries}</SelectItem>
+                <SelectItem value="accountant">{t[language].categoryAccountant}</SelectItem>
+                <SelectItem value="technology">{t[language].categoryTechnology}</SelectItem>
+                <SelectItem value="energy">{t[language].categoryEnergy}</SelectItem>
+                <SelectItem value="infrastructure">{t[language].categoryInfrastructure}</SelectItem>
+                <SelectItem value="merchandise">{t[language].categoryMerchandise}</SelectItem>
+                <SelectItem value="marketing">{t[language].categoryMarketing}</SelectItem>
+                <SelectItem value="licenses">{t[language].categoryLicenses}</SelectItem>
+                <SelectItem value="fnb">{t[language].categoryFnb}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label htmlFor="expense-description">{t[language].description} *</Label>
             <Textarea
               id="expense-description"
@@ -511,23 +608,6 @@ const Payments = ({ language, translations }) => {
             />
           </div>
 
-                    <div>
-            <Label htmlFor="expense-category">{t[language].category}</Label>
-            <Select value={expenseFormData.category} onValueChange={(value) => setExpenseFormData({...expenseFormData, category: value})}>
-              <SelectTrigger id="expense-category" data-testid="expense-category">
-                <SelectValue placeholder={t[language].selectCategory} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rent">{t[language].categoryRent}</SelectItem>
-                <SelectItem value="salaries">{t[language].categorySalaries}</SelectItem>
-                <SelectItem value="equipment">{t[language].categoryEquipment}</SelectItem>
-                <SelectItem value="maintenance">{t[language].categoryMaintenance}</SelectItem>
-                <SelectItem value="marketing">{t[language].categoryMarketing}</SelectItem>
-                <SelectItem value="utilities">{t[language].categoryUtilities}</SelectItem>
-                <SelectItem value="other">{t[language].categoryOther}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button
@@ -551,15 +631,15 @@ const Payments = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].totalRevenue}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   €{stats.totalRevenue.toFixed(2)}
                 </p>
                 <Button
                   size="sm"
-                  className="btn-hover mt-2"
+                  className="btn-hover mt-2 bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => { resetForm(); setShowAddDialog(true); }}
                   data-testid="add-payment-btn"
                 >
@@ -578,10 +658,10 @@ const Payments = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].monthlyRevenue}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   €{stats.monthlyRevenue.toFixed(2)}
                 </p>
               </div>
@@ -596,14 +676,13 @@ const Payments = ({ language, translations }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].pendingPayments}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">€{stats.totalExpenses.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">€{stats.totalExpenses.toFixed(2)}</p>
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="btn-hover mt-2"
+                  className="btn-hover mt-2 bg-orange-500 hover:bg-orange-600 text-white"
                   onClick={() => { resetExpenseForm(); setShowAddExpenseDialog(true); }}
                   data-testid="add-expense-btn"
                 >
@@ -624,7 +703,7 @@ const Payments = ({ language, translations }) => {
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <Input
                 placeholder={t[language].searchPayments}
                 value={searchTerm}
@@ -710,22 +789,22 @@ const Payments = ({ language, translations }) => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4 font-medium text-gray-600">
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].member}
                     </th>
-                    <th className="text-left p-4 font-medium text-gray-600">
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].amount}
                     </th>
-                    <th className="text-left p-4 font-medium text-gray-600">
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].paymentMethod}
                     </th>
-                    <th className="text-left p-4 font-medium text-gray-600">
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].paymentDate}
                     </th>
-                    <th className="text-left p-4 font-medium text-gray-600">
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].status}
                     </th>
-                    <th className="text-left p-4 font-medium text-gray-600">
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].description}
                     </th>
                   </tr>
@@ -740,13 +819,13 @@ const Payments = ({ language, translations }) => {
                           </div>
                           <div>
                             <p className="font-medium">{payment.member.name}</p>
-                            <p className="text-sm text-gray-500">{payment.member.membership_type}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{payment.member.membership_type}</p>
                           </div>
                         </div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center">
-                          <DollarSign size={16} className="text-gray-400 mr-1" />
+                          <DollarSign size={16} className="text-gray-400 dark:text-gray-500 mr-1" />
                           <span className="font-semibold">€{payment.amount.toFixed(2)}</span>
                         </div>
                       </td>
@@ -757,7 +836,7 @@ const Payments = ({ language, translations }) => {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center">
-                          <Calendar size={16} className="text-gray-400 mr-2" />
+                          <Calendar size={16} className="text-gray-400 dark:text-gray-500 mr-2" />
                           {new Date(payment.payment_date).toLocaleDateString('pt-PT')}
                         </div>
                       </td>
@@ -767,7 +846,7 @@ const Payments = ({ language, translations }) => {
                         </Badge>
                       </td>
                       <td className="p-4">
-                        <p className="text-sm text-gray-600 truncate max-w-xs">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">
                           {payment.description || '-'}
                         </p>
                       </td>
@@ -778,13 +857,12 @@ const Payments = ({ language, translations }) => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <CreditCard size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">{t[language].noPayments}</p>
+              <CreditCard size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+              <p className="text-gray-600 dark:text-gray-300">{t[language].noPayments}</p>
             </div>
           )}
         </CardContent>
       </Card>
-      )}
     </div>
   );
 };

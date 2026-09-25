@@ -40,6 +40,20 @@ function App() {
 
   // PWA Service Worker Registration
   useEffect(() => {
+    // In development the service worker caches the built bundle and keeps serving
+    // the stale copy, so code changes never reach the browser. Remove it instead.
+    if (process.env.NODE_ENV === 'development') {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => registration.unregister());
+        });
+      }
+      if (window.caches) {
+        caches.keys().then((names) => names.forEach((name) => caches.delete(name)));
+      }
+      return;
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
         try {
@@ -124,7 +138,7 @@ function App() {
 
   return (
     <AuthProvider>
-        <div className="min-h-screen" style={{ background: 'var(--background-primary)' }}>
+        <div className="min-h-screen ko-animated-bg" style={{ background: 'var(--background-primary)' }}>
           {/* Offline Indicator */}
           {!isOnline && (
             <div 

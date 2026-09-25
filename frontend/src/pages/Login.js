@@ -58,7 +58,7 @@ const Login = () => {
               <div className="space-y-2">
                 <Label htmlFor="username">Nome de Utilizador</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="username"
                     name="username"
@@ -76,7 +76,7 @@ const Login = () => {
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="password"
                     name="password"
@@ -91,7 +91,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-3 text-gray-400 dark:text-gray-500 hover:text-gray-600"
                     data-testid="toggle-password"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -119,7 +119,7 @@ const Login = () => {
             
             <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--ko-neutral-100)' }}>
               <h4 className="text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Credenciais:</h4>
-              <div className="text-xs text-gray-600 space-y-1">
+              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
                 <div><strong>Username:</strong> fabio.guerreiro</div>
                 <div><strong>Password:</strong> admin123</div>
               </div>
@@ -127,7 +127,7 @@ const Login = () => {
           </CardContent>
         </Card>
         
-        <div className="text-center mt-8 text-sm text-gray-500">
+        <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
           <p>&copy; 2025 Gestão Fitness. Sistema de gestão profissional.</p>
         </div>
       </div>

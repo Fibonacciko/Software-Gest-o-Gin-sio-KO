@@ -26,7 +26,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
-import ActivitySelector from '../components/ActivitySelector';
+import MultiActivitySelector from '../components/MultiActivitySelector';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -41,6 +41,7 @@ const Members = ({ language, translations }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [membershipFilter, setMembershipFilter] = useState('all');
+  const [activities, setActivities] = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -51,7 +52,7 @@ const Members = ({ language, translations }) => {
     profession: '',
     address: '',
     membership_type: 'basic',
-    activity_id: '',
+    activity_ids: [],
     photo_url: '',
     notes: ''
   });
@@ -135,7 +136,26 @@ const Members = ({ language, translations }) => {
 
   useEffect(() => {
     fetchMembers();
+    fetchActivities();
   }, []);
+
+  const fetchActivities = async () => {
+    try {
+      const response = await axios.get(`${API}/activities`);
+      setActivities(response.data);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    }
+  };
+
+  const getMemberActivities = (member) => {
+    const ids = member?.activity_ids?.length
+      ? member.activity_ids
+      : (member?.activity_id ? [member.activity_id] : []);
+    return ids
+      .map((id) => activities.find((a) => a.id === id))
+      .filter(Boolean);
+  };
 
   const fetchMembers = async () => {
     try {
@@ -195,7 +215,9 @@ const Members = ({ language, translations }) => {
       profession: member.profession || '',
       address: member.address || '',
       membership_type: member.membership_type || 'basic',
-      activity_id: member.activity_id || '',
+      activity_ids: member.activity_ids && member.activity_ids.length > 0
+        ? member.activity_ids
+        : (member.activity_id ? [member.activity_id] : []),
       photo_url: member.photo_url || '',
       notes: member.notes || ''
     });
@@ -236,7 +258,7 @@ const Members = ({ language, translations }) => {
       profession: '',
       address: '',
       membership_type: 'basic',
-      activity_id: '',
+      activity_ids: [],
       photo_url: '',
       notes: ''
     });
@@ -256,12 +278,12 @@ const Members = ({ language, translations }) => {
       case 'basic': return 'bg-blue-100 text-blue-800';
       case 'premium': return 'bg-purple-100 text-purple-800';
       case 'vip': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800 dark:text-gray-100';
     }
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--background-primary)' }}>
+    <div className="min-h-screen">
       <div className="p-6 space-y-6 fade-in">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
@@ -350,12 +372,11 @@ const Members = ({ language, translations }) => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="profession">{t[language].profession} *</Label>
+                  <Label htmlFor="profession">{t[language].profession}</Label>
                   <Input
                     id="profession"
                     value={formData.profession}
                     onChange={(e) => setFormData({...formData, profession: e.target.value})}
-                    required
                     data-testid="member-profession"
                   />
                 </div>
@@ -372,31 +393,14 @@ const Members = ({ language, translations }) => {
                 />
               </div>
               
-              <div>
-                <Label htmlFor="membership_type">{t[language].membershipType} *</Label>
-                <Select 
-                  value={formData.membership_type} 
-                  onValueChange={(value) => setFormData({...formData, membership_type: value})}
-                >
-                  <SelectTrigger data-testid="member-membership-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="basic">{t[language].basic}</SelectItem>
-                    <SelectItem value="premium">{t[language].premium}</SelectItem>
-                    <SelectItem value="vip">{t[language].vip}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               <div>
-                <Label>Modalidade</Label>
-                <ActivitySelector
-                  value={formData.activity_id}
-                  onChange={(value) => setFormData({...formData, activity_id: value})}
-                  placeholder="Selecionar modalidade"
+                <Label>Modalidades</Label>
+                <MultiActivitySelector
+                  value={formData.activity_ids}
+                  onChange={(value) => setFormData({...formData, activity_ids: value})}
                 />
-                <p className="text-xs text-gray-400 mt-1">Modalidade subscrita pelo membro. O check-in usa sempre esta modalidade.</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Modalidades subscritas pelo membro. Podes escolher mais do que uma; a primeira e usada no check-in por NFC.</p>
               </div>
               
               <div>
@@ -519,13 +523,13 @@ const Members = ({ language, translations }) => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4 font-medium text-gray-600">Nº Sócio</th>
-                    <th className="text-left p-4 font-medium text-gray-600">{t[language].name}</th>
-                    <th className="text-left p-4 font-medium text-gray-600">{t[language].phone}</th>
-                    <th className="text-left p-4 font-medium text-gray-600">{t[language].membershipType}</th>
-                    <th className="text-left p-4 font-medium text-gray-600">{t[language].status}</th>
-                    <th className="text-left p-4 font-medium text-gray-600">{t[language].joinDate}</th>
-                    <th className="text-right p-4 font-medium text-gray-600">Ações</th>
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">Nº Sócio</th>
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].name}</th>
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].phone}</th>
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].membershipType}</th>
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].status}</th>
+                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].joinDate}</th>
+                    <th className="text-right p-4 font-medium text-gray-600 dark:text-gray-300">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -544,20 +548,20 @@ const Members = ({ language, translations }) => {
                             />
                           ) : (
                             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                              <Users size={16} className="text-gray-600" />
+                              <Users size={16} className="text-gray-600 dark:text-gray-300" />
                             </div>
                           )}
                           <div>
                             <p className="font-medium">{member.name}</p>
                             {member.email && (
-                              <p className="text-sm text-gray-500">{member.email}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center">
-                          <Phone size={16} className="text-gray-400 mr-2" />
+                          <Phone size={16} className="text-gray-400 dark:text-gray-500 mr-2" />
                           {member.phone}
                         </div>
                       </td>
@@ -573,7 +577,7 @@ const Members = ({ language, translations }) => {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center">
-                          <Calendar size={16} className="text-gray-400 mr-2" />
+                          <Calendar size={16} className="text-gray-400 dark:text-gray-500 mr-2" />
                           {new Date(member.join_date).toLocaleDateString('pt-PT')}
                         </div>
                       </td>
@@ -613,8 +617,8 @@ const Members = ({ language, translations }) => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Users size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">{t[language].noMembers}</p>
+              <Users size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+              <p className="text-gray-600 dark:text-gray-300">{t[language].noMembers}</p>
             </div>
           )}
         </CardContent>
@@ -642,7 +646,7 @@ const Members = ({ language, translations }) => {
                       />
                     ) : (
                       <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
-                        <Users size={24} className="text-gray-600" />
+                        <Users size={24} className="text-gray-600 dark:text-gray-300" />
                       </div>
                     )}
                     <div>
@@ -661,28 +665,28 @@ const Members = ({ language, translations }) => {
                   <div className="space-y-3">
                     {selectedMember.email && (
                       <div className="flex items-center">
-                        <Mail size={16} className="text-gray-400 mr-3" />
+                        <Mail size={16} className="text-gray-400 dark:text-gray-500 mr-3" />
                         <span>{selectedMember.email}</span>
                       </div>
                     )}
                     <div className="flex items-center">
-                      <Phone size={16} className="text-gray-400 mr-3" />
+                      <Phone size={16} className="text-gray-400 dark:text-gray-500 mr-3" />
                       <span>{selectedMember.phone}</span>
                     </div>
                     <div className="flex items-center">
-                      <MapPin size={16} className="text-gray-400 mr-3" />
+                      <MapPin size={16} className="text-gray-400 dark:text-gray-500 mr-3" />
                       <span>{selectedMember.address}</span>
                     </div>
                     <div className="flex items-center">
-                      <Flag size={16} className="text-gray-400 mr-3" />
+                      <Flag size={16} className="text-gray-400 dark:text-gray-500 mr-3" />
                       <span>{selectedMember.nationality}</span>
                     </div>
                     <div className="flex items-center">
-                      <Briefcase size={16} className="text-gray-400 mr-3" />
+                      <Briefcase size={16} className="text-gray-400 dark:text-gray-500 mr-3" />
                       <span>{selectedMember.profession}</span>
                     </div>
                     <div className="flex items-center">
-                      <Calendar size={16} className="text-gray-400 mr-3" />
+                      <Calendar size={16} className="text-gray-400 dark:text-gray-500 mr-3" />
                       <span>{new Date(selectedMember.date_of_birth).toLocaleDateString('pt-PT')}</span>
                     </div>
                   </div>
@@ -691,12 +695,24 @@ const Members = ({ language, translations }) => {
                 {/* Membership Info */}
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium mb-2">{t[language].membershipType}</h4>
-                    <Badge className={getMembershipColor(selectedMember.membership_type)}>
-                      {t[language][selectedMember.membership_type]}
-                    </Badge>
+                    <h4 className="font-medium mb-2">Modalidades</h4>
+                    {getMemberActivities(selectedMember).length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {getMemberActivities(selectedMember).map((activity) => (
+                          <Badge
+                            key={activity.id}
+                            variant="outline"
+                            style={{ borderColor: activity.color, color: activity.color }}
+                          >
+                            {activity.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Sem modalidades definidas</p>
+                    )}
                   </div>
-                  
+
                   <div>
                     <h4 className="font-medium mb-2">{t[language].joinDate}</h4>
                     <p>{new Date(selectedMember.join_date).toLocaleDateString('pt-PT')}</p>
@@ -705,28 +721,28 @@ const Members = ({ language, translations }) => {
                   {selectedMember.notes && (
                     <div>
                       <h4 className="font-medium mb-2">{t[language].notes}</h4>
-                      <p className="text-gray-600">{selectedMember.notes}</p>
+                      <p className="text-gray-600 dark:text-gray-300">{selectedMember.notes}</p>
                     </div>
                   )}
                 </div>
                 
                 {/* QR Code */}
                 {selectedMember.qr_code && (
-                  <div className="text-center p-6 bg-gray-50 rounded-lg">
+                  <div className="text-center p-6 bg-gray-50 dark:bg-white/5 rounded-lg">
                     <h4 className="font-medium mb-4">{t[language].qrCode}</h4>
                     <div className="qr-code-container inline-block">
                       <img src={selectedMember.qr_code} alt="QR Code" className="w-32 h-32" />
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">Para check-in na app móvel</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Para check-in na app móvel</p>
                   </div>
                 )}
               {/* Estado NFC */}
-              <div className="text-center p-6 bg-gray-50 rounded-lg">
+              <div className="text-center p-6 bg-gray-50 dark:bg-white/5 rounded-lg">
                 <h4 className="font-medium mb-2">NFC</h4>
                 {selectedMember.nfc_tag_id ? (
-                  <p className="text-sm text-gray-600">Telemovel/cartao associado</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Telemovel/cartao associado</p>
                 ) : (
-                  <p className="text-sm text-gray-500">Ainda sem NFC associado. E associado automaticamente no Painel Principal na primeira utilizacao (Check-in NFC).</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Ainda sem NFC associado. E associado automaticamente no Painel Principal na primeira utilizacao (Check-in NFC).</p>
                 )}
               </div>
               </div>

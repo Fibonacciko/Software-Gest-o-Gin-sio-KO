@@ -291,7 +291,8 @@ class Member(BaseModel):
     photo_url: Optional[str] = None
     qr_code: Optional[str] = None
     nfc_tag_id: Optional[str] = None
-    activity_id: Optional[str] = None
+    activity_id: Optional[str] = None  # Primary modality, kept for check-in and legacy records
+    activity_ids: List[str] = Field(default_factory=list)  # All modalities subscribed by the member
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -307,6 +308,7 @@ class MemberCreate(BaseModel):
     photo_url: Optional[str] = None
     notes: Optional[str] = None
     activity_id: Optional[str] = None
+    activity_ids: Optional[List[str]] = None
 
 class Attendance(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -335,6 +337,7 @@ class Payment(BaseModel):
 class PaymentCreate(BaseModel):
     member_id: str
     amount: float
+    payment_date: Optional[date] = None  # Chosen by the user; falls back to today
     payment_method: PaymentMethod = PaymentMethod.CASH
     description: Optional[str] = None
 
@@ -1354,6 +1357,34 @@ async def send_push_notification(fcm_token: str, title: str, body: str, data: di
         print(f'Failed to send push notification: {e}')
         return False
 
+def normalize_member_activities(data: dict) -> dict:
+    """Keep activity_id (primary, used by check-in) and activity_ids (all modalities) in sync.
+
+    Members created before multi-modality support only carry activity_id, so the list is
+    derived from it; when a list is sent, its first entry becomes the primary modality.
+    """
+    activity_ids = data.get("activity_ids")
+    activity_id = data.get("activity_id")
+
+    if activity_ids:
+        # Drop empties and duplicates while preserving the order chosen by the user
+        seen = []
+        for aid in activity_ids:
+            if aid and aid not in seen:
+                seen.append(aid)
+        activity_ids = seen
+    elif activity_id:
+        activity_ids = [activity_id]
+    else:
+        activity_ids = []
+
+    data["activity_ids"] = activity_ids
+    if activity_ids and activity_id not in activity_ids:
+        data["activity_id"] = activity_ids[0]
+    elif not activity_ids:
+        data["activity_id"] = None
+    return data
+
 def prepare_for_mongo(data):
     """Convert date/time objects to ISO strings for MongoDB"""
     if isinstance(data, dict):
@@ -1419,7 +1450,7 @@ async def create_member(
         gym_logger.info("Creating new member", 
                        user_id=current_user.id, member_name=member_data.name)
         
-        member_dict = member_data.dict()
+        member_dict = normalize_member_activities(member_data.dict())
         
         # Generate automatic member number
         member_number = await generate_next_member_number()
@@ -1477,7 +1508,7 @@ async def get_members(
         ]
     
     members = await db.members.find(filter_dict).to_list(1000)
-    return [Member(**parse_from_mongo(member)) for member in members]
+    return [Member(**normalize_member_activities(parse_from_mongo(member))) for member in members]
 
 @api_router.get("/members/{member_id}", response_model=Member)
 async def get_member(
@@ -1487,7 +1518,7 @@ async def get_member(
     member = await db.members.find_one({"id": member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    return Member(**parse_from_mongo(member))
+    return Member(**normalize_member_activities(parse_from_mongo(member)))
 
 @api_router.get("/members/number/{member_number}", response_model=Member)
 async def get_member_by_number(
@@ -1498,7 +1529,7 @@ async def get_member_by_number(
     member = await db.members.find_one({"member_number": member_number})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    return Member(**parse_from_mongo(member))
+    return Member(**normalize_member_activities(parse_from_mongo(member)))
 
 @api_router.put("/members/{member_id}", response_model=Member)
 async def update_member(
@@ -1506,7 +1537,7 @@ async def update_member(
     member_data: MemberCreate,
     current_user: User = Depends(require_admin_or_staff)
 ):
-    member_dict = prepare_for_mongo(member_data.dict())
+    member_dict = prepare_for_mongo(normalize_member_activities(member_data.dict()))
     result = await db.members.update_one(
         {"id": member_id},
         {"$set": member_dict}
@@ -1517,7 +1548,7 @@ async def update_member(
     
     updated_member = await db.members.find_one({"id": member_id})
     await log_audit(current_user, "update", "member", entity_id=member_id, details=f"Atualizou membro {member_id}")
-    return Member(**parse_from_mongo(updated_member))
+    return Member(**normalize_member_activities(parse_from_mongo(updated_member)))
 
 @api_router.delete("/members/{member_id}")
 async def delete_member(
@@ -1653,14 +1684,19 @@ async def get_detailed_attendance(
 @api_router.post("/payments", response_model=Payment)
 async def create_payment(
     payment_data: PaymentCreate,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
     # Check if member exists
     member = await db.members.find_one({"id": payment_data.member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     
-    payment = Payment(**payment_data.dict())
+    payment_dict_in = payment_data.dict()
+    # An empty date must not override the model default of today
+    if payment_dict_in.get("payment_date") is None:
+        payment_dict_in.pop("payment_date", None)
+
+    payment = Payment(**payment_dict_in)
     payment_dict = prepare_for_mongo(payment.dict())
     await db.payments.insert_one(payment_dict)
     await log_audit(current_user, "create", "payment", entity_id=payment.id, details=f"Registou pagamento de {payment.amount} EUR")
@@ -1672,7 +1708,7 @@ async def get_payments(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     status: Optional[PaymentStatus] = None,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
     filter_dict = {}
     if member_id:
@@ -1689,11 +1725,11 @@ async def get_payments(
     payments = await db.payments.find(filter_dict).to_list(1000)
     return [Payment(**parse_from_mongo(payment)) for payment in payments]
 
-# Expense Routes (Admin only)
+# Expense Routes (admin and staff)
 @api_router.post("/expenses", response_model=Expense)
 async def create_expense(
     expense_data: ExpenseCreate,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
     expense_dict_in = expense_data.dict()
     if not expense_dict_in.get('expense_date'):
@@ -1708,7 +1744,7 @@ async def create_expense(
 async def get_expenses(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
     filter_dict = {}
     if start_date:
@@ -1852,7 +1888,7 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
             active_members = await db.members.count_documents({"status": "active"})
             today = date.today()
             today_attendance = await db.attendance.count_documents({
-                "check_in_date": today.isoformat()
+                "check_in_date": {"$regex": f"^{today.isoformat()}"}
             })
             
             response = {
@@ -2146,7 +2182,7 @@ async def qr_checkin(
     
     return {
         "message": "Check-in successful",
-        "member": Member(**parse_from_mongo(member)),
+        "member": Member(**normalize_member_activities(parse_from_mongo(member))),
         "attendance": attendance
     }
 
@@ -2203,7 +2239,7 @@ async def nfc_checkin(
 
     return {
         "message": "Check-in successful",
-        "member": Member(**parse_from_mongo(member)),
+        "member": Member(**normalize_member_activities(parse_from_mongo(member))),
         "attendance": attendance
     }
 

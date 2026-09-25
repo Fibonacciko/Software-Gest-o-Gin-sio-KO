@@ -19,6 +19,65 @@ body {
   min-height: 100vh;
 }
 
+/* ===========================================================
+   Fundo dinamico: ondas suaves que atravessam o ecra do canto
+   superior direito para o canto inferior esquerdo.
+   As cores vem do tema, por isso funciona em claro e escuro.
+   =========================================================== */
+.ko-animated-bg {
+  position: relative;
+  isolation: isolate;
+}
+
+.ko-animated-bg::before,
+.ko-animated-bg::after {
+  content: '';
+  position: fixed;
+  inset: -25%;
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Camada principal: tres manchas de luz em diagonal */
+.ko-animated-bg::before {
+  background:
+    radial-gradient(38% 32% at 82% 12%, var(--wave-strong), transparent 62%),
+    radial-gradient(42% 36% at 55% 48%, var(--wave-soft), transparent 66%),
+    radial-gradient(34% 30% at 18% 86%, var(--wave-strong), transparent 64%);
+  animation: ko-wave-main 26s ease-in-out infinite alternate;
+}
+
+/* Segunda camada, mais lenta e ao contrario, para o movimento nao ser repetitivo */
+.ko-animated-bg::after {
+  background:
+    radial-gradient(30% 26% at 95% 40%, var(--wave-soft), transparent 60%),
+    radial-gradient(36% 30% at 35% 20%, var(--wave-faint), transparent 66%),
+    radial-gradient(28% 24% at 8% 55%, var(--wave-soft), transparent 62%);
+  animation: ko-wave-slow 38s ease-in-out infinite alternate;
+}
+
+@keyframes ko-wave-main {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(-4%, 3.5%, 0) scale(1.06); }
+  100% { transform: translate3d(-8%, 7%, 0) scale(1.02); }
+}
+
+@keyframes ko-wave-slow {
+  0%   { transform: translate3d(0, 0, 0) scale(1.04); }
+  50%  { transform: translate3d(-5%, 2%, 0) scale(1); }
+  100% { transform: translate3d(-9%, 5%, 0) scale(1.05); }
+}
+
+/* Quem preferir menos movimento fica com as ondas paradas */
+@media (prefers-reduced-motion: reduce) {
+  .ko-animated-bg::before,
+  .ko-animated-bg::after {
+    animation: none;
+  }
+}
+
+
 /* Custom scrollbar com cores KO */
 ::-webkit-scrollbar {
   width: 6px;

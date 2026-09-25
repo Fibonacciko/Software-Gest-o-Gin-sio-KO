@@ -48,6 +48,10 @@ const useDarkMode = () => {
       // Adicionar classe dark ao body
       document.body.classList.add('dark-mode');
       document.body.classList.remove('light-mode');
+
+      // Tailwind usa darkMode: "class" no root: sem esta classe os componentes
+      // (dialogs, cards, inputs) mantinham fundo branco com texto branco por cima.
+      root.classList.add('dark');
       
     } else {
       // Restaurar variáveis light mode (valores originais)
@@ -78,6 +82,8 @@ const useDarkMode = () => {
       // Adicionar classe light ao body
       document.body.classList.add('light-mode');
       document.body.classList.remove('dark-mode');
+
+      root.classList.remove('dark');
     }
     
     // Salvar preferência

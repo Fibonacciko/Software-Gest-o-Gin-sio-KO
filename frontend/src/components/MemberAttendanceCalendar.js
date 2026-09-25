@@ -157,7 +157,7 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
                   const hasAttendance = attendanceForDate.length > 0;
                   
                   return (
-                    <div className="relative w-full h-full">
+                    <div className="relative h-9 w-9">
                       <div className={`w-full h-full flex items-center justify-center text-sm ${
                         isSelected ? 'bg-blue-600 text-white rounded-md' :
               isToday ? 'bg-blue-100 text-blue-900 rounded-md' : ''
@@ -189,7 +189,7 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
                   
                   if (dayAttendance.length === 0) {
                     return (
-                      <p className="text-gray-500 text-sm italic">
+                      <p className="text-gray-500 dark:text-gray-400 text-sm italic">
                         {t[language].noAttendance}
                       </p>
                     );
@@ -198,7 +198,7 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
                   return (
                     <div className="space-y-2">
                       {dayAttendance.map((att) => (
-                        <div key={att.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div key={att.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-lg">
                           <div className="flex items-center space-x-3">
                             <div 
                               className="w-4 h-4 rounded-full"
@@ -206,7 +206,7 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
                             />
                             <div>
                               <p className="font-medium text-sm">{getActivityName(att.activity_id)}</p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {new Date(att.check_in_time).toLocaleTimeString('pt-PT', {
                                   hour: '2-digit',
                                   minute: '2-digit'

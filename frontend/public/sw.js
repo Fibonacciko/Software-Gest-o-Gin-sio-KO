@@ -1,9 +1,9 @@
 // KO Gym - Service Worker Premium
 // Funcionalidade offline e cache inteligente
 
-const CACHE_NAME = 'ko-gym-v2.0.0';
-const STATIC_CACHE = 'ko-gym-static-v2.0.0';
-const DYNAMIC_CACHE = 'ko-gym-dynamic-v2.0.0';
+const CACHE_NAME = 'ko-gym-v2.0.1';
+const STATIC_CACHE = 'ko-gym-static-v2.0.1';
+const DYNAMIC_CACHE = 'ko-gym-dynamic-v2.0.1';
 
 // Recursos essenciais para cache
 const STATIC_ASSETS = [
