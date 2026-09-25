@@ -14,7 +14,8 @@ import {
   Package,
   Activity,
   Printer,
-  TrendingDown
+  TrendingDown,
+  ShoppingBag
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -48,6 +49,7 @@ const Reports = ({ language, translations }) => {
   const [payments, setPayments] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [sales, setSales] = useState([]);
 
   const t = {
     pt: {
@@ -82,6 +84,7 @@ const Reports = ({ language, translations }) => {
       averagePayment: 'Pagamento Médio',
       pendingPayments: 'Pagamentos Pendentes',
     totalExpenses: 'Despesas Totais',
+    merchandiseRevenue: 'Merchandise',
     netProfit: 'Lucro Líquido',
     print: 'Imprimir',
       totalItems: 'Total de Items',
@@ -131,6 +134,7 @@ const Reports = ({ language, translations }) => {
       averagePayment: 'Average Payment',
       pendingPayments: 'Pending Payments',
     totalExpenses: 'Total Expenses',
+    merchandiseRevenue: 'Merchandise',
     netProfit: 'Net Profit',
     print: 'Print',
       totalItems: 'Total Items',
@@ -165,17 +169,19 @@ const Reports = ({ language, translations }) => {
       setLoading(true);
       
       // Fetch all data
-      const [membersRes, paymentsRes, attendanceRes, expensesRes] = await Promise.all([
+      const [membersRes, paymentsRes, attendanceRes, expensesRes, salesRes] = await Promise.all([
         axios.get(`${API}/members`),
         axios.get(`${API}/payments`),
         axios.get(`${API}/attendance`),
-        axios.get(`${API}/expenses`).catch(() => ({ data: [] }))
+        axios.get(`${API}/expenses`).catch(() => ({ data: [] })),
+        axios.get(`${API}/sales`).catch(() => ({ data: [] }))
       ]);
       
       setMembers(membersRes.data);
       setPayments(paymentsRes.data);
       setAttendance(attendanceRes.data);
       setExpenses(expensesRes.data);
+      setSales(salesRes.data);
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -317,10 +323,32 @@ const Reports = ({ language, translations }) => {
       return acc;
     }, {});
 
+    // Merchandise: receita das vendas de balcao no mesmo periodo
+    const filteredSales = sales.filter((sale) => {
+      const d = new Date(sale.sale_date);
+      return d >= start && d <= end;
+    });
+    const merchandiseRevenue = filteredSales.reduce((sum, s) => sum + (s.total || 0), 0);
+    const merchandiseUnits = filteredSales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+    const merchandiseByItem = filteredSales.reduce((acc, sale) => {
+      acc[sale.item_name] = (acc[sale.item_name] || 0) + sale.total;
+      return acc;
+    }, {});
+
     setReportData({
       type: 'payment',
-      stats: { totalPayments, totalRevenue, averagePayment, pendingPayments, totalExpenses, netProfit },
-      charts: { revenueByMonth, expensesByMonth, expensesByCategory }
+      stats: {
+        totalPayments,
+        totalRevenue,
+        averagePayment,
+        pendingPayments,
+        totalExpenses,
+        merchandiseRevenue,
+        merchandiseUnits,
+        // O lucro passa a incluir a receita do merchandise
+        netProfit: totalRevenue + merchandiseRevenue - totalExpenses
+      },
+      charts: { revenueByMonth, expensesByMonth, expensesByCategory, merchandiseByItem }
     });
   };
 
@@ -397,6 +425,8 @@ const Reports = ({ language, translations }) => {
           ['Receita Total', reportData.stats.totalRevenue.toFixed(2)],
           ['Pagamento Médio', reportData.stats.averagePayment.toFixed(2)],
           ['Pagamentos Pendentes', reportData.stats.pendingPayments],
+        ['Merchandise (vendas)', (reportData.stats.merchandiseRevenue || 0).toFixed(2)],
+        ['Merchandise (unidades)', reportData.stats.merchandiseUnits || 0],
         ['Despesas Totais', reportData.stats.totalExpenses.toFixed(2)],
         ['Lucro Liquido', reportData.stats.netProfit.toFixed(2)],
         [''],
@@ -405,6 +435,9 @@ const Reports = ({ language, translations }) => {
         [''],
         ['Despesas por Mes'],
         ...Object.entries(reportData.charts.expensesByMonth).map(([m, v]) => [m, v.toFixed(2)]),
+        [''],
+        ['Merchandise por Artigo'],
+        ...Object.entries(reportData.charts.merchandiseByItem || {}).map(([i, v]) => [i, v.toFixed(2)]),
         [''],
         ['Despesas por Categoria'],
         ...Object.entries(reportData.charts.expensesByCategory).map(([c, v]) => [expenseCategoryLabel(c), v.toFixed(2)])
@@ -626,6 +659,12 @@ const Reports = ({ language, translations }) => {
                 icon={Calendar}
                 color="bg-orange-500"
               />
+            <StatCard
+            title={t[language].merchandiseRevenue}
+            value={`€${(reportData.stats.merchandiseRevenue || 0).toFixed(2)}`}
+            icon={ShoppingBag}
+            color="bg-green-600"
+          />
             <StatCard
             title={t[language].totalExpenses}
             value={`€${reportData.stats.totalExpenses.toFixed(2)}`}

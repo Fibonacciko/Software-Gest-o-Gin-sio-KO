@@ -366,6 +366,22 @@ class InventoryItem(BaseModel):
     description: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class Sale(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    item_id: str
+    item_name: str
+    quantity: int
+    unit_price: float
+    total: float
+    sale_date: date = Field(default_factory=lambda: date.today())
+    sold_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SaleCreate(BaseModel):
+    item_id: str
+    quantity: int
+    sale_date: Optional[date] = None
+
 class InventoryItemCreate(BaseModel):
     name: str
     category: ItemCategory
@@ -1425,7 +1441,7 @@ def parse_from_mongo(item):
             # Handle ObjectId conversion to string
             if hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
                 item[key] = str(value)
-            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date'] and isinstance(value, str):
+            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date', 'sale_date', 'expense_date'] and isinstance(value, str):
                 try:
                     item[key] = datetime.fromisoformat(value).date()
                 except (ValueError, TypeError):
@@ -1911,6 +1927,65 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
     except Exception as e:
         gym_logger.error("Dashboard stats generation failed", error=e, user_id=current_user.id)
         raise HTTPException(status_code=500, detail="Failed to generate dashboard statistics")
+
+
+# Sales Routes (merchandise sold at the counter)
+@api_router.post("/sales", response_model=Sale)
+async def create_sale(
+    sale_data: SaleCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    if sale_data.quantity <= 0:
+        raise HTTPException(status_code=400, detail="A quantidade tem de ser maior que zero")
+
+    item = await db.inventory.find_one({"id": sale_data.item_id})
+    if not item:
+        raise HTTPException(status_code=404, detail="Artigo nao encontrado")
+
+    disponivel = item.get("quantity", 0)
+    if sale_data.quantity > disponivel:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Stock insuficiente: existem {disponivel} unidades de {item['name']}"
+        )
+
+    preco = float(item.get("price", 0))
+    sale = Sale(
+        item_id=item["id"],
+        item_name=item["name"],
+        quantity=sale_data.quantity,
+        unit_price=preco,
+        total=round(preco * sale_data.quantity, 2),
+        sale_date=sale_data.sale_date or date.today(),
+        sold_by=current_user.username
+    )
+
+    # Baixa o stock e regista a venda
+    await db.inventory.update_one(
+        {"id": item["id"]},
+        {"$inc": {"quantity": -sale_data.quantity}}
+    )
+    await db.sales.insert_one(prepare_for_mongo(sale.dict()))
+    await log_audit(current_user, "create", "sale", entity_id=sale.id,
+                    details=f"Vendeu {sale.quantity}x {sale.item_name} por {sale.total} EUR")
+
+    return sale
+
+@api_router.get("/sales", response_model=List[Sale])
+async def get_sales(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    filter_dict = {}
+    if start_date:
+        filter_dict.setdefault("sale_date", {})["$gte"] = start_date.isoformat()
+    if end_date:
+        # As datas sao guardadas com hora, por isso o limite e o dia seguinte
+        filter_dict.setdefault("sale_date", {})["$lt"] = (end_date + timedelta(days=1)).isoformat()
+
+    sales = await db.sales.find(filter_dict).sort("created_at", -1).to_list(500)
+    return [Sale(**parse_from_mongo(sale)) for sale in sales]
 
 
 @api_router.get("/dashboard/alerts")

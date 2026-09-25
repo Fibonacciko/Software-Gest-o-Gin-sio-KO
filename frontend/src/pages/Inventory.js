@@ -33,6 +33,9 @@ const Inventory = ({ language, translations }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [showSellDialog, setShowSellDialog] = useState(false);
+  const [sellData, setSellData] = useState({ item_id: '', quantity: '1' });
+  const [selling, setSelling] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -48,6 +51,14 @@ const Inventory = ({ language, translations }) => {
     pt: {
       inventory: 'Gestão de Stock',
       addItem: 'Adicionar Item',
+      sellItem: 'Vender Item',
+      sellTitle: 'Vender Artigo',
+      chooseItem: 'Escolher artigo',
+      inStock: 'em stock',
+      total: 'Total',
+      confirmSale: 'Confirmar Venda',
+      saleDone: 'Venda registada e stock atualizado!',
+      noStock: 'Não há artigos com stock disponível',
       searchItems: 'Procurar items...',
       allCategories: 'Todas as Categorias',
       clothing: 'Roupa',
@@ -98,6 +109,14 @@ const Inventory = ({ language, translations }) => {
     en: {
       inventory: 'Inventory Management',
       addItem: 'Add Item',
+      sellItem: 'Sell Item',
+      sellTitle: 'Sell Item',
+      chooseItem: 'Choose item',
+      inStock: 'in stock',
+      total: 'Total',
+      confirmSale: 'Confirm Sale',
+      saleDone: 'Sale recorded and stock updated!',
+      noStock: 'No items with stock available',
       searchItems: 'Search items...',
       allCategories: 'All Categories',
       clothing: 'Clothing',
@@ -150,6 +169,50 @@ const Inventory = ({ language, translations }) => {
   useEffect(() => {
     fetchInventory();
   }, []);
+
+  const itemsComStock = () => inventory.filter((i) => (i.quantity || 0) > 0);
+
+  const artigoSelecionado = () => inventory.find((i) => i.id === sellData.item_id);
+
+  const totalVenda = () => {
+    const artigo = artigoSelecionado();
+    const qtd = parseInt(sellData.quantity, 10);
+    if (!artigo || !qtd || qtd < 1) return 0;
+    return artigo.price * qtd;
+  };
+
+  const handleSell = async (e) => {
+    e.preventDefault();
+    const artigo = artigoSelecionado();
+    const qtd = parseInt(sellData.quantity, 10);
+
+    if (!artigo) {
+      toast.error('Escolhe o artigo a vender.');
+      return;
+    }
+    if (!qtd || qtd < 1) {
+      toast.error('A quantidade tem de ser pelo menos 1.');
+      return;
+    }
+    if (qtd > artigo.quantity) {
+      toast.error(`Só existem ${artigo.quantity} unidades de ${artigo.name}.`);
+      return;
+    }
+
+    try {
+      setSelling(true);
+      await axios.post(`${API}/sales`, { item_id: artigo.id, quantity: qtd });
+      toast.success(t[language].saleDone);
+      setShowSellDialog(false);
+      setSellData({ item_id: '', quantity: '1' });
+      fetchInventory();
+    } catch (error) {
+      console.error('Error selling item:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao registar a venda');
+    } finally {
+      setSelling(false);
+    }
+  };
 
   const fetchInventory = async () => {
     try {
@@ -290,10 +353,20 @@ const Inventory = ({ language, translations }) => {
           {t[language].inventory}
         </h1>
         
+        <div className="flex flex-wrap gap-3">
+        <Button
+          className="btn-hover bg-green-600 hover:bg-green-700 text-white"
+          onClick={() => { setSellData({ item_id: '', quantity: '1' }); setShowSellDialog(true); }}
+          data-testid="sell-item-btn"
+        >
+          <ShoppingCart className="mr-2" size={16} />
+          {t[language].sellItem}
+        </Button>
+
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
             <Button 
-              className="btn-hover"
+              className="btn-hover bg-orange-500 hover:bg-orange-600 text-white"
               onClick={() => {
                 setEditingItem(null);
                 resetForm();
@@ -410,6 +483,81 @@ const Inventory = ({ language, translations }) => {
                 </Button>
                 <Button type="submit" data-testid="save-item-btn">
                   {t[language].save}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+        </div>
+
+        {/* Janela de venda */}
+        <Dialog open={showSellDialog} onOpenChange={setShowSellDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t[language].sellTitle}</DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleSell} className="space-y-4">
+              <div>
+                <Label htmlFor="sell-item">{t[language].chooseItem} *</Label>
+                {itemsComStock().length > 0 ? (
+                  <Select
+                    value={sellData.item_id}
+                    onValueChange={(value) => setSellData({ ...sellData, item_id: value })}
+                  >
+                    <SelectTrigger id="sell-item" data-testid="sell-item-select">
+                      <SelectValue placeholder={t[language].chooseItem} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {itemsComStock().map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name}{item.size ? ` (${item.size})` : ''} — €{item.price.toFixed(2)} · {item.quantity} {t[language].inStock}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">{t[language].noStock}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="sell-quantity">{t[language].quantity} *</Label>
+                <Input
+                  id="sell-quantity"
+                  type="number"
+                  min="1"
+                  max={artigoSelecionado()?.quantity || 1}
+                  value={sellData.quantity}
+                  onChange={(e) => setSellData({ ...sellData, quantity: e.target.value })}
+                  required
+                  data-testid="sell-quantity"
+                />
+              </div>
+
+              {artigoSelecionado() && (
+                <div className="p-3 rounded-lg" style={{ background: 'var(--background-elevated)' }}>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    {artigoSelecionado().name} · €{artigoSelecionado().price.toFixed(2)} cada
+                  </p>
+                  <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                    {t[language].total}: €{totalVenda().toFixed(2)}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowSellDialog(false)}>
+                  {t[language].cancel}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={selling || itemsComStock().length === 0}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  data-testid="confirm-sale-btn"
+                >
+                  <ShoppingCart className="mr-2" size={16} />
+                  {t[language].confirmSale}
                 </Button>
               </div>
             </form>

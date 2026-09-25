@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../components/ui/textarea';
 import { 
   CreditCard, 
+  ShoppingBag,
   Plus, 
   Search, 
   Filter,
@@ -37,6 +38,7 @@ const Payments = ({ language, translations }) => {
   const [selectedMember, setSelectedMember] = useState('all');
   const [memberSearch, setMemberSearch] = useState('');
   const [expenses, setExpenses] = useState([]);
+  const [sales, setSales] = useState([]);
   const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
   const [expenseFormData, setExpenseFormData] = useState({
     description: '',
@@ -96,7 +98,13 @@ const Payments = ({ language, translations }) => {
       cancel: 'Cancelar',
       view: 'Ver',
       edit: 'Editar',
-      totalRevenue: 'Receitas',
+      totalRevenue: 'Receitas (Quotas)',
+      merchandise: 'Merchandise (Vendas)',
+      merchandiseMonth: 'este mês',
+      units: 'unidades vendidas',
+      recentSales: 'Vendas de Merchandise',
+      noSales: 'Ainda não há vendas registadas',
+      item: 'Artigo',
       monthlyRevenue: 'Receita Mensal',
       pendingPayments: 'Despesas',
       recentPayments: 'Pagamentos Recentes',
@@ -150,7 +158,13 @@ const Payments = ({ language, translations }) => {
       cancel: 'Cancel',
       view: 'View',
       edit: 'Edit',
-      totalRevenue: 'Revenue',
+      totalRevenue: 'Revenue (Fees)',
+      merchandise: 'Merchandise (Sales)',
+      merchandiseMonth: 'this month',
+      units: 'units sold',
+      recentSales: 'Merchandise Sales',
+      noSales: 'No sales recorded yet',
+      item: 'Item',
       monthlyRevenue: 'Monthly Revenue',
       pendingPayments: 'Expenses',
       recentPayments: 'Recent Payments',
@@ -170,6 +184,7 @@ const Payments = ({ language, translations }) => {
     fetchMembers();
     fetchPayments();
     fetchExpenses();
+    fetchSales();
   }, []);
 
   useEffect(() => {
@@ -182,6 +197,15 @@ const Payments = ({ language, translations }) => {
       setMembers(response.data);
     } catch (error) {
       console.error('Error fetching members:', error);
+    }
+  };
+
+  const fetchSales = async () => {
+    try {
+      const response = await axios.get(`${API}/sales`);
+      setSales(response.data);
+    } catch (error) {
+      console.error('Error fetching sales:', error);
     }
   };
 
@@ -365,7 +389,22 @@ const Payments = ({ language, translations }) => {
     
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
-    return { totalRevenue, monthlyRevenue, pendingCount, totalExpenses };
+    // Vendas de merchandise: receita do balcao, contada a parte das quotas
+    const merchandiseRevenue = sales.reduce((sum, s) => sum + (s.total || 0), 0);
+    const merchandiseMonthly = sales
+      .filter(s => new Date(s.sale_date) >= startOfMonth)
+      .reduce((sum, s) => sum + (s.total || 0), 0);
+    const merchandiseUnits = sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+
+    return {
+      totalRevenue,
+      monthlyRevenue,
+      pendingCount,
+      totalExpenses,
+      merchandiseRevenue,
+      merchandiseMonthly,
+      merchandiseUnits
+    };
   };
 
   const exportPayments = () => {
@@ -626,7 +665,7 @@ const Payments = ({ language, translations }) => {
     </Dialog>
 
 {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <Card className="card-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -667,6 +706,27 @@ const Payments = ({ language, translations }) => {
               </div>
               <div className="p-3 rounded-full bg-blue-500">
                 <TrendingUp size={24} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  {t[language].merchandise}
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  €{stats.merchandiseRevenue.toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  €{stats.merchandiseMonthly.toFixed(2)} {t[language].merchandiseMonth} · {stats.merchandiseUnits} {t[language].units}
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-green-600">
+                <ShoppingBag size={24} className="text-white" />
               </div>
             </div>
           </CardContent>
@@ -860,6 +920,48 @@ const Payments = ({ language, translations }) => {
               <CreditCard size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
               <p className="text-gray-600 dark:text-gray-300">{t[language].noPayments}</p>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Vendas de merchandise */}
+      <Card className="card-shadow">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <ShoppingBag className="mr-2" size={20} />
+            {t[language].recentSales} ({sales.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sales.length > 0 ? (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {sales.map((sale) => (
+                <div
+                  key={sale.id}
+                  className="flex items-center justify-between p-3 rounded-lg"
+                  style={{ background: 'var(--background-elevated)', color: 'var(--text-primary)' }}
+                  data-testid={`sale-${sale.id}`}
+                >
+                  <div>
+                    <p className="font-medium">
+                      {sale.quantity}x {sale.item_name}
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      {new Date(sale.sale_date).toLocaleDateString('pt-PT')}
+                      {sale.sold_by ? ` · ${sale.sold_by}` : ''}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">€{sale.total.toFixed(2)}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      €{sale.unit_price.toFixed(2)} cada
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center py-6 text-gray-500 dark:text-gray-400">{t[language].noSales}</p>
           )}
         </CardContent>
       </Card>
