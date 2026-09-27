@@ -229,8 +229,9 @@ class FCMTokenUpdate(BaseModel):
     fcm_token: str
 
 class PaymentType(str, Enum):
-    QUOTA = "quota"        # Mensalidade / quota do socio
-    INSURANCE = "seguro"   # Seguro anual do socio
+    QUOTA = "quota"                  # Mensalidade / quota do socio
+    INSURANCE = "seguro"             # Seguro anual do socio
+    QUOTA_INSURANCE = "quota_seguro" # Mensalidade + seguro, tipico na inscricao
 
 INSURANCE_DEFAULT_AMOUNT = 20.0
 INSURANCE_VALIDITY_DAYS = 365
@@ -1389,18 +1390,23 @@ async def send_push_notification(fcm_token: str, title: str, body: str, data: di
         return False
 
 def add_one_month(d: date) -> date:
-    """Mesmo dia do mes seguinte; em meses curtos usa o ultimo dia possivel."""
+    """Mesmo dia do mes seguinte.
+
+    Quando esse dia nao existe (pagou a 31, o mes seguinte tem 30 ou 28),
+    a quota passa para o primeiro dia do mes a seguir, em vez de encurtar
+    para o dia 28 ou 30. O socio nunca perde dias por causa do calendario.
+    """
     if d.month == 12:
         ano, mes = d.year + 1, 1
     else:
         ano, mes = d.year, d.month + 1
-    dia = d.day
-    while dia > 1:
-        try:
-            return date(ano, mes, dia)
-        except ValueError:
-            dia -= 1
-    return date(ano, mes, 1)
+
+    try:
+        return date(ano, mes, d.day)
+    except ValueError:
+        if mes == 12:
+            return date(ano + 1, 1, 1)
+        return date(ano, mes + 1, 1)
 
 def derive_member_status(data: dict) -> dict:
     """Estado mostrado ao utilizador: a quota tem de estar em vigor.
@@ -1787,31 +1793,31 @@ async def create_payment(
     await db.payments.insert_one(payment_dict)
 
     # Cada pagamento renova o que lhe corresponde na ficha do socio
-    if payment.payment_type == PaymentType.INSURANCE:
-        valid_until = payment.payment_date + timedelta(days=INSURANCE_VALIDITY_DAYS)
-        await db.members.update_one(
-            {"id": payment.member_id},
-            {"$set": prepare_for_mongo({
-                "insurance_paid_date": payment.payment_date,
-                "insurance_valid_until": valid_until,
-                # A validade da inscricao acompanha o seguro
-                "expiry_date": valid_until
-            })}
-        )
-        BusinessCache.invalidate_member_cache()
-    else:
+    renovacao = {}
+
+    if payment.payment_type in (PaymentType.QUOTA, PaymentType.QUOTA_INSURANCE):
         # Quota: cobre ate ao mesmo dia do mes seguinte
-        valid_until = add_one_month(payment.payment_date)
+        renovacao["membership_paid_date"] = payment.payment_date
+        renovacao["membership_valid_until"] = add_one_month(payment.payment_date)
+
+    if payment.payment_type in (PaymentType.INSURANCE, PaymentType.QUOTA_INSURANCE):
+        seguro_ate = payment.payment_date + timedelta(days=INSURANCE_VALIDITY_DAYS)
+        renovacao["insurance_paid_date"] = payment.payment_date
+        renovacao["insurance_valid_until"] = seguro_ate
+        # A validade da inscricao acompanha o seguro
+        renovacao["expiry_date"] = seguro_ate
+
+    if renovacao:
         await db.members.update_one(
             {"id": payment.member_id},
-            {"$set": prepare_for_mongo({
-                "membership_paid_date": payment.payment_date,
-                "membership_valid_until": valid_until
-            })}
+            {"$set": prepare_for_mongo(renovacao)}
         )
         BusinessCache.invalidate_member_cache()
 
-    detalhe = "seguro" if payment.payment_type == PaymentType.INSURANCE else "quota"
+    detalhe = {
+        PaymentType.INSURANCE: "seguro",
+        PaymentType.QUOTA_INSURANCE: "quota + seguro"
+    }.get(payment.payment_type, "quota")
     await log_audit(current_user, "create", "payment", entity_id=payment.id,
                     details=f"Registou pagamento de {detalhe}: {payment.amount} EUR")
     return payment

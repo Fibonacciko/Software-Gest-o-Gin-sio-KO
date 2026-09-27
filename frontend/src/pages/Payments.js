@@ -111,9 +111,12 @@ const Payments = ({ language, translations }) => {
       dailyRevenue: 'Receita Diária',
       quotaBadge: 'Quota',
       insuranceBadge: 'Seguro',
+      bothBadge: 'Quota + Seguro',
       typeQuota: 'Quota (mensalidade)',
       typeInsurance: 'Seguro (anual)',
+      typeBoth: 'Mensalidade + Seguro',
       insuranceHint: 'Renova o seguro do sócio por um ano a partir da data do pagamento.',
+      bothHint: 'Escreve o valor total (mensalidade + 20 € de seguro). Renova a mensalidade por um mês e o seguro por um ano.',
       insuranceRevenue: 'Seguros',
       merchandiseMonth: 'este mês',
       units: 'unidades vendidas',
@@ -180,9 +183,12 @@ const Payments = ({ language, translations }) => {
       dailyRevenue: 'Daily Revenue',
       quotaBadge: 'Fee',
       insuranceBadge: 'Insurance',
+      bothBadge: 'Fee + Insurance',
       typeQuota: 'Membership fee',
       typeInsurance: 'Insurance (yearly)',
+      typeBoth: 'Membership + Insurance',
       insuranceHint: "Renews the member's insurance for one year from the payment date.",
+      bothHint: 'Enter the total (fee + €20 insurance). Renews the fee for a month and the insurance for a year.',
       insuranceRevenue: 'Insurance',
       merchandiseMonth: 'this month',
       units: 'units sold',
@@ -423,11 +429,19 @@ const Payments = ({ language, translations }) => {
 
   const getPaymentStats = () => {
     const pagos = payments.filter(p => p.status === 'paid');
-    const ehSeguro = (p) => p.payment_type === 'seguro';
+    const seguroFixo = parseFloat(INSURANCE_AMOUNT);
 
-    // As quotas e os seguros sao receitas distintas
-    const totalRevenue = pagos.filter(p => !ehSeguro(p)).reduce((sum, p) => sum + p.amount, 0);
-    const insuranceRevenue = pagos.filter(ehSeguro).reduce((sum, p) => sum + p.amount, 0);
+    // Num pagamento combinado, os 20 € do seguro contam como seguro e o
+    // restante como quota, para as duas receitas nao se confundirem
+    const parteSeguro = (p) => {
+      if (p.payment_type === 'seguro') return p.amount;
+      if (p.payment_type === 'quota_seguro') return Math.min(seguroFixo, p.amount);
+      return 0;
+    };
+    const parteQuota = (p) => p.amount - parteSeguro(p);
+
+    const totalRevenue = pagos.reduce((sum, p) => sum + parteQuota(p), 0);
+    const insuranceRevenue = pagos.reduce((sum, p) => sum + parteSeguro(p), 0);
     
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -582,7 +596,7 @@ const Payments = ({ language, translations }) => {
                   onValueChange={(value) => setFormData({
                     ...formData,
                     payment_type: value,
-                    // O seguro tem valor fixo; a quota fica em branco para escrever
+                    // Só o seguro isolado tem valor fixo; nos outros o valor é escrito
                     amount: value === 'seguro' ? INSURANCE_AMOUNT : (formData.amount === INSURANCE_AMOUNT ? '' : formData.amount)
                   })}
                 >
@@ -592,11 +606,17 @@ const Payments = ({ language, translations }) => {
                   <SelectContent>
                     <SelectItem value="quota">{t[language].typeQuota}</SelectItem>
                     <SelectItem value="seguro">{t[language].typeInsurance}</SelectItem>
+                    <SelectItem value="quota_seguro">{t[language].typeBoth}</SelectItem>
                   </SelectContent>
                 </Select>
                 {formData.payment_type === 'seguro' && (
                   <p className="text-xs mt-1" style={{ color: 'var(--ko-primary-orange)' }}>
                     {t[language].insuranceHint}
+                  </p>
+                )}
+                {formData.payment_type === 'quota_seguro' && (
+                  <p className="text-xs mt-1" style={{ color: 'var(--ko-primary-orange)' }}>
+                    {t[language].bothHint}
                   </p>
                 )}
               </div>
@@ -1012,9 +1032,15 @@ const Payments = ({ language, translations }) => {
                               className="mt-1"
                               style={payment.payment_type === 'seguro'
                                 ? { borderColor: '#16a34a', color: '#16a34a' }
-                                : { borderColor: 'var(--ko-primary-orange)', color: 'var(--ko-primary-orange)' }}
+                                : payment.payment_type === 'quota_seguro'
+                                  ? { borderColor: '#2563eb', color: '#2563eb' }
+                                  : { borderColor: 'var(--ko-primary-orange)', color: 'var(--ko-primary-orange)' }}
                             >
-                              {payment.payment_type === 'seguro' ? t[language].insuranceBadge : t[language].quotaBadge}
+                              {payment.payment_type === 'seguro'
+                                ? t[language].insuranceBadge
+                                : payment.payment_type === 'quota_seguro'
+                                  ? t[language].bothBadge
+                                  : t[language].quotaBadge}
                             </Badge>
                           </div>
                         </div>
