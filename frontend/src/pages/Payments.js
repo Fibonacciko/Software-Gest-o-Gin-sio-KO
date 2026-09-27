@@ -49,10 +49,13 @@ const Payments = ({ language, translations }) => {
 
   const todayISO = () => new Date().toISOString().split('T')[0];
 
+  const INSURANCE_AMOUNT = '20.00';
+
   const [formData, setFormData] = useState({
     member_id: '',
     amount: '',
     payment_date: todayISO(),
+    payment_type: 'quota',
     payment_method: 'cash',
     description: ''
   });
@@ -100,6 +103,11 @@ const Payments = ({ language, translations }) => {
       edit: 'Editar',
       totalRevenue: 'Receitas (Quotas)',
       merchandise: 'Merchandise (Vendas)',
+      paymentType: 'Tipo de Pagamento',
+      typeQuota: 'Quota (mensalidade)',
+      typeInsurance: 'Seguro (anual)',
+      insuranceHint: 'Renova o seguro do sócio por um ano a partir da data do pagamento.',
+      insuranceRevenue: 'Seguros',
       merchandiseMonth: 'este mês',
       units: 'unidades vendidas',
       recentSales: 'Vendas de Merchandise',
@@ -160,6 +168,11 @@ const Payments = ({ language, translations }) => {
       edit: 'Edit',
       totalRevenue: 'Revenue (Fees)',
       merchandise: 'Merchandise (Sales)',
+      paymentType: 'Payment Type',
+      typeQuota: 'Membership fee',
+      typeInsurance: 'Insurance (yearly)',
+      insuranceHint: "Renews the member's insurance for one year from the payment date.",
+      insuranceRevenue: 'Insurance',
       merchandiseMonth: 'this month',
       units: 'units sold',
       recentSales: 'Merchandise Sales',
@@ -299,6 +312,11 @@ const Payments = ({ language, translations }) => {
         amount: parseFloat(formData.amount),
         payment_date: formData.payment_date || null
       });
+
+      // O seguro altera a ficha do socio, por isso a lista tem de ser relida
+      if (formData.payment_type === 'seguro') {
+        fetchMembers();
+      }
       
       toast.success(t[language].paymentAdded);
       setShowAddDialog(false);
@@ -316,6 +334,7 @@ const Payments = ({ language, translations }) => {
       member_id: '',
       amount: '',
       payment_date: todayISO(),
+      payment_type: 'quota',
       payment_method: 'cash',
       description: ''
     });
@@ -375,14 +394,17 @@ const Payments = ({ language, translations }) => {
   };
 
   const getPaymentStats = () => {
-    const totalRevenue = payments
-      .filter(p => p.status === 'paid')
-      .reduce((sum, p) => sum + p.amount, 0);
+    const pagos = payments.filter(p => p.status === 'paid');
+    const ehSeguro = (p) => p.payment_type === 'seguro';
+
+    // As quotas e os seguros sao receitas distintas
+    const totalRevenue = pagos.filter(p => !ehSeguro(p)).reduce((sum, p) => sum + p.amount, 0);
+    const insuranceRevenue = pagos.filter(ehSeguro).reduce((sum, p) => sum + p.amount, 0);
     
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthlyRevenue = payments
-      .filter(p => p.status === 'paid' && new Date(p.payment_date) >= startOfMonth)
+    const monthlyRevenue = pagos
+      .filter(p => new Date(p.payment_date) >= startOfMonth)
       .reduce((sum, p) => sum + p.amount, 0);
     
     const pendingCount = payments.filter(p => p.status === 'pending').length;
@@ -398,6 +420,7 @@ const Payments = ({ language, translations }) => {
 
     return {
       totalRevenue,
+      insuranceRevenue,
       monthlyRevenue,
       pendingCount,
       totalExpenses,
@@ -509,6 +532,32 @@ const Payments = ({ language, translations }) => {
                 )}
               </div>
               
+              <div>
+                <Label htmlFor="payment_type">{t[language].paymentType} *</Label>
+                <Select
+                  value={formData.payment_type}
+                  onValueChange={(value) => setFormData({
+                    ...formData,
+                    payment_type: value,
+                    // O seguro tem valor fixo; a quota fica em branco para escrever
+                    amount: value === 'seguro' ? INSURANCE_AMOUNT : (formData.amount === INSURANCE_AMOUNT ? '' : formData.amount)
+                  })}
+                >
+                  <SelectTrigger data-testid="payment-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="quota">{t[language].typeQuota}</SelectItem>
+                    <SelectItem value="seguro">{t[language].typeInsurance}</SelectItem>
+                  </SelectContent>
+                </Select>
+                {formData.payment_type === 'seguro' && (
+                  <p className="text-xs mt-1" style={{ color: 'var(--ko-primary-orange)' }}>
+                    {t[language].insuranceHint}
+                  </p>
+                )}
+              </div>
+
               <div>
                 <Label htmlFor="amount">{t[language].amount} (€) *</Label>
                 <Input
@@ -675,6 +724,9 @@ const Payments = ({ language, translations }) => {
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   €{stats.totalRevenue.toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {t[language].insuranceRevenue}: €{stats.insuranceRevenue.toFixed(2)}
                 </p>
                 <Button
                   size="sm"

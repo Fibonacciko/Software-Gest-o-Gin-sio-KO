@@ -541,7 +541,14 @@ const Dashboard = ({ language, translations }) => {
               <div>
                 <p className="font-semibold" style={{ color: '#c2410c' }}>Renovação de seguro necessária</p>
                 <p className="text-sm" style={{ color: '#9a3412' }}>
-                  {alerts.insurance_due_today.map((i) => `${i.name} completa ${i.years} ano(s) de inscrição hoje`).join(', ')}
+                  {alerts.insurance_due_today.map((i) => {
+                    if (i.expired) {
+                      const dias = Math.abs(i.days_until);
+                      return `${i.name}: seguro expirado há ${dias} dia(s)`;
+                    }
+                    if (i.paid) return `${i.name}: seguro termina hoje`;
+                    return `${i.name} completa ${i.years} ano(s) de inscrição hoje`;
+                  }).join(', ')}
                 </p>
               </div>
             </div>

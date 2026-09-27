@@ -228,6 +228,13 @@ class MobileMemberLogin(BaseModel):
 class FCMTokenUpdate(BaseModel):
     fcm_token: str
 
+class PaymentType(str, Enum):
+    QUOTA = "quota"        # Mensalidade / quota do socio
+    INSURANCE = "seguro"   # Seguro anual do socio
+
+INSURANCE_DEFAULT_AMOUNT = 20.0
+INSURANCE_VALIDITY_DAYS = 365
+
 class PaymentMethod(str, Enum):
     CASH = "cash"
     CARD = "card"
@@ -293,6 +300,8 @@ class Member(BaseModel):
     nfc_tag_id: Optional[str] = None
     activity_id: Optional[str] = None  # Primary modality, kept for check-in and legacy records
     activity_ids: List[str] = Field(default_factory=list)  # All modalities subscribed by the member
+    insurance_paid_date: Optional[date] = None      # Ultimo pagamento do seguro
+    insurance_valid_until: Optional[date] = None    # Validade do seguro
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -329,6 +338,7 @@ class Payment(BaseModel):
     member_id: str
     amount: float
     payment_date: date = Field(default_factory=lambda: date.today())
+    payment_type: PaymentType = PaymentType.QUOTA
     payment_method: PaymentMethod = PaymentMethod.CASH
     status: PaymentStatus = PaymentStatus.PAID
     description: Optional[str] = None
@@ -338,6 +348,7 @@ class PaymentCreate(BaseModel):
     member_id: str
     amount: float
     payment_date: Optional[date] = None  # Chosen by the user; falls back to today
+    payment_type: PaymentType = PaymentType.QUOTA
     payment_method: PaymentMethod = PaymentMethod.CASH
     description: Optional[str] = None
 
@@ -1441,7 +1452,7 @@ def parse_from_mongo(item):
             # Handle ObjectId conversion to string
             if hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
                 item[key] = str(value)
-            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date', 'sale_date', 'expense_date'] and isinstance(value, str):
+            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date', 'sale_date', 'expense_date', 'insurance_paid_date', 'insurance_valid_until'] and isinstance(value, str):
                 try:
                     item[key] = datetime.fromisoformat(value).date()
                 except (ValueError, TypeError):
@@ -1715,7 +1726,22 @@ async def create_payment(
     payment = Payment(**payment_dict_in)
     payment_dict = prepare_for_mongo(payment.dict())
     await db.payments.insert_one(payment_dict)
-    await log_audit(current_user, "create", "payment", entity_id=payment.id, details=f"Registou pagamento de {payment.amount} EUR")
+
+    # Um pagamento de seguro renova a validade na ficha do socio
+    if payment.payment_type == PaymentType.INSURANCE:
+        valid_until = payment.payment_date + timedelta(days=INSURANCE_VALIDITY_DAYS)
+        await db.members.update_one(
+            {"id": payment.member_id},
+            {"$set": prepare_for_mongo({
+                "insurance_paid_date": payment.payment_date,
+                "insurance_valid_until": valid_until
+            })}
+        )
+        BusinessCache.invalidate_member_cache()
+
+    detalhe = "seguro" if payment.payment_type == PaymentType.INSURANCE else "quota"
+    await log_audit(current_user, "create", "payment", entity_id=payment.id,
+                    details=f"Registou pagamento de {detalhe}: {payment.amount} EUR")
     return payment
 
 @api_router.get("/payments", response_model=List[Payment])
@@ -2042,12 +2068,30 @@ async def get_dashboard_alerts(request: Request, current_user: User = Depends(re
                     entry["days_until"] = days_until
                     birthdays_upcoming.append(entry)
 
-            if jd:
+            # O seguro e anual. Quando ja foi pago, manda a validade registada;
+            # caso contrario cai no aniversario da inscricao, como antes.
+            valid_until = to_date(m.get("insurance_valid_until"))
+            entry = {"id": m["id"], "name": m["name"], "member_number": m.get("member_number")}
+
+            if valid_until:
+                days_until = (valid_until - today).days
+                entry["date"] = valid_until.isoformat()
+                entry["days_until"] = days_until
+                entry["paid"] = True
+                if days_until < 0:
+                    entry["expired"] = True
+                    insurance_due_today.append(entry)
+                elif days_until == 0:
+                    insurance_due_today.append(entry)
+                elif days_until <= 30:
+                    insurance_upcoming.append(entry)
+            elif jd:
                 occ = next_occurrence(jd.month, jd.day, today)
                 years = occ.year - jd.year
                 if years > 0:
                     days_until = (occ - today).days
-                    entry = {"id": m["id"], "name": m["name"], "member_number": m.get("member_number"), "years": years}
+                    entry["years"] = years
+                    entry["paid"] = False
                     if days_until == 0:
                         insurance_due_today.append(entry)
                     elif 0 < days_until <= 30:
@@ -2056,7 +2100,7 @@ async def get_dashboard_alerts(request: Request, current_user: User = Depends(re
                         insurance_upcoming.append(entry)
 
         birthdays_upcoming.sort(key=lambda x: x["days_until"])
-        insurance_upcoming.sort(key=lambda x: x["days_until"])
+        insurance_upcoming.sort(key=lambda x: x.get("days_until", 0))
 
         return {
             "birthdays_today": birthdays_today,

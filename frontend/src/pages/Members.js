@@ -714,6 +714,37 @@ const Members = ({ language, translations }) => {
                   </div>
 
                   <div>
+                    <h4 className="font-medium mb-2">Seguro</h4>
+                    {selectedMember.insurance_valid_until ? (
+                      (() => {
+                        const validade = new Date(selectedMember.insurance_valid_until);
+                        const dias = Math.ceil((validade - new Date()) / 86400000);
+                        const expirado = dias < 0;
+                        return (
+                          <div>
+                            <Badge
+                              variant="outline"
+                              style={{
+                                borderColor: expirado ? '#dc2626' : dias <= 30 ? '#ea580c' : '#16a34a',
+                                color: expirado ? '#dc2626' : dias <= 30 ? '#ea580c' : '#16a34a'
+                              }}
+                            >
+                              {expirado ? 'Expirado' : `Válido até ${validade.toLocaleDateString('pt-PT')}`}
+                            </Badge>
+                            {!expirado && dias <= 30 && (
+                              <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                                Faltam {dias} dias para renovar
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Sem seguro registado</p>
+                    )}
+                  </div>
+
+                  <div>
                     <h4 className="font-medium mb-2">{t[language].joinDate}</h4>
                     <p>{new Date(selectedMember.join_date).toLocaleDateString('pt-PT')}</p>
                   </div>
