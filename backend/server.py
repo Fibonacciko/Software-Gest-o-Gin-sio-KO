@@ -390,6 +390,8 @@ class Sale(BaseModel):
     unit_price: float
     total: float
     sale_date: date = Field(default_factory=lambda: date.today())
+    member_id: Optional[str] = None      # Cliente, quando e socio
+    member_name: Optional[str] = None
     sold_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -397,6 +399,7 @@ class SaleCreate(BaseModel):
     item_id: str
     quantity: int
     sale_date: Optional[date] = None
+    member_id: Optional[str] = None
 
 class InventoryItemCreate(BaseModel):
     name: str
@@ -2065,6 +2068,13 @@ async def create_sale(
             detail=f"Stock insuficiente: existem {disponivel} unidades de {item['name']}"
         )
 
+    # Cliente opcional: a venda tambem pode ser a quem nao e socio
+    member = None
+    if sale_data.member_id:
+        member = await db.members.find_one({"id": sale_data.member_id})
+        if not member:
+            raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
     preco = float(item.get("price", 0))
     sale = Sale(
         item_id=item["id"],
@@ -2073,6 +2083,8 @@ async def create_sale(
         unit_price=preco,
         total=round(preco * sale_data.quantity, 2),
         sale_date=sale_data.sale_date or date.today(),
+        member_id=member["id"] if member else None,
+        member_name=member["name"] if member else None,
         sold_by=current_user.username
     )
 

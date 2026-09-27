@@ -326,6 +326,18 @@ const Dashboard = ({ language, translations }) => {
     }
   };
 
+  const estadoQuota = (member) => {
+    const estado = member?.membership_status || member?.status;
+    const ate = member?.membership_valid_until
+      ? new Date(member.membership_valid_until).toLocaleDateString('pt-PT')
+      : null;
+    if (estado === 'suspended') return { texto: 'SUSPENSO', cor: '#dc2626', detalhe: null };
+    if (estado === 'inactive') {
+      return { texto: 'INATIVO', cor: '#dc2626', detalhe: ate ? `Quota expirou em ${ate}` : 'Sem quota registada' };
+    }
+    return { texto: 'ATIVO', cor: '#16a34a', detalhe: ate ? `Quota paga até ${ate}` : null };
+  };
+
   const getMemberActivityIds = (member) => {
     if (member?.activity_ids?.length) return member.activity_ids;
     return member?.activity_id ? [member.activity_id] : [];
@@ -737,10 +749,12 @@ const Dashboard = ({ language, translations }) => {
                         <p className="text-sm text-gray-500 dark:text-gray-400">{member.phone}</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge 
-                          variant={member.status === 'active' ? 'default' : 'secondary'}
+                        <Badge
+                          variant="outline"
+                          style={{ borderColor: estadoQuota(member).cor, color: estadoQuota(member).cor }}
+                          title={estadoQuota(member).detalhe || ''}
                         >
-                          {member.status}
+                          {estadoQuota(member).texto}
                         </Badge>
                         <Button
                           size="sm"
@@ -841,12 +855,21 @@ const Dashboard = ({ language, translations }) => {
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                       N.º {selectedMember.member_number} · {selectedMember.phone}
                     </p>
+                    {estadoQuota(selectedMember).detalhe && (
+                      <p className="text-sm font-medium" style={{ color: estadoQuota(selectedMember).cor }}>
+                        {estadoQuota(selectedMember).detalhe}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={selectedMember.status === 'active' ? 'default' : 'secondary'}>
-                    {selectedMember.status}
+                  <Badge
+                    className="text-sm px-3 py-1"
+                    variant="outline"
+                    style={{ borderColor: estadoQuota(selectedMember).cor, color: estadoQuota(selectedMember).cor }}
+                  >
+                    {estadoQuota(selectedMember).texto}
                   </Badge>
                   <Badge variant="outline">{selectedMember.membership_type}</Badge>
                   {getMemberActivityIds(selectedMember).map((id) => {

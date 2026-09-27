@@ -34,7 +34,8 @@ const Inventory = ({ language, translations }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showSellDialog, setShowSellDialog] = useState(false);
-  const [sellData, setSellData] = useState({ item_id: '', quantity: '1' });
+  const [sellData, setSellData] = useState({ item_id: '', quantity: '1', member_id: '' });
+  const [members, setMembers] = useState([]);
   const [selling, setSelling] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -52,6 +53,8 @@ const Inventory = ({ language, translations }) => {
       inventory: 'Gestão de Stock',
       addItem: 'Adicionar Item',
       sellItem: 'Vender Item',
+      client: 'Cliente (opcional)',
+      noClient: 'Sem sócio associado',
       sellTitle: 'Vender Artigo',
       chooseItem: 'Escolher artigo',
       inStock: 'em stock',
@@ -110,6 +113,8 @@ const Inventory = ({ language, translations }) => {
       inventory: 'Inventory Management',
       addItem: 'Add Item',
       sellItem: 'Sell Item',
+      client: 'Customer (optional)',
+      noClient: 'No member linked',
       sellTitle: 'Sell Item',
       chooseItem: 'Choose item',
       inStock: 'in stock',
@@ -170,6 +175,15 @@ const Inventory = ({ language, translations }) => {
     fetchInventory();
   }, []);
 
+  const fetchMembers = async () => {
+    try {
+      const response = await axios.get(`${API}/members`);
+      setMembers(response.data);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
+  };
+
   const itemsComStock = () => inventory.filter((i) => (i.quantity || 0) > 0);
 
   const artigoSelecionado = () => inventory.find((i) => i.id === sellData.item_id);
@@ -201,10 +215,14 @@ const Inventory = ({ language, translations }) => {
 
     try {
       setSelling(true);
-      await axios.post(`${API}/sales`, { item_id: artigo.id, quantity: qtd });
+      await axios.post(`${API}/sales`, {
+        item_id: artigo.id,
+        quantity: qtd,
+        member_id: sellData.member_id || null
+      });
       toast.success(t[language].saleDone);
       setShowSellDialog(false);
-      setSellData({ item_id: '', quantity: '1' });
+      setSellData({ item_id: '', quantity: '1', member_id: '' });
       fetchInventory();
     } catch (error) {
       console.error('Error selling item:', error);
@@ -356,7 +374,7 @@ const Inventory = ({ language, translations }) => {
         <div className="flex flex-wrap gap-3">
         <Button
           className="btn-hover bg-green-600 hover:bg-green-700 text-white"
-          onClick={() => { setSellData({ item_id: '', quantity: '1' }); setShowSellDialog(true); }}
+          onClick={() => { setSellData({ item_id: '', quantity: '1', member_id: '' }); fetchMembers(); setShowSellDialog(true); }}
           data-testid="sell-item-btn"
         >
           <ShoppingCart className="mr-2" size={16} />
@@ -533,6 +551,26 @@ const Inventory = ({ language, translations }) => {
                   required
                   data-testid="sell-quantity"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="sell-member">{t[language].client}</Label>
+                <Select
+                  value={sellData.member_id || 'none'}
+                  onValueChange={(value) => setSellData({ ...sellData, member_id: value === 'none' ? '' : value })}
+                >
+                  <SelectTrigger id="sell-member" data-testid="sell-member-select">
+                    <SelectValue placeholder={t[language].noClient} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="none">{t[language].noClient}</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        #{m.member_number} — {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {artigoSelecionado() && (

@@ -501,18 +501,6 @@ const Members = ({ language, translations }) => {
                 <SelectItem value="suspended">{t[language].suspended}</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Select value={membershipFilter} onValueChange={setMembershipFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t[language].allMemberships} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t[language].allMemberships}</SelectItem>
-                <SelectItem value="basic">{t[language].basic}</SelectItem>
-                <SelectItem value="premium">{t[language].premium}</SelectItem>
-                <SelectItem value="vip">{t[language].vip}</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
@@ -550,7 +538,6 @@ const Members = ({ language, translations }) => {
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">Nº Sócio</th>
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].name}</th>
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].phone}</th>
-                    <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].membershipType}</th>
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].status}</th>
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">{t[language].joinDate}</th>
                     <th className="text-right p-4 font-medium text-gray-600 dark:text-gray-300">Ações</th>
@@ -588,11 +575,6 @@ const Members = ({ language, translations }) => {
                           <Phone size={16} className="text-gray-400 dark:text-gray-500 mr-2" />
                           {member.phone}
                         </div>
-                      </td>
-                      <td className="p-4">
-                        <Badge className={getMembershipColor(member.membership_type)}>
-                          {t[language][member.membership_type]}
-                        </Badge>
                       </td>
                       <td className="p-4">
                         <Badge

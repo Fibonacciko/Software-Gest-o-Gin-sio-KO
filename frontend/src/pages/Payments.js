@@ -969,15 +969,17 @@ const Payments = ({ language, translations }) => {
             <CreditCard className="mr-2" />
             {t[language].recentPayments} ({payments.length})
           </CardTitle>
-          <Button 
-            variant="outline" 
-            onClick={exportPayments}
-            className="btn-hover"
-            data-testid="export-payments-btn"
-          >
-            <Download className="mr-2" size={16} />
-            {t[language].export}
-          </Button>
+          {isAdmin() && (
+            <Button 
+              variant="outline" 
+              onClick={exportPayments}
+              className="btn-hover"
+              data-testid="export-payments-btn"
+            >
+              <Download className="mr-2" size={16} />
+              {t[language].export}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -1124,15 +1126,18 @@ const Payments = ({ language, translations }) => {
                     </p>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                       {new Date(sale.sale_date).toLocaleDateString('pt-PT')}
-                      {sale.sold_by ? ` · ${sale.sold_by}` : ''}
+                      {sale.member_name ? ` · ${sale.member_name}` : ''}
+                      {sale.sold_by ? ` · vendido por ${sale.sold_by}` : ''}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">€{sale.total.toFixed(2)}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      €{sale.unit_price.toFixed(2)} cada
-                    </p>
-                  </div>
+                  {isAdmin() && (
+                    <div className="text-right">
+                      <p className="font-semibold">€{sale.total.toFixed(2)}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        €{sale.unit_price.toFixed(2)} cada
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
