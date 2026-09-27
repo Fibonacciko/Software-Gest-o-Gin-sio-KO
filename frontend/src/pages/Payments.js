@@ -23,11 +23,13 @@ import {
   Users
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Payments = ({ language, translations }) => {
+  const { isAdmin } = useAuth();
   const [payments, setPayments] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +41,7 @@ const Payments = ({ language, translations }) => {
   const [memberSearch, setMemberSearch] = useState('');
   const [expenses, setExpenses] = useState([]);
   const [sales, setSales] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
   const [expenseFormData, setExpenseFormData] = useState({
     description: '',
@@ -104,6 +107,10 @@ const Payments = ({ language, translations }) => {
       totalRevenue: 'Receitas (Quotas)',
       merchandise: 'Merchandise (Vendas)',
       paymentType: 'Tipo de Pagamento',
+      modalities: 'Modalidades',
+      dailyRevenue: 'Receita Diária',
+      quotaBadge: 'Quota',
+      insuranceBadge: 'Seguro',
       typeQuota: 'Quota (mensalidade)',
       typeInsurance: 'Seguro (anual)',
       insuranceHint: 'Renova o seguro do sócio por um ano a partir da data do pagamento.',
@@ -169,6 +176,10 @@ const Payments = ({ language, translations }) => {
       totalRevenue: 'Revenue (Fees)',
       merchandise: 'Merchandise (Sales)',
       paymentType: 'Payment Type',
+      modalities: 'Activities',
+      dailyRevenue: 'Daily Revenue',
+      quotaBadge: 'Fee',
+      insuranceBadge: 'Insurance',
       typeQuota: 'Membership fee',
       typeInsurance: 'Insurance (yearly)',
       insuranceHint: "Renews the member's insurance for one year from the payment date.",
@@ -198,6 +209,7 @@ const Payments = ({ language, translations }) => {
     fetchPayments();
     fetchExpenses();
     fetchSales();
+    fetchActivities();
   }, []);
 
   useEffect(() => {
@@ -211,6 +223,22 @@ const Payments = ({ language, translations }) => {
     } catch (error) {
       console.error('Error fetching members:', error);
     }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const response = await axios.get(`${API}/activities`);
+      setActivities(response.data);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    }
+  };
+
+  const memberActivities = (member) => {
+    const ids = member?.activity_ids?.length
+      ? member.activity_ids
+      : (member?.activity_id ? [member.activity_id] : []);
+    return ids.map((id) => activities.find((a) => a.id === id)).filter(Boolean);
   };
 
   const fetchSales = async () => {
@@ -411,6 +439,18 @@ const Payments = ({ language, translations }) => {
     
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
+    // Receita do dia: tudo o que entrou hoje, para fechar a caixa
+    const hoje = new Date();
+    const mesmoDia = (d) => {
+      const data = new Date(d);
+      return data.getFullYear() === hoje.getFullYear()
+        && data.getMonth() === hoje.getMonth()
+        && data.getDate() === hoje.getDate();
+    };
+    const dailyPayments = pagos.filter(p => mesmoDia(p.payment_date)).reduce((sum, p) => sum + p.amount, 0);
+    const dailySales = sales.filter(s => mesmoDia(s.sale_date)).reduce((sum, s) => sum + (s.total || 0), 0);
+    const dailyRevenue = dailyPayments + dailySales;
+
     // Vendas de merchandise: receita do balcao, contada a parte das quotas
     const merchandiseRevenue = sales.reduce((sum, s) => sum + (s.total || 0), 0);
     const merchandiseMonthly = sales
@@ -422,6 +462,9 @@ const Payments = ({ language, translations }) => {
       totalRevenue,
       insuranceRevenue,
       monthlyRevenue,
+      dailyRevenue,
+      dailyPayments,
+      dailySales,
       pendingCount,
       totalExpenses,
       merchandiseRevenue,
@@ -714,7 +757,7 @@ const Payments = ({ language, translations }) => {
     </Dialog>
 
 {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin() ? 'lg:grid-cols-3 xl:grid-cols-5' : ''} gap-6`}>
         <Card className="card-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -722,12 +765,16 @@ const Payments = ({ language, translations }) => {
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].totalRevenue}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  €{stats.totalRevenue.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {t[language].insuranceRevenue}: €{stats.insuranceRevenue.toFixed(2)}
-                </p>
+                {isAdmin() && (
+                  <>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      €{stats.totalRevenue.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {t[language].insuranceRevenue}: €{stats.insuranceRevenue.toFixed(2)}
+                    </p>
+                  </>
+                )}
                 <Button
                   size="sm"
                   className="btn-hover mt-2 bg-green-600 hover:bg-green-700 text-white"
@@ -745,6 +792,7 @@ const Payments = ({ language, translations }) => {
           </CardContent>
         </Card>
         
+        {isAdmin() && (
         <Card className="card-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -762,7 +810,32 @@ const Payments = ({ language, translations }) => {
             </div>
           </CardContent>
         </Card>
+        )}
 
+        {isAdmin() && (
+        <Card className="card-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  {t[language].dailyRevenue}
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  €{stats.dailyRevenue.toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  €{stats.dailyPayments.toFixed(2)} pagamentos · €{stats.dailySales.toFixed(2)} merchandise
+                </p>
+              </div>
+              <div className="p-3 rounded-full" style={{ background: 'var(--gradient-primary)' }}>
+                <Calendar size={24} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
+        {isAdmin() && (
         <Card className="card-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -783,6 +856,7 @@ const Payments = ({ language, translations }) => {
             </div>
           </CardContent>
         </Card>
+        )}
         
         <Card className="card-shadow">
           <CardContent className="p-6">
@@ -791,7 +865,9 @@ const Payments = ({ language, translations }) => {
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {t[language].pendingPayments}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">€{stats.totalExpenses.toFixed(2)}</p>
+                {isAdmin() && (
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">€{stats.totalExpenses.toFixed(2)}</p>
+                )}
                 <Button
                   size="sm"
                   className="btn-hover mt-2 bg-orange-500 hover:bg-orange-600 text-white"
@@ -905,7 +981,7 @@ const Payments = ({ language, translations }) => {
                       {t[language].member}
                     </th>
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
-                      {t[language].amount}
+                      {isAdmin() ? t[language].amount : t[language].modalities}
                     </th>
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].paymentMethod}
@@ -931,15 +1007,37 @@ const Payments = ({ language, translations }) => {
                           </div>
                           <div>
                             <p className="font-medium">{payment.member.name}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{payment.member.membership_type}</p>
+                            <Badge
+                              variant="outline"
+                              className="mt-1"
+                              style={payment.payment_type === 'seguro'
+                                ? { borderColor: '#16a34a', color: '#16a34a' }
+                                : { borderColor: 'var(--ko-primary-orange)', color: 'var(--ko-primary-orange)' }}
+                            >
+                              {payment.payment_type === 'seguro' ? t[language].insuranceBadge : t[language].quotaBadge}
+                            </Badge>
                           </div>
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className="flex items-center">
-                          <DollarSign size={16} className="text-gray-400 dark:text-gray-500 mr-1" />
-                          <span className="font-semibold">€{payment.amount.toFixed(2)}</span>
-                        </div>
+                        {isAdmin() ? (
+                          <div className="flex items-center">
+                            <DollarSign size={16} className="text-gray-400 dark:text-gray-500 mr-1" />
+                            <span className="font-semibold">€{payment.amount.toFixed(2)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {memberActivities(payment.member).length > 0 ? (
+                              memberActivities(payment.member).map((a) => (
+                                <Badge key={a.id} variant="outline" style={{ borderColor: a.color, color: a.color }}>
+                                  {a.name}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-sm text-gray-500 dark:text-gray-400">—</span>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="p-4">
                         <Badge className={getPaymentMethodColor(payment.payment_method)}>

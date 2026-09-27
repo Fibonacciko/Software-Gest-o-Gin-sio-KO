@@ -53,6 +53,7 @@ const Members = ({ language, translations }) => {
     address: '',
     membership_type: 'basic',
     activity_ids: [],
+    insurance_valid_until: '',
     photo_url: '',
     notes: ''
   });
@@ -186,11 +187,16 @@ const Members = ({ language, translations }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        insurance_valid_until: formData.insurance_valid_until || null
+      };
+
       if (editingMember) {
-        await axios.put(`${API}/members/${editingMember.id}`, formData);
+        await axios.put(`${API}/members/${editingMember.id}`, payload);
         toast.success(t[language].memberUpdated);
       } else {
-        await axios.post(`${API}/members`, formData);
+        await axios.post(`${API}/members`, payload);
         toast.success(t[language].memberAdded);
       }
       
@@ -215,6 +221,9 @@ const Members = ({ language, translations }) => {
       profession: member.profession || '',
       address: member.address || '',
       membership_type: member.membership_type || 'basic',
+      insurance_valid_until: member.insurance_valid_until
+        ? String(member.insurance_valid_until).split('T')[0]
+        : '',
       activity_ids: member.activity_ids && member.activity_ids.length > 0
         ? member.activity_ids
         : (member.activity_id ? [member.activity_id] : []),
@@ -259,6 +268,7 @@ const Members = ({ language, translations }) => {
       address: '',
       membership_type: 'basic',
       activity_ids: [],
+      insurance_valid_until: '',
       photo_url: '',
       notes: ''
     });
@@ -401,6 +411,20 @@ const Members = ({ language, translations }) => {
                   onChange={(value) => setFormData({...formData, activity_ids: value})}
                 />
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Modalidades subscritas pelo membro. Podes escolher mais do que uma; a primeira e usada no check-in por NFC.</p>
+              </div>
+
+              <div>
+                <Label htmlFor="insurance_valid_until">Validade da inscrição (seguro)</Label>
+                <Input
+                  id="insurance_valid_until"
+                  type="date"
+                  value={formData.insurance_valid_until}
+                  onChange={(e) => setFormData({...formData, insurance_valid_until: e.target.value})}
+                  data-testid="member-insurance-date"
+                />
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  Até quando o seguro é válido. Ao registar um pagamento de seguro nas Finanças, esta data é renovada automaticamente por um ano.
+                </p>
               </div>
               
               <div>
@@ -571,8 +595,13 @@ const Members = ({ language, translations }) => {
                         </Badge>
                       </td>
                       <td className="p-4">
-                        <Badge variant={getStatusVariant(member.status)}>
-                          {t[language][member.status]}
+                        <Badge
+                          variant={getStatusVariant(member.membership_status || member.status)}
+                          title={member.membership_valid_until
+                            ? `Quota paga até ${new Date(member.membership_valid_until).toLocaleDateString('pt-PT')}`
+                            : 'Sem quota registada'}
+                        >
+                          {t[language][member.membership_status || member.status]}
                         </Badge>
                       </td>
                       <td className="p-4">
@@ -710,6 +739,26 @@ const Members = ({ language, translations }) => {
                       </div>
                     ) : (
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Sem modalidades definidas</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">Quota</h4>
+                    {selectedMember.membership_valid_until ? (
+                      (() => {
+                        const ate = new Date(selectedMember.membership_valid_until);
+                        const emVigor = ate >= new Date(new Date().toDateString());
+                        return (
+                          <Badge
+                            variant="outline"
+                            style={{ borderColor: emVigor ? '#16a34a' : '#dc2626', color: emVigor ? '#16a34a' : '#dc2626' }}
+                          >
+                            {emVigor ? `Paga até ${ate.toLocaleDateString('pt-PT')}` : `Expirou em ${ate.toLocaleDateString('pt-PT')}`}
+                          </Badge>
+                        );
+                      })()
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Sem quota registada</p>
                     )}
                   </div>
 

@@ -271,6 +271,9 @@ class BusinessCache:
         """Invalida todo o cache relacionado a membros"""
         gym_cache.clear_pattern("members_")
         gym_cache.clear_pattern("dashboard_stats")
+        # O painel guarda os numeros ja calculados: sem isto, um pagamento
+        # levava ate 5 minutos a refletir-se nos membros ativos
+        gym_cache.clear_pattern("analytics:dashboard_analytics")
         gym_logger.info("Member-related cache invalidated")
     
     @staticmethod

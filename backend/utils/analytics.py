@@ -112,7 +112,20 @@ class AnalyticsEngine:
         
         # Contagens básicas
         total_members = await self.db.members.count_documents({})
-        active_members = await self.db.members.count_documents({"status": "active"})
+        # Ativo = quota em vigor. Sem quota registada, vale o estado da ficha.
+        hoje_iso = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc).isoformat()
+        active_members = await self.db.members.count_documents({
+            "$and": [
+                {"status": {"$ne": "suspended"}},
+                {"$or": [
+                    # Quota em vigor
+                    {"membership_valid_until": {"$gte": hoje_iso}},
+                    # Sem quota registada: vale o estado gravado na ficha
+                    {"membership_valid_until": {"$exists": False}, "status": "active"},
+                    {"membership_valid_until": None, "status": "active"}
+                ]}
+            ]
+        })
         new_members = await self.db.members.count_documents({
             "join_date": {"$gte": thirty_days_ago.date().isoformat()}
         })
@@ -265,7 +278,20 @@ class AnalyticsEngine:
         ]).to_list(None)
         
         # Revenue per member
-        active_members = await self.db.members.count_documents({"status": "active"})
+        # Ativo = quota em vigor. Sem quota registada, vale o estado da ficha.
+        hoje_iso = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc).isoformat()
+        active_members = await self.db.members.count_documents({
+            "$and": [
+                {"status": {"$ne": "suspended"}},
+                {"$or": [
+                    # Quota em vigor
+                    {"membership_valid_until": {"$gte": hoje_iso}},
+                    # Sem quota registada: vale o estado gravado na ficha
+                    {"membership_valid_until": {"$exists": False}, "status": "active"},
+                    {"membership_valid_until": None, "status": "active"}
+                ]}
+            ]
+        })
         revenue_per_member = current_revenue / max(active_members, 1)
         
         return serialize_mongo_data({

@@ -301,7 +301,10 @@ class Member(BaseModel):
     activity_id: Optional[str] = None  # Primary modality, kept for check-in and legacy records
     activity_ids: List[str] = Field(default_factory=list)  # All modalities subscribed by the member
     insurance_paid_date: Optional[date] = None      # Ultimo pagamento do seguro
-    insurance_valid_until: Optional[date] = None    # Validade do seguro
+    insurance_valid_until: Optional[date] = None    # Validade do seguro (= validade da inscricao)
+    membership_paid_date: Optional[date] = None     # Ultimo pagamento de quota
+    membership_valid_until: Optional[date] = None   # Quota paga ate esta data
+    membership_status: Optional[str] = None         # Calculado: active / inactive / suspended
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -318,6 +321,7 @@ class MemberCreate(BaseModel):
     notes: Optional[str] = None
     activity_id: Optional[str] = None
     activity_ids: Optional[List[str]] = None
+    insurance_valid_until: Optional[date] = None
 
 class Attendance(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -1384,6 +1388,49 @@ async def send_push_notification(fcm_token: str, title: str, body: str, data: di
         print(f'Failed to send push notification: {e}')
         return False
 
+def add_one_month(d: date) -> date:
+    """Mesmo dia do mes seguinte; em meses curtos usa o ultimo dia possivel."""
+    if d.month == 12:
+        ano, mes = d.year + 1, 1
+    else:
+        ano, mes = d.year, d.month + 1
+    dia = d.day
+    while dia > 1:
+        try:
+            return date(ano, mes, dia)
+        except ValueError:
+            dia -= 1
+    return date(ano, mes, 1)
+
+def derive_member_status(data: dict) -> dict:
+    """Estado mostrado ao utilizador: a quota tem de estar em vigor.
+
+    Uma suspensao manual manda sempre. Socios sem nenhuma quota registada
+    mantem o estado gravado na ficha, para nao ficarem todos inativos de um
+    dia para o outro so porque ainda nao ha historico de pagamentos.
+    """
+    gravado = data.get("status")
+    valid_until = data.get("membership_valid_until")
+
+    if isinstance(valid_until, str):
+        try:
+            valid_until = datetime.fromisoformat(valid_until).date()
+        except (ValueError, TypeError):
+            valid_until = None
+
+    if gravado == MemberStatus.SUSPENDED or gravado == "suspended":
+        data["membership_status"] = "suspended"
+    elif valid_until:
+        data["membership_status"] = "active" if valid_until >= date.today() else "inactive"
+    else:
+        data["membership_status"] = gravado if isinstance(gravado, str) else (gravado.value if gravado else "active")
+
+    return data
+
+def normalize_member_read(data: dict) -> dict:
+    """Tudo o que uma ficha precisa antes de ser devolvida."""
+    return derive_member_status(normalize_member_activities(data))
+
 def normalize_member_activities(data: dict) -> dict:
     """Keep activity_id (primary, used by check-in) and activity_ids (all modalities) in sync.
 
@@ -1452,7 +1499,7 @@ def parse_from_mongo(item):
             # Handle ObjectId conversion to string
             if hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
                 item[key] = str(value)
-            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date', 'sale_date', 'expense_date', 'insurance_paid_date', 'insurance_valid_until'] and isinstance(value, str):
+            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date', 'sale_date', 'expense_date', 'insurance_paid_date', 'insurance_valid_until', 'membership_paid_date', 'membership_valid_until'] and isinstance(value, str):
                 try:
                     item[key] = datetime.fromisoformat(value).date()
                 except (ValueError, TypeError):
@@ -1478,7 +1525,11 @@ async def create_member(
                        user_id=current_user.id, member_name=member_data.name)
         
         member_dict = normalize_member_activities(member_data.dict())
-        
+
+        # A validade da inscricao e a do seguro
+        if member_dict.get("insurance_valid_until"):
+            member_dict["expiry_date"] = member_dict["insurance_valid_until"]
+
         # Generate automatic member number
         member_number = await generate_next_member_number()
         member_dict["member_number"] = member_number
@@ -1535,7 +1586,7 @@ async def get_members(
         ]
     
     members = await db.members.find(filter_dict).to_list(1000)
-    return [Member(**normalize_member_activities(parse_from_mongo(member))) for member in members]
+    return [Member(**normalize_member_read(parse_from_mongo(member))) for member in members]
 
 @api_router.get("/members/{member_id}", response_model=Member)
 async def get_member(
@@ -1545,7 +1596,7 @@ async def get_member(
     member = await db.members.find_one({"id": member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    return Member(**normalize_member_activities(parse_from_mongo(member)))
+    return Member(**normalize_member_read(parse_from_mongo(member)))
 
 @api_router.get("/members/number/{member_number}", response_model=Member)
 async def get_member_by_number(
@@ -1556,7 +1607,7 @@ async def get_member_by_number(
     member = await db.members.find_one({"member_number": member_number})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    return Member(**normalize_member_activities(parse_from_mongo(member)))
+    return Member(**normalize_member_read(parse_from_mongo(member)))
 
 @api_router.put("/members/{member_id}", response_model=Member)
 async def update_member(
@@ -1564,7 +1615,15 @@ async def update_member(
     member_data: MemberCreate,
     current_user: User = Depends(require_admin_or_staff)
 ):
-    member_dict = prepare_for_mongo(normalize_member_activities(member_data.dict()))
+    member_dict = normalize_member_activities(member_data.dict())
+
+    if member_dict.get("insurance_valid_until"):
+        member_dict["expiry_date"] = member_dict["insurance_valid_until"]
+    else:
+        # Sem valor no formulario, mantem-se o que ja estava gravado
+        member_dict.pop("insurance_valid_until", None)
+
+    member_dict = prepare_for_mongo(member_dict)
     result = await db.members.update_one(
         {"id": member_id},
         {"$set": member_dict}
@@ -1575,7 +1634,7 @@ async def update_member(
     
     updated_member = await db.members.find_one({"id": member_id})
     await log_audit(current_user, "update", "member", entity_id=member_id, details=f"Atualizou membro {member_id}")
-    return Member(**normalize_member_activities(parse_from_mongo(updated_member)))
+    return Member(**normalize_member_read(parse_from_mongo(updated_member)))
 
 @api_router.delete("/members/{member_id}")
 async def delete_member(
@@ -1727,14 +1786,27 @@ async def create_payment(
     payment_dict = prepare_for_mongo(payment.dict())
     await db.payments.insert_one(payment_dict)
 
-    # Um pagamento de seguro renova a validade na ficha do socio
+    # Cada pagamento renova o que lhe corresponde na ficha do socio
     if payment.payment_type == PaymentType.INSURANCE:
         valid_until = payment.payment_date + timedelta(days=INSURANCE_VALIDITY_DAYS)
         await db.members.update_one(
             {"id": payment.member_id},
             {"$set": prepare_for_mongo({
                 "insurance_paid_date": payment.payment_date,
-                "insurance_valid_until": valid_until
+                "insurance_valid_until": valid_until,
+                # A validade da inscricao acompanha o seguro
+                "expiry_date": valid_until
+            })}
+        )
+        BusinessCache.invalidate_member_cache()
+    else:
+        # Quota: cobre ate ao mesmo dia do mes seguinte
+        valid_until = add_one_month(payment.payment_date)
+        await db.members.update_one(
+            {"id": payment.member_id},
+            {"$set": prepare_for_mongo({
+                "membership_paid_date": payment.payment_date,
+                "membership_valid_until": valid_until
             })}
         )
         BusinessCache.invalidate_member_cache()
@@ -1927,7 +1999,19 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
             
             # Basic fallback stats
             total_members = await db.members.count_documents({})
-            active_members = await db.members.count_documents({"status": "active"})
+            hoje_iso = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc).isoformat()
+            active_members = await db.members.count_documents({
+                "$and": [
+                    {"status": {"$ne": "suspended"}},
+                    {"$or": [
+                        # Quota em vigor
+                        {"membership_valid_until": {"$gte": hoje_iso}},
+                        # Sem quota registada: vale o estado gravado na ficha
+                        {"membership_valid_until": {"$exists": False}, "status": "active"},
+                        {"membership_valid_until": None, "status": "active"}
+                    ]}
+                ]
+            })
             today = date.today()
             today_attendance = await db.attendance.count_documents({
                 "check_in_date": {"$regex": f"^{today.isoformat()}"}
@@ -2301,7 +2385,7 @@ async def qr_checkin(
     
     return {
         "message": "Check-in successful",
-        "member": Member(**normalize_member_activities(parse_from_mongo(member))),
+        "member": Member(**normalize_member_read(parse_from_mongo(member))),
         "attendance": attendance
     }
 
@@ -2358,7 +2442,7 @@ async def nfc_checkin(
 
     return {
         "message": "Check-in successful",
-        "member": Member(**normalize_member_activities(parse_from_mongo(member))),
+        "member": Member(**normalize_member_read(parse_from_mongo(member))),
         "attendance": attendance
     }
 
