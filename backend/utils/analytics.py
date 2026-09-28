@@ -115,16 +115,8 @@ class AnalyticsEngine:
         # Ativo = quota em vigor. Sem quota registada, vale o estado da ficha.
         hoje_iso = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc).isoformat()
         active_members = await self.db.members.count_documents({
-            "$and": [
-                {"status": {"$ne": "suspended"}},
-                {"$or": [
-                    # Quota em vigor
-                    {"membership_valid_until": {"$gte": hoje_iso}},
-                    # Sem quota registada: vale o estado gravado na ficha
-                    {"membership_valid_until": {"$exists": False}, "status": "active"},
-                    {"membership_valid_until": None, "status": "active"}
-                ]}
-            ]
+            "status": {"$ne": "suspended"},
+            "membership_valid_until": {"$gte": hoje_iso}
         })
         new_members = await self.db.members.count_documents({
             "join_date": {"$gte": thirty_days_ago.date().isoformat()}
@@ -281,16 +273,8 @@ class AnalyticsEngine:
         # Ativo = quota em vigor. Sem quota registada, vale o estado da ficha.
         hoje_iso = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc).isoformat()
         active_members = await self.db.members.count_documents({
-            "$and": [
-                {"status": {"$ne": "suspended"}},
-                {"$or": [
-                    # Quota em vigor
-                    {"membership_valid_until": {"$gte": hoje_iso}},
-                    # Sem quota registada: vale o estado gravado na ficha
-                    {"membership_valid_until": {"$exists": False}, "status": "active"},
-                    {"membership_valid_until": None, "status": "active"}
-                ]}
-            ]
+            "status": {"$ne": "suspended"},
+            "membership_valid_until": {"$gte": hoje_iso}
         })
         revenue_per_member = current_revenue / max(active_members, 1)
         

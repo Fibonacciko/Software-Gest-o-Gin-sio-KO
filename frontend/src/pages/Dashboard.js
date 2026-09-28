@@ -43,6 +43,7 @@ const Dashboard = ({ language, translations }) => {
   const [experimentalAberta, setExperimentalAberta] = useState(false);
   const [aRegistarExperimental, setARegistarExperimental] = useState(false);
   const [experimentaisHoje, setExperimentaisHoje] = useState(0);
+  const [presencasMes, setPresencasMes] = useState({ total: 0, media: '0.0' });
   const [loading, setLoading] = useState(true);
   const [checkinMemberId, setCheckinMemberId] = useState('');
   const [qrMode, setQrMode] = useState(false);
@@ -63,6 +64,8 @@ const Dashboard = ({ language, translations }) => {
       totalMembers: 'Total de Membros',
       activeMembers: 'Membros Ativos',
       todayAttendance: 'Presenças Hoje',
+      monthAttendance: 'Presenças do Mês',
+      dailyAverage: 'Média Diária',
       monthlyRevenue: 'Receita Mensal',
       attendanceByModality: 'Presenças por Modalidade',
       quickCheckin: 'Check-in Rápido',
@@ -93,6 +96,8 @@ const Dashboard = ({ language, translations }) => {
       totalMembers: 'Total Members',
       activeMembers: 'Active Members',
       todayAttendance: "Today's Attendance",
+      monthAttendance: 'Attendance This Month',
+      dailyAverage: 'Daily Average',
       monthlyRevenue: 'Monthly Revenue',
       attendanceByModality: 'Attendance by Modality',
       quickCheckin: 'Quick Check-in',
@@ -122,6 +127,7 @@ const Dashboard = ({ language, translations }) => {
   useEffect(() => {
     fetchDashboardData();
     carregarExperimentaisHoje();
+    carregarPresencasDoMes();
   }, []);
 
   useEffect(() => {
@@ -196,6 +202,26 @@ const Dashboard = ({ language, translations }) => {
       toast.error('Erro ao carregar dados do painel');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const carregarPresencasDoMes = async () => {
+    try {
+      const hoje = new Date();
+      const iso = (d) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      // Primeiro dia do mes seguinte: evita datas invalidas como 31 de setembro
+      const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+
+      const response = await axios.get(`${API}/attendance?start_date=${iso(inicio)}&end_date=${iso(fim)}`);
+      const diasDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+      setPresencasMes({
+        total: response.data.length,
+        media: (response.data.length / diasDoMes).toFixed(1)
+      });
+    } catch (error) {
+      console.error('Error fetching monthly attendance:', error);
     }
   };
 
@@ -517,7 +543,7 @@ const Dashboard = ({ language, translations }) => {
         </div>
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin() ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isAdmin() ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-6`}>
         <StatCard
           title={t[language].totalMembers}
           value={stats.total_members}
@@ -535,6 +561,18 @@ const Dashboard = ({ language, translations }) => {
           value={todayAttendance.length}
           icon={Calendar}
           color="ko-golden"
+        />
+        <StatCard
+          title={t[language].monthAttendance}
+          value={presencasMes.total}
+          icon={Activity}
+          color="ko-primary"
+        />
+        <StatCard
+          title={t[language].dailyAverage}
+          value={presencasMes.media}
+          icon={TrendingUp}
+          color="ko-amber"
         />
         {isAdmin() && (
         <Card
@@ -1011,7 +1049,9 @@ const Dashboard = ({ language, translations }) => {
             </div>
           ) : todayAttendance.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
-              {todayAttendance.map((attendance) => {
+              {[...todayAttendance]
+                .sort((a, b) => new Date(b.check_in_time) - new Date(a.check_in_time))
+                .map((attendance) => {
                 const activity = activities.find((a) => a.id === attendance.activity_id);
                 return (
                   <button
@@ -1036,7 +1076,16 @@ const Dashboard = ({ language, translations }) => {
                         {activity ? ` · ${activity.name}` : ''}
                       </p>
                     </div>
-                    <Badge variant="outline">{attendance.method}</Badge>
+                    <Badge
+                      variant="outline"
+                      style={{
+                        borderColor: estadoQuota(attendance.member).cor,
+                        color: estadoQuota(attendance.member).cor
+                      }}
+                      title={estadoQuota(attendance.member).detalhe || ''}
+                    >
+                      {estadoQuota(attendance.member).texto}
+                    </Badge>
                   </button>
                 );
               })}

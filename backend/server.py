@@ -1456,13 +1456,12 @@ def derive_member_status(data: dict) -> dict:
 
     if gravado == MemberStatus.SUSPENDED or gravado == "suspended":
         data["membership_status"] = "suspended"
-    elif valid_until:
-        data["membership_status"] = "active" if valid_until >= date.today() else "inactive"
+    elif valid_until and valid_until >= date.today():
+        data["membership_status"] = "active"
     else:
-        # Sem nenhuma quota registada nao ha como saber se esta em dia.
-        # Fica por determinar, para nao acusar de atraso quem talvez esteja
-        # em dia e apenas nao tem historico de pagamentos no sistema.
-        data["membership_status"] = None
+        # Regra unica e sem excecoes: so esta ativo quem tem a mensalidade
+        # paga e dentro da validade. Sem pagamento registado, inativo.
+        data["membership_status"] = "inactive"
 
     return data
 
@@ -2040,16 +2039,8 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
             total_members = await db.members.count_documents({})
             hoje_iso = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc).isoformat()
             active_members = await db.members.count_documents({
-                "$and": [
-                    {"status": {"$ne": "suspended"}},
-                    {"$or": [
-                        # Quota em vigor
-                        {"membership_valid_until": {"$gte": hoje_iso}},
-                        # Sem quota registada: vale o estado gravado na ficha
-                        {"membership_valid_until": {"$exists": False}, "status": "active"},
-                        {"membership_valid_until": None, "status": "active"}
-                    ]}
-                ]
+                "status": {"$ne": "suspended"},
+                "membership_valid_until": {"$gte": hoje_iso}
             })
             today = date.today()
             today_attendance = await db.attendance.count_documents({

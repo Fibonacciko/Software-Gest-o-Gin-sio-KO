@@ -9,7 +9,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Members from './pages/Members';
 import Payments from './pages/Payments';
-import Attendance from './pages/Attendance';
 import Reports from './pages/Reports';
 import Inventory from './pages/Inventory';
 import UserManagement from './pages/UserManagement';
@@ -166,11 +165,6 @@ function App() {
                   <Route path="/members" element={
                     <ProtectedRoute>
                       <Members language={language} />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/attendance" element={
-                    <ProtectedRoute>
-                      <Attendance language={language} />
                     </ProtectedRoute>
                   } />
                   <Route path="/payments" element={
