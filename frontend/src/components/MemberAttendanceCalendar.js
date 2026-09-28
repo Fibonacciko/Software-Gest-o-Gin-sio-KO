@@ -173,17 +173,20 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
                     <div className="relative h-9 w-9" title={titulo}>
                       <div
                         className={`w-full h-full flex items-center justify-center text-sm rounded-full ${
-                          isSelected ? 'bg-blue-600 text-white font-semibold' :
-                          isToday ? 'bg-blue-100 text-blue-900 font-semibold' :
-                          hasAttendance ? 'font-semibold' : ''
+                          isSelected || isToday || hasAttendance ? 'font-semibold' : ''
                         }`}
-                        style={hasAttendance && !isSelected ? {
-                          border: '2px solid #F5A623',
-                          backgroundColor: 'rgba(245, 166, 35, 0.15)',
-                          color: 'var(--text-primary)'
-                        } : hasAttendance && isSelected ? {
-                          boxShadow: '0 0 0 2px #F5A623'
-                        } : undefined}
+                        style={{
+                          // Paleta KO em todo o calendario: dia escolhido cheio a
+                          // laranja, dia de hoje a ambar, dias com presenca rodeados
+                          ...(isSelected
+                            ? { backgroundColor: '#B8651B', color: '#FFFFFF' }
+                            : isToday
+                              ? { backgroundColor: '#F5A623', color: '#1A1A1A' }
+                              : hasAttendance
+                                ? { backgroundColor: 'rgba(245, 166, 35, 0.15)', color: 'var(--text-primary)' }
+                                : {}),
+                          ...(hasAttendance ? { boxShadow: '0 0 0 2px #F5A623' } : {})
+                        }}
                       >
                         {date.getDate()}
                       </div>
