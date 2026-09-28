@@ -2535,17 +2535,49 @@ async def build_mobile_member(member: dict) -> MobileMember:
 
     return MobileMember(**dados)
 
+def so_digitos(texto: str) -> str:
+    return "".join(c for c in (texto or "") if c.isdigit())
+
+def telefones_coincidem(escrito: str, guardado: str) -> bool:
+    """Compara telefones ignorando espacos, tracos e indicativo do pais."""
+    a, b = so_digitos(escrito), so_digitos(guardado)
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    # 351912345678 vale tanto como 912345678
+    return a.lstrip("0").endswith(b[-9:]) or b.lstrip("0").endswith(a[-9:])
+
 @api_router.post("/mobile/auth/login")
 async def mobile_login(credentials: MobileMemberLogin):
-    """Mobile app login using member number and phone"""
-    member = await db.members.find_one({
-        "member_number": credentials.member_number,
-        "phone": credentials.phone,
-        "status": "active"
-    })
-    
+    """Login do socio na app, pelo numero de socio e telefone.
+
+    O numero pode ser escrito com ou sem zeros a frente, e o telefone com
+    espacos ou indicativo. Socios com a quota em atraso entram na mesma:
+    e precisamente quem mais precisa de ver o aviso no cartao.
+    """
+    escrito = (credentials.member_number or "").strip()
+    variantes = {escrito, escrito.lstrip("0"), escrito.zfill(3)}
+    variantes = {v for v in variantes if v}
+
+    candidatos = await db.members.find({"member_number": {"$in": list(variantes)}}).to_list(20)
+
+    member = next(
+        (m for m in candidatos if telefones_coincidem(credentials.phone, m.get("phone", ""))),
+        None
+    )
+
     if not member:
-        raise HTTPException(status_code=401, detail="Invalid credentials or inactive member")
+        raise HTTPException(
+            status_code=401,
+            detail="Numero de socio ou telefone nao conferem. Confirma na rececao."
+        )
+
+    if member.get("status") == "suspended":
+        raise HTTPException(
+            status_code=403,
+            detail="Inscricao suspensa. Fala com a rececao."
+        )
     
     # Get workout count for motivational note
     workout_count = await db.attendance.count_documents({"member_id": member["id"]})

@@ -38,7 +38,10 @@
       "react-native-nfc-manager"
     ],
     "extra": {
-      "eas": {}
-    }
+      "eas": {
+        "projectId": "0f8d3251-81fb-48cf-8b8e-8b33f8f92500"
+      }
+    },
+    "owner": "ginasio-ko"
   }
 }
