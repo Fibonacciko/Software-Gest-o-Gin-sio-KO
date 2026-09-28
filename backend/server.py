@@ -218,6 +218,13 @@ class MobileMember(BaseModel):
     current_motivational_note: Optional[str] = None
     subscription_active: bool = True
     fcm_token: Optional[str] = None
+    # Estado das quotas e do seguro, para o cartao do socio
+    membership_status: Optional[str] = None
+    membership_valid_until: Optional[date] = None
+    insurance_valid_until: Optional[date] = None
+    activity_ids: List[str] = Field(default_factory=list)
+    streak_weeks: int = 0            # Semanas seguidas com pelo menos um treino
+    checked_in_today: bool = False
 
 # Mobile Login Model
 class MobileMemberLogin(BaseModel):
@@ -387,7 +394,8 @@ class Sale(BaseModel):
     item_id: str
     item_name: str
     quantity: int
-    unit_price: float
+    unit_price: float                    # Preco cobrado por unidade
+    list_price: Optional[float] = None   # Preco de tabela, para comparar
     total: float
     sale_date: date = Field(default_factory=lambda: date.today())
     member_id: Optional[str] = None      # Cliente, quando e socio
@@ -398,6 +406,7 @@ class Sale(BaseModel):
 class SaleCreate(BaseModel):
     item_id: str
     quantity: int
+    unit_price: Optional[float] = None   # Vazio usa o preco de tabela
     sale_date: Optional[date] = None
     member_id: Optional[str] = None
 
@@ -2075,12 +2084,21 @@ async def create_sale(
         if not member:
             raise HTTPException(status_code=404, detail="Socio nao encontrado")
 
-    preco = float(item.get("price", 0))
+    preco_tabela = float(item.get("price", 0))
+    # O valor cobrado pode diferir do preco de tabela (descontos, promocoes)
+    if sale_data.unit_price is None:
+        preco = preco_tabela
+    else:
+        preco = float(sale_data.unit_price)
+        if preco < 0:
+            raise HTTPException(status_code=400, detail="O preco nao pode ser negativo")
+
     sale = Sale(
         item_id=item["id"],
         item_name=item["name"],
         quantity=sale_data.quantity,
         unit_price=preco,
+        list_price=preco_tabela,
         total=round(preco * sale_data.quantity, 2),
         sale_date=sale_data.sale_date or date.today(),
         member_id=member["id"] if member else None,
@@ -2094,8 +2112,10 @@ async def create_sale(
         {"$inc": {"quantity": -sale_data.quantity}}
     )
     await db.sales.insert_one(prepare_for_mongo(sale.dict()))
-    await log_audit(current_user, "create", "sale", entity_id=sale.id,
-                    details=f"Vendeu {sale.quantity}x {sale.item_name} por {sale.total} EUR")
+    detalhe = f"Vendeu {sale.quantity}x {sale.item_name} por {sale.total} EUR"
+    if abs(preco - preco_tabela) > 0.001:
+        detalhe += f" (tabela: {preco_tabela} EUR/un)"
+    await log_audit(current_user, "create", "sale", entity_id=sale.id, details=detalhe)
 
     return sale
 
@@ -2465,6 +2485,56 @@ async def nfc_checkin(
     }
 
 # Mobile API Endpoints
+async def build_mobile_member(member: dict) -> MobileMember:
+    """Monta o cartao do socio: treinos, estado das quotas, sequencia e frase."""
+    member_id = member["id"]
+    workout_count = await db.attendance.count_documents({"member_id": member_id})
+
+    hoje = date.today()
+
+    # Ja treinou hoje?
+    checked_in_today = await db.attendance.count_documents({
+        "member_id": member_id,
+        "check_in_date": {"$regex": f"^{hoje.isoformat()}"}
+    }) > 0
+
+    # Sequencia: semanas seguidas com pelo menos um treino, a contar desta
+    registos = await db.attendance.find(
+        {"member_id": member_id}, {"check_in_date": 1}
+    ).to_list(2000)
+
+    semanas = set()
+    for r in registos:
+        valor = r.get("check_in_date")
+        if isinstance(valor, str):
+            try:
+                d = datetime.fromisoformat(valor).date()
+            except (ValueError, TypeError):
+                continue
+        elif isinstance(valor, date):
+            d = valor
+        else:
+            continue
+        inicio_semana = d - timedelta(days=d.weekday())
+        semanas.add(inicio_semana)
+
+    streak = 0
+    semana_atual = hoje - timedelta(days=hoje.weekday())
+    # Se ainda nao treinou esta semana, a sequencia conta a partir da anterior
+    if semana_atual not in semanas:
+        semana_atual -= timedelta(days=7)
+    while semana_atual in semanas:
+        streak += 1
+        semana_atual -= timedelta(days=7)
+
+    dados = derive_member_status(normalize_member_activities(parse_from_mongo(dict(member))))
+    dados["workout_count"] = workout_count
+    dados["current_motivational_note"] = get_motivational_note_for_member(workout_count, "pt")
+    dados["streak_weeks"] = streak
+    dados["checked_in_today"] = checked_in_today
+
+    return MobileMember(**dados)
+
 @api_router.post("/mobile/auth/login")
 async def mobile_login(credentials: MobileMemberLogin):
     """Mobile app login using member number and phone"""
@@ -2484,16 +2554,8 @@ async def mobile_login(credentials: MobileMemberLogin):
     token_data = {"sub": member["id"], "role": "member"}
     access_token = create_access_token(data=token_data)
     
-    # Get current motivational note
-    motivational_note = get_motivational_note_for_member(workout_count, "pt")
-    
-    # Prepare mobile member response
-    member_data = parse_from_mongo(member)
-    member_data["workout_count"] = workout_count
-    member_data["current_motivational_note"] = motivational_note
-    
-    mobile_member = MobileMember(**member_data)
-    
+    mobile_member = await build_mobile_member(member)
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -2507,20 +2569,7 @@ async def get_mobile_profile(member_id: str):
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     
-    # Get workout count
-    workout_count = await db.attendance.count_documents({"member_id": member_id})
-    
-    # Get motivational note
-    motivational_note = get_motivational_note_for_member(workout_count, "pt")
-    
-    # Parse member data and add mobile-specific fields
-    member_data = parse_from_mongo(member)
-    member_data["workout_count"] = workout_count
-    member_data["current_motivational_note"] = motivational_note
-    
-    mobile_member = MobileMember(**member_data)
-    
-    return mobile_member
+    return await build_mobile_member(member)
 
 @api_router.put("/mobile/profile/{member_id}")
 async def update_mobile_profile(member_id: str, profile_data: dict):
@@ -2560,6 +2609,75 @@ async def get_mobile_activities():
     """Get active activities for mobile check-in"""
     activities = await db.activities.find({"is_active": True}).to_list(100)
     return [Activity(**parse_from_mongo(activity)) for activity in activities]
+
+class MobileCheckin(BaseModel):
+    member_id: str
+    activity_id: Optional[str] = None   # Sem modalidade usa a principal do socio
+    method: str = "mobile_qr"           # mobile_qr ou mobile_nfc
+
+@api_router.post("/mobile/checkin/app")
+async def mobile_app_checkin(dados: MobileCheckin):
+    """Check-in feito pela aplicacao do socio (QR na parede ou autocolante NFC)."""
+    member = await db.members.find_one({"id": dados.member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+    if member.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Inscricao suspensa. Fala com a rececao.")
+
+    # Modalidade: a escolhida, ou a principal da ficha
+    activity_id = dados.activity_id or member.get("activity_id")
+    if not activity_id:
+        ids = member.get("activity_ids") or []
+        activity_id = ids[0] if ids else None
+    if not activity_id:
+        raise HTTPException(status_code=400, detail="Sem modalidade definida. Fala com a rececao.")
+
+    activity = await db.activities.find_one({"id": activity_id, "is_active": True})
+    if not activity:
+        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+
+    hoje = date.today()
+
+    # Evita o check-in repetido na mesma modalidade no mesmo dia
+    ja_hoje = await db.attendance.find_one({
+        "member_id": dados.member_id,
+        "activity_id": activity_id,
+        "check_in_date": {"$regex": f"^{hoje.isoformat()}"}
+    })
+    if ja_hoje:
+        cartao = await build_mobile_member(member)
+        return {
+            "message": "Ja tinhas feito check-in hoje nesta modalidade",
+            "already_checked_in": True,
+            "activity_name": activity["name"],
+            "workout_count": cartao.workout_count,
+            "streak_weeks": cartao.streak_weeks,
+            "motivational_note": cartao.current_motivational_note
+        }
+
+    attendance = Attendance(
+        member_id=dados.member_id,
+        activity_id=activity_id,
+        check_in_date=hoje,
+        method=dados.method
+    )
+    await db.attendance.insert_one(prepare_for_mongo(attendance.dict()))
+    BusinessCache.invalidate_member_cache()
+
+    cartao = await build_mobile_member(member)
+    marcos = [10, 25, 50, 100, 200, 365]
+
+    return {
+        "message": "Check-in realizado",
+        "already_checked_in": False,
+        "activity_name": activity["name"],
+        "workout_count": cartao.workout_count,
+        "streak_weeks": cartao.streak_weeks,
+        "milestone": cartao.workout_count if cartao.workout_count in marcos else None,
+        "motivational_note": cartao.current_motivational_note,
+        "membership_status": cartao.membership_status,
+        "membership_valid_until": cartao.membership_valid_until
+    }
 
 @api_router.post("/mobile/checkin")
 async def mobile_qr_checkin(member_id: str, activity_id: str):

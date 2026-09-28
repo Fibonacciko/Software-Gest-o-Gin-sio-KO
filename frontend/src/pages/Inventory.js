@@ -34,7 +34,7 @@ const Inventory = ({ language, translations }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showSellDialog, setShowSellDialog] = useState(false);
-  const [sellData, setSellData] = useState({ item_id: '', quantity: '1', member_id: '' });
+  const [sellData, setSellData] = useState({ item_id: '', quantity: '1', member_id: '', unit_price: '' });
   const [members, setMembers] = useState([]);
   const [selling, setSelling] = useState(false);
 
@@ -54,6 +54,10 @@ const Inventory = ({ language, translations }) => {
       addItem: 'Adicionar Item',
       sellItem: 'Vender Item',
       client: 'Cliente (opcional)',
+      soldFor: 'Preço de venda por unidade',
+      listPrice: 'Preço de tabela',
+      discount: 'com desconto',
+      surcharge: 'acima da tabela',
       noClient: 'Sem sócio associado',
       sellTitle: 'Vender Artigo',
       chooseItem: 'Escolher artigo',
@@ -114,6 +118,10 @@ const Inventory = ({ language, translations }) => {
       addItem: 'Add Item',
       sellItem: 'Sell Item',
       client: 'Customer (optional)',
+      soldFor: 'Unit sale price',
+      listPrice: 'List price',
+      discount: 'discounted',
+      surcharge: 'above list',
       noClient: 'No member linked',
       sellTitle: 'Sell Item',
       chooseItem: 'Choose item',
@@ -188,11 +196,19 @@ const Inventory = ({ language, translations }) => {
 
   const artigoSelecionado = () => inventory.find((i) => i.id === sellData.item_id);
 
-  const totalVenda = () => {
+  const precoCobrado = () => {
     const artigo = artigoSelecionado();
+    if (!artigo) return 0;
+    // Campo vazio significa preço de tabela
+    if (sellData.unit_price === '') return artigo.price;
+    const p = parseFloat(sellData.unit_price);
+    return isNaN(p) ? 0 : p;
+  };
+
+  const totalVenda = () => {
     const qtd = parseInt(sellData.quantity, 10);
-    if (!artigo || !qtd || qtd < 1) return 0;
-    return artigo.price * qtd;
+    if (!artigoSelecionado() || !qtd || qtd < 1) return 0;
+    return precoCobrado() * qtd;
   };
 
   const handleSell = async (e) => {
@@ -212,17 +228,22 @@ const Inventory = ({ language, translations }) => {
       toast.error(`Só existem ${artigo.quantity} unidades de ${artigo.name}.`);
       return;
     }
+    if (sellData.unit_price !== '' && (isNaN(parseFloat(sellData.unit_price)) || precoCobrado() < 0)) {
+      toast.error('Indica um preço de venda válido.');
+      return;
+    }
 
     try {
       setSelling(true);
       await axios.post(`${API}/sales`, {
         item_id: artigo.id,
         quantity: qtd,
+        unit_price: sellData.unit_price === '' ? null : precoCobrado(),
         member_id: sellData.member_id || null
       });
       toast.success(t[language].saleDone);
       setShowSellDialog(false);
-      setSellData({ item_id: '', quantity: '1', member_id: '' });
+      setSellData({ item_id: '', quantity: '1', member_id: '', unit_price: '' });
       fetchInventory();
     } catch (error) {
       console.error('Error selling item:', error);
@@ -374,7 +395,7 @@ const Inventory = ({ language, translations }) => {
         <div className="flex flex-wrap gap-3">
         <Button
           className="btn-hover bg-green-600 hover:bg-green-700 text-white"
-          onClick={() => { setSellData({ item_id: '', quantity: '1', member_id: '' }); fetchMembers(); setShowSellDialog(true); }}
+          onClick={() => { setSellData({ item_id: '', quantity: '1', member_id: '', unit_price: '' }); fetchMembers(); setShowSellDialog(true); }}
           data-testid="sell-item-btn"
         >
           <ShoppingCart className="mr-2" size={16} />
@@ -521,7 +542,14 @@ const Inventory = ({ language, translations }) => {
                 {itemsComStock().length > 0 ? (
                   <Select
                     value={sellData.item_id}
-                    onValueChange={(value) => setSellData({ ...sellData, item_id: value })}
+                    onValueChange={(value) => {
+                      const artigo = inventory.find((i) => i.id === value);
+                      setSellData({
+                        ...sellData,
+                        item_id: value,
+                        unit_price: artigo ? String(artigo.price.toFixed(2)) : ''
+                      });
+                    }}
                   >
                     <SelectTrigger id="sell-item" data-testid="sell-item-select">
                       <SelectValue placeholder={t[language].chooseItem} />
@@ -551,6 +579,26 @@ const Inventory = ({ language, translations }) => {
                   required
                   data-testid="sell-quantity"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="sell-price">{t[language].soldFor} (€) *</Label>
+                <Input
+                  id="sell-price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={sellData.unit_price}
+                  onChange={(e) => setSellData({ ...sellData, unit_price: e.target.value })}
+                  placeholder={artigoSelecionado() ? artigoSelecionado().price.toFixed(2) : '0.00'}
+                  data-testid="sell-price"
+                />
+                {artigoSelecionado() && Math.abs(precoCobrado() - artigoSelecionado().price) > 0.001 && (
+                  <p className="text-xs mt-1" style={{ color: 'var(--ko-primary-orange)' }}>
+                    {t[language].listPrice}: €{artigoSelecionado().price.toFixed(2)} ·{' '}
+                    {precoCobrado() < artigoSelecionado().price ? t[language].discount : t[language].surcharge}
+                  </p>
+                )}
               </div>
 
               <div>
