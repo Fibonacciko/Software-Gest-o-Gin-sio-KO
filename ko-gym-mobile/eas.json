@@ -1,0 +1,28 @@
+{
+  "cli": {
+    "version": ">= 5.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "teste": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://ginasioko.site/api"
+      }
+    },
+    "producao": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://ginasioko.site/api"
+      }
+    }
+  },
+  "submit": {
+    "producao": {}
+  }
+}

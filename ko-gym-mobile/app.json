@@ -1,33 +1,44 @@
 {
   "expo": {
-    "name": "ko-gym-mobile",
+    "name": "KO Gym",
     "slug": "ko-gym-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1A1A1A"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "site.ginasioko.app",
+      "infoPlist": {
+        "NFCReaderUsageDescription": "Usamos o NFC para fazeres check-in ao encostar o telemóvel ao autocolante à entrada do ginásio."
+      }
     },
     "android": {
+      "package": "site.ginasioko.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1A1A1A"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.NFC"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "react-native-nfc-manager"
-    ]
+    ],
+    "extra": {
+      "eas": {}
+    }
   }
 }
