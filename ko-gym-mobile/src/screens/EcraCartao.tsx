@@ -118,10 +118,9 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       {/* Cartao do socio */}
       <View style={estilos.cartao}>
         <View style={estilos.cartaoTopo}>
-          <View>
-            <Text style={estilos.nome}>{socio.name}</Text>
-            <Text style={estilos.numero}>Sócio n.º {socio.member_number}</Text>
-          </View>
+          <Text style={estilos.nome}>{socio.name}</Text>
+          <Text style={estilos.numero}>Sócio n.º {socio.member_number}</Text>
+          {/* Por baixo do numero: o texto e longo e nao cabe ao lado do nome */}
           <View style={[estilos.selo, { borderColor: corEstado }]}>
             <Text style={[estilos.seloTexto, { color: corEstado }]}>{textoEstado}</Text>
           </View>
@@ -290,11 +289,18 @@ const estilos = StyleSheet.create({
     borderColor: cores.borda,
     gap: espaco.m,
   },
-  cartaoTopo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  cartaoTopo: { gap: 6 },
   nome: { color: cores.texto, fontSize: 22, fontWeight: '800' },
   numero: { color: cores.textoSecundario, fontSize: 14, marginTop: 2 },
-  selo: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  seloTexto: { fontSize: 11, fontWeight: '800' },
+  selo: {
+    borderWidth: 1.5,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    alignSelf: 'flex-start',   // acompanha o texto, em vez de ocupar a largura toda
+    marginTop: 2,
+  },
+  seloTexto: { fontSize: 12, fontWeight: '800' },
 
   qrCaixa: {
     backgroundColor: '#FFFFFF',
