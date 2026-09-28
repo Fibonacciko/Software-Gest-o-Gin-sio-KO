@@ -15,7 +15,8 @@ import {
   Activity,
   Printer,
   TrendingDown,
-  ShoppingBag
+  ShoppingBag,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -50,6 +51,7 @@ const Reports = ({ language, translations }) => {
   const [attendance, setAttendance] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [sales, setSales] = useState([]);
+  const [trials, setTrials] = useState([]);
 
   const t = {
     pt: {
@@ -85,6 +87,12 @@ const Reports = ({ language, translations }) => {
       pendingPayments: 'Pagamentos Pendentes',
     totalExpenses: 'Despesas Totais',
     merchandiseRevenue: 'Merchandise',
+    trialClasses: 'Trial Classes',
+    trialsByActivity: 'Trials by Activity',
+    trialsByMonth: 'Trials by Month',
+    trialClasses: 'Aulas Experimentais',
+    trialsByActivity: 'Experimentais por Modalidade',
+    trialsByMonth: 'Experimentais por Mês',
     netProfit: 'Lucro Líquido',
     print: 'Imprimir',
       totalItems: 'Total de Items',
@@ -169,12 +177,13 @@ const Reports = ({ language, translations }) => {
       setLoading(true);
       
       // Fetch all data
-      const [membersRes, paymentsRes, attendanceRes, expensesRes, salesRes] = await Promise.all([
+      const [membersRes, paymentsRes, attendanceRes, expensesRes, salesRes, trialsRes] = await Promise.all([
         axios.get(`${API}/members`),
         axios.get(`${API}/payments`),
         axios.get(`${API}/attendance`),
         axios.get(`${API}/expenses`).catch(() => ({ data: [] })),
-        axios.get(`${API}/sales`).catch(() => ({ data: [] }))
+        axios.get(`${API}/sales`).catch(() => ({ data: [] })),
+        axios.get(`${API}/trials`).catch(() => ({ data: [] }))
       ]);
       
       setMembers(membersRes.data);
@@ -182,6 +191,7 @@ const Reports = ({ language, translations }) => {
       setAttendance(attendanceRes.data);
       setExpenses(expensesRes.data);
       setSales(salesRes.data);
+      setTrials(trialsRes.data);
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -277,10 +287,27 @@ const Reports = ({ language, translations }) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
     
+    // Aulas experimentais do periodo, contadas a parte das presencas
+    const filteredTrials = trials.filter((t) => {
+      const d = new Date(t.trial_date);
+      return d >= start && d <= end;
+    });
+    const totalTrials = filteredTrials.length;
+    const trialsByActivity = filteredTrials.reduce((acc, t) => {
+      acc[t.activity_name] = (acc[t.activity_name] || 0) + 1;
+      return acc;
+    }, {});
+    const trialsByMonth = filteredTrials.reduce((acc, t) => {
+      const d = new Date(t.trial_date);
+      const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      acc[chave] = (acc[chave] || 0) + 1;
+      return acc;
+    }, {});
+
     setReportData({
       type: 'attendance',
-      stats: { totalAttendance, uniqueVisitors, dailyAverage },
-      charts: { attendanceByDay, topMembers }
+      stats: { totalAttendance, uniqueVisitors, dailyAverage, totalTrials },
+      charts: { attendanceByDay, topMembers, trialsByActivity, trialsByMonth }
     });
   };
 
@@ -412,6 +439,13 @@ const Reports = ({ language, translations }) => {
           ['Total de Presenças', reportData.stats.totalAttendance],
           ['Visitantes Únicos', reportData.stats.uniqueVisitors],
           ['Média Diária', reportData.stats.dailyAverage],
+          ['Aulas Experimentais', reportData.stats.totalTrials || 0],
+          [''],
+          ['Aulas Experimentais por Modalidade'],
+          ...Object.entries(reportData.charts.trialsByActivity || {}).map(([a, n]) => [a, n]),
+          [''],
+          ['Aulas Experimentais por Mês'],
+          ...Object.entries(reportData.charts.trialsByMonth || {}).sort().map(([m, n]) => [m, n]),
           [''],
           ['Membros Mais Ativos'],
           ['Membro', 'Presenças'],
@@ -587,7 +621,7 @@ const Reports = ({ language, translations }) => {
           {/* Statistics */}
           {reportData.type === 'attendance' && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                 <StatCard
                   title={t[language].totalAttendance}
                   value={reportData.stats.totalAttendance}
@@ -606,7 +640,56 @@ const Reports = ({ language, translations }) => {
                   icon={Calendar}
                   color="bg-purple-500"
                 />
+                <StatCard
+                  title={t[language].trialClasses}
+                  value={reportData.stats.totalTrials || 0}
+                  icon={Sparkles}
+                  color="bg-violet-600"
+                />
               </div>
+
+              {/* Aulas experimentais por modalidade e por mes */}
+              {reportData.stats.totalTrials > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{t[language].trialsByActivity}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {Object.entries(reportData.charts.trialsByActivity || {})
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([nome, n]) => (
+                            <div key={nome} className="flex justify-between items-center p-2 rounded"
+                                 style={{ background: 'var(--background-elevated)' }}>
+                              <span>{nome}</span>
+                              <span className="font-bold">{n}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{t[language].trialsByMonth}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {Object.entries(reportData.charts.trialsByMonth || {})
+                          .sort()
+                          .map(([mes, n]) => (
+                            <div key={mes} className="flex justify-between items-center p-2 rounded"
+                                 style={{ background: 'var(--background-elevated)' }}>
+                              <span>{mes}</span>
+                              <span className="font-bold">{n}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
               
               {/* Top Members */}
               <Card>

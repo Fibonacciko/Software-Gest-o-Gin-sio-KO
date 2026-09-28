@@ -378,6 +378,24 @@ class ExpenseCreate(BaseModel):
     expense_date: Optional[date] = None
     category: Optional[str] = None
 
+class TrialClass(BaseModel):
+    """Aula experimental: alguem que veio experimentar uma modalidade.
+
+    Nao e um socio nem uma presenca: fica a parte, para nao inflacionar as
+    contagens de presencas, e serve para contar quantas experimentais houve
+    por mes, por ano e por modalidade.
+    """
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    activity_id: str
+    activity_name: str
+    trial_date: date = Field(default_factory=lambda: date.today())
+    registered_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TrialClassCreate(BaseModel):
+    activity_id: str
+    trial_date: Optional[date] = None
+
 class InventoryItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -1517,7 +1535,7 @@ def parse_from_mongo(item):
             # Handle ObjectId conversion to string
             if hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
                 item[key] = str(value)
-            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date', 'sale_date', 'expense_date', 'insurance_paid_date', 'insurance_valid_until', 'membership_paid_date', 'membership_valid_until'] and isinstance(value, str):
+            elif key in ['date_of_birth', 'join_date', 'expiry_date', 'check_in_date', 'payment_date', 'sale_date', 'expense_date', 'insurance_paid_date', 'insurance_valid_until', 'membership_paid_date', 'membership_valid_until', 'trial_date'] and isinstance(value, str):
                 try:
                     item[key] = datetime.fromisoformat(value).date()
                 except (ValueError, TypeError):
@@ -2056,6 +2074,55 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
         gym_logger.error("Dashboard stats generation failed", error=e, user_id=current_user.id)
         raise HTTPException(status_code=500, detail="Failed to generate dashboard statistics")
 
+
+# Trial Class Routes (aulas experimentais)
+@api_router.post("/trials", response_model=TrialClass)
+async def create_trial(
+    dados: TrialClassCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    activity = await db.activities.find_one({"id": dados.activity_id, "is_active": True})
+    if not activity:
+        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+
+    trial = TrialClass(
+        activity_id=activity["id"],
+        activity_name=activity["name"],
+        trial_date=dados.trial_date or date.today(),
+        registered_by=current_user.username
+    )
+    await db.trial_classes.insert_one(prepare_for_mongo(trial.dict()))
+    await log_audit(current_user, "create", "trial", entity_id=trial.id,
+                    details=f"Registou aula experimental de {trial.activity_name}")
+    return trial
+
+@api_router.get("/trials", response_model=List[TrialClass])
+async def get_trials(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    activity_id: Optional[str] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    filtro = {}
+    if start_date:
+        filtro.setdefault("trial_date", {})["$gte"] = start_date.isoformat()
+    if end_date:
+        # As datas sao guardadas com hora, por isso o limite e o dia seguinte
+        filtro.setdefault("trial_date", {})["$lt"] = (end_date + timedelta(days=1)).isoformat()
+    if activity_id:
+        filtro["activity_id"] = activity_id
+
+    trials = await db.trial_classes.find(filtro).sort("created_at", -1).to_list(2000)
+    return [TrialClass(**parse_from_mongo(t)) for t in trials]
+
+@api_router.delete("/trials/{trial_id}")
+async def delete_trial(trial_id: str, current_user: User = Depends(require_admin_or_staff)):
+    resultado = await db.trial_classes.delete_one({"id": trial_id})
+    if resultado.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Aula experimental nao encontrada")
+    await log_audit(current_user, "delete", "trial", entity_id=trial_id,
+                    details="Eliminou uma aula experimental")
+    return {"message": "Aula experimental eliminada"}
 
 # Sales Routes (merchandise sold at the counter)
 @api_router.post("/sales", response_model=Sale)

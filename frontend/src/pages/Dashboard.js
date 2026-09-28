@@ -18,7 +18,8 @@ import {
   Activity,
   StickyNote,
   Save,
-  ArrowLeft
+  ArrowLeft,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
@@ -39,6 +40,9 @@ const Dashboard = ({ language, translations }) => {
   const [memberNotes, setMemberNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [checkinChoiceMember, setCheckinChoiceMember] = useState(null);
+  const [experimentalAberta, setExperimentalAberta] = useState(false);
+  const [aRegistarExperimental, setARegistarExperimental] = useState(false);
+  const [experimentaisHoje, setExperimentaisHoje] = useState(0);
   const [loading, setLoading] = useState(true);
   const [checkinMemberId, setCheckinMemberId] = useState('');
   const [qrMode, setQrMode] = useState(false);
@@ -68,6 +72,10 @@ const Dashboard = ({ language, translations }) => {
       todayAttendanceList: 'Presenças de Hoje',
       selectMemberHint: 'Seleciona uma presença para veres o calendário e as notas do membro',
       backToAttendance: 'Voltar às presenças',
+      trialClass: 'Aula Experimental',
+      trialHint: 'Escolhe a modalidade que a pessoa veio experimentar. Fica contada nos relatórios.',
+      trialToday: 'aula experimental hoje',
+      trialsToday: 'aulas experimentais hoje',
       memberNotes: 'Notas do Membro',
       notesPlaceholder: 'Escreve aqui as notas deste membro...',
       saveNotes: 'Guardar Notas',
@@ -94,6 +102,10 @@ const Dashboard = ({ language, translations }) => {
       todayAttendanceList: "Today's Attendance",
       selectMemberHint: "Select an attendance to see the member's calendar and notes",
       backToAttendance: 'Back to attendance',
+      trialClass: 'Trial Class',
+      trialHint: 'Pick the activity the visitor came to try. It is counted in the reports.',
+      trialToday: 'trial class today',
+      trialsToday: 'trial classes today',
       memberNotes: 'Member Notes',
       notesPlaceholder: "Write this member's notes here...",
       saveNotes: 'Save Notes',
@@ -109,6 +121,7 @@ const Dashboard = ({ language, translations }) => {
 
   useEffect(() => {
     fetchDashboardData();
+    carregarExperimentaisHoje();
   }, []);
 
   useEffect(() => {
@@ -183,6 +196,31 @@ const Dashboard = ({ language, translations }) => {
       toast.error('Erro ao carregar dados do painel');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const carregarExperimentaisHoje = async () => {
+    try {
+      const hoje = new Date();
+      const iso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+      const response = await axios.get(`${API}/trials?start_date=${iso}&end_date=${iso}`);
+      setExperimentaisHoje(response.data.length);
+    } catch (error) {
+      console.error('Error fetching trials:', error);
+    }
+  };
+
+  const registarExperimental = async (activity) => {
+    try {
+      setARegistarExperimental(true);
+      await axios.post(`${API}/trials`, { activity_id: activity.id });
+      toast.success(`Aula experimental de ${activity.name} registada!`);
+      carregarExperimentaisHoje();
+    } catch (error) {
+      console.error('Error registering trial:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao registar a aula experimental');
+    } finally {
+      setARegistarExperimental(false);
     }
   };
 
@@ -636,7 +674,57 @@ const Dashboard = ({ language, translations }) => {
             <Activity className="mr-2" size={16} />
             Check-in NFC
           </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setExperimentalAberta(!experimentalAberta)}
+            className="transition-all duration-200"
+            style={{
+              backgroundColor: experimentalAberta ? '#7c3aed' : 'transparent',
+              borderColor: '#7c3aed',
+              color: experimentalAberta ? 'white' : '#7c3aed'
+            }}
+            data-testid="aula-experimental-btn"
+          >
+            <Sparkles className="mr-2" size={16} />
+            {t[language].trialClass}
+          </Button>
           </div>
+
+          {/* Aula experimental: um clique na modalidade e fica contada */}
+          {experimentalAberta && (
+            <div
+              className="rounded-lg p-4 space-y-3"
+              style={{ background: 'var(--background-elevated)', border: '1px solid #7c3aed' }}
+            >
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {t[language].trialHint}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {activities.map((a) => (
+                  <Button
+                    key={a.id}
+                    variant="outline"
+                    disabled={aRegistarExperimental}
+                    onClick={() => registarExperimental(a)}
+                    style={{ borderColor: a.color, color: a.color }}
+                    data-testid={`trial-${a.id}`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full mr-2"
+                      style={{ backgroundColor: a.color }}
+                    />
+                    {a.name}
+                  </Button>
+                ))}
+              </div>
+              {experimentaisHoje > 0 && (
+                <p className="text-sm font-medium" style={{ color: '#7c3aed' }}>
+                  {experimentaisHoje} {experimentaisHoje === 1 ? t[language].trialToday : t[language].trialsToday}
+                </p>
+              )}
+            </div>
+          )}
 
         {nfcMode ? (
           <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg space-y-3">
