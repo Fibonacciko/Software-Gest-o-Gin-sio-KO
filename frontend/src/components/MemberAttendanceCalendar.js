@@ -75,9 +75,15 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
     return activity ? activity.name : 'Unknown';
   };
 
+  // toISOString converte para UTC e, em Portugal, atira o dia para tras:
+  // os dias apareciam marcados um dia a frente do que realmente aconteceu
+  const dataLocal = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
   const getAttendanceForDate = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return attendance.filter(att => att.check_in_date === dateStr);
+    const dateStr = dataLocal(date);
+    // check_in_date pode vir como data simples ou com hora incluida
+    return attendance.filter((att) => String(att.check_in_date).split('T')[0] === dateStr);
   };
 
   const handlePreviousMonth = () => {
@@ -156,20 +162,30 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
                   const attendanceForDate = getAttendanceForDate(date);
                   const hasAttendance = attendanceForDate.length > 0;
                   
+                  // Dias com presenca ficam rodeados por um circulo amarelo
+                  const titulo = hasAttendance
+                    ? attendanceForDate
+                        .map((a) => `${getActivityName(a.activity_id)} — ${new Date(a.check_in_time).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`)
+                        .join(' · ')
+                    : undefined;
+
                   return (
-                    <div className="relative h-9 w-9">
-                      <div className={`w-full h-full flex items-center justify-center text-sm ${
-                        isSelected ? 'bg-blue-600 text-white rounded-md' :
-              isToday ? 'bg-blue-100 text-blue-900 rounded-md' : ''
-                      }`}>
+                    <div className="relative h-9 w-9" title={titulo}>
+                      <div
+                        className={`w-full h-full flex items-center justify-center text-sm rounded-full ${
+                          isSelected ? 'bg-blue-600 text-white font-semibold' :
+                          isToday ? 'bg-blue-100 text-blue-900 font-semibold' :
+                          hasAttendance ? 'font-semibold' : ''
+                        }`}
+                        style={hasAttendance && !isSelected ? {
+                          border: '2px solid #F5A623',
+                          backgroundColor: 'rgba(245, 166, 35, 0.15)',
+                          color: 'var(--text-primary)'
+                        } : hasAttendance && isSelected ? {
+                          boxShadow: '0 0 0 2px #F5A623'
+                        } : undefined}
+                      >
                         {date.getDate()}
-                        {hasAttendance && (
-                          <div 
-                            className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full"
-                            style={{ backgroundColor: getActivityColor(attendanceForDate[0].activity_id) }}
-                            title={`${getActivityName(attendanceForDate[0].activity_id)} - ${new Date(attendanceForDate[0].check_in_time).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`}
-                          />
-                        )}
                       </div>
                     </div>
                   );
