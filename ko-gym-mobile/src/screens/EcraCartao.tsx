@@ -101,11 +101,23 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
     }
   };
 
-  const estado = socio.membership_status ?? 'active';
-  const emDia = estado === 'active';
-  const corEstado = estado === 'suspended' ? cores.vermelho : emDia ? cores.verde : cores.vermelho;
+  // Sem quota registada no sistema, o estado fica por determinar: nao se
+  // acusa de atraso quem talvez esteja em dia e so nao tem historico
+  const estado = socio.membership_status;
+  const corEstado =
+    estado === 'suspended' || estado === 'inactive'
+      ? cores.vermelho
+      : estado === 'active'
+        ? cores.verde
+        : cores.textoSecundario;
   const textoEstado =
-    estado === 'suspended' ? 'SUSPENSO' : emDia ? 'EM DIA' : 'QUOTA POR REGULARIZAR';
+    estado === 'suspended'
+      ? 'SUSPENSO'
+      : estado === 'inactive'
+        ? 'QUOTA POR REGULARIZAR'
+        : estado === 'active'
+          ? 'EM DIA'
+          : 'SÓCIO';
 
   return (
     <ScrollView

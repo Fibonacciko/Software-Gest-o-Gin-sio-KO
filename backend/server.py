@@ -1459,7 +1459,10 @@ def derive_member_status(data: dict) -> dict:
     elif valid_until:
         data["membership_status"] = "active" if valid_until >= date.today() else "inactive"
     else:
-        data["membership_status"] = gravado if isinstance(gravado, str) else (gravado.value if gravado else "active")
+        # Sem nenhuma quota registada nao ha como saber se esta em dia.
+        # Fica por determinar, para nao acusar de atraso quem talvez esteja
+        # em dia e apenas nao tem historico de pagamentos no sistema.
+        data["membership_status"] = None
 
     return data
 
