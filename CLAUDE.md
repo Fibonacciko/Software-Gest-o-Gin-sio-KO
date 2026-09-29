@@ -100,9 +100,26 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 (`ko_gym_dev`), `CORS_ORIGINS`, `ENVIRONMENT`; `frontend/.env` com
 `REACT_APP_BACKEND_URL=http://localhost:8001`.
 
-### Verificar o que se escreve
+### Testes automáticos
 
-Não há testes automáticos. O que se usa, e funciona bem:
+Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
+backend** — são 63 testes e demoram 3 segundos.
+
+```bash
+cd backend && ./venv/Scripts/python.exe -m pytest tests -q
+```
+
+Ou, no Windows, dois cliques em `TESTAR.bat`.
+
+Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
+teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
+Nunca tocam nos dados de desenvolvimento nem nos de produção.
+
+Ao acrescentar uma regra de negócio, acrescente o teste que a protege. Se
+alterar uma regra e um teste falhar, **confirme qual dos dois está certo** antes
+de mexer no teste.
+
+### Outras verificações
 
 ```bash
 # Sintaxe, antes de qualquer outra coisa

@@ -5,6 +5,7 @@ Proteção contra ataques e controle de tráfego
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+import os
 from fastapi import Request, HTTPException
 from typing import Dict, Any
 import time
@@ -15,8 +16,11 @@ class GymRateLimiter:
     """Sistema de Rate Limiting inteligente para o KO Gym"""
     
     def __init__(self):
-        # Limiter principal usando IP
-        self.limiter = Limiter(key_func=get_remote_address)
+        # Limiter principal usando IP.
+        # Desligavel nos testes automaticos, que fazem muitos pedidos seguidos:
+        # RATE_LIMITS_ENABLED=false
+        self.ativo = os.getenv("RATE_LIMITS_ENABLED", "true").lower() != "false"
+        self.limiter = Limiter(key_func=get_remote_address, enabled=self.ativo)
         
         # Cache para tracking de usuários suspeitos
         self.suspicious_ips = {}
@@ -170,7 +174,8 @@ class RateLimitMiddleware:
             request = Request(scope, receive)
             
             try:
-                await gym_rate_limiter.check_request_limits(request)
+                if gym_rate_limiter.ativo:
+                    await gym_rate_limiter.check_request_limits(request)
             except HTTPException as e:
                 # Enviar resposta de erro
                 response = {
