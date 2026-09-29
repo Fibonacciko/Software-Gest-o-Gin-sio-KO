@@ -1434,13 +1434,12 @@ def normalizar_texto(texto: str) -> str:
 def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, numero=None) -> bool:
     """Todas as palavras escritas tem de bater certo com o socio.
 
-    Procura sempre pelo *inicio* das palavras, nunca a meio. E quanto
-    menos se escreve, mais estreita e a procura:
+    Procura pelo *inicio* das palavras, nunca a meio, e desde a primeira
+    letra: "i" mostra "Ines Ferreira", "Isabel Dias" e "Ana Isabel", mas
+    nao "Maria Silva", onde o "i" esta a meio.
 
-    - uma letra procura so no nome proprio: "i" mostra "Ines Ferreira",
-      mas nao "Ana Isabel" nem "Maria Silva";
-    - duas ou mais letras procuram tambem nos apelidos: "is" ja mostra
-      "Ana Isabel", e "fer" mostra "Ines Ferreira".
+    Quem tem o *nome proprio* a comecar pelas letras escritas aparece
+    primeiro na lista (ver `relevancia_pesquisa`).
 
     Ignora maiusculas, acentos e as ligacoes dos nomes ("de", "da", "dos"),
     e a ordem das palavras nao importa.
@@ -1458,9 +1457,7 @@ def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, n
     telefone_digitos = "".join(c for c in str(telefone or "") if c.isdigit())
 
     for termo in termos:
-        # Uma letra so procura no nome proprio; a partir de duas, em todo o nome
-        candidatas = palavras_nome[:1] if len(termo) == 1 else palavras_nome
-        if any(p.startswith(termo) for p in candidatas):
+        if any(p.startswith(termo) for p in palavras_nome):
             continue
         if numero_limpo and (numero_limpo.startswith(termo) or numero_limpo.lstrip("0").startswith(termo)):
             continue
@@ -1471,6 +1468,15 @@ def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, n
         return False
 
     return True
+
+def relevancia_pesquisa(procurado: str, nome: str) -> int:
+    """0 para quem tem o nome proprio a comecar pelo que foi escrito, 1 para
+    os restantes. Serve para os nomes proprios virem primeiro na lista."""
+    termos = [t for t in normalizar_texto(procurado).split() if t and t not in LIGACOES_NOME]
+    palavras = [p for p in normalizar_texto(nome).split() if p not in LIGACOES_NOME]
+    if not termos or not palavras:
+        return 1
+    return 0 if any(palavras[0].startswith(t) for t in termos) else 1
 
 def add_one_month(d: date) -> date:
     """Mesmo dia do mes seguinte.
@@ -1681,8 +1687,13 @@ async def get_members(
             )
         ]
 
-    # Por ordem alfabetica, para ser previsivel a rolar a lista
-    members.sort(key=lambda m: normalizar_texto(m.get("name")))
+    # Nomes proprios primeiro, e dentro de cada grupo por ordem alfabetica
+    members.sort(
+        key=lambda m: (
+            relevancia_pesquisa(search, m.get("name")) if search else 0,
+            normalizar_texto(m.get("name")),
+        )
+    )
 
     return [Member(**normalize_member_read(parse_from_mongo(member))) for member in members]
 

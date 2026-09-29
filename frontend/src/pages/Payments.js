@@ -521,9 +521,8 @@ const Payments = ({ language, translations }) => {
       .toLowerCase()
       .trim();
 
-  // Procura sempre pelo início das palavras, nunca a meio. Uma letra
-  // procura só no nome próprio ("i" mostra "Inês Ferreira", não "Ana
-  // Isabel"); a partir de duas, procura também nos apelidos.
+  // Procura pelo início das palavras, nunca a meio, desde a primeira letra.
+  // Quem tem o nome próprio a começar pelas letras escritas aparece primeiro.
   const correspondePesquisa = (procurado, nome, numero, telefone) => {
     const termos = normalizar(procurado).split(/\s+/).filter((t) => t && !LIGACOES.includes(t));
     if (termos.length === 0) return true;
@@ -533,22 +532,34 @@ const Payments = ({ language, translations }) => {
     const digitos = String(telefone || '').replace(/\D/g, '');
 
     return termos.every((termo) => {
-      const candidatas = termo.length === 1 ? palavras.slice(0, 1) : palavras;
-      if (candidatas.some((p) => p.startsWith(termo))) return true;
+      if (palavras.some((p) => p.startsWith(termo))) return true;
       if (numeroLimpo && (numeroLimpo.startsWith(termo) || numeroLimpo.replace(/^0+/, '').startsWith(termo))) return true;
       if (digitos && /^\d+$/.test(termo) && digitos.includes(termo)) return true;
       return false;
     });
   };
 
+  // 0 para quem tem o nome próprio a começar pelo que foi escrito, 1 para os restantes
+  const relevancia = (procurado, nome) => {
+    const termos = normalizar(procurado).split(/\s+/).filter((t) => t && !LIGACOES.includes(t));
+    const palavras = normalizar(nome).split(/\s+/).filter((p) => p && !LIGACOES.includes(p));
+    if (termos.length === 0 || palavras.length === 0) return 1;
+    return termos.some((t) => palavras[0].startsWith(t)) ? 0 : 1;
+  };
+
   const getSearchedMembers = () => {
-    const lista = memberSearch.trim()
-      ? members.filter((m) =>
-          correspondePesquisa(memberSearch, m.name, m.member_number, m.phone)
-        )
+    const procurado = memberSearch.trim();
+    const lista = procurado
+      ? members.filter((m) => correspondePesquisa(procurado, m.name, m.member_number, m.phone))
       : members;
-    // Por ordem alfabética, para ser previsível a rolar
-    return [...lista].sort((a, b) => normalizar(a.name).localeCompare(normalizar(b.name)));
+
+    // Nomes próprios primeiro; dentro de cada grupo, por ordem alfabética
+    return [...lista].sort((a, b) => {
+      const ra = procurado ? relevancia(procurado, a.name) : 0;
+      const rb = procurado ? relevancia(procurado, b.name) : 0;
+      if (ra !== rb) return ra - rb;
+      return normalizar(a.name).localeCompare(normalizar(b.name));
+    });
   };
 
   const getSelectedMemberObject = () => members.find((m) => m.id === formData.member_id);

@@ -1,6 +1,6 @@
 """A pesquisa ignora maiúsculas, acentos e as ligações dos nomes."""
 import pytest
-from server import corresponde_pesquisa, normalizar_texto
+from server import corresponde_pesquisa, normalizar_texto, relevancia_pesquisa
 
 
 @pytest.mark.parametrize(
@@ -72,56 +72,47 @@ def test_resultados_vem_por_ordem_alfabetica(cliente, admin, criar_socio):
 # letra aparecia a meio do nome.
 
 @pytest.mark.parametrize(
-    "letra, nome",
-    [
-        ("i", "Inês Ferreira"),
-        ("i", "Isabel Dias"),
-        ("m", "Maria Silva"),
-        ("j", "João Pedro da Silva"),
-    ],
-)
-def test_uma_letra_procura_so_no_nome_proprio(letra, nome):
-    assert corresponde_pesquisa(letra, nome)
-
-
-@pytest.mark.parametrize(
-    "letra, nome",
-    [
-        ("i", "Ana Isabel Costa"),   # Isabel e nome do meio, nao o proprio
-        ("f", "Inês Ferreira"),      # Ferreira e apelido
-        ("s", "João Silva"),         # Silva e apelido
-        ("i", "Maria Silva"),        # tem "i" a meio de Maria
-        ("i", "Ana Costa"),
-        ("z", "Maria Silva"),
-    ],
-)
-def test_uma_letra_nao_mostra_apelidos_nem_letras_do_meio(letra, nome):
-    assert not corresponde_pesquisa(letra, nome)
-
-
-@pytest.mark.parametrize(
     "escrito, nome",
     [
-        ("is", "Ana Isabel Costa"),
+        ("i", "Inês Ferreira"),        # nome proprio
+        ("i", "Isabel Dias"),
+        ("i", "Ana Isabel Costa"),     # nome do meio
+        ("f", "Inês Ferreira"),        # apelido, desde a primeira letra
+        ("s", "João Silva"),
         ("fe", "Inês Ferreira"),
-        ("fer", "Inês Ferreira"),
         ("sil", "João Pedro da Silva"),
-        ("an", "Ana Costa"),
     ],
 )
-def test_duas_letras_ja_procuram_nos_apelidos(escrito, nome):
+def test_procura_desde_a_primeira_letra_em_todo_o_nome(escrito, nome):
     assert corresponde_pesquisa(escrito, nome)
 
 
 @pytest.mark.parametrize(
     "escrito, nome",
     [
-        ("os", "João Santos"),    # "os" esta no fim de Santos, nao no inicio
+        ("i", "Maria Silva"),     # tem "i", mas a meio de Maria
+        ("i", "Ana Costa"),
+        ("z", "Maria Silva"),
+        ("os", "João Santos"),    # "os" esta no fim de Santos
         ("ria", "Maria Silva"),   # "ria" esta a meio
     ],
 )
-def test_continua_a_nao_procurar_a_meio_das_palavras(escrito, nome):
+def test_nunca_procura_a_meio_das_palavras(escrito, nome):
     assert not corresponde_pesquisa(escrito, nome)
+
+
+@pytest.mark.parametrize(
+    "escrito, nome, esperado",
+    [
+        ("i", "Inês Ferreira", 0),        # nome proprio: vem primeiro
+        ("i", "Isabel Dias", 0),
+        ("i", "Ana Isabel Costa", 1),     # so no nome do meio: vem depois
+        ("f", "Inês Ferreira", 1),        # so no apelido: vem depois
+        ("fe", "Fernanda Alves", 0),
+    ],
+)
+def test_nome_proprio_tem_preferencia(escrito, nome, esperado):
+    assert relevancia_pesquisa(escrito, nome) == esperado
 
 
 def test_telefone_aceita_os_ultimos_digitos():
@@ -145,12 +136,23 @@ def test_lista_de_socios_so_mostra_quem_comeca_pela_letra(cliente, admin, criar_
     assert [m["name"] for m in r.json()] == ["Inês Ferreira"]
 
 
-def test_apelido_aparece_ao_escrever_duas_letras(cliente, admin, criar_socio):
-    criar_socio(nome="Inês Ferreira", telefone="912200011")
-    criar_socio(nome="Ana Costa", telefone="912200012")
+def test_nomes_proprios_aparecem_antes_dos_apelidos(cliente, admin, criar_socio):
+    criar_socio(nome="Ana Isabel Costa", telefone="912200011")
+    criar_socio(nome="Isabel Dias", telefone="912200012")
+    criar_socio(nome="Inês Ferreira", telefone="912200013")
+    criar_socio(nome="Maria Silva", telefone="912200014")   # nao deve aparecer
 
-    uma = cliente.get("/api/members", headers=admin, params={"search": "f"}).json()
-    assert uma == []            # "f" e apelido, nao aparece
+    nomes = [m["name"] for m in
+             cliente.get("/api/members", headers=admin, params={"search": "i"}).json()]
 
-    duas = cliente.get("/api/members", headers=admin, params={"search": "fe"}).json()
-    assert [m["name"] for m in duas] == ["Inês Ferreira"]
+    # Primeiro os nomes proprios por "i", em ordem alfabetica; depois os outros
+    assert nomes == ["Inês Ferreira", "Isabel Dias", "Ana Isabel Costa"]
+
+
+def test_apelido_aparece_logo_a_primeira_letra(cliente, admin, criar_socio):
+    criar_socio(nome="Inês Ferreira", telefone="912200015")
+    criar_socio(nome="Ana Costa", telefone="912200016")
+
+    nomes = [m["name"] for m in
+             cliente.get("/api/members", headers=admin, params={"search": "f"}).json()]
+    assert nomes == ["Inês Ferreira"]
