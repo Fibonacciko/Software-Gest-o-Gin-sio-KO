@@ -1434,9 +1434,16 @@ def normalizar_texto(texto: str) -> str:
 def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, numero=None) -> bool:
     """Todas as palavras escritas tem de bater certo com o socio.
 
-    Procura pelo *inicio* das palavras, nao a meio: escrever "i" mostra
-    "Ines" e "Isabel", e nao "Maria". Ignora maiusculas, acentos e as
-    ligacoes dos nomes, para "joao silva" encontrar "Joao Pedro da Silva".
+    Procura sempre pelo *inicio* das palavras, nunca a meio. E quanto
+    menos se escreve, mais estreita e a procura:
+
+    - uma letra procura so no nome proprio: "i" mostra "Ines Ferreira",
+      mas nao "Ana Isabel" nem "Maria Silva";
+    - duas ou mais letras procuram tambem nos apelidos: "is" ja mostra
+      "Ana Isabel", e "fer" mostra "Ines Ferreira".
+
+    Ignora maiusculas, acentos e as ligacoes dos nomes ("de", "da", "dos"),
+    e a ordem das palavras nao importa.
 
     O telefone e a excecao: aceita parte do numero em qualquer posicao,
     porque as pessoas costumam lembrar-se dos ultimos digitos.
@@ -1451,7 +1458,9 @@ def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, n
     telefone_digitos = "".join(c for c in str(telefone or "") if c.isdigit())
 
     for termo in termos:
-        if any(p.startswith(termo) for p in palavras_nome):
+        # Uma letra so procura no nome proprio; a partir de duas, em todo o nome
+        candidatas = palavras_nome[:1] if len(termo) == 1 else palavras_nome
+        if any(p.startswith(termo) for p in candidatas):
             continue
         if numero_limpo and (numero_limpo.startswith(termo) or numero_limpo.lstrip("0").startswith(termo)):
             continue

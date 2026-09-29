@@ -521,9 +521,9 @@ const Payments = ({ language, translations }) => {
       .toLowerCase()
       .trim();
 
-  // Procura pelo início das palavras, não a meio: escrever "i" mostra
-  // "Inês" e "Isabel", e não "Maria". O telefone é a exceção, porque as
-  // pessoas lembram-se dos últimos dígitos.
+  // Procura sempre pelo início das palavras, nunca a meio. Uma letra
+  // procura só no nome próprio ("i" mostra "Inês Ferreira", não "Ana
+  // Isabel"); a partir de duas, procura também nos apelidos.
   const correspondePesquisa = (procurado, nome, numero, telefone) => {
     const termos = normalizar(procurado).split(/\s+/).filter((t) => t && !LIGACOES.includes(t));
     if (termos.length === 0) return true;
@@ -533,7 +533,8 @@ const Payments = ({ language, translations }) => {
     const digitos = String(telefone || '').replace(/\D/g, '');
 
     return termos.every((termo) => {
-      if (palavras.some((p) => p.startsWith(termo))) return true;
+      const candidatas = termo.length === 1 ? palavras.slice(0, 1) : palavras;
+      if (candidatas.some((p) => p.startsWith(termo))) return true;
       if (numeroLimpo && (numeroLimpo.startsWith(termo) || numeroLimpo.replace(/^0+/, '').startsWith(termo))) return true;
       if (digitos && /^\d+$/.test(termo) && digitos.includes(termo)) return true;
       return false;

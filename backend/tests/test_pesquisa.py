@@ -76,26 +76,52 @@ def test_resultados_vem_por_ordem_alfabetica(cliente, admin, criar_socio):
     [
         ("i", "Inês Ferreira"),
         ("i", "Isabel Dias"),
-        ("i", "Ana Isabel Costa"),   # inicio de uma palavra do meio conta
-        ("f", "Inês Ferreira"),
-        ("s", "João Silva"),
+        ("m", "Maria Silva"),
+        ("j", "João Pedro da Silva"),
     ],
 )
-def test_uma_letra_mostra_quem_comeca_por_ela(letra, nome):
+def test_uma_letra_procura_so_no_nome_proprio(letra, nome):
     assert corresponde_pesquisa(letra, nome)
 
 
 @pytest.mark.parametrize(
     "letra, nome",
     [
-        ("i", "Maria Silva"),     # tem "i", mas nenhuma palavra comeca por "i"
+        ("i", "Ana Isabel Costa"),   # Isabel e nome do meio, nao o proprio
+        ("f", "Inês Ferreira"),      # Ferreira e apelido
+        ("s", "João Silva"),         # Silva e apelido
+        ("i", "Maria Silva"),        # tem "i" a meio de Maria
         ("i", "Ana Costa"),
         ("z", "Maria Silva"),
-        ("os", "João Santos"),    # "os" esta no fim de Santos, nao no inicio
     ],
 )
-def test_uma_letra_nao_mostra_quem_so_a_tem_a_meio(letra, nome):
+def test_uma_letra_nao_mostra_apelidos_nem_letras_do_meio(letra, nome):
     assert not corresponde_pesquisa(letra, nome)
+
+
+@pytest.mark.parametrize(
+    "escrito, nome",
+    [
+        ("is", "Ana Isabel Costa"),
+        ("fe", "Inês Ferreira"),
+        ("fer", "Inês Ferreira"),
+        ("sil", "João Pedro da Silva"),
+        ("an", "Ana Costa"),
+    ],
+)
+def test_duas_letras_ja_procuram_nos_apelidos(escrito, nome):
+    assert corresponde_pesquisa(escrito, nome)
+
+
+@pytest.mark.parametrize(
+    "escrito, nome",
+    [
+        ("os", "João Santos"),    # "os" esta no fim de Santos, nao no inicio
+        ("ria", "Maria Silva"),   # "ria" esta a meio
+    ],
+)
+def test_continua_a_nao_procurar_a_meio_das_palavras(escrito, nome):
+    assert not corresponde_pesquisa(escrito, nome)
 
 
 def test_telefone_aceita_os_ultimos_digitos():
@@ -117,3 +143,14 @@ def test_lista_de_socios_so_mostra_quem_comeca_pela_letra(cliente, admin, criar_
 
     r = cliente.get("/api/members", headers=admin, params={"search": "i"})
     assert [m["name"] for m in r.json()] == ["Inês Ferreira"]
+
+
+def test_apelido_aparece_ao_escrever_duas_letras(cliente, admin, criar_socio):
+    criar_socio(nome="Inês Ferreira", telefone="912200011")
+    criar_socio(nome="Ana Costa", telefone="912200012")
+
+    uma = cliente.get("/api/members", headers=admin, params={"search": "f"}).json()
+    assert uma == []            # "f" e apelido, nao aparece
+
+    duas = cliente.get("/api/members", headers=admin, params={"search": "fe"}).json()
+    assert [m["name"] for m in duas] == ["Inês Ferreira"]
