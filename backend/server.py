@@ -9,6 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import List, Optional, Dict
 import uuid
+import unicodedata
 from datetime import datetime, date, timezone, timedelta, time
 from enum import Enum
 import qrcode
@@ -1419,6 +1420,36 @@ async def send_push_notification(fcm_token: str, title: str, body: str, data: di
         print(f'Failed to send push notification: {e}')
         return False
 
+LIGACOES_NOME = {"de", "da", "do", "das", "dos", "e", "du", "del", "di", "van", "von"}
+
+def normalizar_texto(texto: str) -> str:
+    """Minusculas e sem acentos, para a pesquisa nao depender de preciosismos."""
+    if not texto:
+        return ""
+    semacentos = unicodedata.normalize("NFD", str(texto))
+    semacentos = "".join(c for c in semacentos if unicodedata.category(c) != "Mn")
+    return semacentos.lower().strip()
+
+def corresponde_pesquisa(procurado: str, *campos) -> bool:
+    """Todas as palavras escritas tem de aparecer nos campos do socio.
+
+    Ignora maiusculas, acentos e as ligacoes dos nomes ("de", "da", "dos"),
+    para que "joao silva" encontre "Joao Pedro da Silva".
+    """
+    termos = [t for t in normalizar_texto(procurado).split() if t and t not in LIGACOES_NOME]
+    if not termos:
+        return True
+
+    alvo = " ".join(normalizar_texto(c) for c in campos if c)
+    palavras_alvo = [p for p in alvo.split() if p not in LIGACOES_NOME]
+    alvo_limpo = " ".join(palavras_alvo)
+
+    for termo in termos:
+        # Vale como inicio de qualquer palavra, ou como parte do texto todo
+        if not (any(p.startswith(termo) for p in palavras_alvo) or termo in alvo_limpo):
+            return False
+    return True
+
 def add_one_month(d: date) -> date:
     """Mesmo dia do mes seguinte.
 
@@ -1615,15 +1646,22 @@ async def get_members(
         filter_dict['status'] = status
     if membership_type:
         filter_dict['membership_type'] = membership_type
+    # A pesquisa e feita aqui e nao na base de dados: assim ignora acentos,
+    # maiusculas e as ligacoes dos nomes, que o Mongo nao sabe ignorar
+    members = await db.members.find(filter_dict).to_list(2000)
+
     if search:
-        filter_dict['$or'] = [
-            {'name': {'$regex': search, '$options': 'i'}},
-            {'phone': {'$regex': search, '$options': 'i'}},
-            {'email': {'$regex': search, '$options': 'i'}},
-            {'member_number': {'$regex': search, '$options': 'i'}}  # Search by member number
+        members = [
+            m for m in members
+            if corresponde_pesquisa(
+                search,
+                m.get("name"), m.get("phone"), m.get("email"), m.get("member_number")
+            )
         ]
-    
-    members = await db.members.find(filter_dict).to_list(1000)
+
+    # Por ordem alfabetica, para ser previsivel a rolar a lista
+    members.sort(key=lambda m: normalizar_texto(m.get("name")))
+
     return [Member(**normalize_member_read(parse_from_mongo(member))) for member in members]
 
 @api_router.get("/members/{member_id}", response_model=Member)

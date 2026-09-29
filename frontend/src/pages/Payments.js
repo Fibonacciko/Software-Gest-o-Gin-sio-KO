@@ -510,15 +510,41 @@ const Payments = ({ language, translations }) => {
 
   const stats = getPaymentStats();
 
-  // Members matching the search box: by name (any letters) or by member number
-  const getSearchedMembers = () => {
-    const term = memberSearch.trim().toLowerCase();
-    if (!term) return members;
-    return members.filter((member) =>
-      member.name?.toLowerCase().includes(term) ||
-      String(member.member_number || '').toLowerCase().includes(term) ||
-      member.phone?.toLowerCase().includes(term)
+  // Pesquisa sem preciosismos: ignora maiúsculas, acentos e as ligações dos
+  // nomes ("de", "da", "dos"), para "joao silva" encontrar "João da Silva"
+  const LIGACOES = ['de', 'da', 'do', 'das', 'dos', 'e', 'du', 'del', 'di'];
+
+  const normalizar = (texto) =>
+    String(texto || '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .trim();
+
+  const correspondePesquisa = (procurado, ...campos) => {
+    const termos = normalizar(procurado).split(/\s+/).filter((t) => t && !LIGACOES.includes(t));
+    if (termos.length === 0) return true;
+
+    const palavras = campos
+      .map(normalizar)
+      .join(' ')
+      .split(/\s+/)
+      .filter((p) => p && !LIGACOES.includes(p));
+    const tudo = palavras.join(' ');
+
+    return termos.every(
+      (termo) => palavras.some((p) => p.startsWith(termo)) || tudo.includes(termo)
     );
+  };
+
+  const getSearchedMembers = () => {
+    const lista = memberSearch.trim()
+      ? members.filter((m) =>
+          correspondePesquisa(memberSearch, m.name, m.member_number, m.phone)
+        )
+      : members;
+    // Por ordem alfabética, para ser previsível a rolar
+    return [...lista].sort((a, b) => normalizar(a.name).localeCompare(normalizar(b.name)));
   };
 
   const getSelectedMemberObject = () => members.find((m) => m.id === formData.member_id);
@@ -532,7 +558,7 @@ const Payments = ({ language, translations }) => {
         </h1>
         
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t[language].addPayment}</DialogTitle>
             </DialogHeader>
@@ -554,7 +580,7 @@ const Payments = ({ language, translations }) => {
                   />
                 </div>
 
-                <div className="mt-2 border rounded-lg max-h-48 overflow-y-auto" data-testid="payment-member-list">
+                <div className="mt-2 border rounded-lg max-h-[8.25rem] overflow-y-auto" data-testid="payment-member-list">
                   {getSearchedMembers().length > 0 ? (
                     getSearchedMembers().map((member) => {
                       const selected = formData.member_id === member.id;
