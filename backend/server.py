@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import List, Optional, Dict
 import uuid
 import unicodedata
+import re
 from datetime import datetime, date, timezone, timedelta, time
 from enum import Enum
 import qrcode
@@ -1430,24 +1431,36 @@ def normalizar_texto(texto: str) -> str:
     semacentos = "".join(c for c in semacentos if unicodedata.category(c) != "Mn")
     return semacentos.lower().strip()
 
-def corresponde_pesquisa(procurado: str, *campos) -> bool:
-    """Todas as palavras escritas tem de aparecer nos campos do socio.
+def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, numero=None) -> bool:
+    """Todas as palavras escritas tem de bater certo com o socio.
 
-    Ignora maiusculas, acentos e as ligacoes dos nomes ("de", "da", "dos"),
-    para que "joao silva" encontre "Joao Pedro da Silva".
+    Procura pelo *inicio* das palavras, nao a meio: escrever "i" mostra
+    "Ines" e "Isabel", e nao "Maria". Ignora maiusculas, acentos e as
+    ligacoes dos nomes, para "joao silva" encontrar "Joao Pedro da Silva".
+
+    O telefone e a excecao: aceita parte do numero em qualquer posicao,
+    porque as pessoas costumam lembrar-se dos ultimos digitos.
     """
     termos = [t for t in normalizar_texto(procurado).split() if t and t not in LIGACOES_NOME]
     if not termos:
         return True
 
-    alvo = " ".join(normalizar_texto(c) for c in campos if c)
-    palavras_alvo = [p for p in alvo.split() if p not in LIGACOES_NOME]
-    alvo_limpo = " ".join(palavras_alvo)
+    palavras_nome = [p for p in normalizar_texto(nome).split() if p not in LIGACOES_NOME]
+    email_partes = [p for p in re.split(r"[@._-]", normalizar_texto(email)) if p]
+    numero_limpo = normalizar_texto(numero)
+    telefone_digitos = "".join(c for c in str(telefone or "") if c.isdigit())
 
     for termo in termos:
-        # Vale como inicio de qualquer palavra, ou como parte do texto todo
-        if not (any(p.startswith(termo) for p in palavras_alvo) or termo in alvo_limpo):
-            return False
+        if any(p.startswith(termo) for p in palavras_nome):
+            continue
+        if numero_limpo and (numero_limpo.startswith(termo) or numero_limpo.lstrip("0").startswith(termo)):
+            continue
+        if any(p.startswith(termo) for p in email_partes):
+            continue
+        if telefone_digitos and termo.isdigit() and termo in telefone_digitos:
+            continue
+        return False
+
     return True
 
 def add_one_month(d: date) -> date:

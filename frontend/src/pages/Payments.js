@@ -521,20 +521,23 @@ const Payments = ({ language, translations }) => {
       .toLowerCase()
       .trim();
 
-  const correspondePesquisa = (procurado, ...campos) => {
+  // Procura pelo início das palavras, não a meio: escrever "i" mostra
+  // "Inês" e "Isabel", e não "Maria". O telefone é a exceção, porque as
+  // pessoas lembram-se dos últimos dígitos.
+  const correspondePesquisa = (procurado, nome, numero, telefone) => {
     const termos = normalizar(procurado).split(/\s+/).filter((t) => t && !LIGACOES.includes(t));
     if (termos.length === 0) return true;
 
-    const palavras = campos
-      .map(normalizar)
-      .join(' ')
-      .split(/\s+/)
-      .filter((p) => p && !LIGACOES.includes(p));
-    const tudo = palavras.join(' ');
+    const palavras = normalizar(nome).split(/\s+/).filter((p) => p && !LIGACOES.includes(p));
+    const numeroLimpo = normalizar(numero);
+    const digitos = String(telefone || '').replace(/\D/g, '');
 
-    return termos.every(
-      (termo) => palavras.some((p) => p.startsWith(termo)) || tudo.includes(termo)
-    );
+    return termos.every((termo) => {
+      if (palavras.some((p) => p.startsWith(termo))) return true;
+      if (numeroLimpo && (numeroLimpo.startsWith(termo) || numeroLimpo.replace(/^0+/, '').startsWith(termo))) return true;
+      if (digitos && /^\d+$/.test(termo) && digitos.includes(termo)) return true;
+      return false;
+    });
   };
 
   const getSearchedMembers = () => {

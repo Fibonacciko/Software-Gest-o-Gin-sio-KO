@@ -66,3 +66,54 @@ def test_resultados_vem_por_ordem_alfabetica(cliente, admin, criar_socio):
 
     nomes = [m["name"] for m in cliente.get("/api/members", headers=admin).json()]
     assert nomes == ["Ana Costa", "Bruno Dias", "Zé Antunes"]
+
+# --- Procura pelo inicio das palavras, nao a meio ---
+# Este erro chegou a producao: escrever "i" mostrava "Maria", porque a
+# letra aparecia a meio do nome.
+
+@pytest.mark.parametrize(
+    "letra, nome",
+    [
+        ("i", "Inês Ferreira"),
+        ("i", "Isabel Dias"),
+        ("i", "Ana Isabel Costa"),   # inicio de uma palavra do meio conta
+        ("f", "Inês Ferreira"),
+        ("s", "João Silva"),
+    ],
+)
+def test_uma_letra_mostra_quem_comeca_por_ela(letra, nome):
+    assert corresponde_pesquisa(letra, nome)
+
+
+@pytest.mark.parametrize(
+    "letra, nome",
+    [
+        ("i", "Maria Silva"),     # tem "i", mas nenhuma palavra comeca por "i"
+        ("i", "Ana Costa"),
+        ("z", "Maria Silva"),
+        ("os", "João Santos"),    # "os" esta no fim de Santos, nao no inicio
+    ],
+)
+def test_uma_letra_nao_mostra_quem_so_a_tem_a_meio(letra, nome):
+    assert not corresponde_pesquisa(letra, nome)
+
+
+def test_telefone_aceita_os_ultimos_digitos():
+    """A excecao: no telefone procura-se em qualquer posicao."""
+    assert corresponde_pesquisa("5678", "João Silva", telefone="912345678")
+    assert corresponde_pesquisa("2345", "João Silva", telefone="912345678")
+
+
+def test_numero_de_socio_pelo_inicio():
+    assert corresponde_pesquisa("00", "João Silva", numero="007")
+    assert corresponde_pesquisa("7", "João Silva", numero="007")     # sem zeros
+    assert not corresponde_pesquisa("9", "João Silva", numero="007")
+
+
+def test_lista_de_socios_so_mostra_quem_comeca_pela_letra(cliente, admin, criar_socio):
+    criar_socio(nome="Inês Ferreira", telefone="912200001")
+    criar_socio(nome="Maria Silva", telefone="912200002")
+    criar_socio(nome="Ana Costa", telefone="912200003")
+
+    r = cliente.get("/api/members", headers=admin, params={"search": "i"})
+    assert [m["name"] for m in r.json()] == ["Inês Ferreira"]
