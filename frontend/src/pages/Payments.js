@@ -1075,7 +1075,7 @@ const Payments = ({ language, translations }) => {
                       {t[language].status}
                     </th>
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
-                      {t[language].description}
+                      {isAdmin() ? t[language].description : t[language].amount}
                     </th>
                     <th className="text-right p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].actions}
@@ -1162,9 +1162,22 @@ const Payments = ({ language, translations }) => {
                         })()}
                       </td>
                       <td className="p-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">
-                          {payment.description || '-'}
-                        </p>
+                        {isAdmin() ? (
+                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">
+                            {payment.description || '-'}
+                          </p>
+                        ) : (
+                          // O colaborador precisa do valor para conferir o que
+                          // lançou; os totais do ginásio continuam escondidos
+                          <div className="max-w-xs">
+                            <p className="font-semibold">€{payment.amount.toFixed(2)}</p>
+                            {payment.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {payment.description}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="p-4">
                         <div className="flex justify-end gap-2">
@@ -1231,14 +1244,12 @@ const Payments = ({ language, translations }) => {
                       {sale.sold_by ? ` · vendido por ${sale.sold_by}` : ''}
                     </p>
                   </div>
-                  {isAdmin() && (
-                    <div className="text-right">
-                      <p className="font-semibold">€{sale.total.toFixed(2)}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        €{sale.unit_price.toFixed(2)} cada
-                      </p>
-                    </div>
-                  )}
+                  <div className="text-right">
+                    <p className="font-semibold">€{sale.total.toFixed(2)}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      €{sale.unit_price.toFixed(2)} cada
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
