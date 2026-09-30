@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Users, Plus, Search, Shield, User, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { filtrarEOrdenar } from '../lib/pesquisa';
 import { useAuth } from '../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -167,11 +168,11 @@ const UserManagement = ({ language = 'pt' }) => {
     }
   };
 
-  const filteredUsers = users.filter(u =>
-    u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = filtrarEOrdenar(users, searchTerm, (u) => ({
+    principal: u.full_name || u.username,
+    extras: [u.username, u.email],
+    numeros: []
+  }));
 
   return (
     <div className="min-h-screen">

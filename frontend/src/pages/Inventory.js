@@ -22,6 +22,7 @@ import {
   Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { filtrarEOrdenar } from '../lib/pesquisa';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -265,13 +266,12 @@ const Inventory = ({ language, translations }) => {
       const response = await axios.get(`${API}/inventory?${params}`);
       let inventoryData = response.data;
       
-      // Filter by search term if provided
-      if (searchTerm) {
-        inventoryData = inventoryData.filter(item => 
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
+      // Mesma pesquisa do resto da aplicação: início das palavras, nome primeiro
+      inventoryData = filtrarEOrdenar(inventoryData, searchTerm, (item) => ({
+        principal: item.name,
+        extras: [item.description, item.color, item.size],
+        numeros: []
+      }));
       
       setInventory(inventoryData);
     } catch (error) {

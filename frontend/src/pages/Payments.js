@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { corresponde, filtrarEOrdenar } from '../lib/pesquisa';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -233,7 +234,10 @@ const Payments = ({ language, translations }) => {
   }, []);
 
   useEffect(() => {
-    fetchPayments();
+    // Espera 300ms enquanto se escreve: sem isto, cada letra lancava uma
+    // leitura, e a mais antiga chegava depois e mostrava a lista por filtrar
+    const espera = setTimeout(() => fetchPayments(), 300);
+    return () => clearTimeout(espera);
   }, [statusFilter, dateFilter, selectedMember, searchTerm]);
 
   const fetchMembers = async () => {
@@ -279,7 +283,10 @@ const Payments = ({ language, translations }) => {
     }
   };
 
+  const pedidoAtual = useRef(0);
+
   const fetchPayments = async () => {
+    const meuPedido = ++pedidoAtual.current;
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -306,7 +313,7 @@ const Payments = ({ language, translations }) => {
       let paymentsData = response.data;
       
       // Get member details for each payment with better error handling
-      const paymentsWithMembers = await Promise.all(
+      let paymentsWithMembers = await Promise.all(
         paymentsData.map(async (payment) => {
           try {
             const memberResponse = await axios.get(`${API}/members/${payment.member_id}`);
@@ -331,9 +338,13 @@ const Payments = ({ language, translations }) => {
       
       // Filter by search term if provided
       if (searchTerm) {
-        paymentsWithMembers = paymentsWithMembers.filter(payment => 
-          payment.member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          payment.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        paymentsWithMembers = paymentsWithMembers.filter((payment) =>
+          corresponde(
+            searchTerm,
+            payment.member?.name,
+            [payment.description],
+            [payment.member?.member_number, payment.member?.phone]
+          )
         );
       }
       
@@ -343,6 +354,9 @@ const Payments = ({ language, translations }) => {
         if (dataA.getTime() !== dataB.getTime()) return dataB - dataA;
         return new Date(b.created_at) - new Date(a.created_at);
       });
+
+      // Se entretanto foi pedida outra leitura, esta ja nao interessa
+      if (meuPedido !== pedidoAtual.current) return;
 
       setPayments(paymentsWithMembers);
     } catch (error) {
@@ -563,57 +577,12 @@ const Payments = ({ language, translations }) => {
 
   const stats = getPaymentStats();
 
-  // Pesquisa sem preciosismos: ignora maiúsculas, acentos e as ligações dos
-  // nomes ("de", "da", "dos"), para "joao silva" encontrar "João da Silva"
-  const LIGACOES = ['de', 'da', 'do', 'das', 'dos', 'e', 'du', 'del', 'di'];
-
-  const normalizar = (texto) =>
-    String(texto || '')
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .toLowerCase()
-      .trim();
-
-  // Procura pelo início das palavras, nunca a meio, desde a primeira letra.
-  // Quem tem o nome próprio a começar pelas letras escritas aparece primeiro.
-  const correspondePesquisa = (procurado, nome, numero, telefone) => {
-    const termos = normalizar(procurado).split(/\s+/).filter((t) => t && !LIGACOES.includes(t));
-    if (termos.length === 0) return true;
-
-    const palavras = normalizar(nome).split(/\s+/).filter((p) => p && !LIGACOES.includes(p));
-    const numeroLimpo = normalizar(numero);
-    const digitos = String(telefone || '').replace(/\D/g, '');
-
-    return termos.every((termo) => {
-      if (palavras.some((p) => p.startsWith(termo))) return true;
-      if (numeroLimpo && (numeroLimpo.startsWith(termo) || numeroLimpo.replace(/^0+/, '').startsWith(termo))) return true;
-      if (digitos && /^\d+$/.test(termo) && digitos.includes(termo)) return true;
-      return false;
-    });
-  };
-
-  // 0 para quem tem o nome próprio a começar pelo que foi escrito, 1 para os restantes
-  const relevancia = (procurado, nome) => {
-    const termos = normalizar(procurado).split(/\s+/).filter((t) => t && !LIGACOES.includes(t));
-    const palavras = normalizar(nome).split(/\s+/).filter((p) => p && !LIGACOES.includes(p));
-    if (termos.length === 0 || palavras.length === 0) return 1;
-    return termos.some((t) => palavras[0].startsWith(t)) ? 0 : 1;
-  };
-
-  const getSearchedMembers = () => {
-    const procurado = memberSearch.trim();
-    const lista = procurado
-      ? members.filter((m) => correspondePesquisa(procurado, m.name, m.member_number, m.phone))
-      : members;
-
-    // Nomes próprios primeiro; dentro de cada grupo, por ordem alfabética
-    return [...lista].sort((a, b) => {
-      const ra = procurado ? relevancia(procurado, a.name) : 0;
-      const rb = procurado ? relevancia(procurado, b.name) : 0;
-      if (ra !== rb) return ra - rb;
-      return normalizar(a.name).localeCompare(normalizar(b.name));
-    });
-  };
+  const getSearchedMembers = () =>
+    filtrarEOrdenar(members, memberSearch, (m) => ({
+      principal: m.name,
+      extras: [],
+      numeros: [m.member_number, m.phone]
+    }));
 
   const getSelectedMemberObject = () => members.find((m) => m.id === formData.member_id);
 
