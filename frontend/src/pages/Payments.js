@@ -309,32 +309,24 @@ const Payments = ({ language, translations }) => {
         params.append('start_date', startOfYear.toISOString().split('T')[0]);
       }
       
-      const response = await axios.get(`${API}/payments?${params}`);
-      let paymentsData = response.data;
-      
-      // Get member details for each payment with better error handling
-      let paymentsWithMembers = await Promise.all(
-        paymentsData.map(async (payment) => {
-          try {
-            const memberResponse = await axios.get(`${API}/members/${payment.member_id}`);
-            return {
-              ...payment,
-              member: memberResponse.data
-            };
-          } catch (error) {
-            console.warn(`Member ${payment.member_id} not found for payment, likely deleted`);
-            return {
-              ...payment,
-              member: { 
-                name: 'Membro eliminado', 
-                id: payment.member_id,
-                member_number: 'N/A',
-                membership_type: 'N/A'
-              }
-            };
-          }
-        })
-      );
+      // Dois pedidos, e não um por cada pagamento: com mil pagamentos, o
+      // ecrã fazia mais de mil pedidos ao servidor e demorava uma eternidade
+      const [respostaPagamentos, respostaMembros] = await Promise.all([
+        axios.get(`${API}/payments?${params}`),
+        axios.get(`${API}/members`)
+      ]);
+
+      const porId = new Map(respostaMembros.data.map((m) => [m.id, m]));
+
+      let paymentsWithMembers = respostaPagamentos.data.map((payment) => ({
+        ...payment,
+        member: porId.get(payment.member_id) || {
+          name: 'Membro eliminado',
+          id: payment.member_id,
+          member_number: 'N/A',
+          membership_type: 'N/A'
+        }
+      }));
       
       // Filter by search term if provided
       if (searchTerm) {

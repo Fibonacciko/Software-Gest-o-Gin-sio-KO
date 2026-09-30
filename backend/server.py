@@ -1475,7 +1475,7 @@ async def recalcular_validades(member_id: str):
     Chamada depois de editar ou apagar um pagamento: sem isto, apagar a
     mensalidade deixava o socio ativo na mesma, com uma validade orfa.
     """
-    pagamentos = await db.payments.find({"member_id": member_id, "status": "paid"}).to_list(1000)
+    pagamentos = await db.payments.find({"member_id": member_id, "status": "paid"}).to_list(5000)
 
     def ultima_data(tipos):
         datas = []
@@ -1742,6 +1742,11 @@ async def get_members(
             )
         ]
 
+    # O QR code e uma imagem em texto e vale 58% do peso da resposta.
+    # A lista nao o mostra: quem precisa dele e a ficha individual e a app.
+    for m in members:
+        m.pop("qr_code", None)
+
     # Nomes proprios primeiro, e dentro de cada grupo por ordem alfabetica
     members.sort(
         key=lambda m: (
@@ -1858,7 +1863,7 @@ async def get_attendance(
         # com $lte, um intervalo excluia sempre o ultimo dia
         filter_dict['check_in_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
     
-    attendance_records = await db.attendance.find(filter_dict).to_list(1000)
+    attendance_records = await db.attendance.find(filter_dict).to_list(20000)
     return [Attendance(**parse_from_mongo(record)) for record in attendance_records]
 
 @api_router.get("/members/{member_id}/attendance", response_model=List[Attendance])
@@ -1882,7 +1887,7 @@ async def get_member_attendance(
             '$lt': end_date.isoformat()
         }
     
-    attendance_records = await db.attendance.find(filter_dict).to_list(1000)
+    attendance_records = await db.attendance.find(filter_dict).to_list(20000)
     return [Attendance(**parse_from_mongo(record)) for record in attendance_records]
 
 @api_router.get("/attendance/detailed")
@@ -1908,7 +1913,7 @@ async def get_detailed_attendance(
         # com $lte, um intervalo excluia sempre o ultimo dia
         filter_dict['check_in_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
     
-    attendance_records = await db.attendance.find(filter_dict).to_list(1000)
+    attendance_records = await db.attendance.find(filter_dict).to_list(20000)
     
     # Enrich with member and activity data
     detailed_records = []
@@ -2054,7 +2059,7 @@ async def get_payments(
         # com $lte, um intervalo excluia sempre o ultimo dia
         filter_dict['payment_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
     
-    payments = await db.payments.find(filter_dict).to_list(1000)
+    payments = await db.payments.find(filter_dict).to_list(20000)
     return [Payment(**parse_from_mongo(payment)) for payment in payments]
 
 # Expense Routes (admin and staff)
@@ -2088,7 +2093,7 @@ async def get_expenses(
         # com $lte, um intervalo excluia sempre o ultimo dia
         filter_dict['expense_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
 
-    expenses = await db.expenses.find(filter_dict).to_list(1000)
+    expenses = await db.expenses.find(filter_dict).to_list(20000)
     return [Expense(**parse_from_mongo(expense)) for expense in expenses]
 
 # Inventory Routes

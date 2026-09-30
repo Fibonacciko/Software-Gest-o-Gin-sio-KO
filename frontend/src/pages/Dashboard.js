@@ -170,31 +170,24 @@ const Dashboard = ({ language, translations }) => {
       const tomorrowDate = new Date();
       tomorrowDate.setDate(tomorrowDate.getDate() + 1);
       const tomorrow = tomorrowDate.toISOString().split('T')[0];
-      const attendanceResponse = await axios.get(`${API}/attendance?start_date=${today}&end_date=${tomorrow}`);
-      
-      // Get member details for each attendance with better error handling
-      const attendanceWithMembers = await Promise.all(
-        attendanceResponse.data.map(async (att) => {
-          try {
-            const memberResponse = await axios.get(`${API}/members/${att.member_id}`);
-            return {
-              ...att,
-              member: memberResponse.data
-            };
-          } catch (error) {
-            console.warn(`Member ${att.member_id} not found, likely deleted`);
-            return {
-              ...att,
-              member: { 
-                name: 'Membro eliminado', 
-                id: att.member_id,
-                member_number: 'N/A',
-                phone: 'N/A'
-              }
-            };
-          }
-        })
-      );
+      // Um pedido para as presenças e outro para os sócios, em vez de um
+      // pedido por cada presença
+      const [attendanceResponse, membrosResponse] = await Promise.all([
+        axios.get(`${API}/attendance?start_date=${today}&end_date=${tomorrow}`),
+        axios.get(`${API}/members`)
+      ]);
+
+      const porId = new Map(membrosResponse.data.map((m) => [m.id, m]));
+
+      const attendanceWithMembers = attendanceResponse.data.map((att) => ({
+        ...att,
+        member: porId.get(att.member_id) || {
+          name: 'Membro eliminado',
+          id: att.member_id,
+          member_number: 'N/A',
+          phone: 'N/A'
+        }
+      }));
       
       setTodayAttendance(attendanceWithMembers);
     } catch (error) {
