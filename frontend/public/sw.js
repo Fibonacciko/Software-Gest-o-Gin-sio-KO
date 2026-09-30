@@ -1,13 +1,14 @@
 // KO Gym - Service Worker Premium
 // Funcionalidade offline e cache inteligente
 
-const CACHE_NAME = 'ko-gym-v2.0.1';
-const STATIC_CACHE = 'ko-gym-static-v2.0.1';
-const DYNAMIC_CACHE = 'ko-gym-dynamic-v2.0.1';
+const CACHE_NAME = 'ko-gym-v2.1.0';
+const STATIC_CACHE = 'ko-gym-static-v2.1.0';
+const DYNAMIC_CACHE = 'ko-gym-dynamic-v2.1.0';
 
 // Recursos essenciais para cache
 const STATIC_ASSETS = [
-  '/',
+  // '/' fica de fora de proposito: a pagina principal aponta para os
+  // ficheiros da versao atual e tem de vir sempre da rede
   '/static/js/bundle.js',
   '/static/css/main.css', 
   '/manifest.json',
@@ -94,8 +95,10 @@ async function handleRequest(request) {
       return await networkFirstWithFallback(request);
     }
     
-    // 3. Stale While Revalidate - Para páginas
-    return await staleWhileRevalidate(request);
+    // 3. Páginas: rede primeiro, para uma versão nova aparecer logo.
+    // Antes vinha da cache, e uma atualização só se via ao segundo
+    // recarregamento — dava a impressão de que nada tinha mudado.
+    return await networkFirstWithFallback(request);
     
   } catch (error) {
     console.error('🚫 KO Gym SW: Request failed', error);
