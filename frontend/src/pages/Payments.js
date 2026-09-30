@@ -1078,7 +1078,7 @@ const Payments = ({ language, translations }) => {
                       {t[language].description}
                     </th>
                     <th className="text-right p-4 font-medium text-gray-600 dark:text-gray-300">
-                      {t[language].actions}
+                      {isAdmin() ? t[language].actions : t[language].edit}
                     </th>
                   </tr>
                 </thead>
