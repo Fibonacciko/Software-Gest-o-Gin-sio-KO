@@ -3702,12 +3702,44 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
+async def criar_indices():
+    """Indices da base de dados, criados no arranque.
+
+    Sem eles, cada consulta percorre a coleccao inteira. Com mil registos
+    ainda e rapido; com dez mil deixa de ser. Criar um indice que ja existe
+    nao faz nada, por isso e seguro correr sempre.
+    """
+    indices = {
+        "members": ["id", "member_number", "status", "membership_valid_until", "nfc_tag_id"],
+        "attendance": ["member_id", "check_in_date", "activity_id"],
+        "payments": ["member_id", "payment_date", "status", "payment_type"],
+        "sales": ["sale_date", "item_id", "member_id"],
+        "trial_classes": ["trial_date", "activity_id"],
+        "expenses": ["expense_date", "category"],
+        "inventory": ["id", "category"],
+        "activities": ["id", "is_active"],
+        "users": ["username", "id"],
+        "audit_logs": ["timestamp", "entity_type"],
+    }
+
+    criados = 0
+    for coleccao, campos in indices.items():
+        for campo in campos:
+            try:
+                await db[coleccao].create_index(campo)
+                criados += 1
+            except Exception as e:
+                gym_logger.warning("Indice nao criado", collection=coleccao, field=campo, error=e)
+
+    gym_logger.info("Indices verificados", total=criados)
+
 async def startup_db():
     global analytics_engine
     
     gym_logger.info("🚀 Starting KO Gym Management API - Premium Edition")
     
     initialize_firebase()
+    await criar_indices()
     await create_admin_user()
     await create_default_activities()
     await update_existing_members_with_numbers()
