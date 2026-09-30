@@ -19,6 +19,7 @@ import {
   Calendar,
   Download,
   Edit,
+  Trash2,
   Eye,
   Users
 } from 'lucide-react';
@@ -39,6 +40,7 @@ const Payments = ({ language, translations }) => {
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedMember, setSelectedMember] = useState('all');
   const [memberSearch, setMemberSearch] = useState('');
+  const [editingPayment, setEditingPayment] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [sales, setSales] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -104,6 +106,12 @@ const Payments = ({ language, translations }) => {
       cancel: 'Cancelar',
       view: 'Ver',
       edit: 'Editar',
+      actions: 'Ações',
+      editPayment: 'Corrigir Pagamento',
+      delete: 'Eliminar',
+      confirmDeletePayment: 'Eliminar este pagamento? As validades do sócio serão recalculadas.',
+      paymentDeleted: 'Pagamento eliminado e validades recalculadas.',
+      paymentUpdated: 'Pagamento corrigido.',
       totalRevenue: 'Receitas (Quotas)',
       merchandise: 'Merchandise (Vendas)',
       paymentType: 'Tipo de Pagamento',
@@ -176,6 +184,12 @@ const Payments = ({ language, translations }) => {
       cancel: 'Cancel',
       view: 'View',
       edit: 'Edit',
+      actions: 'Actions',
+      editPayment: 'Edit Payment',
+      delete: 'Delete',
+      confirmDeletePayment: 'Delete this payment? The member validities will be recalculated.',
+      paymentDeleted: 'Payment deleted and validities recalculated.',
+      paymentUpdated: 'Payment updated.',
       totalRevenue: 'Revenue (Fees)',
       merchandise: 'Merchandise (Sales)',
       paymentType: 'Payment Type',
@@ -323,12 +337,46 @@ const Payments = ({ language, translations }) => {
         );
       }
       
+      // Mais recentes no topo
+      paymentsWithMembers.sort((a, b) => {
+        const dataA = new Date(a.payment_date), dataB = new Date(b.payment_date);
+        if (dataA.getTime() !== dataB.getTime()) return dataB - dataA;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+
       setPayments(paymentsWithMembers);
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast.error('Erro ao carregar pagamentos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const editarPagamento = (payment) => {
+    setEditingPayment(payment);
+    setMemberSearch('');
+    setFormData({
+      member_id: payment.member_id,
+      amount: String(payment.amount),
+      payment_date: String(payment.payment_date).split('T')[0],
+      payment_type: payment.payment_type || 'quota',
+      payment_method: payment.payment_method || 'cash',
+      description: payment.description || ''
+    });
+    setShowAddDialog(true);
+  };
+
+  const apagarPagamento = async (payment) => {
+    if (!window.confirm(t[language].confirmDeletePayment)) return;
+    try {
+      await axios.delete(`${API}/payments/${payment.id}`);
+      toast.success(t[language].paymentDeleted);
+      fetchPayments();
+      fetchMembers();
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao eliminar o pagamento');
     }
   };
 
@@ -340,25 +388,30 @@ const Payments = ({ language, translations }) => {
       return;
     }
 
-    try {
-      await axios.post(`${API}/payments`, {
-        ...formData,
-        amount: parseFloat(formData.amount),
-        payment_date: formData.payment_date || null
-      });
+    const corpo = {
+      ...formData,
+      amount: parseFloat(formData.amount),
+      payment_date: formData.payment_date || null
+    };
 
-      // O seguro altera a ficha do socio, por isso a lista tem de ser relida
-      if (formData.payment_type === 'seguro') {
-        fetchMembers();
+    try {
+      if (editingPayment) {
+        await axios.put(`${API}/payments/${editingPayment.id}`, corpo);
+        toast.success(t[language].paymentUpdated);
+      } else {
+        await axios.post(`${API}/payments`, corpo);
+        toast.success(t[language].paymentAdded);
       }
-      
-      toast.success(t[language].paymentAdded);
+
+      // Qualquer pagamento altera as validades do sócio
+      fetchMembers();
       setShowAddDialog(false);
+      setEditingPayment(null);
       resetForm();
       fetchPayments();
     } catch (error) {
-      console.error('Error adding payment:', error);
-      toast.error('Erro ao registar pagamento');
+      console.error('Error saving payment:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao guardar o pagamento');
     }
   };
 
@@ -572,10 +625,15 @@ const Payments = ({ language, translations }) => {
           {t[language].payments}
         </h1>
         
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <Dialog
+          open={showAddDialog}
+          onOpenChange={(aberto) => { setShowAddDialog(aberto); if (!aberto) setEditingPayment(null); }}
+        >
         <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{t[language].addPayment}</DialogTitle>
+              <DialogTitle>
+                {editingPayment ? t[language].editPayment : t[language].addPayment}
+              </DialogTitle>
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -1058,6 +1116,9 @@ const Payments = ({ language, translations }) => {
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].description}
                     </th>
+                    <th className="text-right p-4 font-medium text-gray-600 dark:text-gray-300">
+                      {t[language].actions}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1120,14 +1181,54 @@ const Payments = ({ language, translations }) => {
                         </div>
                       </td>
                       <td className="p-4">
-                        <Badge variant={getStatusVariant(payment.status)}>
-                          {t[language][payment.status]}
-                        </Badge>
+                        {(() => {
+                          // Ligado exclusivamente aos pagamentos do sócio
+                          const estado = payment.member?.membership_status;
+                          const cor = estado === 'active' ? '#16a34a'
+                            : estado === 'suspended' ? '#dc2626' : '#dc2626';
+                          const texto = estado === 'active' ? 'ATIVO'
+                            : estado === 'suspended' ? 'SUSPENSO' : 'INATIVO';
+                          const ate = payment.member?.membership_valid_until;
+                          return (
+                            <Badge
+                              variant="outline"
+                              style={{ borderColor: cor, color: cor }}
+                              title={ate ? `Quota paga até ${new Date(ate).toLocaleDateString('pt-PT')}` : 'Sem quota registada'}
+                            >
+                              {texto}
+                            </Badge>
+                          );
+                        })()}
                       </td>
                       <td className="p-4">
                         <p className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">
                           {payment.description || '-'}
                         </p>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => editarPagamento(payment)}
+                            title={t[language].edit}
+                            data-testid={`edit-payment-${payment.id}`}
+                          >
+                            <Edit size={16} />
+                          </Button>
+                          {isAdmin() && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => apagarPagamento(payment)}
+                              className="text-red-600 hover:text-red-700"
+                              title={t[language].delete}
+                              data-testid={`delete-payment-${payment.id}`}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

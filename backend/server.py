@@ -1469,6 +1469,61 @@ def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, n
 
     return True
 
+async def recalcular_validades(member_id: str):
+    """Reconstroi a quota e o seguro do socio a partir dos pagamentos que existem.
+
+    Chamada depois de editar ou apagar um pagamento: sem isto, apagar a
+    mensalidade deixava o socio ativo na mesma, com uma validade orfa.
+    """
+    pagamentos = await db.payments.find({"member_id": member_id, "status": "paid"}).to_list(1000)
+
+    def ultima_data(tipos):
+        datas = []
+        for p in pagamentos:
+            if p.get("payment_type", "quota") not in tipos:
+                continue
+            valor = p.get("payment_date")
+            if isinstance(valor, str):
+                try:
+                    datas.append(datetime.fromisoformat(valor).date())
+                except (ValueError, TypeError):
+                    continue
+            elif isinstance(valor, date):
+                datas.append(valor)
+        return max(datas) if datas else None
+
+    quota = ultima_data({"quota", "quota_seguro"})
+    seguro = ultima_data({"seguro", "quota_seguro"})
+
+    alteracoes, remover = {}, {}
+
+    if quota:
+        alteracoes["membership_paid_date"] = quota
+        alteracoes["membership_valid_until"] = add_one_month(quota)
+    else:
+        remover["membership_paid_date"] = ""
+        remover["membership_valid_until"] = ""
+
+    if seguro:
+        validade = seguro + timedelta(days=INSURANCE_VALIDITY_DAYS)
+        alteracoes["insurance_paid_date"] = seguro
+        alteracoes["insurance_valid_until"] = validade
+        alteracoes["expiry_date"] = validade
+    else:
+        remover["insurance_paid_date"] = ""
+        remover["insurance_valid_until"] = ""
+        remover["expiry_date"] = ""
+
+    operacao = {}
+    if alteracoes:
+        operacao["$set"] = prepare_for_mongo(alteracoes)
+    if remover:
+        operacao["$unset"] = remover
+
+    if operacao:
+        await db.members.update_one({"id": member_id}, operacao)
+        BusinessCache.invalidate_member_cache()
+
 def relevancia_pesquisa(procurado: str, nome: str) -> int:
     """0 para quem tem o nome proprio a comecar pelo que foi escrito, 1 para
     os restantes. Serve para os nomes proprios virem primeiro na lista."""
@@ -1799,7 +1854,9 @@ async def get_attendance(
         filter_dict['check_in_date']['$gte'] = start_date.isoformat()
     if end_date:
         filter_dict['check_in_date'] = filter_dict.get('check_in_date', {})
-        filter_dict['check_in_date']['$lte'] = end_date.isoformat()
+        # As datas sao guardadas com hora, por isso o limite e o dia seguinte:
+        # com $lte, um intervalo excluia sempre o ultimo dia
+        filter_dict['check_in_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
     
     attendance_records = await db.attendance.find(filter_dict).to_list(1000)
     return [Attendance(**parse_from_mongo(record)) for record in attendance_records]
@@ -1847,7 +1904,9 @@ async def get_detailed_attendance(
         filter_dict['check_in_date']['$gte'] = start_date.isoformat()
     if end_date:
         filter_dict['check_in_date'] = filter_dict.get('check_in_date', {})
-        filter_dict['check_in_date']['$lte'] = end_date.isoformat()
+        # As datas sao guardadas com hora, por isso o limite e o dia seguinte:
+        # com $lte, um intervalo excluia sempre o ultimo dia
+        filter_dict['check_in_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
     
     attendance_records = await db.attendance.find(filter_dict).to_list(1000)
     
@@ -1925,6 +1984,54 @@ async def create_payment(
                     details=f"Registou pagamento de {detalhe}: {payment.amount} EUR")
     return payment
 
+@api_router.put("/payments/{payment_id}", response_model=Payment)
+async def update_payment(
+    payment_id: str,
+    dados: PaymentCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Corrige um pagamento mal lancado e refaz as validades do socio."""
+    existente = await db.payments.find_one({"id": payment_id})
+    if not existente:
+        raise HTTPException(status_code=404, detail="Pagamento nao encontrado")
+
+    membro = await db.members.find_one({"id": dados.member_id})
+    if not membro:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
+    novos = dados.dict()
+    if novos.get("payment_date") is None:
+        novos["payment_date"] = existente.get("payment_date")
+
+    atualizado = Payment(**{**parse_from_mongo(dict(existente)), **novos, "id": payment_id})
+    await db.payments.replace_one({"id": payment_id}, prepare_for_mongo(atualizado.dict()))
+
+    # O socio pode ter mudado; ambos tem de ser recalculados
+    await recalcular_validades(dados.member_id)
+    if existente.get("member_id") != dados.member_id:
+        await recalcular_validades(existente["member_id"])
+
+    await log_audit(current_user, "update", "payment", entity_id=payment_id,
+                    details=f"Corrigiu pagamento para {atualizado.amount} EUR")
+    return atualizado
+
+@api_router.delete("/payments/{payment_id}")
+async def delete_payment(
+    payment_id: str,
+    current_user: User = Depends(require_admin)
+):
+    """Apaga um pagamento lancado por engano. So o administrador."""
+    pagamento = await db.payments.find_one({"id": payment_id})
+    if not pagamento:
+        raise HTTPException(status_code=404, detail="Pagamento nao encontrado")
+
+    await db.payments.delete_one({"id": payment_id})
+    await recalcular_validades(pagamento["member_id"])
+
+    await log_audit(current_user, "delete", "payment", entity_id=payment_id,
+                    details=f"Eliminou pagamento de {pagamento.get('amount')} EUR")
+    return {"message": "Pagamento eliminado"}
+
 @api_router.get("/payments", response_model=List[Payment])
 async def get_payments(
     member_id: Optional[str] = None,
@@ -1943,7 +2050,9 @@ async def get_payments(
         filter_dict['payment_date']['$gte'] = start_date.isoformat()
     if end_date:
         filter_dict['payment_date'] = filter_dict.get('payment_date', {})
-        filter_dict['payment_date']['$lte'] = end_date.isoformat()
+        # As datas sao guardadas com hora, por isso o limite e o dia seguinte:
+        # com $lte, um intervalo excluia sempre o ultimo dia
+        filter_dict['payment_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
     
     payments = await db.payments.find(filter_dict).to_list(1000)
     return [Payment(**parse_from_mongo(payment)) for payment in payments]
@@ -1975,7 +2084,9 @@ async def get_expenses(
         filter_dict['expense_date']['$gte'] = start_date.isoformat()
     if end_date:
         filter_dict['expense_date'] = filter_dict.get('expense_date', {})
-        filter_dict['expense_date']['$lte'] = end_date.isoformat()
+        # As datas sao guardadas com hora, por isso o limite e o dia seguinte:
+        # com $lte, um intervalo excluia sempre o ultimo dia
+        filter_dict['expense_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
 
     expenses = await db.expenses.find(filter_dict).to_list(1000)
     return [Expense(**parse_from_mongo(expense)) for expense in expenses]
@@ -3363,7 +3474,7 @@ async def get_invoices(
         filter_dict["issue_date"]["$gte"] = start_date.isoformat()
     if end_date:
         filter_dict["issue_date"] = filter_dict.get("issue_date", {})
-        filter_dict["issue_date"]["$lte"] = end_date.isoformat()
+        filter_dict["issue_date"]["$lt"] = (end_date + timedelta(days=1)).isoformat()
     
     invoices = await db.invoices.find(filter_dict).sort("issue_date", -1).to_list(1000)
     return [Invoice(**parse_from_mongo(invoice)) for invoice in invoices]
