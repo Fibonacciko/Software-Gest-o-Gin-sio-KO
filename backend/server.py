@@ -2023,9 +2023,13 @@ async def update_payment(
 @api_router.delete("/payments/{payment_id}")
 async def delete_payment(
     payment_id: str,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin_or_staff)
 ):
-    """Apaga um pagamento lancado por engano. So o administrador."""
+    """Apaga um pagamento lancado por engano.
+
+    Ao alcance do colaborador, tal como em Membros. Fica registado no
+    historico quem apagou o que, e quando.
+    """
     pagamento = await db.payments.find_one({"id": payment_id})
     if not pagamento:
         raise HTTPException(status_code=404, detail="Pagamento nao encontrado")

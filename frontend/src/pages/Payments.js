@@ -1078,7 +1078,7 @@ const Payments = ({ language, translations }) => {
                       {t[language].description}
                     </th>
                     <th className="text-right p-4 font-medium text-gray-600 dark:text-gray-300">
-                      {isAdmin() ? t[language].actions : t[language].edit}
+                      {t[language].actions}
                     </th>
                   </tr>
                 </thead>
@@ -1177,18 +1177,16 @@ const Payments = ({ language, translations }) => {
                           >
                             <Edit size={16} />
                           </Button>
-                          {isAdmin() && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => apagarPagamento(payment)}
-                              className="text-red-600 hover:text-red-700"
-                              title={t[language].delete}
-                              data-testid={`delete-payment-${payment.id}`}
-                            >
-                              <Trash2 size={16} />
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => apagarPagamento(payment)}
+                            className="text-red-600 hover:text-red-700"
+                            title={t[language].delete}
+                            data-testid={`delete-payment-${payment.id}`}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
                         </div>
                       </td>
                     </tr>

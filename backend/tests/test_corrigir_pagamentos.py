@@ -112,8 +112,11 @@ def test_corrigir_o_valor_nao_mexe_na_validade(cliente, admin, criar_socio, paga
     assert ficha(cliente, admin, socio["id"])["membership_valid_until"] == "2026-07-10"
 
 
-def test_colaborador_corrige_mas_nao_apaga(cliente, admin, colaborador, criar_socio, pagar):
-    """Apagar registos financeiros fica reservado ao administrador."""
+def test_colaborador_corrige_e_apaga(cliente, admin, colaborador, criar_socio, pagar):
+    """O colaborador lanca, corrige e apaga, como em Membros.
+
+    Fica registado no historico quem apagou o que.
+    """
     socio = criar_socio()
     pagamento = pagar(socio["id"])
 
@@ -130,7 +133,20 @@ def test_colaborador_corrige_mas_nao_apaga(cliente, admin, colaborador, criar_so
     )
     assert correcao.status_code == 200
 
-    assert cliente.delete(f"/api/payments/{pagamento['id']}", headers=colaborador).status_code == 403
+    assert cliente.delete(f"/api/payments/{pagamento['id']}", headers=colaborador).status_code == 200
+    # E as validades do socio sao refeitas na mesma
+    assert ficha(cliente, admin, socio["id"])["membership_status"] == "inactive"
+
+
+def test_quem_apaga_fica_registado(cliente, admin, colaborador, criar_socio, pagar):
+    socio = criar_socio()
+    pagamento = pagar(socio["id"])
+    cliente.delete(f"/api/payments/{pagamento['id']}", headers=colaborador)
+
+    registos = cliente.get("/api/audit-logs", headers=admin).json()
+    apagados = [r for r in registos if r["action"] == "delete" and r["entity_type"] == "payment"]
+    assert apagados, "a eliminacao devia ficar no historico"
+    assert apagados[0]["username"] == "colaborador.teste"
 
 
 def test_pagamento_inexistente_devolve_404(cliente, admin):
