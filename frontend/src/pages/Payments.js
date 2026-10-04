@@ -16,6 +16,7 @@ import {
   Filter,
   DollarSign,
   TrendingUp,
+  TrendingDown,
   Calendar,
   Download,
   Edit,
@@ -54,6 +55,11 @@ const Payments = ({ language, translations }) => {
   });
 
   const todayISO = () => new Date().toISOString().split('T')[0];
+
+  const nomeDoMes = () => {
+    const texto = new Date().toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  };
 
   const INSURANCE_AMOUNT = '20.00';
 
@@ -115,6 +121,8 @@ const Payments = ({ language, translations }) => {
       paymentUpdated: 'Pagamento corrigido.',
       totalRevenue: 'Receitas (Quotas)',
       merchandise: 'Merchandise (Vendas)',
+      monthlyExpenses: 'Despesas do Mês',
+      sinceAlways: 'desde sempre',
       paymentType: 'Tipo de Pagamento',
       modalities: 'Modalidades',
       dailyRevenue: 'Receita Diária',
@@ -193,6 +201,8 @@ const Payments = ({ language, translations }) => {
       paymentUpdated: 'Payment updated.',
       totalRevenue: 'Revenue (Fees)',
       merchandise: 'Merchandise (Sales)',
+      monthlyExpenses: 'Expenses This Month',
+      sinceAlways: 'all time',
       paymentType: 'Payment Type',
       modalities: 'Activities',
       dailyRevenue: 'Daily Revenue',
@@ -511,6 +521,9 @@ const Payments = ({ language, translations }) => {
     const pendingCount = payments.filter(p => p.status === 'pending').length;
     
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const monthlyExpenses = expenses
+      .filter((exp) => new Date(exp.expense_date) >= startOfMonth)
+      .reduce((sum, exp) => sum + exp.amount, 0);
 
     // Receita do dia: tudo o que entrou hoje, para fechar a caixa
     const hoje = new Date();
@@ -533,6 +546,7 @@ const Payments = ({ language, translations }) => {
 
     return {
       totalRevenue,
+      monthlyExpenses,
       insuranceRevenue,
       monthlyRevenue,
       dailyRevenue,
@@ -837,7 +851,7 @@ const Payments = ({ language, translations }) => {
     </Dialog>
 
 {/* Statistics */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin() ? 'lg:grid-cols-3 xl:grid-cols-5' : ''} gap-6`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin() ? 'lg:grid-cols-3 xl:grid-cols-6' : ''} gap-6`}>
         <Card className="card-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -938,6 +952,29 @@ const Payments = ({ language, translations }) => {
         </Card>
         )}
         
+        {isAdmin() && (
+        <Card className="card-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  {t[language].monthlyExpenses}
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  €{stats.monthlyExpenses.toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {nomeDoMes()}
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-red-500">
+                <TrendingDown size={24} className="text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
         <Card className="card-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -946,7 +983,12 @@ const Payments = ({ language, translations }) => {
                   {t[language].pendingPayments}
                 </p>
                 {isAdmin() && (
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">€{stats.totalExpenses.toFixed(2)}</p>
+                  <>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">€{stats.totalExpenses.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {t[language].sinceAlways}
+                    </p>
+                  </>
                 )}
                 <Button
                   size="sm"

@@ -34,7 +34,19 @@ const EXPENSE_CATEGORY_LABELS = {
   merchandise: 'Merchandise',
   marketing: 'Marketing',
   licenses: 'Licenças',
-  fnb: 'F&B'
+  fnb: 'F&B',
+  // Categorias usadas antes de a lista ter sido revista, ainda presentes
+  // nas despesas de 2025 e do inicio de 2026
+  teachers: 'Professores',
+  collaborators: 'Colaboradores',
+  maintenance: 'Manutenção',
+  equipment: 'Equipamento',
+  utilities: 'Serviços (água, luz)',
+  products: 'Produtos',
+  cleaning: 'Limpeza',
+  insurance: 'Seguros',
+  misc: 'Diversos',
+  other: 'Outros'
 };
 
 const expenseCategoryLabel = (id) => EXPENSE_CATEGORY_LABELS[id] || id;
