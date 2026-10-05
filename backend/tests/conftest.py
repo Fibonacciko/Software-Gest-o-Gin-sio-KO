@@ -114,7 +114,6 @@ def criar_socio(cliente, admin):
             "nationality": "Portuguesa",
             "profession": "",
             "address": "Rua de Teste, 1",
-            "membership_type": "basic",
         }
         dados.update(extra)
         r = cliente.post("/api/members", headers=admin, json=dados)

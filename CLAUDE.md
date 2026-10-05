@@ -54,10 +54,17 @@ compatibilidade e acompanha sempre a primeira da lista.
 ### Perfis de acesso
 
 - **admin** — tudo.
-- **staff (colaborador)** — Painel, Membros, Finanças e Stock. Nas Finanças
-  **não vê valores** (nem nos cartões, nem na lista de pagamentos, nem nas
-  vendas) e **não pode exportar**. Vê os preços no Stock, que precisa para
-  cobrar ao balcão.
+- **staff (colaborador)** — Painel, Membros, Finanças e Stock. Nas Finanças vê
+  o valor de **cada** pagamento e venda (precisa dele para conferir ao balcão),
+  mas **não vê as contas do ginásio**: os cartões de faturação, despesa e
+  resultado líquido aparecem-lhe sem números, e **não pode exportar**. Os
+  **Relatórios são só do administrador** — mostram as contas todas.
+
+### Sem pacotes
+
+Não há Básico / Premium / VIP. O ginásio nunca os usou e o campo foi removido
+em outubro de 2026; o que distingue os sócios são as **modalidades** e o estado
+da quota. Fichas antigas podem ter o campo gravado — é ignorado.
 - **member** — apenas a aplicação móvel.
 
 ---
@@ -103,13 +110,19 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 63 testes e demoram 3 segundos.
+backend** — são 108 testes e demoram 6 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 ```
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
+
+As contas dos Relatórios têm testes próprios, no site (70 testes, 3 segundos):
+
+```bash
+cd frontend && yarn test --watchAll=false
+```
 
 Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
@@ -189,6 +202,11 @@ arranque de novo — não confie no `--reload`.
 
 Nas consultas ao servidor, o limite superior de um intervalo tem de ser o **dia
 seguinte** (`$lt`), senão exclui o próprio dia.
+
+**As contas dos Relatórios vivem em `frontend/src/lib/estatisticas.js`**, fora
+dos ecrãs e com testes. As datas **nunca** passam por `new Date(texto)`: lê-se o
+ano/mês/dia do próprio texto e comparam-se como números (`20261005`). Foi assim
+que se resolveu o último dia do período ficar de fora no horário de verão.
 
 **Cache do painel.** Os números do painel ficam em cache 5 minutos. Ao alterar
 dados que os afetem, chame `BusinessCache.invalidate_member_cache()`.

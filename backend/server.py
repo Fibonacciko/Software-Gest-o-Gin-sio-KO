@@ -81,11 +81,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 # Enums
-class MembershipType(str, Enum):
-    BASIC = "basic"
-    PREMIUM = "premium"
-    VIP = "vip"
-
 class MemberStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -210,7 +205,6 @@ class MobileMember(BaseModel):
     date_of_birth: date
     nationality: str
     profession: str
-    membership_type: MembershipType
     status: MemberStatus
     join_date: date
     expiry_date: Optional[date] = None
@@ -301,7 +295,6 @@ class Member(BaseModel):
     nationality: str
     profession: str
     address: str
-    membership_type: MembershipType
     status: MemberStatus = MemberStatus.ACTIVE
     join_date: date = Field(default_factory=lambda: date.today())
     expiry_date: Optional[date] = None
@@ -326,12 +319,20 @@ class MemberCreate(BaseModel):
     nationality: str
     profession: str
     address: str
-    membership_type: MembershipType
     photo_url: Optional[str] = None
     notes: Optional[str] = None
     activity_id: Optional[str] = None
     activity_ids: Optional[List[str]] = None
     insurance_valid_until: Optional[date] = None
+
+    @field_validator('email', mode='before')
+    @classmethod
+    def empty_email_to_none(cls, v):
+        # O formulario envia sempre o campo, vazio quando o socio nao tem
+        # email. Sem isto, a ficha era recusada com um erro de validacao.
+        if v == '' or v is None:
+            return None
+        return v
 
 class Attendance(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -970,8 +971,6 @@ async def calculate_smart_discount(member_id: str, amount: float):
             if "min_workouts" in conditions and workout_count < conditions["min_workouts"]:
                 applies = False
             if "min_membership_days" in conditions and membership_days < conditions["min_membership_days"]:
-                applies = False
-            if "membership_type" in conditions and member.get("membership_type") not in conditions["membership_type"]:
                 applies = False
             
             if applies:
@@ -1699,9 +1698,8 @@ async def create_member(
         
         # Log business metric
         gym_logger.business_metric("member_created", 1,
-                                 user_id=current_user.id, 
-                                 member_id=member.id,
-                                 membership_type=member_data.membership_type)
+                                 user_id=current_user.id,
+                                 member_id=member.id)
         
         gym_logger.info("Member created successfully", 
                        member_id=member.id, 
@@ -1719,7 +1717,6 @@ async def create_member(
 @api_rate_limit()
 async def get_members(
     status: Optional[MemberStatus] = None,
-    membership_type: Optional[MembershipType] = None,
     search: Optional[str] = None,
     current_user: User = Depends(require_admin_or_staff),
     request: Request = None
@@ -1727,8 +1724,6 @@ async def get_members(
     filter_dict = {}
     if status:
         filter_dict['status'] = status
-    if membership_type:
-        filter_dict['membership_type'] = membership_type
     # A pesquisa e feita aqui e nao na base de dados: assim ignora acentos,
     # maiusculas e as ligacoes dos nomes, que o Mongo nao sabe ignorar
     members = await db.members.find(filter_dict).to_list(2000)

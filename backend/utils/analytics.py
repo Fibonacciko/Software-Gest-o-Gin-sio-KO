@@ -122,14 +122,6 @@ class AnalyticsEngine:
             "join_date": {"$gte": thirty_days_ago.date().isoformat()}
         })
         
-        # Membros por tipo
-        membership_breakdown = await self.db.members.aggregate([
-            {"$group": {
-                "_id": "$membership_type",
-                "count": {"$sum": 1}
-            }}
-        ]).to_list(None)
-        
         # Taxa de crescimento
         sixty_days_ago = now - timedelta(days=60)
         members_last_month = await self.db.members.count_documents({
@@ -145,8 +137,7 @@ class AnalyticsEngine:
             "active": active_members,
             "inactive": total_members - active_members,
             "new_this_month": new_members,
-            "growth_rate": round(growth_rate, 2),
-            "membership_breakdown": {item["_id"]: item["count"] for item in membership_breakdown}
+            "growth_rate": round(growth_rate, 2)
         })
     
     async def _get_attendance_metrics(self) -> Dict[str, Any]:
@@ -568,7 +559,6 @@ class AnalyticsEngine:
                 "$project": {
                     "id": 1,
                     "name": 1,
-                    "membership_type": 1,
                     "join_date": 1
                 }
             }

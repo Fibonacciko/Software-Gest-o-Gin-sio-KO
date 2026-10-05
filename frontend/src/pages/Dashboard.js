@@ -278,7 +278,6 @@ const Dashboard = ({ language, translations }) => {
         nationality: selectedMember.nationality,
         profession: selectedMember.profession,
         address: selectedMember.address,
-        membership_type: selectedMember.membership_type,
         photo_url: selectedMember.photo_url || null,
         activity_id: selectedMember.activity_id || null,
         activity_ids: selectedMember.activity_ids || [],
@@ -990,7 +989,6 @@ const Dashboard = ({ language, translations }) => {
                   >
                     {estadoQuota(selectedMember).texto}
                   </Badge>
-                  <Badge variant="outline">{selectedMember.membership_type}</Badge>
                   {getMemberActivityIds(selectedMember).map((id) => {
                     const activity = activities.find((a) => a.id === id);
                     if (!activity) return null;

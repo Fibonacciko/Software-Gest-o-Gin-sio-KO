@@ -40,7 +40,6 @@ const Members = ({ language, translations }) => {
   const [editingMember, setEditingMember] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [membershipFilter, setMembershipFilter] = useState('all');
   const [activities, setActivities] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -51,7 +50,6 @@ const Members = ({ language, translations }) => {
     nationality: '',
     profession: '',
     address: '',
-    membership_type: 'basic',
     activity_ids: [],
     insurance_valid_until: '',
     photo_url: '',
@@ -78,7 +76,6 @@ const Members = ({ language, translations }) => {
       nationality: 'Nacionalidade',
       profession: 'Profissão',
       address: 'Morada',
-      membershipType: 'Tipo de Membership',
       photoUrl: 'URL da Foto',
       notes: 'Notas',
       save: 'Guardar',
@@ -115,7 +112,6 @@ const Members = ({ language, translations }) => {
       nationality: 'Nationality',
       profession: 'Profession',
       address: 'Address',
-      membershipType: 'Membership Type',
       photoUrl: 'Photo URL',
       notes: 'Notes',
       save: 'Save',
@@ -165,7 +161,6 @@ const Members = ({ language, translations }) => {
       
       if (searchTerm) params.append('search', searchTerm);
       if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (membershipFilter !== 'all') params.append('membership_type', membershipFilter);
       
       const response = await axios.get(`${API}/members?${params}`);
       setMembers(response.data);
@@ -182,7 +177,7 @@ const Members = ({ language, translations }) => {
       fetchMembers();
     }, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, statusFilter, membershipFilter]);
+  }, [searchTerm, statusFilter]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -220,7 +215,6 @@ const Members = ({ language, translations }) => {
       nationality: member.nationality || '',
       profession: member.profession || '',
       address: member.address || '',
-      membership_type: member.membership_type || 'basic',
       insurance_valid_until: member.insurance_valid_until
         ? String(member.insurance_valid_until).split('T')[0]
         : '',
@@ -266,8 +260,7 @@ const Members = ({ language, translations }) => {
       nationality: '',
       profession: '',
       address: '',
-      membership_type: 'basic',
-      activity_ids: [],
+        activity_ids: [],
       insurance_valid_until: '',
       photo_url: '',
       notes: ''

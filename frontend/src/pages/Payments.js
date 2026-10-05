@@ -356,7 +356,7 @@ const Payments = ({ language, translations }) => {
           name: 'Membro eliminado',
           id: payment.member_id,
           member_number: 'N/A',
-          membership_type: 'N/A'
+          nome: 'Desconhecido'
         }
       }));
       
@@ -690,7 +690,6 @@ const Payments = ({ language, translations }) => {
                             <Badge variant="outline">{member.member_number}</Badge>
                             <span>{member.name}</span>
                           </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{member.membership_type}</span>
                         </button>
                       );
                     })

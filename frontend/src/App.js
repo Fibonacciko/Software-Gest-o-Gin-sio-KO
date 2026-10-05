@@ -173,7 +173,7 @@ function App() {
                     </ProtectedRoute>
                   } />
                   <Route path="/reports" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requiredRole="admin">
                       <Reports language={language} />
                     </ProtectedRoute>
                   } />
@@ -183,13 +183,13 @@ function App() {
                     </ProtectedRoute>
                   } />
                   <Route path="/users" element={
-                    <ProtectedRoute requireAdmin>
+                    <ProtectedRoute requiredRole="admin">
                       <UserManagement language={language} />
                     </ProtectedRoute>
                   } />
                   {/* Premium Analytics Route */}
                   <Route path="/analytics" element={
-                    <ProtectedRoute requireAdmin>
+                    <ProtectedRoute requiredRole="admin">
                       <Dashboard language={language} analytics={true} />
                     </ProtectedRoute>
                   } />
