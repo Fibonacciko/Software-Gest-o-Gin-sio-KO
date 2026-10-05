@@ -86,6 +86,7 @@ const Reports = ({ language, translations }) => {
       totalMembers: 'Total de Membros',
       activeMembers: 'Membros Ativos',
       totalRevenue: 'Receita Total',
+    billing: 'Faturação (quotas + merchandise)',
       averageAttendance: 'Presença Média',
       attendanceStats: 'Estatísticas de Presença',
       paymentStats: 'Estatísticas de Pagamentos',
@@ -105,13 +106,13 @@ const Reports = ({ language, translations }) => {
     trialClasses: 'Aulas Experimentais',
     trialsByActivity: 'Experimentais por Modalidade',
     trialsByMonth: 'Experimentais por Mês',
-    netProfit: 'Lucro Líquido',
+    netProfit: 'Resultado Líquido',
     print: 'Imprimir',
       totalItems: 'Total de Items',
       totalValue: 'Valor Total',
       lowStockItems: 'Items com Stock Baixo',
       membersByType: 'Membros por Tipo',
-      revenueByMonth: 'Receita por Mês',
+      revenueByMonth: 'Faturação por Mês',
       attendanceByDay: 'Presenças por Dia',
       topMembers: 'Membros Mais Ativos',
       noData: 'Nenhum dado disponível para o período selecionado',
@@ -142,6 +143,7 @@ const Reports = ({ language, translations }) => {
       totalMembers: 'Total Members',
       activeMembers: 'Active Members',
       totalRevenue: 'Total Revenue',
+    billing: 'Billing (fees + merchandise)',
       averageAttendance: 'Average Attendance',
       attendanceStats: 'Attendance Statistics',
       paymentStats: 'Payment Statistics',
@@ -161,7 +163,7 @@ const Reports = ({ language, translations }) => {
       totalValue: 'Total Value',
       lowStockItems: 'Low Stock Items',
       membersByType: 'Members by Type',
-      revenueByMonth: 'Revenue by Month',
+      revenueByMonth: 'Billing by Month',
       attendanceByDay: 'Attendance by Day',
       topMembers: 'Most Active Members',
       noData: 'No data available for the selected period',
@@ -350,7 +352,6 @@ const Reports = ({ language, translations }) => {
       return expDate >= start && expDate <= end;
     });
     const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const netProfit = totalRevenue - totalExpenses;
     const expensesByMonth = filteredExpenses.reduce((acc, expense) => {
       const month = new Date(expense.expense_date).toLocaleDateString('pt-PT', { month: 'short' });
       acc[month] = (acc[month] || 0) + expense.amount;
@@ -374,6 +375,12 @@ const Reports = ({ language, translations }) => {
       return acc;
     }, {});
 
+    // O grafico mensal e a faturacao toda, para somar o mesmo que o cartao
+    filteredSales.forEach((sale) => {
+      const mes = new Date(sale.sale_date).toLocaleDateString('pt-PT', { month: 'short' });
+      revenueByMonth[mes] = (revenueByMonth[mes] || 0) + (sale.total || 0);
+    });
+
     setReportData({
       type: 'payment',
       stats: {
@@ -384,7 +391,9 @@ const Reports = ({ language, translations }) => {
         totalExpenses,
         merchandiseRevenue,
         merchandiseUnits,
-        // O lucro passa a incluir a receita do merchandise
+        // Faturacao = quotas e seguros + merchandise. O liquido e a faturacao menos a despesa,
+        // igual ao que a pagina de Financas mostra.
+        faturacao: totalRevenue + merchandiseRevenue,
         netProfit: totalRevenue + merchandiseRevenue - totalExpenses
       },
       charts: { revenueByMonth, expensesByMonth, expensesByCategory, merchandiseByItem }
@@ -468,15 +477,16 @@ const Reports = ({ language, translations }) => {
         csvContent = [
           ['Estatísticas de Pagamentos'],
           ['Total de Pagamentos', reportData.stats.totalPayments],
-          ['Receita Total', reportData.stats.totalRevenue.toFixed(2)],
+          ['Faturacao (quotas + merchandise)', (reportData.stats.faturacao ?? reportData.stats.totalRevenue).toFixed(2)],
+          ['  dos quais quotas e seguros', reportData.stats.totalRevenue.toFixed(2)],
           ['Pagamento Médio', reportData.stats.averagePayment.toFixed(2)],
           ['Pagamentos Pendentes', reportData.stats.pendingPayments],
         ['Merchandise (vendas)', (reportData.stats.merchandiseRevenue || 0).toFixed(2)],
         ['Merchandise (unidades)', reportData.stats.merchandiseUnits || 0],
         ['Despesas Totais', reportData.stats.totalExpenses.toFixed(2)],
-        ['Lucro Liquido', reportData.stats.netProfit.toFixed(2)],
+        ['Resultado Liquido', reportData.stats.netProfit.toFixed(2)],
         [''],
-        ['Receita por Mes'],
+        ['Faturacao por Mes'],
         ...Object.entries(reportData.charts.revenueByMonth).map(([m, v]) => [m, v.toFixed(2)]),
         [''],
         ['Despesas por Mes'],
@@ -737,8 +747,8 @@ const Reports = ({ language, translations }) => {
                 color="bg-blue-500"
               />
               <StatCard
-                title={t[language].totalRevenue}
-                value={`€${reportData.stats.totalRevenue.toFixed(2)}`}
+                title={t[language].billing}
+                value={`€${(reportData.stats.faturacao ?? reportData.stats.totalRevenue).toFixed(2)}`}
                 icon={TrendingUp}
                 color="bg-green-500"
               />
@@ -768,7 +778,7 @@ const Reports = ({ language, translations }) => {
           />
           <StatCard
             title={t[language].netProfit}
-            value={`€${reportData.stats.netProfit.toFixed(2)}`}
+            value={`${reportData.stats.netProfit < 0 ? '-' : ''}€${Math.abs(reportData.stats.netProfit).toFixed(2)}`}
             icon={DollarSign}
             color={reportData.stats.netProfit >= 0 ? "bg-emerald-500" : "bg-red-600"}
           />

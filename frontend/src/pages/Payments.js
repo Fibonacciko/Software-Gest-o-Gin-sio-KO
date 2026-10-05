@@ -122,6 +122,17 @@ const Payments = ({ language, translations }) => {
       totalRevenue: 'Receitas (Quotas)',
       merchandise: 'Merchandise (Vendas)',
       monthlyExpenses: 'Despesas do Mês',
+      billing: 'Faturação',
+      billingYear: 'Faturação (anual)',
+      billingMonth: 'Faturação (mensal)',
+      billingDay: 'Faturação (diária)',
+      expenseYear: 'Despesa (anual)',
+      expenseMonth: 'Despesa (mensal)',
+      expenseDay: 'Despesa (diária)',
+      netYear: 'Resultado líquido (anual)',
+      netMonth: 'Resultado líquido (mensal)',
+      today: 'hoje',
+      expenses: 'Despesa',
       sinceAlways: 'desde sempre',
       paymentType: 'Tipo de Pagamento',
       modalities: 'Modalidades',
@@ -202,6 +213,17 @@ const Payments = ({ language, translations }) => {
       totalRevenue: 'Revenue (Fees)',
       merchandise: 'Merchandise (Sales)',
       monthlyExpenses: 'Expenses This Month',
+      billing: 'Billing',
+      billingYear: 'Billing (year)',
+      billingMonth: 'Billing (month)',
+      billingDay: 'Billing (day)',
+      expenseYear: 'Expenses (year)',
+      expenseMonth: 'Expenses (month)',
+      expenseDay: 'Expenses (day)',
+      netYear: 'Net result (year)',
+      netMonth: 'Net result (month)',
+      today: 'today',
+      expenses: 'Expenses',
       sinceAlways: 'all time',
       paymentType: 'Payment Type',
       modalities: 'Activities',
@@ -497,66 +519,67 @@ const Payments = ({ language, translations }) => {
   };
 
   const getPaymentStats = () => {
-    const pagos = payments.filter(p => p.status === 'paid');
+    const pagos = payments.filter((p) => p.status === 'paid');
     const seguroFixo = parseFloat(INSURANCE_AMOUNT);
 
     // Num pagamento combinado, os 20 € do seguro contam como seguro e o
-    // restante como quota, para as duas receitas nao se confundirem
+    // restante como quota, para as duas receitas não se confundirem
     const parteSeguro = (p) => {
       if (p.payment_type === 'seguro') return p.amount;
       if (p.payment_type === 'quota_seguro') return Math.min(seguroFixo, p.amount);
       return 0;
     };
-    const parteQuota = (p) => p.amount - parteSeguro(p);
 
-    const totalRevenue = pagos.reduce((sum, p) => sum + parteQuota(p), 0);
-    const insuranceRevenue = pagos.reduce((sum, p) => sum + parteSeguro(p), 0);
-    
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthlyRevenue = pagos
-      .filter(p => new Date(p.payment_date) >= startOfMonth)
-      .reduce((sum, p) => sum + p.amount, 0);
-    
-    const pendingCount = payments.filter(p => p.status === 'pending').length;
-    
-    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-    const monthlyExpenses = expenses
-      .filter((exp) => new Date(exp.expense_date) >= startOfMonth)
-      .reduce((sum, exp) => sum + exp.amount, 0);
-
-    // Receita do dia: tudo o que entrou hoje, para fechar a caixa
     const hoje = new Date();
-    const mesmoDia = (d) => {
-      const data = new Date(d);
-      return data.getFullYear() === hoje.getFullYear()
-        && data.getMonth() === hoje.getMonth()
-        && data.getDate() === hoje.getDate();
-    };
-    const dailyPayments = pagos.filter(p => mesmoDia(p.payment_date)).reduce((sum, p) => sum + p.amount, 0);
-    const dailySales = sales.filter(s => mesmoDia(s.sale_date)).reduce((sum, s) => sum + (s.total || 0), 0);
-    const dailyRevenue = dailyPayments + dailySales;
+    const inicioDoAno = new Date(hoje.getFullYear(), 0, 1);
+    const inicioDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
 
-    // Vendas de merchandise: receita do balcao, contada a parte das quotas
-    const merchandiseRevenue = sales.reduce((sum, s) => sum + (s.total || 0), 0);
-    const merchandiseMonthly = sales
-      .filter(s => new Date(s.sale_date) >= startOfMonth)
-      .reduce((sum, s) => sum + (s.total || 0), 0);
-    const merchandiseUnits = sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+    const noPeriodo = (valorData, desde) => {
+      const d = new Date(valorData);
+      if (desde === 'hoje') {
+        return d.getFullYear() === hoje.getFullYear()
+          && d.getMonth() === hoje.getMonth()
+          && d.getDate() === hoje.getDate();
+      }
+      return d >= desde;
+    };
+
+    const somar = (lista, campoData, campoValor, desde) =>
+      lista
+        .filter((x) => noPeriodo(x[campoData], desde))
+        .reduce((total, x) => total + (campoValor(x) || 0), 0);
+
+    // FATURAÇÃO = tudo o que o ginásio faturou: quotas, seguros e merchandise
+    const faturacao = (desde) =>
+      somar(pagos, 'payment_date', (p) => p.amount, desde) +
+      somar(sales, 'sale_date', (v) => v.total, desde);
+
+    const despesa = (desde) => somar(expenses, 'expense_date', (e) => e.amount, desde);
+
+    const faturacaoAnual = faturacao(inicioDoAno);
+    const faturacaoMensal = faturacao(inicioDoMes);
+    const faturacaoDiaria = faturacao('hoje');
+
+    const despesaAnual = despesa(inicioDoAno);
+    const despesaMensal = despesa(inicioDoMes);
+    const despesaDiaria = despesa('hoje');
 
     return {
-      totalRevenue,
-      monthlyExpenses,
-      insuranceRevenue,
-      monthlyRevenue,
-      dailyRevenue,
-      dailyPayments,
-      dailySales,
-      pendingCount,
-      totalExpenses,
-      merchandiseRevenue,
-      merchandiseMonthly,
-      merchandiseUnits
+      ano: hoje.getFullYear(),
+      faturacaoAnual,
+      faturacaoMensal,
+      faturacaoDiaria,
+      despesaAnual,
+      despesaMensal,
+      despesaDiaria,
+      // RESULTADO LÍQUIDO = faturação menos despesa, no mesmo período
+      liquidoAnual: faturacaoAnual - despesaAnual,
+      liquidoMensal: faturacaoMensal - despesaMensal,
+      // Detalhe, para quem quiser perceber de onde vem a faturação
+      quotasAnual: somar(pagos, 'payment_date', (p) => p.amount - parteSeguro(p), inicioDoAno),
+      segurosAnual: somar(pagos, 'payment_date', parteSeguro, inicioDoAno),
+      merchandiseAnual: somar(sales, 'sale_date', (v) => v.total, inicioDoAno),
+      pendingCount: payments.filter((p) => p.status === 'pending').length
     };
   };
 
@@ -599,6 +622,26 @@ const Payments = ({ language, translations }) => {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-0">
           {t[language].payments}
         </h1>
+
+        <div className="flex flex-wrap gap-3 mb-4 lg:mb-0">
+          <Button
+            className="btn-hover bg-green-600 hover:bg-green-700 text-white"
+            onClick={() => { resetForm(); setEditingPayment(null); setShowAddDialog(true); }}
+            data-testid="add-payment-btn"
+          >
+            <Plus className="mr-2" size={16} />
+            {t[language].addPayment}
+          </Button>
+          <Button
+            className="btn-hover bg-orange-500 hover:bg-orange-600 text-white"
+            onClick={() => { resetExpenseForm(); setShowAddExpenseDialog(true); }}
+            data-testid="add-expense-btn"
+          >
+            <Plus className="mr-2" size={16} />
+            {t[language].addExpense}
+          </Button>
+        </div>
+
         
         <Dialog
           open={showAddDialog}
@@ -850,163 +893,73 @@ const Payments = ({ language, translations }) => {
       </DialogContent>
     </Dialog>
 
-{/* Statistics */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin() ? 'lg:grid-cols-3 xl:grid-cols-6' : ''} gap-6`}>
-        <Card className="card-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  {t[language].totalRevenue}
-                </p>
-                {isAdmin() && (
-                  <>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      €{stats.totalRevenue.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {t[language].insuranceRevenue}: €{stats.insuranceRevenue.toFixed(2)}
-                    </p>
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  className="btn-hover mt-2 bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => { resetForm(); setShowAddDialog(true); }}
-                  data-testid="add-payment-btn"
-                >
-                  <Plus className="mr-1" size={14} />
-                  {t[language].addPayment}
-                </Button>
+      {/* Faturação, despesa e resultado líquido */}
+      {isAdmin() ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { titulo: t[language].billingYear, valor: stats.faturacaoAnual, nota: String(stats.ano), cor: 'bg-green-600', icone: DollarSign },
+            { titulo: t[language].billingMonth, valor: stats.faturacaoMensal, nota: nomeDoMes(), cor: 'bg-green-500', icone: TrendingUp },
+            { titulo: t[language].billingDay, valor: stats.faturacaoDiaria, nota: t[language].today, cor: 'bg-emerald-500', icone: Calendar },
+            { titulo: t[language].expenseYear, valor: stats.despesaAnual, nota: String(stats.ano), cor: 'bg-red-600', icone: TrendingDown },
+            { titulo: t[language].expenseMonth, valor: stats.despesaMensal, nota: nomeDoMes(), cor: 'bg-red-500', icone: TrendingDown },
+            { titulo: t[language].expenseDay, valor: stats.despesaDiaria, nota: t[language].today, cor: 'bg-orange-500', icone: CreditCard },
+            { titulo: t[language].netYear, valor: stats.liquidoAnual, nota: String(stats.ano), liquido: true, icone: DollarSign },
+            { titulo: t[language].netMonth, valor: stats.liquidoMensal, nota: nomeDoMes(), liquido: true, icone: DollarSign }
+          ].map((c) => {
+            const Icone = c.icone;
+            const negativo = c.liquido && c.valor < 0;
+            const corIcone = c.liquido ? (negativo ? 'bg-red-600' : 'bg-emerald-600') : c.cor;
+            return (
+              <Card key={c.titulo} className="card-shadow">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300 truncate">
+                        {c.titulo}
+                      </p>
+                      <p
+                        className="text-2xl font-bold truncate"
+                        style={{ color: negativo ? '#dc2626' : 'var(--text-primary)' }}
+                      >
+                        {c.valor < 0 ? '-' : ''}€{Math.abs(c.valor).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{c.nota}</p>
+                    </div>
+                    <div className={`p-2.5 rounded-full shrink-0 ${corIcone}`}>
+                      <Icone size={20} className="text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        /* O colaborador não vê contas do ginásio: só os botões de registar */
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="card-shadow">
+            <CardContent className="p-5 flex items-center justify-between gap-3">
+              <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                {t[language].billing}
+              </p>
+              <div className="p-2.5 rounded-full bg-green-600 shrink-0">
+                <DollarSign size={20} className="text-white" />
               </div>
-              <div className="p-3 rounded-full bg-green-500">
-                <DollarSign size={24} className="text-white" />
+            </CardContent>
+          </Card>
+          <Card className="card-shadow">
+            <CardContent className="p-5 flex items-center justify-between gap-3">
+              <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                {t[language].expenses}
+              </p>
+              <div className="p-2.5 rounded-full bg-orange-500 shrink-0">
+                <CreditCard size={20} className="text-white" />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {isAdmin() && (
-        <Card className="card-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  {t[language].monthlyRevenue}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  €{stats.monthlyRevenue.toFixed(2)}
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-blue-500">
-                <TrendingUp size={24} className="text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        {isAdmin() && (
-        <Card className="card-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  {t[language].dailyRevenue}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  €{stats.dailyRevenue.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  €{stats.dailyPayments.toFixed(2)} pagamentos · €{stats.dailySales.toFixed(2)} merchandise
-                </p>
-              </div>
-              <div className="p-3 rounded-full" style={{ background: 'var(--gradient-primary)' }}>
-                <Calendar size={24} className="text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        )}
-
-        {isAdmin() && (
-        <Card className="card-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  {t[language].merchandise}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  €{stats.merchandiseRevenue.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  €{stats.merchandiseMonthly.toFixed(2)} {t[language].merchandiseMonth} · {stats.merchandiseUnits} {t[language].units}
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-green-600">
-                <ShoppingBag size={24} className="text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        )}
-        
-        {isAdmin() && (
-        <Card className="card-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  {t[language].monthlyExpenses}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  €{stats.monthlyExpenses.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {nomeDoMes()}
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-red-500">
-                <TrendingDown size={24} className="text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        )}
-
-        <Card className="card-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  {t[language].pendingPayments}
-                </p>
-                {isAdmin() && (
-                  <>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">€{stats.totalExpenses.toFixed(2)}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {t[language].sinceAlways}
-                    </p>
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  className="btn-hover mt-2 bg-orange-500 hover:bg-orange-600 text-white"
-                  onClick={() => { resetExpenseForm(); setShowAddExpenseDialog(true); }}
-                  data-testid="add-expense-btn"
-                >
-                  <Plus className="mr-1" size={14} />
-                  {t[language].addExpense}
-                </Button>
-              </div>
-              <div className="p-3 rounded-full bg-orange-500">
-                <CreditCard size={24} className="text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Filters */}
       <Card>
