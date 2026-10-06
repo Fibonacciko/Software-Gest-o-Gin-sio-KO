@@ -38,6 +38,28 @@ Três tipos: **Quota**, **Seguro** (20 € automáticos) e **Mensalidade + Segur
 Nas contas, um pagamento combinado é repartido: 20 € contam como seguro, o resto
 como quota.
 
+### Início das contas
+
+**As contas do ginásio começam a 1 de outubro de 2026** (`INICIO_DAS_CONTAS`,
+em `frontend/src/lib/estatisticas.js`). Foi quando o sistema passou a ser usado
+a sério: antes disso há pagamentos lançados mas muitas despesas que nunca foram
+registadas, e o lucro que daí saía nunca existiu. 2027 será o primeiro ano
+inteiro e certo.
+
+- **Nada foi apagado.** Os 1007 pagamentos e as 37 despesas anteriores continuam
+  na base de dados e na ficha de cada sócio. O que muda é só o que entra nas
+  somas: Finanças e Relatórios.
+- Aplica-se a **quotas, despesas, merchandise e aulas experimentais**.
+- **Não se aplica às presenças nem às inscrições**, que estão certas desde o
+  princípio e contam desde sempre.
+- **Não toca nos seguros**: a validade vem da ficha do sócio, não destas somas.
+  (Confirmado na altura: nenhum seguro válido vinha de um pagamento anterior.)
+- Um período inteiramente anterior **não serve de comparação** — dizer que
+  subiu tudo a partir de um zero que não é verdade engana mais do que informa.
+  Nesses casos a comparação não aparece.
+
+Para mudar a data, é só esse `INICIO_DAS_CONTAS`. Há testes a protegê-lo.
+
 ### Despesas
 
 A **descrição é opcional**. Uma despesa fica identificada pela **categoria** e
@@ -147,7 +169,7 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios têm testes próprios, no site (74 testes, 2 segundos):
+As contas dos Relatórios têm testes próprios, no site (86 testes, 2 segundos):
 
 ```bash
 cd frontend && yarn test --watchAll=false

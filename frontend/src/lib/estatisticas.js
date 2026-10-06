@@ -20,6 +20,23 @@
  *    medida com os mesmos dias imediatamente antes.
  */
 
+/**
+ * O dia em que as contas do ginásio passam a contar.
+ *
+ * O ginásio só começou a registar as despesas a sério em outubro de 2026.
+ * Antes disso há pagamentos lançados mas muitas despesas que nunca foram
+ * registadas, o que dava um lucro que não existiu. O dono decidiu começar
+ * as contas aqui, para o ano de 2027 ser o primeiro ano inteiro e certo.
+ *
+ * **Os dados antigos não foram apagados** — continuam na ficha de cada
+ * sócio e na lista de pagamentos. O que muda é só o que entra nas contas.
+ *
+ * Não toca nos seguros: a validade do seguro vem da ficha do sócio, não
+ * destas somas. (Verificado: nenhum seguro válido vinha de um pagamento
+ * anterior a outubro de 2026.)
+ */
+export const INICIO_DAS_CONTAS = { ano: 2026, mes: 10, dia: 1 };
+
 export const NOMES_MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -118,6 +135,21 @@ export const intervaloAnterior = (inicio, fim) => {
   const fimAnterior = new Date(a.ano, a.mes - 1, a.dia - 1);
   const inicioAnterior = new Date(a.ano, a.mes - 1, a.dia - dias);
   return { inicio: inicioAnterior, fim: fimAnterior };
+};
+
+/* ------------------------------------------------- início das contas */
+
+/** O início do período, nunca anterior ao dia em que as contas começam. */
+export const desdeOInicioDasContas = (inicio) => {
+  const pedido = numeroDaData(inicio);
+  const corte = numeroDaData(INICIO_DAS_CONTAS);
+  return pedido === null || pedido < corte ? INICIO_DAS_CONTAS : inicio;
+};
+
+/** Verdadeiro quando o período inteiro é anterior ao início das contas. */
+export const anteriorAoInicioDasContas = (fim) => {
+  const ate = numeroDaData(fim);
+  return ate !== null && ate < numeroDaData(INICIO_DAS_CONTAS);
 };
 
 /* ------------------------------------------------------------- comparações */
@@ -321,10 +353,14 @@ export const estatisticasFinanceiras = ({
   const pagos = pagamentos.filter((p) => p.status === 'paid');
 
   const contas = (de, ate) => {
-    const quotas = noPeriodo(pagos, 'payment_date', de, ate);
-    const vendasDo = noPeriodo(vendas, 'sale_date', de, ate);
-    const despesasDo = noPeriodo(despesas, 'expense_date', de, ate);
-    const trialsDo = noPeriodo(experimentais, 'trial_date', de, ate);
+    // Nada anterior ao início das contas entra nas somas
+    const desde = desdeOInicioDasContas(de);
+    const foraDoPeriodo = anteriorAoInicioDasContas(ate);
+
+    const quotas = foraDoPeriodo ? [] : noPeriodo(pagos, 'payment_date', desde, ate);
+    const vendasDo = foraDoPeriodo ? [] : noPeriodo(vendas, 'sale_date', desde, ate);
+    const despesasDo = foraDoPeriodo ? [] : noPeriodo(despesas, 'expense_date', desde, ate);
+    const trialsDo = foraDoPeriodo ? [] : noPeriodo(experimentais, 'trial_date', desde, ate);
     const receitaQuotas = soma(quotas, (p) => p.amount);
     const merchandise = soma(vendasDo, (v) => v.total);
     const trials = soma(trialsDo, (t) => t.amount);
@@ -342,7 +378,12 @@ export const estatisticasFinanceiras = ({
   const antes = contas(anterior.inicio, anterior.fim);
 
   const pendentes = noPeriodo(pagamentos.filter((p) => p.status === 'pending'),
-    'payment_date', inicio, fim).length;
+    'payment_date', desdeOInicioDasContas(inicio), fim).length;
+
+  // Comparar com um período inteiramente anterior ao início das contas daria
+  // sempre "subiu tudo", a partir de um zero que não é verdade
+  const semComparacao = anteriorAoInicioDasContas(anterior.fim);
+  const comp = (atual, antesDisso) => (semComparacao ? null : variacao(atual, antesDisso));
 
   return {
     faturacao: agora.faturacao,
@@ -359,14 +400,14 @@ export const estatisticasFinanceiras = ({
     pendentes,
     margem: agora.faturacao > 0 ? (agora.liquido / agora.faturacao) * 100 : null,
     comparacao: {
-      faturacao: variacao(agora.faturacao, antes.faturacao),
-      despesa: variacao(agora.despesa, antes.despesa),
-      liquido: variacao(agora.liquido, antes.liquido),
-      merchandise: variacao(agora.merchandise, antes.merchandise),
-      experimentais: variacao(agora.trials, antes.trials),
-      nPagamentos: variacao(agora.quotas.length, antes.quotas.length)
+      faturacao: comp(agora.faturacao, antes.faturacao),
+      despesa: comp(agora.despesa, antes.despesa),
+      liquido: comp(agora.liquido, antes.liquido),
+      merchandise: comp(agora.merchandise, antes.merchandise),
+      experimentais: comp(agora.trials, antes.trials),
+      nPagamentos: comp(agora.quotas.length, antes.quotas.length)
     },
-    periodoAnterior: anterior,
+    periodoAnterior: semComparacao ? null : anterior,
     faturacaoPorMes: (() => {
       const porMes = agrupar(agora.quotas, (p) => chaveDoMes(p.payment_date), (p) => p.amount);
       agora.vendasDo.forEach((v) => {
@@ -457,12 +498,18 @@ export const destaquesDoAno = ({
   const fim = { ano, mes: 12, dia: 31 };
   const noAno = (lista, campo) => lista.filter((x) => dentroDoIntervalo(x[campo], inicio, fim));
 
+  // O dinheiro só conta a partir do início das contas; as presenças e as
+  // inscrições contam desde sempre, que essas estão certas
+  const desde = desdeOInicioDasContas(inicio);
+  const noAnoEComContas = (lista, campo) =>
+    lista.filter((x) => dentroDoIntervalo(x[campo], desde, fim));
+
   const presencasDoAno = noAno(presencas, 'check_in_date');
-  const experimentaisDoAno = noAno(experimentais, 'trial_date');
+  const experimentaisDoAno = noAnoEComContas(experimentais, 'trial_date');
   const inscricoesDoAno = noAno(membros, 'join_date');
-  const pagos = noAno(pagamentos.filter((p) => p.status === 'paid'), 'payment_date');
-  const vendasDoAno = noAno(vendas, 'sale_date');
-  const despesasDoAno = noAno(despesas, 'expense_date');
+  const pagos = noAnoEComContas(pagamentos.filter((p) => p.status === 'paid'), 'payment_date');
+  const vendasDoAno = noAnoEComContas(vendas, 'sale_date');
+  const despesasDoAno = noAnoEComContas(despesas, 'expense_date');
 
   const notas = [];
 

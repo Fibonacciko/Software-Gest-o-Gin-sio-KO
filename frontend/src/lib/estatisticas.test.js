@@ -21,7 +21,8 @@ import {
   rotuloDoMes, diasDoIntervalo, intervaloAnterior, variacao, agrupar, maiorDe,
   porOrdemDeValor, mesesDoIntervalo, idade, escalaoEtario, modalidadesDoSocio,
   estaAtivo, estatisticasDePresencas, estatisticasFinanceiras,
-  estatisticasDeSocios, destaquesDoAno, anosComDados, parteDoSeguro, NOMES_DIAS, SEMANA
+  estatisticasDeSocios, destaquesDoAno, anosComDados, parteDoSeguro, NOMES_DIAS, SEMANA,
+  INICIO_DAS_CONTAS, desdeOInicioDasContas, anteriorAoInicioDasContas
 } from './estatisticas';
 
 /* ------------------------------------------------------------------ datas */
@@ -307,27 +308,29 @@ describe('estatísticas de presenças', () => {
 /* --------------------------------------------------------------- finanças */
 
 describe('estatísticas financeiras', () => {
-  const inicio = new Date(2026, 9, 1);
-  const fim = new Date(2026, 9, 31);
+  // Novembro, e outubro como mes de comparacao: setembro e anterior ao
+  // inicio das contas e ja nao serve de termo de comparacao
+  const inicio = new Date(2026, 10, 1);
+  const fim = new Date(2026, 10, 30);
   const pagamentos = [
-    { status: 'paid', amount: 35, payment_type: 'quota', payment_method: 'cash', payment_date: '2026-10-05' },
-    { status: 'paid', amount: 20, payment_type: 'seguro', payment_method: 'cash', payment_date: '2026-10-05' },
-    { status: 'paid', amount: 55, payment_type: 'quota_seguro', payment_method: 'mbway', payment_date: '2026-10-31' },
-    { status: 'pending', amount: 35, payment_type: 'quota', payment_method: 'cash', payment_date: '2026-10-10' },
-    { status: 'paid', amount: 100, payment_type: 'quota', payment_method: 'cash', payment_date: '2026-09-15' }
+    { status: 'paid', amount: 35, payment_type: 'quota', payment_method: 'cash', payment_date: '2026-11-05' },
+    { status: 'paid', amount: 20, payment_type: 'seguro', payment_method: 'cash', payment_date: '2026-11-05' },
+    { status: 'paid', amount: 55, payment_type: 'quota_seguro', payment_method: 'mbway', payment_date: '2026-11-30' },
+    { status: 'pending', amount: 35, payment_type: 'quota', payment_method: 'cash', payment_date: '2026-11-10' },
+    { status: 'paid', amount: 100, payment_type: 'quota', payment_method: 'cash', payment_date: '2026-10-15' }
   ];
   const vendas = [
-    { total: 12, quantity: 1, item_name: 'Luvas', sale_date: '2026-10-05' },
-    { total: 8, quantity: 2, item_name: 'Ligaduras', sale_date: '2026-09-20' }
+    { total: 12, quantity: 1, item_name: 'Luvas', sale_date: '2026-11-05' },
+    { total: 8, quantity: 2, item_name: 'Ligaduras', sale_date: '2026-10-20' }
   ];
   const despesas = [
-    { amount: 30, category: 'rent', expense_date: '2026-10-05' },
-    { amount: 100, category: 'rent', expense_date: '2026-09-20' }
+    { amount: 30, category: 'rent', expense_date: '2026-11-05' },
+    { amount: 100, category: 'rent', expense_date: '2026-10-20' }
   ];
   const experimentais = [
-    { amount: 5, activity_name: 'Boxe', trial_date: '2026-10-07' },
-    { amount: 5, activity_name: 'Boxe', trial_date: '2026-10-31' },
-    { amount: 5, activity_name: 'Kickboxing', trial_date: '2026-09-09' }
+    { amount: 5, activity_name: 'Boxe', trial_date: '2026-11-07' },
+    { amount: 5, activity_name: 'Boxe', trial_date: '2026-11-30' },
+    { amount: 5, activity_name: 'Kickboxing', trial_date: '2026-10-09' }
   ];
   const r = estatisticasFinanceiras({ pagamentos, despesas, vendas, experimentais, inicio, fim });
 
@@ -349,7 +352,7 @@ describe('estatísticas financeiras', () => {
 
   test('uma experimental oferecida conta como aula mas não como receita', () => {
     const comOferta = estatisticasFinanceiras({
-      experimentais: [{ amount: 0, activity_name: 'Boxe', trial_date: '2026-10-07' }],
+      experimentais: [{ amount: 0, activity_name: 'Boxe', trial_date: '2026-11-07' }],
       inicio, fim
     });
     expect(comOferta.nExperimentais).toBe(1);
@@ -375,14 +378,14 @@ describe('estatísticas financeiras', () => {
   });
 
   test('compara com o mês anterior', () => {
-    // Setembro: 100 de quota + 8 de venda + 5 de experimental = 113.
+    // Outubro: 100 de quota + 8 de venda + 5 de experimental = 113.
     expect(r.comparacao.faturacao).toMatchObject({ atual: 132, anterior: 113 });
     expect(r.comparacao.liquido).toMatchObject({ atual: 102, anterior: 13 });
     expect(r.comparacao.experimentais).toMatchObject({ atual: 10, anterior: 5 });
   });
 
   test('o pagamento e a experimental do último dia do mês contam', () => {
-    // Se o dia 31 fosse excluído, faltavam 55 de quota e 5 de experimental.
+    // Se o dia 30 fosse excluído, faltavam 55 de quota e 5 de experimental.
     expect(r.faturacao).toBe(132);
   });
 
@@ -465,14 +468,16 @@ describe('destaques do ano', () => {
   ];
   const d = destaquesDoAno({
     ano: 2026, presencas, membros, modalidades,
+    // O dinheiro e de depois do inicio das contas; as presencas e as
+    // inscricoes acima sao de marco e contam na mesma
     experimentais: [
-      { activity_name: 'Boxe', trial_date: '2026-04-10', amount: 5 },
-      { activity_name: 'Boxe', trial_date: '2026-04-11', amount: 5 },
-      { activity_name: 'Kickboxing', trial_date: '2026-05-02', amount: 0 }
+      { activity_name: 'Boxe', trial_date: '2026-11-10', amount: 5 },
+      { activity_name: 'Boxe', trial_date: '2026-11-11', amount: 5 },
+      { activity_name: 'Kickboxing', trial_date: '2026-12-02', amount: 0 }
     ],
-    pagamentos: [{ status: 'paid', amount: 200, payment_date: '2026-03-05' }],
-    vendas: [{ total: 50, sale_date: '2026-04-02' }],
-    despesas: [{ amount: 500, expense_date: '2026-04-20' }],
+    pagamentos: [{ status: 'paid', amount: 200, payment_date: '2026-10-05' }],
+    vendas: [{ total: 50, sale_date: '2026-11-02' }],
+    despesas: [{ amount: 500, expense_date: '2026-11-20' }],
     hoje: new Date(2026, 9, 5)
   });
 
@@ -502,13 +507,13 @@ describe('destaques do ano', () => {
   });
 
   test('diz qual foi o mês com mais aulas experimentais', () => {
-    expect(nota('Mês com mais aulas experimentais')).toContain('Abril 2026');
+    expect(nota('Mês com mais aulas experimentais')).toContain('Novembro 2026');
   });
 
   test('o melhor mês de faturação inclui o merchandise e as experimentais', () => {
-    expect(nota('Melhor mês de faturação')).toContain('Março 2026');
-    // Abril: 50 da venda + 10 das duas experimentais pagas
-    expect(d.faturacaoPorMes['2026-04']).toBe(60);
+    expect(nota('Melhor mês de faturação')).toContain('Outubro 2026');
+    // Novembro: 50 da venda + 10 das duas experimentais pagas
+    expect(d.faturacaoPorMes['2026-11']).toBe(60);
   });
 
   test('diz o que as experimentais renderam', () => {
@@ -519,14 +524,14 @@ describe('destaques do ano', () => {
   });
 
   test('uma experimental oferecida conta como aula e rende zero', () => {
-    expect(d.receitaExperimentaisPorMes['2026-05']).toBe(0);
-    expect(d.experimentaisPorMes['2026-05']).toBe(1);
+    expect(d.receitaExperimentaisPorMes['2026-12']).toBe(0);
+    expect(d.experimentaisPorMes['2026-12']).toBe(1);
   });
 
   test('o resultado líquido por mês é a faturação menos a despesa', () => {
-    expect(d.liquidoPorMes['2026-03']).toBe(200);
-    expect(d.liquidoPorMes['2026-04']).toBe(60 - 500);
-    expect(nota('Pior resultado líquido')).toContain('Abril 2026');
+    expect(d.liquidoPorMes['2026-10']).toBe(200);
+    expect(d.liquidoPorMes['2026-11']).toBe(60 - 500);
+    expect(nota('Pior resultado líquido')).toContain('Novembro 2026');
   });
 
   test('sem dados não inventa notas', () => {
@@ -538,6 +543,149 @@ describe('destaques do ano', () => {
   test('um ano sem aulas experimentais não fala delas', () => {
     const sem = destaquesDoAno({ ano: 2026, presencas, membros, modalidades });
     expect(sem.notas.some((n) => n.titulo.includes('experimentais'))).toBe(false);
+  });
+});
+
+/* -------------------------------------------------- início das contas */
+
+describe('início das contas', () => {
+  // O ginásio só começou a registar as despesas a sério em outubro de 2026.
+  // Antes disso ha pagamentos mas faltam despesas, o que dava um lucro que
+  // nunca existiu. As contas comecam ai; os dados antigos ficam guardados.
+
+  test('começa em 1 de outubro de 2026', () => {
+    expect(INICIO_DAS_CONTAS).toEqual({ ano: 2026, mes: 10, dia: 1 });
+  });
+
+  test('um período anterior é empurrado para o início das contas', () => {
+    expect(desdeOInicioDasContas(new Date(2026, 0, 1))).toEqual(INICIO_DAS_CONTAS);
+    expect(desdeOInicioDasContas(new Date(2025, 5, 1))).toEqual(INICIO_DAS_CONTAS);
+  });
+
+  test('um período posterior fica como está', () => {
+    const novembro = new Date(2026, 10, 1);
+    expect(desdeOInicioDasContas(novembro)).toBe(novembro);
+  });
+
+  test('reconhece um período inteiramente anterior', () => {
+    expect(anteriorAoInicioDasContas(new Date(2026, 8, 30))).toBe(true);
+    expect(anteriorAoInicioDasContas(new Date(2026, 9, 1))).toBe(false);
+  });
+});
+
+describe('o dinheiro antigo não entra nas contas', () => {
+  const antigos = [
+    { status: 'paid', amount: 1000, payment_type: 'quota', payment_date: '2026-07-15' },
+    { status: 'paid', amount: 500, payment_type: 'quota', payment_date: '2026-09-30' }
+  ];
+  const novos = [
+    { status: 'paid', amount: 35, payment_type: 'quota', payment_date: '2026-10-05' }
+  ];
+  const despesasAntigas = [{ amount: 800, category: 'rent', expense_date: '2026-09-20' }];
+  const despesasNovas = [{ amount: 100, category: 'rent', expense_date: '2026-10-10' }];
+  const experimentaisAntigas = [{ amount: 5, activity_name: 'Boxe', trial_date: '2026-09-29' }];
+  const experimentaisNovas = [{ amount: 5, activity_name: 'Boxe', trial_date: '2026-10-02' }];
+
+  const anoInteiro = { inicio: new Date(2026, 0, 1), fim: new Date(2026, 11, 31) };
+
+  test('um ano inteiro só conta de outubro para a frente', () => {
+    const r = estatisticasFinanceiras({
+      pagamentos: [...antigos, ...novos],
+      despesas: [...despesasAntigas, ...despesasNovas],
+      experimentais: [...experimentaisAntigas, ...experimentaisNovas],
+      ...anoInteiro
+    });
+    expect(r.receitaQuotas).toBe(35);      // e nao 1535
+    expect(r.despesa).toBe(100);           // e nao 900
+    expect(r.experimentais).toBe(5);       // e nao 10
+    expect(r.faturacao).toBe(40);
+    expect(r.liquido).toBe(-60);
+  });
+
+  test('o corte vale para tudo, incluindo as vendas de balcão', () => {
+    // A unica venda anterior, de 29 de setembro, foi passada para 1 de
+    // outubro na base de dados: o dono quis que contasse em outubro.
+    const r = estatisticasFinanceiras({
+      vendas: [
+        { total: 65, quantity: 1, item_name: 'Luvas', sale_date: '2026-09-29' },
+        { total: 20, quantity: 1, item_name: 'Ligaduras', sale_date: '2026-10-02' }
+      ],
+      ...anoInteiro
+    });
+    expect(r.merchandise).toBe(20);
+    expect(r.faturacao).toBe(20);
+  });
+
+  test('um período todo anterior dá zero, e não os valores antigos', () => {
+    const r = estatisticasFinanceiras({
+      pagamentos: antigos, despesas: despesasAntigas,
+      inicio: new Date(2026, 6, 1), fim: new Date(2026, 6, 31)
+    });
+    expect(r.faturacao).toBe(0);
+    expect(r.despesa).toBe(0);
+    expect(r.liquido).toBe(0);
+    expect(r.nPagamentos).toBe(0);
+  });
+
+  test('outubro não se compara com setembro, que não tem contas', () => {
+    const r = estatisticasFinanceiras({
+      pagamentos: [...antigos, ...novos],
+      inicio: new Date(2026, 9, 1), fim: new Date(2026, 9, 31)
+    });
+    expect(r.faturacao).toBe(35);
+    // Comparar com setembro daria "subiu tudo" a partir de um zero falso
+    expect(r.comparacao.faturacao).toBeNull();
+    expect(r.periodoAnterior).toBeNull();
+  });
+
+  test('novembro já se compara com outubro', () => {
+    const r = estatisticasFinanceiras({
+      pagamentos: [
+        ...novos,
+        { status: 'paid', amount: 70, payment_type: 'quota', payment_date: '2026-11-05' }
+      ],
+      inicio: new Date(2026, 10, 1), fim: new Date(2026, 10, 30)
+    });
+    expect(r.faturacao).toBe(70);
+    expect(r.comparacao.faturacao).toMatchObject({ atual: 70, anterior: 35 });
+  });
+
+  test('um pagamento pendente antigo também não conta', () => {
+    const r = estatisticasFinanceiras({
+      pagamentos: [{ status: 'pending', amount: 35, payment_date: '2026-07-10' }],
+      ...anoInteiro
+    });
+    expect(r.pendentes).toBe(0);
+  });
+
+  test('os destaques do ano seguem a mesma regra', () => {
+    const d = destaquesDoAno({
+      ano: 2026,
+      pagamentos: [...antigos, ...novos],
+      despesas: [...despesasAntigas, ...despesasNovas],
+      experimentais: [...experimentaisAntigas, ...experimentaisNovas],
+      vendas: [{ total: 65, sale_date: '2026-09-29' }],
+      presencas: [{ member_id: '1', check_in_date: '2026-03-02' }],
+      membros: [{ id: '1', join_date: '2026-03-10' }]
+    });
+    expect(d.totais.despesa).toBe(100);
+    expect(d.totais.experimentais).toBe(1);
+    expect(d.faturacaoPorMes['2026-07']).toBeUndefined();
+    expect(d.faturacaoPorMes['2026-10']).toBe(40);   // 35 de quota + 5 da experimental
+    expect(d.faturacaoPorMes['2026-09']).toBeUndefined();   // nem a venda de balcao
+  });
+
+  test('as presenças e as inscrições antigas continuam a contar', () => {
+    const d = destaquesDoAno({
+      ano: 2026,
+      presencas: [
+        { member_id: '1', check_in_date: '2026-03-02' },
+        { member_id: '1', check_in_date: '2026-10-02' }
+      ],
+      membros: [{ id: '1', join_date: '2026-03-10' }]
+    });
+    expect(d.totais.presencas).toBe(2);
+    expect(d.totais.inscricoes).toBe(1);
   });
 });
 

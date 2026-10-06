@@ -114,6 +114,7 @@ const Reports = ({ language }) => {
       previousPeriod: 'Período anterior',
       highlights: 'Notas do ano',
       highlightsHint: 'Leituras automáticas a partir dos registos do ano escolhido.',
+      accountsStart: 'As contas começam a 1 de outubro de 2026, quando o ginásio passou a registar tudo. As presenças e as inscrições contam desde sempre.',
       // Presenças
       totalAttendance: 'Total de Presenças',
       uniqueVisitors: 'Sócios Diferentes',
@@ -189,6 +190,7 @@ const Reports = ({ language }) => {
       previousPeriod: 'Previous period',
       highlights: 'Notes of the year',
       highlightsHint: 'Read automatically from the records of the selected year.',
+      accountsStart: 'The accounts start on 1 October 2026, when the gym began recording everything. Attendance and sign-ups count from the beginning.',
       totalAttendance: 'Total Check-ins',
       uniqueVisitors: 'Distinct Members',
       dailyAverage: 'Daily Average',
@@ -440,9 +442,11 @@ const Reports = ({ language }) => {
         ['Pagamentos registados', financas.nPagamentos],
         ['Pagamento medio', financas.pagamentoMedio.toFixed(2)],
         ['Pagamentos pendentes', financas.pendentes],
-        ['Faturacao no periodo anterior', financas.comparacao.faturacao.anterior.toFixed(2)],
-        ['Despesa no periodo anterior', financas.comparacao.despesa.anterior.toFixed(2)],
-        ['Resultado liquido no periodo anterior', financas.comparacao.liquido.anterior.toFixed(2)]
+        ...(financas.comparacao.faturacao ? [
+          ['Faturacao no periodo anterior', financas.comparacao.faturacao.anterior.toFixed(2)],
+          ['Despesa no periodo anterior', financas.comparacao.despesa.anterior.toFixed(2)],
+          ['Resultado liquido no periodo anterior', financas.comparacao.liquido.anterior.toFixed(2)]
+        ] : [['Periodo anterior', 'sem contas: e anterior a 1 de outubro de 2026']])
       ]);
       tabela('Faturacao por mes', Object.entries(financas.faturacaoPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
@@ -622,6 +626,12 @@ const Reports = ({ language }) => {
           </Button>
         </div>
       </div>
+
+      {(reportType === 'resumo' || reportType === 'payment') && (
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+          {txt.accountsStart}
+        </p>
+      )}
 
       {/* Escolha do relatório */}
       <Card>
@@ -858,9 +868,11 @@ const Reports = ({ language }) => {
                   icon={Calendar} color="bg-orange-500" />
               </div>
 
-              <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
-                {txt.previousPeriod}: {anteriorLegivel(financas.periodoAnterior)}
-              </p>
+              {financas.periodoAnterior && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
+                  {txt.previousPeriod}: {anteriorLegivel(financas.periodoAnterior)}
+                </p>
+              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Barras titulo={txt.billingByMonth} dados={porMes(financas.faturacaoPorMes, inicio, fim)}

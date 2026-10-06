@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { corresponde, filtrarEOrdenar } from '../lib/pesquisa';
 import { CATEGORIAS_DE_DESPESA, nomeDaCategoria } from '../lib/categorias';
+import { INICIO_DAS_CONTAS } from '../lib/estatisticas';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -121,6 +122,7 @@ const Payments = ({ language, translations }) => {
     categoryFnb: 'F&B (Alimentos e bebidas)',
     expensesList: 'Despesas Registadas',
     openExpenses: 'Ver, corrigir e apagar →',
+    accountsStart: 'As contas começam a 1 de outubro de 2026, quando o ginásio passou a registar tudo. O que é anterior continua guardado na ficha de cada sócio, mas não entra nestes totais.',
     expenseDescriptionHint: 'Opcional — sem texto, fica identificada pela categoria',
     allCategories: 'Todos os tipos',
     dayToday: 'Hoje',
@@ -229,6 +231,7 @@ const Payments = ({ language, translations }) => {
     categoryFnb: 'F&B (food and drinks)',
     expensesList: 'Recorded Expenses',
     openExpenses: 'View, edit and delete →',
+    accountsStart: 'The accounts start on 1 October 2026, when the gym began recording everything. Earlier records are kept on each member’s file but do not count towards these totals.',
     expenseDescriptionHint: 'Optional — without text, the category identifies it',
     allCategories: 'All types',
     dayToday: 'Today',
@@ -683,8 +686,13 @@ const Payments = ({ language, translations }) => {
     };
 
     const hoje = new Date();
-    const inicioDoAno = new Date(hoje.getFullYear(), 0, 1);
-    const inicioDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    // As contas do ginásio começam no dia em que o sistema passou a ser usado
+    // a sério. Antes disso faltam despesas por registar, e o lucro que daí
+    // saía não existiu. Os dados antigos continuam guardados, só não contam.
+    const corte = new Date(INICIO_DAS_CONTAS.ano, INICIO_DAS_CONTAS.mes - 1, INICIO_DAS_CONTAS.dia);
+    const maisTarde = (a, b) => (a > b ? a : b);
+    const inicioDoAno = maisTarde(new Date(hoje.getFullYear(), 0, 1), corte);
+    const inicioDoMes = maisTarde(new Date(hoje.getFullYear(), hoje.getMonth(), 1), corte);
 
     const noPeriodo = (valorData, desde) => {
       const d = new Date(valorData);
@@ -1157,6 +1165,12 @@ const Payments = ({ language, translations }) => {
         </div>
       )}
 
+
+      {isAdmin() && (
+        <p className="text-xs -mt-2" style={{ color: 'var(--text-secondary)' }}>
+          {t[language].accountsStart}
+        </p>
+      )}
 
       {/* Filters */}
       <Card>
