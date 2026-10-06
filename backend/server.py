@@ -1476,11 +1476,17 @@ def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, n
 
     return True
 
-async def recalcular_validades(member_id: str):
+async def recalcular_validades(member_id: str, mexer_no_seguro: bool = True):
     """Reconstroi a quota e o seguro do socio a partir dos pagamentos que existem.
 
     Chamada depois de editar ou apagar um pagamento: sem isto, apagar a
     mensalidade deixava o socio ativo na mesma, com uma validade orfa.
+
+    **`mexer_no_seguro=False` quando a operacao nao envolveu nenhum seguro.**
+    Ha socios com o seguro posto a mao na ficha, sem pagamento associado
+    (vieram assim da importacao). Para esses, recalcular apagava o seguro
+    silenciosamente, so por se ter corrigido uma mensalidade. O seguro so se
+    mexe quando foi mesmo um pagamento de seguro que mudou.
     """
     pagamentos = await db.payments.find({"member_id": member_id, "status": "paid"}).to_list(5000)
 
@@ -1511,15 +1517,16 @@ async def recalcular_validades(member_id: str):
         remover["membership_paid_date"] = ""
         remover["membership_valid_until"] = ""
 
-    if seguro:
-        validade = seguro + timedelta(days=INSURANCE_VALIDITY_DAYS)
-        alteracoes["insurance_paid_date"] = seguro
-        alteracoes["insurance_valid_until"] = validade
-        alteracoes["expiry_date"] = validade
-    else:
-        remover["insurance_paid_date"] = ""
-        remover["insurance_valid_until"] = ""
-        remover["expiry_date"] = ""
+    if mexer_no_seguro:
+        if seguro:
+            validade = seguro + timedelta(days=INSURANCE_VALIDITY_DAYS)
+            alteracoes["insurance_paid_date"] = seguro
+            alteracoes["insurance_valid_until"] = validade
+            alteracoes["expiry_date"] = validade
+        else:
+            remover["insurance_paid_date"] = ""
+            remover["insurance_valid_until"] = ""
+            remover["expiry_date"] = ""
 
     operacao = {}
     if alteracoes:
@@ -2077,10 +2084,16 @@ async def update_payment(
     atualizado = Payment(**{**parse_from_mongo(dict(existente)), **novos, "id": payment_id})
     await db.payments.replace_one({"id": payment_id}, prepare_for_mongo(atualizado.dict()))
 
+    tipos_de_seguro = {PaymentType.INSURANCE.value, PaymentType.QUOTA_INSURANCE.value}
+    envolve_seguro = (
+        existente.get("payment_type") in tipos_de_seguro
+        or atualizado.payment_type in tipos_de_seguro
+    )
+
     # O socio pode ter mudado; ambos tem de ser recalculados
-    await recalcular_validades(dados.member_id)
+    await recalcular_validades(dados.member_id, mexer_no_seguro=envolve_seguro)
     if existente.get("member_id") != dados.member_id:
-        await recalcular_validades(existente["member_id"])
+        await recalcular_validades(existente["member_id"], mexer_no_seguro=envolve_seguro)
 
     await log_audit(current_user, "update", "payment", entity_id=payment_id,
                     details=f"Corrigiu pagamento para {atualizado.amount} EUR")
@@ -2101,7 +2114,12 @@ async def delete_payment(
         raise HTTPException(status_code=404, detail="Pagamento nao encontrado")
 
     await db.payments.delete_one({"id": payment_id})
-    await recalcular_validades(pagamento["member_id"])
+    await recalcular_validades(
+        pagamento["member_id"],
+        mexer_no_seguro=pagamento.get("payment_type") in {
+            PaymentType.INSURANCE.value, PaymentType.QUOTA_INSURANCE.value
+        }
+    )
 
     await log_audit(current_user, "delete", "payment", entity_id=payment_id,
                     details=f"Eliminou pagamento de {pagamento.get('amount')} EUR")

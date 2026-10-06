@@ -151,3 +151,71 @@ def test_quem_apaga_fica_registado(cliente, admin, colaborador, criar_socio, pag
 
 def test_pagamento_inexistente_devolve_404(cliente, admin):
     assert cliente.delete("/api/payments/nao-existe", headers=admin).status_code == 404
+
+
+# --- O seguro posto a mao na ficha nao pode desaparecer sozinho ---
+# Ha 14 socios com o seguro na ficha mas sem pagamento de seguro associado:
+# vieram assim da importacao do sistema antigo. Antes disto, corrigir ou
+# apagar uma simples mensalidade desses socios apagava-lhes o seguro.
+
+def test_corrigir_uma_quota_nao_apaga_o_seguro_posto_a_mao(cliente, admin, criar_socio, pagar, bd):
+    socio = criar_socio(telefone="912950001")
+    quota = pagar(socio["id"])
+    # Seguro na ficha, sem pagamento associado
+    bd.members.update_one({"id": socio["id"]}, {"$set": {
+        "insurance_valid_until": "2027-06-30T00:00:00+00:00",
+        "expiry_date": "2027-06-30T00:00:00+00:00",
+    }})
+
+    cliente.put(
+        f"/api/payments/{quota['id']}",
+        headers=admin,
+        json={"member_id": socio["id"], "amount": 40, "payment_type": "quota",
+              "payment_method": "cash", "payment_date": date.today().isoformat()},
+    )
+
+    ficha_depois = ficha(cliente, admin, socio["id"])
+    assert ficha_depois["insurance_valid_until"] == "2027-06-30"
+    assert ficha_depois["expiry_date"] == "2027-06-30"
+
+
+def test_apagar_uma_quota_nao_apaga_o_seguro_posto_a_mao(cliente, admin, criar_socio, pagar, bd):
+    socio = criar_socio(telefone="912950002")
+    quota = pagar(socio["id"])
+    bd.members.update_one({"id": socio["id"]}, {"$set": {
+        "insurance_valid_until": "2027-06-30T00:00:00+00:00",
+        "expiry_date": "2027-06-30T00:00:00+00:00",
+    }})
+
+    cliente.delete(f"/api/payments/{quota['id']}", headers=admin)
+
+    ficha_depois = ficha(cliente, admin, socio["id"])
+    assert ficha_depois["insurance_valid_until"] == "2027-06-30"
+    # E a quota, essa, foi mesmo removida
+    assert ficha_depois["membership_status"] == "inactive"
+
+
+def test_apagar_o_pagamento_do_seguro_continua_a_limpar_o_seguro(cliente, admin, criar_socio, pagar):
+    """A regra de sempre: se o seguro veio de um pagamento, apagar o pagamento tira-o."""
+    socio = criar_socio(telefone="912950003")
+    seguro = pagar(socio["id"], valor=20, tipo="seguro")
+    assert ficha(cliente, admin, socio["id"])["insurance_valid_until"] is not None
+
+    cliente.delete(f"/api/payments/{seguro['id']}", headers=admin)
+
+    assert ficha(cliente, admin, socio["id"])["insurance_valid_until"] is None
+
+
+def test_corrigir_um_pagamento_de_inscricao_refaz_o_seguro(cliente, admin, criar_socio, pagar):
+    socio = criar_socio(telefone="912950004")
+    inscricao = pagar(socio["id"], valor=55, tipo="quota_seguro", quando=date(2026, 6, 10))
+    assert ficha(cliente, admin, socio["id"])["insurance_valid_until"] == "2027-06-10"
+
+    cliente.put(
+        f"/api/payments/{inscricao['id']}",
+        headers=admin,
+        json={"member_id": socio["id"], "amount": 55, "payment_type": "quota_seguro",
+              "payment_method": "cash", "payment_date": "2026-06-20"},
+    )
+
+    assert ficha(cliente, admin, socio["id"])["insurance_valid_until"] == "2027-06-20"
