@@ -5,6 +5,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Label } from '../components/ui/label';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
 import { 
   Users, 
@@ -19,7 +21,9 @@ import {
   StickyNote,
   Save,
   ArrowLeft,
-  Sparkles
+  Sparkles,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,6 +46,11 @@ const Dashboard = ({ language, translations }) => {
   const [checkinChoiceMember, setCheckinChoiceMember] = useState(null);
   const [experimentalAberta, setExperimentalAberta] = useState(false);
   const [aRegistarExperimental, setARegistarExperimental] = useState(false);
+  // As experimentais sao pagas: 5 euros por omissao, alteravel em cada aula
+  const [valorExperimental, setValorExperimental] = useState('5');
+  // Corrigir ou apagar um check-in errado
+  const [presencaAEditar, setPresencaAEditar] = useState(null);
+  const [modalidadeEscolhida, setModalidadeEscolhida] = useState('');
   const [experimentaisHoje, setExperimentaisHoje] = useState(0);
   const [presencasMes, setPresencasMes] = useState({ total: 0, media: '0.0' });
   const [loading, setLoading] = useState(true);
@@ -76,7 +85,11 @@ const Dashboard = ({ language, translations }) => {
       selectMemberHint: 'Seleciona uma presença para veres o calendário e as notas do membro',
       backToAttendance: 'Voltar às presenças',
       trialClass: 'Aula Experimental',
-      trialHint: 'Escolhe a modalidade que a pessoa veio experimentar. Fica contada nos relatórios.',
+      trialHint: 'Escolhe a modalidade que a pessoa veio experimentar. Fica contada nos relatórios e na faturação.',
+      trialAmount: 'Valor cobrado (€)',
+      fixActivity: 'Corrigir a modalidade',
+      cancel: 'Cancelar',
+      save: 'Guardar',
       trialToday: 'aula experimental hoje',
       trialsToday: 'aulas experimentais hoje',
       memberNotes: 'Notas do Membro',
@@ -108,7 +121,11 @@ const Dashboard = ({ language, translations }) => {
       selectMemberHint: "Select an attendance to see the member's calendar and notes",
       backToAttendance: 'Back to attendance',
       trialClass: 'Trial Class',
-      trialHint: 'Pick the activity the visitor came to try. It is counted in the reports.',
+      trialHint: 'Pick the activity the visitor came to try. It is counted in the reports and in billing.',
+      trialAmount: 'Amount charged (€)',
+      fixActivity: 'Fix the activity',
+      cancel: 'Cancel',
+      save: 'Save',
       trialToday: 'trial class today',
       trialsToday: 'trial classes today',
       memberNotes: 'Member Notes',
@@ -230,16 +247,58 @@ const Dashboard = ({ language, translations }) => {
   };
 
   const registarExperimental = async (activity) => {
+    const valor = parseFloat(String(valorExperimental).replace(',', '.'));
+    if (Number.isNaN(valor) || valor < 0) {
+      toast.error('Escreve o valor cobrado pela aula experimental.');
+      return;
+    }
     try {
       setARegistarExperimental(true);
-      await axios.post(`${API}/trials`, { activity_id: activity.id });
-      toast.success(`Aula experimental de ${activity.name} registada!`);
+      await axios.post(`${API}/trials`, { activity_id: activity.id, amount: valor });
+      toast.success(`Aula experimental de ${activity.name} registada (€${valor.toFixed(2)})!`);
       carregarExperimentaisHoje();
     } catch (error) {
       console.error('Error registering trial:', error);
       toast.error(error.response?.data?.detail || 'Erro ao registar a aula experimental');
     } finally {
       setARegistarExperimental(false);
+    }
+  };
+
+  /** Apaga um check-in feito por engano. As contagens do mes dependem disto. */
+  const apagarPresenca = async (presenca) => {
+    const nome = presenca.member?.name || 'este sócio';
+    if (!window.confirm(`Apagar o check-in de ${nome}? Esta ação não se desfaz.`)) return;
+    try {
+      await axios.delete(`${API}/attendance/${presenca.id}`);
+      toast.success('Check-in eliminado.');
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Error deleting attendance:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao eliminar o check-in');
+    }
+  };
+
+  const abrirCorrecaoDaPresenca = (presenca) => {
+    setPresencaAEditar(presenca);
+    setModalidadeEscolhida(presenca.activity_id || '');
+  };
+
+  const guardarModalidadeDaPresenca = async () => {
+    if (!modalidadeEscolhida) {
+      toast.error('Escolhe a modalidade.');
+      return;
+    }
+    try {
+      await axios.put(`${API}/attendance/${presencaAEditar.id}`, {
+        activity_id: modalidadeEscolhida
+      });
+      toast.success('Modalidade corrigida.');
+      setPresencaAEditar(null);
+      fetchDashboardData();
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      toast.error(error.response?.data?.detail || 'Erro ao corrigir a modalidade');
     }
   };
 
@@ -661,7 +720,7 @@ const Dashboard = ({ language, translations }) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             <Button
               variant={!qrMode ? "default" : "outline"}
               onClick={() => { setQrMode(false); setNfcMode(false); }}
@@ -730,6 +789,22 @@ const Dashboard = ({ language, translations }) => {
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 {t[language].trialHint}
               </p>
+              <div className="flex items-end gap-2 max-w-xs">
+                <div className="flex-1">
+                  <Label htmlFor="valor-experimental" className="text-xs">
+                    {t[language].trialAmount}
+                  </Label>
+                  <Input
+                    id="valor-experimental"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={valorExperimental}
+                    onChange={(e) => setValorExperimental(e.target.value)}
+                    data-testid="trial-amount"
+                  />
+                </div>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {activities.map((a) => (
                   <Button
@@ -1045,11 +1120,9 @@ const Dashboard = ({ language, translations }) => {
                 .map((attendance) => {
                 const activity = activities.find((a) => a.id === attendance.activity_id);
                 return (
-                  <button
+                  <div
                     key={attendance.id}
-                    type="button"
-                    onClick={() => handleSelectAttendanceMember(attendance.member)}
-                    className="flex items-center justify-between p-3 rounded-lg text-left transition-all duration-200 hover:opacity-80"
+                    className="flex items-center justify-between gap-2 p-3 rounded-lg transition-all duration-200"
                     style={{
                       background: 'var(--background-elevated)',
                       color: 'var(--text-primary)',
@@ -1057,27 +1130,56 @@ const Dashboard = ({ language, translations }) => {
                     }}
                     data-testid={`attendance-${attendance.id}`}
                   >
-                    <div>
-                      <p className="font-medium">{attendance.member?.name}</p>
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectAttendanceMember(attendance.member)}
+                      className="min-w-0 flex-1 text-left hover:opacity-80"
+                    >
+                      <p className="font-medium truncate">{attendance.member?.name}</p>
+                      <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
                         {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
                         {activity ? ` · ${activity.name}` : ''}
                       </p>
+                    </button>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Badge
+                        variant="outline"
+                        style={{
+                          borderColor: estadoQuota(attendance.member).cor,
+                          color: estadoQuota(attendance.member).cor
+                        }}
+                        title={estadoQuota(attendance.member).detalhe || ''}
+                      >
+                        {estadoQuota(attendance.member).texto}
+                      </Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Corrigir a modalidade"
+                        onClick={() => abrirCorrecaoDaPresenca(attendance)}
+                        data-testid={`edit-attendance-${attendance.id}`}
+                      >
+                        <Edit size={15} />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-600 hover:text-red-700"
+                        title="Apagar o check-in"
+                        onClick={() => apagarPresenca(attendance)}
+                        data-testid={`delete-attendance-${attendance.id}`}
+                      >
+                        <Trash2 size={15} />
+                      </Button>
                     </div>
-                    <Badge
-                      variant="outline"
-                      style={{
-                        borderColor: estadoQuota(attendance.member).cor,
-                        color: estadoQuota(attendance.member).cor
-                      }}
-                      title={estadoQuota(attendance.member).detalhe || ''}
-                    >
-                      {estadoQuota(attendance.member).texto}
-                    </Badge>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -1089,6 +1191,56 @@ const Dashboard = ({ language, translations }) => {
         </CardContent>
       </Card>
       </div>
+
+      {/* Corrigir a modalidade de um check-in */}
+      <Dialog open={!!presencaAEditar} onOpenChange={(aberto) => !aberto && setPresencaAEditar(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t[language].fixActivity}</DialogTitle>
+          </DialogHeader>
+          {presencaAEditar && (
+            <div className="space-y-4">
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {presencaAEditar.member?.name} ·{' '}
+                {new Date(presencaAEditar.check_in_time).toLocaleTimeString('pt-PT', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {activities.map((a) => (
+                  <Button
+                    key={a.id}
+                    type="button"
+                    variant="outline"
+                    onClick={() => setModalidadeEscolhida(a.id)}
+                    style={{
+                      borderColor: a.color,
+                      color: modalidadeEscolhida === a.id ? 'white' : a.color,
+                      backgroundColor: modalidadeEscolhida === a.id ? a.color : 'transparent'
+                    }}
+                    data-testid={`fix-activity-${a.id}`}
+                  >
+                    {a.name}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setPresencaAEditar(null)}>
+                  {t[language].cancel}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={guardarModalidadeDaPresenca}
+                  data-testid="save-activity"
+                >
+                  {t[language].save}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

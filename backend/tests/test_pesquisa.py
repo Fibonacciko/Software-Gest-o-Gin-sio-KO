@@ -59,13 +59,15 @@ def test_lista_de_socios_responde_a_pesquisa_sem_acentos(cliente, admin, criar_s
     assert nomes == ["João Pedro da Silva"]
 
 
-def test_resultados_vem_por_ordem_alfabetica(cliente, admin, criar_socio):
-    criar_socio(nome="Zé Antunes", telefone="912100003")
-    criar_socio(nome="Ana Costa", telefone="912100004")
-    criar_socio(nome="Bruno Dias", telefone="912100005")
+def test_a_pesquisa_devolve_por_ordem_alfabetica(cliente, admin, criar_socio):
+    """Dentro dos resultados de uma pesquisa, manda a ordem alfabetica."""
+    criar_socio(nome="Dias Antunes", telefone="912100003")
+    criar_socio(nome="Dias Costa", telefone="912100004")
+    criar_socio(nome="Dias Barros", telefone="912100005")
 
-    nomes = [m["name"] for m in cliente.get("/api/members", headers=admin).json()]
-    assert nomes == ["Ana Costa", "Bruno Dias", "Zé Antunes"]
+    nomes = [m["name"] for m in
+             cliente.get("/api/members", headers=admin, params={"search": "dias"}).json()]
+    assert nomes == ["Dias Antunes", "Dias Barros", "Dias Costa"]
 
 # --- Procura pelo inicio das palavras, nao a meio ---
 # Este erro chegou a producao: escrever "i" mostrava "Maria", porque a

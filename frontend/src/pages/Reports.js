@@ -127,11 +127,14 @@ const Reports = ({ language }) => {
       trialsByMonth: 'Experimentais por Mês',
       // Finanças
       billing: 'Faturação',
-      billingHint: 'quotas, seguros e merchandise',
+      billingHint: 'quotas, seguros, merchandise e experimentais',
       totalExpenses: 'Despesa',
       netProfit: 'Resultado Líquido',
       margin: 'Margem',
       merchandiseRevenue: 'Merchandise',
+      trialRevenue: 'Aulas Experimentais',
+      trialRevenueByMonth: 'Experimentais: Receita por Mês',
+      trialRevenueByActivity: 'Experimentais: Receita por Modalidade',
       totalPayments: 'Pagamentos Registados',
       averagePayment: 'Pagamento Médio',
       pendingPayments: 'Pagamentos Pendentes',
@@ -197,11 +200,14 @@ const Reports = ({ language }) => {
       trialsByActivity: 'Trials by Activity',
       trialsByMonth: 'Trials by Month',
       billing: 'Billing',
-      billingHint: 'fees, insurance and merchandise',
+      billingHint: 'fees, insurance, merchandise and trials',
       totalExpenses: 'Expenses',
       netProfit: 'Net Result',
       margin: 'Margin',
       merchandiseRevenue: 'Merchandise',
+      trialRevenue: 'Trial Classes',
+      trialRevenueByMonth: 'Trials: Revenue by Month',
+      trialRevenueByActivity: 'Trials: Revenue by Activity',
       totalPayments: 'Payments Recorded',
       averagePayment: 'Average Payment',
       pendingPayments: 'Pending Payments',
@@ -330,8 +336,10 @@ const Reports = ({ language }) => {
   );
 
   const financas = useMemo(
-    () => estatisticasFinanceiras({ pagamentos: payments, despesas: expenses, vendas: sales, inicio, fim }),
-    [payments, expenses, sales, inicio, fim]
+    () => estatisticasFinanceiras({
+      pagamentos: payments, despesas: expenses, vendas: sales, experimentais: trials, inicio, fim
+    }),
+    [payments, expenses, sales, trials, inicio, fim]
   );
 
   const socios = useMemo(
@@ -390,6 +398,11 @@ const Reports = ({ language }) => {
         .map((x) => [x.chave, x.valor]));
       tabela('Inscricoes por mes', Object.entries(resumo.inscricoesPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v]));
+      tabela('Aulas experimentais por mes (quantas)',
+        Object.entries(resumo.experimentaisPorMes).sort().map(([m, v]) => [rotuloDoMes(m), v]));
+      tabela('Aulas experimentais por mes (quanto renderam)',
+        Object.entries(resumo.receitaExperimentaisPorMes).sort()
+          .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
       tabela('Socios por modalidade', porOrdemDeValor(resumo.sociosPorModalidade)
         .map((x) => [x.chave, x.valor]));
       tabela('Faturacao por mes', Object.entries(resumo.faturacaoPorMes).sort()
@@ -415,10 +428,12 @@ const Reports = ({ language }) => {
         porOrdemDeValor(presencas.experimentaisPorModalidade).map((x) => [x.chave, x.valor]));
     } else if (reportType === 'payment') {
       tabela('Totais', [
-        ['Faturacao (quotas + seguros + merchandise)', financas.faturacao.toFixed(2)],
+        ['Faturacao (quotas + seguros + merchandise + experimentais)', financas.faturacao.toFixed(2)],
         ['  dos quais quotas e seguros', financas.receitaQuotas.toFixed(2)],
         ['  dos quais seguros', financas.seguros.toFixed(2)],
         ['  dos quais merchandise', financas.merchandise.toFixed(2)],
+        ['  dos quais aulas experimentais', financas.experimentais.toFixed(2)],
+        ['Aulas experimentais (quantas)', financas.nExperimentais],
         ['Despesa', financas.despesa.toFixed(2)],
         ['Resultado liquido', financas.liquido.toFixed(2)],
         ['Margem (%)', financas.margem === null ? '-' : financas.margem.toFixed(1)],
@@ -437,6 +452,14 @@ const Reports = ({ language }) => {
         .map((x) => [nomeDaCategoria(x.chave), x.valor.toFixed(2)]));
       tabela('Merchandise por artigo', porOrdemDeValor(financas.merchandisePorArtigo)
         .map((x) => [x.chave, x.valor.toFixed(2)]));
+      tabela('Aulas experimentais por mes (quantas)',
+        Object.entries(financas.experimentaisPorMes).sort().map(([m, v]) => [rotuloDoMes(m), v]));
+      tabela('Aulas experimentais por mes (quanto renderam)',
+        Object.entries(financas.receitaExperimentaisPorMes).sort()
+          .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
+      tabela('Aulas experimentais por modalidade (quanto renderam)',
+        porOrdemDeValor(financas.receitaExperimentaisPorModalidade)
+          .map((x) => [x.chave, x.valor.toFixed(2)]));
     } else if (reportType === 'member') {
       tabela('Totais', [
         ['Total de socios', socios.total],
@@ -698,6 +721,9 @@ const Reports = ({ language }) => {
                   hint={`${txt.year} ${anoEscolhido}`} icon={Wallet}
                   color={resumo.totais.faturacao - resumo.totais.despesa >= 0 ? 'bg-emerald-600' : 'bg-red-600'}
                   destaque={resumo.totais.faturacao - resumo.totais.despesa < 0 ? '#dc2626' : undefined} />
+                <StatCard title={txt.trialClasses} value={numero(resumo.totais.experimentais)}
+                  hint={`${euros(resumo.totais.receitaExperimentais)} ${txt.year.toLowerCase()} ${anoEscolhido}`}
+                  icon={Sparkles} color="bg-violet-600" />
               </div>
 
               <Card>
@@ -751,6 +777,16 @@ const Reports = ({ language }) => {
                 <Barras titulo={txt.netByMonth}
                   dados={porMes(resumo.liquidoPorMes, { ano: anoEscolhido, mes: 1, dia: 1 }, { ano: anoEscolhido, mes: 12, dia: 31 })}
                   formatar={euros} cor="bg-emerald-600" />
+                {resumo.totais.experimentais > 0 && (
+                  <>
+                    <Barras titulo={txt.trialsByMonth}
+                      dados={porMes(resumo.experimentaisPorMes, { ano: anoEscolhido, mes: 1, dia: 1 }, { ano: anoEscolhido, mes: 12, dia: 31 })}
+                      cor="bg-fuchsia-500" />
+                    <Barras titulo={txt.trialRevenueByMonth}
+                      dados={porMes(resumo.receitaExperimentaisPorMes, { ano: anoEscolhido, mes: 1, dia: 1 }, { ano: anoEscolhido, mes: 12, dia: 31 })}
+                      formatar={euros} cor="bg-violet-500" />
+                  </>
+                )}
               </div>
             </>
           )}
@@ -814,6 +850,10 @@ const Reports = ({ language }) => {
                   hint={`${txt.averagePayment}: ${euros(financas.pagamentoMedio)}`}
                   icon={DollarSign} color="bg-blue-600"
                   comparacao={financas.comparacao.nPagamentos} />
+                <StatCard title={txt.trialRevenue} value={euros(financas.experimentais)}
+                  hint={`${numero(financas.nExperimentais)} ${txt.trialClasses.toLowerCase()}`}
+                  icon={Sparkles} color="bg-violet-600"
+                  comparacao={financas.comparacao.experimentais} formatarComparacao={euros} />
                 <StatCard title={txt.pendingPayments} value={numero(financas.pendentes)}
                   icon={Calendar} color="bg-orange-500" />
               </div>
@@ -835,12 +875,28 @@ const Reports = ({ language }) => {
                   )}
                   formatar={euros} cor="bg-emerald-600" />
                 <Barras titulo={txt.expensesByCategory}
-                  dados={serie(financas.despesaPorCategoria, expenseCategoryLabel)}
+                  dados={serie(financas.despesaPorCategoria, nomeDaCategoria)}
                   formatar={euros} cor="bg-orange-500" />
                 <Barras titulo={txt.merchandiseByItem} dados={serie(financas.merchandisePorArtigo)}
                   formatar={euros} cor="bg-teal-600" />
                 <Barras titulo={txt.byMethod} dados={serie(financas.porMetodo, paymentMethodLabel)}
                   formatar={euros} cor="bg-sky-600" />
+                {financas.nExperimentais > 0 && (
+                  <>
+                    <Barras titulo={txt.trialRevenueByMonth}
+                      dados={porMes(financas.receitaExperimentaisPorMes, inicio, fim)}
+                      formatar={euros} cor="bg-violet-500" />
+                    <Barras titulo={txt.trialsByMonth}
+                      dados={porMes(financas.experimentaisPorMes, inicio, fim)}
+                      cor="bg-fuchsia-500" />
+                    <Barras titulo={txt.trialRevenueByActivity}
+                      dados={serie(financas.receitaExperimentaisPorModalidade)}
+                      formatar={euros} cor="bg-violet-500" />
+                    <Barras titulo={txt.trialsByActivity}
+                      dados={serie(financas.experimentaisPorModalidade)}
+                      cor="bg-fuchsia-500" />
+                  </>
+                )}
               </div>
             </>
           )}

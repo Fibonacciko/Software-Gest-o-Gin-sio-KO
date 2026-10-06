@@ -303,11 +303,14 @@ export const parteDoSeguro = (pagamento) => {
 };
 
 /**
- * Finanças: faturação (quotas + seguros + merchandise), despesa e resultado
- * líquido, com os mesmos critérios da página de Finanças.
+ * Finanças: faturação (quotas + seguros + merchandise + aulas experimentais),
+ * despesa e resultado líquido, com os mesmos critérios da página de Finanças.
+ *
+ * As aulas experimentais são pagas, por isso o que rendem é faturação como
+ * qualquer outra. Continuam fora das contagens de presenças.
  */
 export const estatisticasFinanceiras = ({
-  pagamentos = [], despesas = [], vendas = [], inicio, fim
+  pagamentos = [], despesas = [], vendas = [], experimentais = [], inicio, fim
 }) => {
   const anterior = intervaloAnterior(inicio, fim);
 
@@ -321,14 +324,17 @@ export const estatisticasFinanceiras = ({
     const quotas = noPeriodo(pagos, 'payment_date', de, ate);
     const vendasDo = noPeriodo(vendas, 'sale_date', de, ate);
     const despesasDo = noPeriodo(despesas, 'expense_date', de, ate);
+    const trialsDo = noPeriodo(experimentais, 'trial_date', de, ate);
     const receitaQuotas = soma(quotas, (p) => p.amount);
     const merchandise = soma(vendasDo, (v) => v.total);
+    const trials = soma(trialsDo, (t) => t.amount);
     const despesa = soma(despesasDo, (e) => e.amount);
+    const faturacao = receitaQuotas + merchandise + trials;
     return {
-      quotas, vendasDo, despesasDo,
-      receitaQuotas, merchandise, despesa,
-      faturacao: receitaQuotas + merchandise,
-      liquido: receitaQuotas + merchandise - despesa
+      quotas, vendasDo, despesasDo, trialsDo,
+      receitaQuotas, merchandise, trials, despesa,
+      faturacao,
+      liquido: faturacao - despesa
     };
   };
 
@@ -344,6 +350,8 @@ export const estatisticasFinanceiras = ({
     seguros: soma(agora.quotas, parteDoSeguro),
     merchandise: agora.merchandise,
     unidadesVendidas: soma(agora.vendasDo, (v) => v.quantity),
+    experimentais: agora.trials,
+    nExperimentais: agora.trialsDo.length,
     despesa: agora.despesa,
     liquido: agora.liquido,
     nPagamentos: agora.quotas.length,
@@ -355,6 +363,7 @@ export const estatisticasFinanceiras = ({
       despesa: variacao(agora.despesa, antes.despesa),
       liquido: variacao(agora.liquido, antes.liquido),
       merchandise: variacao(agora.merchandise, antes.merchandise),
+      experimentais: variacao(agora.trials, antes.trials),
       nPagamentos: variacao(agora.quotas.length, antes.quotas.length)
     },
     periodoAnterior: anterior,
@@ -364,8 +373,16 @@ export const estatisticasFinanceiras = ({
         const k = chaveDoMes(v.sale_date);
         if (k) porMes[k] = (porMes[k] || 0) + (Number(v.total) || 0);
       });
+      agora.trialsDo.forEach((e) => {
+        const k = chaveDoMes(e.trial_date);
+        if (k) porMes[k] = (porMes[k] || 0) + (Number(e.amount) || 0);
+      });
       return porMes;
     })(),
+    experimentaisPorMes: agrupar(agora.trialsDo, (e) => chaveDoMes(e.trial_date)),
+    receitaExperimentaisPorMes: agrupar(agora.trialsDo, (e) => chaveDoMes(e.trial_date), (e) => e.amount),
+    experimentaisPorModalidade: agrupar(agora.trialsDo, (e) => e.activity_name),
+    receitaExperimentaisPorModalidade: agrupar(agora.trialsDo, (e) => e.activity_name, (e) => e.amount),
     despesaPorMes: agrupar(agora.despesasDo, (e) => chaveDoMes(e.expense_date), (e) => e.amount),
     despesaPorCategoria: agrupar(agora.despesasDo, (e) => e.category || 'other', (e) => e.amount),
     merchandisePorArtigo: agrupar(agora.vendasDo, (v) => v.item_name, (v) => v.total),
@@ -527,12 +544,23 @@ export const destaquesDoAno = ({
       notas.push(frase('experimental', 'Experimentais: modalidade mais procurada',
         `${modalidadeExperimentais.chave}, com ${modalidadeExperimentais.valor} aulas.`));
     }
+    const rendeu = experimentaisDoAno.reduce((t, e) => t + (Number(e.amount) || 0), 0);
+    notas.push(frase('experimental', 'O que as experimentais renderam',
+      `${rendeu.toFixed(2)} € em ${experimentaisDoAno.length} aulas` +
+      (experimentaisDoAno.length
+        ? `, a uma média de ${(rendeu / experimentaisDoAno.length).toFixed(2)} € por aula.`
+        : '.')));
   }
 
   const faturacaoPorMes = agrupar(pagos, (p) => chaveDoMes(p.payment_date), (p) => p.amount);
   vendasDoAno.forEach((v) => {
     const k = chaveDoMes(v.sale_date);
     if (k) faturacaoPorMes[k] = (faturacaoPorMes[k] || 0) + (Number(v.total) || 0);
+  });
+  // As aulas experimentais sao pagas: o que rendem e faturacao como as outras
+  experimentaisDoAno.forEach((e) => {
+    const k = chaveDoMes(e.trial_date);
+    if (k) faturacaoPorMes[k] = (faturacaoPorMes[k] || 0) + (Number(e.amount) || 0);
   });
   const melhorMes = maiorDe(faturacaoPorMes);
   if (melhorMes) {
@@ -597,6 +625,8 @@ export const destaquesDoAno = ({
     presencasPorModalidade: agrupar(presencasDoAno, (p) => nomeDaModalidade(modalidades, p.activity_id)),
     inscricoesPorMes: agrupar(inscricoesDoAno, (m) => chaveDoMes(m.join_date)),
     experimentaisPorMes: agrupar(experimentaisDoAno, (e) => chaveDoMes(e.trial_date)),
+    receitaExperimentaisPorMes: agrupar(experimentaisDoAno, (e) => chaveDoMes(e.trial_date), (e) => e.amount),
+    experimentaisPorModalidade: agrupar(experimentaisDoAno, (e) => e.activity_name),
     faturacaoPorMes,
     despesaPorMes,
     liquidoPorMes,
@@ -605,6 +635,7 @@ export const destaquesDoAno = ({
       presencas: presencasDoAno.length,
       inscricoes: inscricoesDoAno.length,
       experimentais: experimentaisDoAno.length,
+      receitaExperimentais: experimentaisDoAno.reduce((t, e) => t + (Number(e.amount) || 0), 0),
       faturacao: Object.values(faturacaoPorMes).reduce((a, b) => a + b, 0),
       despesa: despesasDoAno.reduce((t, e) => t + (Number(e.amount) || 0), 0),
       socios: membros.length,

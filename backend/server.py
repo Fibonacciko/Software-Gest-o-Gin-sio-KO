@@ -239,6 +239,9 @@ class PaymentType(str, Enum):
 INSURANCE_DEFAULT_AMOUNT = 20.0
 INSURANCE_VALIDITY_DAYS = 365
 
+# Preco de uma aula experimental. Pode ser alterado em cada registo.
+TRIAL_DEFAULT_AMOUNT = 5.0
+
 class PaymentMethod(str, Enum):
     CASH = "cash"
     CARD = "card"
@@ -342,6 +345,9 @@ class Attendance(BaseModel):
     check_in_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     method: str = "manual"  # manual or qr_code
 
+class AttendanceUpdate(BaseModel):
+    activity_id: str
+
 class AttendanceCreate(BaseModel):
     member_id: str
     activity_id: str  # Required modalidade
@@ -392,12 +398,14 @@ class TrialClass(BaseModel):
     activity_id: str
     activity_name: str
     trial_date: date = Field(default_factory=lambda: date.today())
+    amount: float = TRIAL_DEFAULT_AMOUNT   # As experimentais sao pagas
     registered_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class TrialClassCreate(BaseModel):
     activity_id: str
     trial_date: Optional[date] = None
+    amount: Optional[float] = None   # Sem valor, vale o preco normal
 
 class InventoryItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -1523,6 +1531,17 @@ async def recalcular_validades(member_id: str):
         await db.members.update_one({"id": member_id}, operacao)
         BusinessCache.invalidate_member_cache()
 
+def numero_de_socio(numero):
+    """O numero de socio como numero, para a lista vir 1, 2, 10 e nao 1, 10, 2.
+
+    Uma ficha sem numero vai para o fim, em vez de rebentar a ordenacao.
+    """
+    try:
+        return (0, int(str(numero).strip()))
+    except (TypeError, ValueError):
+        return (1, 0)
+
+
 def relevancia_pesquisa(procurado: str, nome: str) -> int:
     """0 para quem tem o nome proprio a comecar pelo que foi escrito, 1 para
     os restantes. Serve para os nomes proprios virem primeiro na lista."""
@@ -1742,13 +1761,18 @@ async def get_members(
     for m in members:
         m.pop("qr_code", None)
 
-    # Nomes proprios primeiro, e dentro de cada grupo por ordem alfabetica
-    members.sort(
-        key=lambda m: (
-            relevancia_pesquisa(search, m.get("name")) if search else 0,
-            normalizar_texto(m.get("name")),
+    # Sem pesquisa, a lista vem por numero de socio: e assim que se procura
+    # alguem a correr os olhos pela lista. A pesquisar, mandam os nomes
+    # proprios, como o dono do ginasio pediu.
+    if search:
+        members.sort(
+            key=lambda m: (
+                relevancia_pesquisa(search, m.get("name")),
+                normalizar_texto(m.get("name")),
+            )
         )
-    )
+    else:
+        members.sort(key=lambda m: numero_de_socio(m.get("member_number")))
 
     return [Member(**normalize_member_read(parse_from_mongo(member))) for member in members]
 
@@ -1835,6 +1859,53 @@ async def create_attendance(
     attendance_dict = prepare_for_mongo(attendance.dict())
     await db.attendance.insert_one(attendance_dict)
     return attendance
+
+@api_router.put("/attendance/{attendance_id}", response_model=Attendance)
+async def update_attendance(
+    attendance_id: str,
+    dados: AttendanceUpdate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Corrige a modalidade de um check-in feito na modalidade errada."""
+    registo = await db.attendance.find_one({"id": attendance_id})
+    if not registo:
+        raise HTTPException(status_code=404, detail="Presenca nao encontrada")
+
+    activity = await db.activities.find_one({"id": dados.activity_id, "is_active": True})
+    if not activity:
+        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+
+    await db.attendance.update_one(
+        {"id": attendance_id}, {"$set": {"activity_id": dados.activity_id}}
+    )
+    BusinessCache.invalidate_member_cache()
+
+    await log_audit(current_user, "update", "attendance", entity_id=attendance_id,
+                    details=f"Corrigiu a modalidade da presenca para {activity['name']}")
+
+    atualizado = await db.attendance.find_one({"id": attendance_id})
+    return Attendance(**parse_from_mongo(atualizado))
+
+@api_router.delete("/attendance/{attendance_id}")
+async def delete_attendance(
+    attendance_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Apaga um check-in feito por engano.
+
+    As contagens de presencas sao feitas a partir destes registos, por isso
+    um check-in a mais estraga as estatisticas do mes.
+    """
+    registo = await db.attendance.find_one({"id": attendance_id})
+    if not registo:
+        raise HTTPException(status_code=404, detail="Presenca nao encontrada")
+
+    await db.attendance.delete_one({"id": attendance_id})
+    BusinessCache.invalidate_member_cache()
+
+    await log_audit(current_user, "delete", "attendance", entity_id=attendance_id,
+                    details=f"Eliminou uma presenca de {registo.get('check_in_date')}")
+    return {"message": "Presenca eliminada"}
 
 @api_router.get("/attendance", response_model=List[Attendance])
 async def get_attendance(
@@ -2076,6 +2147,46 @@ async def create_expense(
     await log_audit(current_user, "create", "expense", entity_id=expense.id, details=f"Registou despesa de {expense.amount} EUR - {expense.description}")
     return expense
 
+@api_router.put("/expenses/{expense_id}", response_model=Expense)
+async def update_expense(
+    expense_id: str,
+    expense_data: ExpenseCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Corrige uma despesa lancada com engano.
+
+    Ao alcance do colaborador, tal como os pagamentos: quem a lanca tem de
+    a poder emendar. Fica registado no historico quem mudou o que.
+    """
+    antiga = await db.expenses.find_one({"id": expense_id})
+    if not antiga:
+        raise HTTPException(status_code=404, detail="Despesa nao encontrada")
+
+    campos = expense_data.dict()
+    if not campos.get("expense_date"):
+        campos["expense_date"] = parse_from_mongo(dict(antiga)).get("expense_date") or date.today()
+
+    nova = Expense(**campos, id=expense_id, created_at=antiga.get("created_at"))
+    await db.expenses.replace_one({"id": expense_id}, prepare_for_mongo(nova.dict()))
+
+    await log_audit(current_user, "update", "expense", entity_id=expense_id,
+                    details=f"Corrigiu despesa: {antiga.get('amount')} EUR -> {nova.amount} EUR")
+    return nova
+
+@api_router.delete("/expenses/{expense_id}")
+async def delete_expense(
+    expense_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    despesa = await db.expenses.find_one({"id": expense_id})
+    if not despesa:
+        raise HTTPException(status_code=404, detail="Despesa nao encontrada")
+
+    await db.expenses.delete_one({"id": expense_id})
+    await log_audit(current_user, "delete", "expense", entity_id=expense_id,
+                    details=f"Eliminou despesa de {despesa.get('amount')} EUR")
+    return {"message": "Despesa eliminada"}
+
 @api_router.get("/expenses", response_model=List[Expense])
 async def get_expenses(
     start_date: Optional[date] = None,
@@ -2268,15 +2379,20 @@ async def create_trial(
     if not activity:
         raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
 
+    valor = TRIAL_DEFAULT_AMOUNT if dados.amount is None else dados.amount
+    if valor < 0:
+        raise HTTPException(status_code=400, detail="O valor nao pode ser negativo")
+
     trial = TrialClass(
         activity_id=activity["id"],
         activity_name=activity["name"],
         trial_date=dados.trial_date or date.today(),
+        amount=valor,
         registered_by=current_user.username
     )
     await db.trial_classes.insert_one(prepare_for_mongo(trial.dict()))
     await log_audit(current_user, "create", "trial", entity_id=trial.id,
-                    details=f"Registou aula experimental de {trial.activity_name}")
+                    details=f"Registou aula experimental de {trial.activity_name} ({trial.amount} EUR)")
     return trial
 
 @api_router.get("/trials", response_model=List[TrialClass])
@@ -2297,6 +2413,39 @@ async def get_trials(
 
     trials = await db.trial_classes.find(filtro).sort("created_at", -1).to_list(2000)
     return [TrialClass(**parse_from_mongo(t)) for t in trials]
+
+@api_router.put("/trials/{trial_id}", response_model=TrialClass)
+async def update_trial(
+    trial_id: str,
+    dados: TrialClassCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    antiga = await db.trial_classes.find_one({"id": trial_id})
+    if not antiga:
+        raise HTTPException(status_code=404, detail="Aula experimental nao encontrada")
+
+    activity = await db.activities.find_one({"id": dados.activity_id, "is_active": True})
+    if not activity:
+        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+
+    valor = antiga.get("amount", TRIAL_DEFAULT_AMOUNT) if dados.amount is None else dados.amount
+    if valor < 0:
+        raise HTTPException(status_code=400, detail="O valor nao pode ser negativo")
+
+    nova = TrialClass(
+        id=trial_id,
+        activity_id=activity["id"],
+        activity_name=activity["name"],
+        trial_date=dados.trial_date or parse_from_mongo(dict(antiga)).get("trial_date") or date.today(),
+        amount=valor,
+        registered_by=antiga.get("registered_by"),
+        created_at=antiga.get("created_at")
+    )
+    await db.trial_classes.replace_one({"id": trial_id}, prepare_for_mongo(nova.dict()))
+
+    await log_audit(current_user, "update", "trial", entity_id=trial_id,
+                    details=f"Corrigiu aula experimental para {nova.activity_name} ({nova.amount} EUR)")
+    return nova
 
 @api_router.delete("/trials/{trial_id}")
 async def delete_trial(trial_id: str, current_user: User = Depends(require_admin_or_staff)):

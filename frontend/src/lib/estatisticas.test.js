@@ -324,19 +324,42 @@ describe('estatísticas financeiras', () => {
     { amount: 30, category: 'rent', expense_date: '2026-10-05' },
     { amount: 100, category: 'rent', expense_date: '2026-09-20' }
   ];
-  const r = estatisticasFinanceiras({ pagamentos, despesas, vendas, inicio, fim });
+  const experimentais = [
+    { amount: 5, activity_name: 'Boxe', trial_date: '2026-10-07' },
+    { amount: 5, activity_name: 'Boxe', trial_date: '2026-10-31' },
+    { amount: 5, activity_name: 'Kickboxing', trial_date: '2026-09-09' }
+  ];
+  const r = estatisticasFinanceiras({ pagamentos, despesas, vendas, experimentais, inicio, fim });
 
-  test('a faturação são as quotas pagas mais o merchandise', () => {
-    // 35 + 20 + 55 (pagos) + 12 (venda) = 122. O pendente não conta.
-    expect(r.faturacao).toBe(122);
+  test('a faturação são as quotas pagas, o merchandise e as experimentais', () => {
+    // 35 + 20 + 55 (pagos) + 12 (venda) + 10 (2 experimentais) = 132.
+    // O pagamento pendente não conta.
+    expect(r.faturacao).toBe(132);
     expect(r.receitaQuotas).toBe(110);
     expect(r.merchandise).toBe(12);
+    expect(r.experimentais).toBe(10);
+    expect(r.nExperimentais).toBe(2);
   });
 
   test('o resultado líquido é a faturação menos a despesa', () => {
     expect(r.despesa).toBe(30);
-    expect(r.liquido).toBe(122 - 30);
+    expect(r.liquido).toBe(132 - 30);
     expect(r.liquido).toBe(r.faturacao - r.despesa);
+  });
+
+  test('uma experimental oferecida conta como aula mas não como receita', () => {
+    const comOferta = estatisticasFinanceiras({
+      experimentais: [{ amount: 0, activity_name: 'Boxe', trial_date: '2026-10-07' }],
+      inicio, fim
+    });
+    expect(comOferta.nExperimentais).toBe(1);
+    expect(comOferta.experimentais).toBe(0);
+    expect(comOferta.faturacao).toBe(0);
+  });
+
+  test('sem experimentais, a faturação é a de sempre', () => {
+    const semTrials = estatisticasFinanceiras({ pagamentos, despesas, vendas, inicio, fim });
+    expect(semTrials.faturacao).toBe(122);
   });
 
   test('num pagamento de inscrição, 20 € são seguro e o resto quota', () => {
@@ -352,14 +375,15 @@ describe('estatísticas financeiras', () => {
   });
 
   test('compara com o mês anterior', () => {
-    // Setembro: 100 de quota + 8 de venda = 108 de faturação, 100 de despesa.
-    expect(r.comparacao.faturacao).toMatchObject({ atual: 122, anterior: 108 });
-    expect(r.comparacao.liquido).toMatchObject({ atual: 92, anterior: 8 });
+    // Setembro: 100 de quota + 8 de venda + 5 de experimental = 113.
+    expect(r.comparacao.faturacao).toMatchObject({ atual: 132, anterior: 113 });
+    expect(r.comparacao.liquido).toMatchObject({ atual: 102, anterior: 13 });
+    expect(r.comparacao.experimentais).toMatchObject({ atual: 10, anterior: 5 });
   });
 
-  test('o pagamento do último dia do mês conta', () => {
-    // Se o dia 31 fosse excluído, a faturação seria 67 em vez de 122.
-    expect(r.faturacao).toBeGreaterThan(67);
+  test('o pagamento e a experimental do último dia do mês contam', () => {
+    // Se o dia 31 fosse excluído, faltavam 55 de quota e 5 de experimental.
+    expect(r.faturacao).toBe(132);
   });
 
   test('a faturação por mês soma o mesmo que o total', () => {
@@ -441,7 +465,11 @@ describe('destaques do ano', () => {
   ];
   const d = destaquesDoAno({
     ano: 2026, presencas, membros, modalidades,
-    experimentais: [{ activity_name: 'Boxe', trial_date: '2026-04-10' }],
+    experimentais: [
+      { activity_name: 'Boxe', trial_date: '2026-04-10', amount: 5 },
+      { activity_name: 'Boxe', trial_date: '2026-04-11', amount: 5 },
+      { activity_name: 'Kickboxing', trial_date: '2026-05-02', amount: 0 }
+    ],
     pagamentos: [{ status: 'paid', amount: 200, payment_date: '2026-03-05' }],
     vendas: [{ total: 50, sale_date: '2026-04-02' }],
     despesas: [{ amount: 500, expense_date: '2026-04-20' }],
@@ -477,14 +505,27 @@ describe('destaques do ano', () => {
     expect(nota('Mês com mais aulas experimentais')).toContain('Abril 2026');
   });
 
-  test('o melhor mês de faturação inclui o merchandise', () => {
+  test('o melhor mês de faturação inclui o merchandise e as experimentais', () => {
     expect(nota('Melhor mês de faturação')).toContain('Março 2026');
-    expect(d.faturacaoPorMes['2026-04']).toBe(50);
+    // Abril: 50 da venda + 10 das duas experimentais pagas
+    expect(d.faturacaoPorMes['2026-04']).toBe(60);
+  });
+
+  test('diz o que as experimentais renderam', () => {
+    expect(d.totais.receitaExperimentais).toBe(10);
+    expect(d.totais.experimentais).toBe(3);
+    expect(nota('O que as experimentais renderam')).toContain('10.00 €');
+    expect(nota('O que as experimentais renderam')).toContain('3 aulas');
+  });
+
+  test('uma experimental oferecida conta como aula e rende zero', () => {
+    expect(d.receitaExperimentaisPorMes['2026-05']).toBe(0);
+    expect(d.experimentaisPorMes['2026-05']).toBe(1);
   });
 
   test('o resultado líquido por mês é a faturação menos a despesa', () => {
     expect(d.liquidoPorMes['2026-03']).toBe(200);
-    expect(d.liquidoPorMes['2026-04']).toBe(50 - 500);
+    expect(d.liquidoPorMes['2026-04']).toBe(60 - 500);
     expect(nota('Pior resultado líquido')).toContain('Abril 2026');
   });
 

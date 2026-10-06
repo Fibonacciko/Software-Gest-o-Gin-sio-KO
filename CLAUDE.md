@@ -46,6 +46,8 @@ Onde não há descrição, mostra-se o nome da categoria.
 
 Consultam-se nas Finanças, com filtro por **período** (hoje, este mês, mês
 passado, este ano, ano passado, um dia certo ou um intervalo) e por **tipo**.
+Podem ser **corrigidas e apagadas**, pelo administrador e pelo colaborador:
+quem as lança tem de as poder emendar.
 Os filtros são aplicados pelo servidor (`GET /api/expenses` aceita
 `start_date`, `end_date` e `category`), não no ecrã.
 
@@ -58,7 +60,12 @@ pode mexer nas contas do ginásio.
 - Uma presença é sempre de um **sócio**, numa modalidade.
 - As **aulas experimentais** ficam numa coleção à parte (`trial_classes`) e
   **nunca entram nas contagens de presenças** — inflacionariam as estatísticas
-  com gente que não é sócia. Registam só a modalidade e a data.
+  com gente que não é sócia.
+- São **pagas: 5 €** (`TRIAL_DEFAULT_AMOUNT`), alterável em cada registo, e
+  0 € quando são oferecidas. Esse dinheiro **entra na Faturação**, como o
+  merchandise. Registam-se no Painel Principal, ao lado do Check-in.
+- Um **check-in errado** corrige-se (a modalidade) ou apaga-se, no Painel. Uma
+  presença a mais estraga as estatísticas do mês.
 
 ### Modalidades
 
@@ -127,7 +134,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 120 testes e demoram 4 segundos.
+backend** — são 142 testes e demoram 5 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -135,7 +142,7 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios têm testes próprios, no site (70 testes, 3 segundos):
+As contas dos Relatórios têm testes próprios, no site (74 testes, 2 segundos):
 
 ```bash
 cd frontend && yarn test --watchAll=false
@@ -250,7 +257,10 @@ testes com nomes portugueses, use Python.
   volta.
 - **Pesquisas** ignoram maiúsculas, acentos e as ligações dos nomes ("de", "da",
   "dos"): `corresponde_pesquisa()` no backend, `correspondePesquisa()` no
-  frontend. Resultados por ordem alfabética.
+  frontend. Resultados por ordem alfabética, com os **nomes próprios primeiro**.
+- **A lista de sócios, sem pesquisa, vem por número de sócio** (001, 002, 010 —
+  não por texto, senão o 10 vinha a seguir ao 1). É assim que se encontra alguém
+  a correr os olhos pela lista. A pesquisa mantém a ordem dos nomes.
 - **Tema claro e escuro.** Toda a cor nova precisa da variante escura
   (`dark:`) ou de variáveis do tema. O tema escuro é o mais usado.
 - **Cores da marca:** laranja `#B8651B`, âmbar `#F5A623`, fundo escuro `#1A1A1A`.

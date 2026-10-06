@@ -49,7 +49,9 @@ const Payments = ({ language, translations }) => {
   const [activities, setActivities] = useState([]);
   const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
   // Filtros da lista de despesas: por periodo (ou um dia certo) e por tipo
+  const [trials, setTrials] = useState([]);
   const [despesasFiltradas, setDespesasFiltradas] = useState([]);
+  const [despesaAEditar, setDespesaAEditar] = useState(null);
   const [expenseDateFilter, setExpenseDateFilter] = useState('thisYear');
   const [expenseCategoryFilter, setExpenseCategoryFilter] = useState('all');
   const [expenseDay, setExpenseDay] = useState('');
@@ -178,6 +180,9 @@ const Payments = ({ language, translations }) => {
       noPayments: 'Nenhum pagamento encontrado',
       paymentAdded: 'Pagamento registado com sucesso!',
       expenseAdded: 'Despesa registada com sucesso!',
+      expenseUpdated: 'Despesa corrigida.',
+      expenseDeleted: 'Despesa eliminada.',
+      editExpense: 'Corrigir Despesa',
       export: 'Exportar',
       paymentDetails: 'Detalhes do Pagamento',
       membershipPayment: 'Pagamento de Membership',
@@ -282,6 +287,9 @@ const Payments = ({ language, translations }) => {
       noPayments: 'No payments found',
       paymentAdded: 'Payment added successfully!',
       expenseAdded: 'Expense added successfully!',
+      expenseUpdated: 'Expense updated.',
+      expenseDeleted: 'Expense deleted.',
+      editExpense: 'Edit Expense',
       export: 'Export',
       paymentDetails: 'Payment Details',
       membershipPayment: 'Membership Payment',
@@ -296,6 +304,7 @@ const Payments = ({ language, translations }) => {
     fetchPayments();
     fetchExpenses();
     fetchSales();
+    fetchTrials();
     fetchActivities();
   }, []);
 
@@ -341,6 +350,16 @@ const Payments = ({ language, translations }) => {
       setSales(response.data);
     } catch (error) {
       console.error('Error fetching sales:', error);
+    }
+  };
+
+  /** As aulas experimentais sao pagas: o que rendem entra na faturacao. */
+  const fetchTrials = async () => {
+    try {
+      const response = await axios.get(`${API}/trials`);
+      setTrials(response.data);
+    } catch (error) {
+      console.error('Error fetching trials:', error);
     }
   };
 
@@ -575,16 +594,48 @@ const Payments = ({ language, translations }) => {
       if (expenseFormData.category) {
         payload.category = expenseFormData.category;
       }
-      await axios.post(`${API}/expenses`, payload);
 
-      toast.success(t[language].expenseAdded);
+      if (despesaAEditar) {
+        await axios.put(`${API}/expenses/${despesaAEditar.id}`, payload);
+        toast.success(t[language].expenseUpdated);
+      } else {
+        await axios.post(`${API}/expenses`, payload);
+        toast.success(t[language].expenseAdded);
+      }
+
       setShowAddExpenseDialog(false);
+      setDespesaAEditar(null);
       resetExpenseForm();
       fetchExpenses();
       fetchDespesasFiltradas();
     } catch (error) {
-      console.error('Error adding expense:', error);
-      toast.error('Erro ao registar despesa');
+      console.error('Error saving expense:', error);
+      toast.error(despesaAEditar ? 'Erro ao corrigir a despesa' : 'Erro ao registar despesa');
+    }
+  };
+
+  const abrirCorrecaoDaDespesa = (despesa) => {
+    setDespesaAEditar(despesa);
+    setExpenseFormData({
+      description: despesa.description || '',
+      amount: String(despesa.amount ?? ''),
+      expense_date: String(despesa.expense_date || '').split('T')[0],
+      category: despesa.category || ''
+    });
+    setShowAddExpenseDialog(true);
+  };
+
+  const apagarDespesa = async (despesa) => {
+    const nome = despesa.description || nomeDaCategoria(despesa.category);
+    if (!window.confirm(`Apagar a despesa "${nome}"? Esta ação não se desfaz.`)) return;
+    try {
+      await axios.delete(`${API}/expenses/${despesa.id}`);
+      toast.success(t[language].expenseDeleted);
+      fetchExpenses();
+      fetchDespesasFiltradas();
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('Erro ao eliminar a despesa');
     }
   };
 
@@ -647,10 +698,12 @@ const Payments = ({ language, translations }) => {
         .filter((x) => noPeriodo(x[campoData], desde))
         .reduce((total, x) => total + (campoValor(x) || 0), 0);
 
-    // FATURAÇÃO = tudo o que o ginásio faturou: quotas, seguros e merchandise
+    // FATURAÇÃO = tudo o que o ginásio faturou: quotas, seguros, merchandise
+    // e aulas experimentais, que são pagas
     const faturacao = (desde) =>
       somar(pagos, 'payment_date', (p) => p.amount, desde) +
-      somar(sales, 'sale_date', (v) => v.total, desde);
+      somar(sales, 'sale_date', (v) => v.total, desde) +
+      somar(trials, 'trial_date', (e) => e.amount, desde);
 
     const despesa = (desde) => somar(expenses, 'expense_date', (e) => e.amount, desde);
 
@@ -676,6 +729,7 @@ const Payments = ({ language, translations }) => {
       // Detalhe, para quem quiser perceber de onde vem a faturação
       quotasAnual: somar(pagos, 'payment_date', (p) => p.amount - parteSeguro(p), inicioDoAno),
       segurosAnual: somar(pagos, 'payment_date', parteSeguro, inicioDoAno),
+      experimentaisAnual: somar(trials, 'trial_date', (e) => e.amount, inicioDoAno),
       merchandiseAnual: somar(sales, 'sale_date', (v) => v.total, inicioDoAno),
       pendingCount: payments.filter((p) => p.status === 'pending').length
     };
@@ -732,7 +786,7 @@ const Payments = ({ language, translations }) => {
           </Button>
           <Button
             className="btn-hover bg-orange-500 hover:bg-orange-600 text-white"
-            onClick={() => { resetExpenseForm(); setShowAddExpenseDialog(true); }}
+            onClick={() => { setDespesaAEditar(null); resetExpenseForm(); setShowAddExpenseDialog(true); }}
             data-testid="add-expense-btn"
           >
             <Plus className="mr-2" size={16} />
@@ -909,10 +963,18 @@ const Payments = ({ language, translations }) => {
         </Dialog>
       </div>
 
-      <Dialog open={showAddExpenseDialog} onOpenChange={setShowAddExpenseDialog}>
+      <Dialog
+        open={showAddExpenseDialog}
+        onOpenChange={(aberto) => {
+          setShowAddExpenseDialog(aberto);
+          if (!aberto) { setDespesaAEditar(null); resetExpenseForm(); }
+        }}
+      >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t[language].addExpense}</DialogTitle>
+          <DialogTitle>
+            {despesaAEditar ? t[language].editExpense : t[language].addExpense}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleAddExpense} className="space-y-4">
           <div>
@@ -1406,11 +1468,35 @@ const Payments = ({ language, translations }) => {
                         {despesa.category ? ` · ${nomeDaCategoria(despesa.category)}` : ''}
                       </p>
                     </div>
-                    {isAdmin() && (
-                      <p className="font-semibold shrink-0" style={{ color: '#dc2626' }}>
-                        €{despesa.amount.toFixed(2)}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isAdmin() && (
+                        <p className="font-semibold" style={{ color: '#dc2626' }}>
+                          €{despesa.amount.toFixed(2)}
+                        </p>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title={t[language].editExpense}
+                        onClick={() => abrirCorrecaoDaDespesa(despesa)}
+                        data-testid={`edit-expense-${despesa.id}`}
+                      >
+                        <Edit size={15} />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-600 hover:text-red-700"
+                        title={t[language].expenseDeleted}
+                        onClick={() => apagarDespesa(despesa)}
+                        data-testid={`delete-expense-${despesa.id}`}
+                      >
+                        <Trash2 size={15} />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
