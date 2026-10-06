@@ -44,10 +44,15 @@ A **descrição é opcional**. Uma despesa fica identificada pela **categoria** 
 pela **data**; obrigar a escrever texto só levava a "vários" e a pontos finais.
 Onde não há descrição, mostra-se o nome da categoria.
 
-Consultam-se nas Finanças, com filtro por **período** (hoje, este mês, mês
-passado, este ano, ano passado, um dia certo ou um intervalo) e por **tipo**.
-Podem ser **corrigidas e apagadas**, pelo administrador e pelo colaborador:
-quem as lança tem de as poder emendar.
+Consultam-se nas Finanças, no cartão **Despesas Registadas**, que abre uma
+janela com filtro por **período** (hoje, este mês, mês passado, este ano, ano
+passado, um dia certo ou um intervalo) e por **tipo**. Podem ser **corrigidas e
+apagadas**, pelo administrador e pelo colaborador: quem as lança tem de as
+poder emendar.
+
+Ficam numa janela, e não numa secção da página, porque a lista de pagamentos
+tem mais de mil linhas: tudo o que viesse a seguir ficava a dezenas de milhares
+de pixeis de distância. Pela mesma razão, essa lista tem altura limitada.
 Os filtros são aplicados pelo servidor (`GET /api/expenses` aceita
 `start_date`, `end_date` e `category`), não no ecrã.
 

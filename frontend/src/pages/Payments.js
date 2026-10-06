@@ -52,6 +52,7 @@ const Payments = ({ language, translations }) => {
   const [trials, setTrials] = useState([]);
   const [despesasFiltradas, setDespesasFiltradas] = useState([]);
   const [despesaAEditar, setDespesaAEditar] = useState(null);
+  const [despesasAbertas, setDespesasAbertas] = useState(false);
   const [expenseDateFilter, setExpenseDateFilter] = useState('thisYear');
   const [expenseCategoryFilter, setExpenseCategoryFilter] = useState('all');
   const [expenseDay, setExpenseDay] = useState('');
@@ -119,6 +120,7 @@ const Payments = ({ language, translations }) => {
     categoryLicenses: 'Licenças (Seguros)',
     categoryFnb: 'F&B (Alimentos e bebidas)',
     expensesList: 'Despesas Registadas',
+    openExpenses: 'Ver, corrigir e apagar →',
     expenseDescriptionHint: 'Opcional — sem texto, fica identificada pela categoria',
     allCategories: 'Todos os tipos',
     dayToday: 'Hoje',
@@ -226,6 +228,7 @@ const Payments = ({ language, translations }) => {
     categoryLicenses: 'Licences (insurance)',
     categoryFnb: 'F&B (food and drinks)',
     expensesList: 'Recorded Expenses',
+    openExpenses: 'View, edit and delete →',
     expenseDescriptionHint: 'Optional — without text, the category identifies it',
     allCategories: 'All types',
     dayToday: 'Today',
@@ -1092,6 +1095,32 @@ const Payments = ({ language, translations }) => {
               </Card>
             );
           })}
+
+          {/* O lugar vazio da grelha dá acesso à consulta das despesas */}
+          <Card
+            className="card-shadow cursor-pointer transition-all duration-200 hover:opacity-90"
+            onClick={() => setDespesasAbertas(true)}
+            data-testid="abrir-despesas"
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 truncate">
+                    {t[language].expensesList}
+                  </p>
+                  <p className="text-2xl font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                    {despesasFiltradas.length}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: 'var(--ko-primary-orange)' }}>
+                    {t[language].openExpenses}
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-full shrink-0 bg-orange-600">
+                  <Receipt size={20} className="text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         /* O colaborador não vê contas do ginásio: só os botões de registar */
@@ -1106,13 +1135,22 @@ const Payments = ({ language, translations }) => {
               </div>
             </CardContent>
           </Card>
-          <Card className="card-shadow">
+          <Card
+            className="card-shadow cursor-pointer transition-all duration-200 hover:opacity-90"
+            onClick={() => setDespesasAbertas(true)}
+            data-testid="abrir-despesas"
+          >
             <CardContent className="p-5 flex items-center justify-between gap-3">
-              <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                {t[language].expenses}
-              </p>
+              <div className="min-w-0">
+                <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                  {t[language].expenses}
+                </p>
+                <p className="text-xs truncate" style={{ color: 'var(--ko-primary-orange)' }}>
+                  {t[language].openExpenses}
+                </p>
+              </div>
               <div className="p-2.5 rounded-full bg-orange-500 shrink-0">
-                <CreditCard size={20} className="text-white" />
+                <Receipt size={20} className="text-white" />
               </div>
             </CardContent>
           </Card>
@@ -1209,9 +1247,12 @@ const Payments = ({ language, translations }) => {
               ))}
             </div>
           ) : payments.length > 0 ? (
-            <div className="overflow-x-auto">
+            /* Altura limitada: sem isto, mil pagamentos faziam uma pagina de
+               dezenas de milhares de pixeis e empurravam tudo o resto para
+               fora do alcance */
+            <div className="overflow-x-auto max-h-[32rem] overflow-y-auto">
               <table className="w-full">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-card">
                   <tr className="border-b">
                     <th className="text-left p-4 font-medium text-gray-600 dark:text-gray-300">
                       {t[language].member}
@@ -1370,15 +1411,18 @@ const Payments = ({ language, translations }) => {
         </CardContent>
       </Card>
 
-      {/* Despesas registadas, com filtro por periodo e por tipo */}
-      <Card className="card-shadow">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Receipt className="mr-2" size={20} />
-            {t[language].expensesList} ({despesasFiltradas.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Consultar despesas: aberta pelo cartao, para nao ficar enterrada
+          debaixo da lista de pagamentos, que pode ter mais de mil linhas */}
+      <Dialog open={despesasAbertas} onOpenChange={setDespesasAbertas}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Receipt className="mr-2" size={20} />
+              {t[language].expensesList} ({despesasFiltradas.length})
+            </DialogTitle>
+          </DialogHeader>
+          <div>
+
           {/* Filtros */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <Select value={expenseDateFilter} onValueChange={setExpenseDateFilter}>
@@ -1515,8 +1559,9 @@ const Payments = ({ language, translations }) => {
           ) : (
             <p className="text-center py-6 text-gray-500 dark:text-gray-400">{t[language].noExpenses}</p>
           )}
-        </CardContent>
-      </Card>
+                  </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Vendas de merchandise */}
       <Card className="card-shadow">
