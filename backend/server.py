@@ -369,14 +369,14 @@ class PaymentCreate(BaseModel):
 
 class Expense(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    description: str
+    description: Optional[str] = None
     amount: float
     expense_date: date = Field(default_factory=lambda: date.today())
     category: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ExpenseCreate(BaseModel):
-    description: str
+    description: Optional[str] = None
     amount: float
     expense_date: Optional[date] = None
     category: Optional[str] = None
@@ -2080,9 +2080,12 @@ async def create_expense(
 async def get_expenses(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    category: Optional[str] = None,
     current_user: User = Depends(require_admin_or_staff)
 ):
     filter_dict = {}
+    if category:
+        filter_dict['category'] = category
     if start_date:
         filter_dict['expense_date'] = filter_dict.get('expense_date', {})
         filter_dict['expense_date']['$gte'] = start_date.isoformat()
@@ -2092,7 +2095,7 @@ async def get_expenses(
         # com $lte, um intervalo excluia sempre o ultimo dia
         filter_dict['expense_date']['$lt'] = (end_date + timedelta(days=1)).isoformat()
 
-    expenses = await db.expenses.find(filter_dict).to_list(20000)
+    expenses = await db.expenses.find(filter_dict).sort("expense_date", -1).to_list(20000)
     return [Expense(**parse_from_mongo(expense)) for expense in expenses]
 
 # Inventory Routes

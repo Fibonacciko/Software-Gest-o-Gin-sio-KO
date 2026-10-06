@@ -38,6 +38,21 @@ Três tipos: **Quota**, **Seguro** (20 € automáticos) e **Mensalidade + Segur
 Nas contas, um pagamento combinado é repartido: 20 € contam como seguro, o resto
 como quota.
 
+### Despesas
+
+A **descrição é opcional**. Uma despesa fica identificada pela **categoria** e
+pela **data**; obrigar a escrever texto só levava a "vários" e a pontos finais.
+Onde não há descrição, mostra-se o nome da categoria.
+
+Consultam-se nas Finanças, com filtro por **período** (hoje, este mês, mês
+passado, este ano, ano passado, um dia certo ou um intervalo) e por **tipo**.
+Os filtros são aplicados pelo servidor (`GET /api/expenses` aceita
+`start_date`, `end_date` e `category`), não no ecrã.
+
+**Os cartões de Despesa não seguem este filtro**: somam sempre o ano, o mês e o
+dia inteiros. São duas leituras diferentes de propósito — filtrar a consulta não
+pode mexer nas contas do ginásio.
+
 ### Presenças e aulas experimentais
 
 - Uma presença é sempre de um **sócio**, numa modalidade.
@@ -58,7 +73,9 @@ compatibilidade e acompanha sempre a primeira da lista.
   o valor de **cada** pagamento e venda (precisa dele para conferir ao balcão),
   mas **não vê as contas do ginásio**: os cartões de faturação, despesa e
   resultado líquido aparecem-lhe sem números, e **não pode exportar**. Os
-  **Relatórios são só do administrador** — mostram as contas todas.
+  **Relatórios são só do administrador** — mostram as contas todas. Consulta a
+  lista de despesas (regista-as, por isso tem de as poder conferir), mas sem
+  valores e sem o total.
 
 ### Sem pacotes
 
@@ -110,7 +127,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 108 testes e demoram 6 segundos.
+backend** — são 120 testes e demoram 4 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -202,6 +219,10 @@ arranque de novo — não confie no `--reload`.
 
 Nas consultas ao servidor, o limite superior de um intervalo tem de ser o **dia
 seguinte** (`$lt`), senão exclui o próprio dia.
+
+**Os nomes das categorias de despesa vivem em `frontend/src/lib/categorias.js`.**
+Estavam escritos duas vezes, nas Finanças e nos Relatórios, e bastava acrescentar
+uma categoria num lado para o outro mostrar o nome técnico em inglês.
 
 **As contas dos Relatórios vivem em `frontend/src/lib/estatisticas.js`**, fora
 dos ecrãs e com testes. As datas **nunca** passam por `new Date(texto)`: lê-se o

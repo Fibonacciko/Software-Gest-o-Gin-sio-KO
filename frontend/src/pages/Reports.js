@@ -35,37 +35,12 @@ import {
   rotuloDoMes,
   SEMANA
 } from '../lib/estatisticas';
+import { nomeDaCategoria } from '../lib/categorias';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Nomes das categorias de despesa, tal como aparecem no formulario das Financas
-const EXPENSE_CATEGORY_LABELS = {
-  rent: 'Renda',
-  salaries: 'Salários',
-  accountant: 'Contabilista',
-  technology: 'Tecnologia',
-  energy: 'Energia',
-  infrastructure: 'Infraestruturas',
-  merchandise: 'Merchandise',
-  marketing: 'Marketing',
-  licenses: 'Licenças',
-  fnb: 'F&B',
-  // Categorias usadas antes de a lista ter sido revista, ainda presentes
-  // nas despesas de 2025 e do inicio de 2026
-  teachers: 'Professores',
-  collaborators: 'Colaboradores',
-  maintenance: 'Manutenção',
-  equipment: 'Equipamento',
-  utilities: 'Serviços (água, luz)',
-  products: 'Produtos',
-  cleaning: 'Limpeza',
-  insurance: 'Seguros',
-  misc: 'Diversos',
-  other: 'Outros'
-};
 
-const expenseCategoryLabel = (id) => EXPENSE_CATEGORY_LABELS[id] || id;
 
 // Metodos de pagamento, com os mesmos nomes que aparecem nas Financas
 const PAYMENT_METHOD_LABELS = {
@@ -459,7 +434,7 @@ const Reports = ({ language }) => {
       tabela('Despesa por mes', Object.entries(financas.despesaPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
       tabela('Despesa por categoria', porOrdemDeValor(financas.despesaPorCategoria)
-        .map((x) => [expenseCategoryLabel(x.chave), x.valor.toFixed(2)]));
+        .map((x) => [nomeDaCategoria(x.chave), x.valor.toFixed(2)]));
       tabela('Merchandise por artigo', porOrdemDeValor(financas.merchandisePorArtigo)
         .map((x) => [x.chave, x.valor.toFixed(2)]));
     } else if (reportType === 'member') {

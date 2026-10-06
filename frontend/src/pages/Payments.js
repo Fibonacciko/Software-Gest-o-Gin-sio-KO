@@ -21,12 +21,13 @@ import {
   Download,
   Edit,
   Trash2,
-  Eye,
-  Users
+  Users,
+  Receipt
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { corresponde, filtrarEOrdenar } from '../lib/pesquisa';
+import { CATEGORIAS_DE_DESPESA, nomeDaCategoria } from '../lib/categorias';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -47,6 +48,13 @@ const Payments = ({ language, translations }) => {
   const [sales, setSales] = useState([]);
   const [activities, setActivities] = useState([]);
   const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
+  // Filtros da lista de despesas: por periodo (ou um dia certo) e por tipo
+  const [despesasFiltradas, setDespesasFiltradas] = useState([]);
+  const [expenseDateFilter, setExpenseDateFilter] = useState('thisYear');
+  const [expenseCategoryFilter, setExpenseCategoryFilter] = useState('all');
+  const [expenseDay, setExpenseDay] = useState('');
+  const [expenseFrom, setExpenseFrom] = useState('');
+  const [expenseTo, setExpenseTo] = useState('');
   const [expenseFormData, setExpenseFormData] = useState({
     description: '',
     amount: '',
@@ -108,6 +116,19 @@ const Payments = ({ language, translations }) => {
     categoryMarketing: 'Marketing (Redes sociais, multimédia)',
     categoryLicenses: 'Licenças (Seguros)',
     categoryFnb: 'F&B (Alimentos e bebidas)',
+    expensesList: 'Despesas Registadas',
+    expenseDescriptionHint: 'Opcional — sem texto, fica identificada pela categoria',
+    allCategories: 'Todos os tipos',
+    dayToday: 'Hoje',
+    lastYear: 'Ano Passado',
+    pickDay: 'Escolher dia',
+    pickRange: 'Escolher intervalo',
+    day: 'Dia',
+    from: 'De',
+    to: 'Até',
+    noExpenses: 'Nenhuma despesa para este filtro.',
+    expensesTotal: 'Total do filtro',
+    noCategory: 'Sem categoria',
       status: 'Status',
       save: 'Guardar',
       cancel: 'Cancelar',
@@ -199,6 +220,19 @@ const Payments = ({ language, translations }) => {
     categoryMarketing: 'Marketing (social media, multimedia)',
     categoryLicenses: 'Licences (insurance)',
     categoryFnb: 'F&B (food and drinks)',
+    expensesList: 'Recorded Expenses',
+    expenseDescriptionHint: 'Optional — without text, the category identifies it',
+    allCategories: 'All types',
+    dayToday: 'Today',
+    lastYear: 'Last Year',
+    pickDay: 'Pick a day',
+    pickRange: 'Pick a range',
+    day: 'Day',
+    from: 'From',
+    to: 'To',
+    noExpenses: 'No expenses for this filter.',
+    expensesTotal: 'Filter total',
+    noCategory: 'No category',
       status: 'Status',
       save: 'Save',
       cancel: 'Cancel',
@@ -272,6 +306,10 @@ const Payments = ({ language, translations }) => {
     return () => clearTimeout(espera);
   }, [statusFilter, dateFilter, selectedMember, searchTerm]);
 
+  useEffect(() => {
+    fetchDespesasFiltradas();
+  }, [expenseDateFilter, expenseCategoryFilter, expenseDay, expenseFrom, expenseTo]);
+
   const fetchMembers = async () => {
     try {
       const response = await axios.get(`${API}/members`);
@@ -306,10 +344,68 @@ const Payments = ({ language, translations }) => {
     }
   };
 
+  /**
+   * O intervalo de datas que corresponde ao filtro escolhido.
+   * As datas sao montadas a partir dos componentes locais: `toISOString()`
+   * recua um dia em Portugal.
+   */
+  const intervaloDasDespesas = () => {
+    const dia = (d) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const hoje = new Date();
+
+    switch (expenseDateFilter) {
+      case 'today':
+        return { de: dia(hoje), ate: dia(hoje) };
+      case 'thisMonth':
+        return {
+          de: dia(new Date(hoje.getFullYear(), hoje.getMonth(), 1)),
+          ate: dia(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0))
+        };
+      case 'lastMonth':
+        return {
+          de: dia(new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)),
+          ate: dia(new Date(hoje.getFullYear(), hoje.getMonth(), 0))
+        };
+      case 'thisYear':
+        return { de: `${hoje.getFullYear()}-01-01`, ate: `${hoje.getFullYear()}-12-31` };
+      case 'lastYear':
+        return { de: `${hoje.getFullYear() - 1}-01-01`, ate: `${hoje.getFullYear() - 1}-12-31` };
+      case 'day':
+        return expenseDay ? { de: expenseDay, ate: expenseDay } : {};
+      case 'range':
+        return { de: expenseFrom || undefined, ate: expenseTo || undefined };
+      default:
+        return {};
+    }
+  };
+
+  const pedidoDeDespesas = useRef(0);
+
+  /** A lista toda, que alimenta os cartoes de Despesa (anual, mensal, diaria). */
   const fetchExpenses = async () => {
     try {
       const response = await axios.get(`${API}/expenses`);
       setExpenses(response.data);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+    }
+  };
+
+  /** A lista que se esta a consultar, com os filtros aplicados pelo servidor. */
+  const fetchDespesasFiltradas = async () => {
+    const meuPedido = ++pedidoDeDespesas.current;
+    try {
+      const params = new URLSearchParams();
+      const { de, ate } = intervaloDasDespesas();
+      if (de) params.append('start_date', de);
+      if (ate) params.append('end_date', ate);
+      if (expenseCategoryFilter !== 'all') params.append('category', expenseCategoryFilter);
+
+      const response = await axios.get(`${API}/expenses?${params}`);
+      // Uma leitura antiga que chegue depois nao pode substituir a mais recente
+      if (meuPedido !== pedidoDeDespesas.current) return;
+      setDespesasFiltradas(response.data);
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
@@ -469,7 +565,8 @@ const Payments = ({ language, translations }) => {
     e.preventDefault();
     try {
       const payload = {
-        description: expenseFormData.description,
+        // Sem texto, a despesa fica identificada pela categoria e pela data
+        description: expenseFormData.description.trim() || null,
         amount: parseFloat(expenseFormData.amount)
       };
       if (expenseFormData.expense_date) {
@@ -484,6 +581,7 @@ const Payments = ({ language, translations }) => {
       setShowAddExpenseDialog(false);
       resetExpenseForm();
       fetchExpenses();
+      fetchDespesasFiltradas();
     } catch (error) {
       console.error('Error adding expense:', error);
       toast.error('Erro ao registar despesa');
@@ -839,14 +937,14 @@ const Payments = ({ language, translations }) => {
           </div>
 
           <div>
-            <Label htmlFor="expense-description">{t[language].description} *</Label>
+            <Label htmlFor="expense-description">{t[language].description}</Label>
             <Textarea
               id="expense-description"
               value={expenseFormData.description}
               onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
-              required
-              placeholder={t[language].paymentDescription}
+              placeholder={t[language].expenseDescriptionHint}
               rows={3}
+              data-testid="expense-description"
             />
           </div>
 
@@ -1206,6 +1304,130 @@ const Payments = ({ language, translations }) => {
               <CreditCard size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
               <p className="text-gray-600 dark:text-gray-300">{t[language].noPayments}</p>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Despesas registadas, com filtro por periodo e por tipo */}
+      <Card className="card-shadow">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Receipt className="mr-2" size={20} />
+            {t[language].expensesList} ({despesasFiltradas.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Filtros */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <Select value={expenseDateFilter} onValueChange={setExpenseDateFilter}>
+              <SelectTrigger data-testid="expense-date-filter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t[language].allDates}</SelectItem>
+                <SelectItem value="today">{t[language].dayToday}</SelectItem>
+                <SelectItem value="thisMonth">{t[language].thisMonth}</SelectItem>
+                <SelectItem value="lastMonth">{t[language].lastMonth}</SelectItem>
+                <SelectItem value="thisYear">{t[language].thisYear}</SelectItem>
+                <SelectItem value="lastYear">{t[language].lastYear}</SelectItem>
+                <SelectItem value="day">{t[language].pickDay}</SelectItem>
+                <SelectItem value="range">{t[language].pickRange}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={expenseCategoryFilter} onValueChange={setExpenseCategoryFilter}>
+              <SelectTrigger data-testid="expense-category-filter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">{t[language].allCategories}</SelectItem>
+                {CATEGORIAS_DE_DESPESA.map((c) => (
+                  <SelectItem key={c} value={c}>{nomeDaCategoria(c)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {expenseDateFilter === 'day' && (
+              <div>
+                <Label htmlFor="expense-day" className="text-xs">{t[language].day}</Label>
+                <Input
+                  id="expense-day"
+                  type="date"
+                  value={expenseDay}
+                  onChange={(e) => setExpenseDay(e.target.value)}
+                  data-testid="expense-day"
+                />
+              </div>
+            )}
+
+            {expenseDateFilter === 'range' && (
+              <>
+                <div>
+                  <Label htmlFor="expense-from" className="text-xs">{t[language].from}</Label>
+                  <Input
+                    id="expense-from"
+                    type="date"
+                    value={expenseFrom}
+                    onChange={(e) => setExpenseFrom(e.target.value)}
+                    data-testid="expense-from"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="expense-to" className="text-xs">{t[language].to}</Label>
+                  <Input
+                    id="expense-to"
+                    type="date"
+                    value={expenseTo}
+                    onChange={(e) => setExpenseTo(e.target.value)}
+                    data-testid="expense-to"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Lista */}
+          {despesasFiltradas.length > 0 ? (
+            <>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {despesasFiltradas.map((despesa) => (
+                  <div
+                    key={despesa.id}
+                    className="flex items-start justify-between gap-3 p-3 rounded-lg"
+                    style={{ background: 'var(--background-elevated)', color: 'var(--text-primary)' }}
+                    data-testid={`expense-${despesa.id}`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">
+                        {despesa.description || nomeDaCategoria(despesa.category)}
+                      </p>
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        {new Date(despesa.expense_date).toLocaleDateString('pt-PT')}
+                        {despesa.category ? ` · ${nomeDaCategoria(despesa.category)}` : ''}
+                      </p>
+                    </div>
+                    {isAdmin() && (
+                      <p className="font-semibold shrink-0" style={{ color: '#dc2626' }}>
+                        €{despesa.amount.toFixed(2)}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {isAdmin() && (
+                <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-200 dark:border-white/10">
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    {t[language].expensesTotal}
+                  </span>
+                  <span className="text-lg font-bold" style={{ color: '#dc2626' }}>
+                    €{despesasFiltradas.reduce((t, d) => t + d.amount, 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-center py-6 text-gray-500 dark:text-gray-400">{t[language].noExpenses}</p>
           )}
         </CardContent>
       </Card>
