@@ -22,7 +22,8 @@ import {
   porOrdemDeValor, mesesDoIntervalo, idade, escalaoEtario, modalidadesDoSocio,
   estaAtivo, estatisticasDePresencas, estatisticasFinanceiras,
   estatisticasDeSocios, destaquesDoAno, anosComDados, parteDoSeguro, NOMES_DIAS, SEMANA,
-  INICIO_DAS_CONTAS, desdeOInicioDasContas, anteriorAoInicioDasContas, dataDasContas
+  INICIO_DAS_CONTAS, desdeOInicioDasContas, anteriorAoInicioDasContas, dataDasContas,
+  resultadoPorModalidade
 } from './estatisticas';
 
 /* ------------------------------------------------------------------ datas */
@@ -740,6 +741,117 @@ describe('a data das contas e a data do pagamento', () => {
     });
     expect(d.faturacaoPorMes['2026-10']).toBe(50);
     expect(d.totais.faturacao).toBe(50);
+  });
+});
+
+
+describe('resultado por modalidade', () => {
+  const modalidades = [{ id: 'bx', name: 'Boxe' }, { id: 'kb', name: 'Kickboxing' }];
+  const membros = [
+    { id: '1', activity_ids: ['bx'] },
+    { id: '2', activity_ids: ['kb'] },
+    { id: '3', activity_ids: ['bx', 'kb'] },   // duas modalidades
+    { id: '4', activity_ids: [] }              // nenhuma
+  ];
+
+  test('a quota de quem tem uma modalidade vai toda para ela', () => {
+    const r = resultadoPorModalidade({
+      pagos: [{ member_id: '1', amount: 40 }, { member_id: '2', amount: 60 }],
+      membros, modalidades
+    });
+    expect(r.receita).toEqual({ Boxe: 40, Kickboxing: 60 });
+  });
+
+  test('quem tem duas modalidades reparte a quota por igual', () => {
+    const r = resultadoPorModalidade({
+      pagos: [{ member_id: '3', amount: 50 }], membros, modalidades
+    });
+    expect(r.receita).toEqual({ Boxe: 25, Kickboxing: 25 });
+  });
+
+  test('quem não tem modalidade fica à parte, em vez de se perder', () => {
+    const r = resultadoPorModalidade({
+      pagos: [{ member_id: '4', amount: 30 }], membros, modalidades
+    });
+    expect(r.receita).toEqual({ 'Sem modalidade': 30 });
+  });
+
+  test('as experimentais vão para a modalidade que foi experimentada', () => {
+    const r = resultadoPorModalidade({
+      experimentais: [{ activity_name: 'Boxe', amount: 5 }, { activity_name: 'Boxe', amount: 5 }],
+      membros, modalidades
+    });
+    expect(r.receita).toEqual({ Boxe: 10 });
+  });
+
+  test('a despesa reparte-se na proporção da receita', () => {
+    const r = resultadoPorModalidade({
+      pagos: [{ member_id: '1', amount: 75 }, { member_id: '2', amount: 25 }],
+      membros, modalidades, despesaTotal: 40
+    });
+    // Boxe fez 75% da receita, por isso leva 75% da despesa
+    expect(r.despesa.Boxe).toBe(30);
+    expect(r.despesa.Kickboxing).toBe(10);
+    expect(r.liquido.Boxe).toBe(45);
+    expect(r.liquido.Kickboxing).toBe(15);
+  });
+
+  test('o total do líquido por modalidade bate com o resultado verdadeiro', () => {
+    const r = resultadoPorModalidade({
+      pagos: [{ member_id: '1', amount: 40 }, { member_id: '3', amount: 60 }],
+      experimentais: [{ activity_name: 'Kickboxing', amount: 5 }],
+      membros, modalidades, despesaTotal: 200
+    });
+    const soma = Object.values(r.liquido).reduce((a, b) => a + b, 0);
+    expect(soma).toBeCloseTo(40 + 60 + 5 - 200);
+  });
+
+  test('sem receita nenhuma, não se inventa despesa por modalidade', () => {
+    const r = resultadoPorModalidade({ membros, modalidades, despesaTotal: 500 });
+    expect(r.receita).toEqual({});
+    expect(r.liquido).toEqual({});
+  });
+});
+
+describe('presenças por dia da semana, mês a mês', () => {
+  const d = destaquesDoAno({
+    ano: 2026,
+    presencas: [
+      { member_id: '1', check_in_date: '2026-10-05' },   // segunda
+      { member_id: '1', check_in_date: '2026-10-12' },   // segunda
+      { member_id: '1', check_in_date: '2026-10-06' },   // terça
+      { member_id: '1', check_in_date: '2026-11-02' }    // segunda, outro mês
+    ]
+  });
+
+  test('a contagem recomeça em cada mês', () => {
+    expect(d.presencasPorDiaDaSemanaEMes['2026-10']).toEqual({
+      'Segunda-feira': 2, 'Terça-feira': 1
+    });
+    expect(d.presencasPorDiaDaSemanaEMes['2026-11']).toEqual({ 'Segunda-feira': 1 });
+  });
+
+  test('os meses anteriores ficam todos guardados para consultar', () => {
+    expect(Object.keys(d.presencasPorDiaDaSemanaEMes).sort()).toEqual(['2026-10', '2026-11']);
+  });
+
+  test('o ano inteiro continua disponível', () => {
+    expect(d.presencasPorDiaDaSemana).toEqual({ 'Segunda-feira': 3, 'Terça-feira': 1 });
+  });
+});
+
+describe('sócios por modalidade', () => {
+  const modalidades = [{ id: 'bx', name: 'Boxe' }];
+  const membros = [
+    { id: '1', activity_ids: ['bx'], membership_status: 'active' },
+    { id: '2', activity_ids: ['bx'], membership_status: 'active' },
+    { id: '3', activity_ids: ['bx'], membership_status: 'inactive' }
+  ];
+
+  test('conta os ativos à parte de todos', () => {
+    const d = destaquesDoAno({ ano: 2026, membros, modalidades });
+    expect(d.sociosPorModalidade).toEqual({ Boxe: 3 });
+    expect(d.sociosAtivosPorModalidade).toEqual({ Boxe: 2 });
   });
 });
 

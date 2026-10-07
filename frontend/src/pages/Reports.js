@@ -77,6 +77,8 @@ const Reports = ({ language }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [anoEscolhido, setAnoEscolhido] = useState(new Date().getFullYear());
+  // As presenças por dia da semana contam-se mês a mês; 'ano' mostra o ano todo
+  const [mesDaSemana, setMesDaSemana] = useState('ano');
 
   const [members, setMembers] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -125,7 +127,12 @@ const Reports = ({ language }) => {
       attendanceByActivity: 'Presenças por Modalidade',
       topMembers: 'Sócios Mais Assíduos',
       trialsByActivity: 'Experimentais por Modalidade',
-      trialsByMonth: 'Experimentais por Mês',
+      trialsByMonth: 'Aulas Experimentais por Mês',
+      netByActivity: 'Resultado Líquido por Modalidade',
+      netByActivityHint: 'A despesa não é registada por modalidade: está repartida na proporção da receita de cada uma.',
+      activeMembersByActivity: 'Sócios por Modalidade (ativos)',
+      total: 'Total',
+      wholeYear: 'Ano inteiro',
       // Finanças
       billing: 'Faturação',
       billingHint: 'quotas, seguros, merchandise e experimentais',
@@ -200,7 +207,12 @@ const Reports = ({ language }) => {
       attendanceByActivity: 'Check-ins by Activity',
       topMembers: 'Most Active Members',
       trialsByActivity: 'Trials by Activity',
-      trialsByMonth: 'Trials by Month',
+      trialsByMonth: 'Trial Classes by Month',
+      netByActivity: 'Net Result by Activity',
+      netByActivityHint: 'Expenses are not recorded per activity: they are split in proportion to each one’s revenue.',
+      activeMembersByActivity: 'Members by Activity (active)',
+      total: 'Total',
+      wholeYear: 'Whole year',
       billing: 'Billing',
       billingHint: 'fees, insurance, merchandise and trials',
       totalExpenses: 'Expenses',
@@ -393,20 +405,27 @@ const Reports = ({ language }) => {
       tabela('Notas do ano', resumo.notas.map((n) => [n.titulo, n.texto]));
       tabela('Presencas por mes', Object.entries(resumo.presencasPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v]));
-      tabela('Presencas por dia da semana', SEMANA
+      tabela('Presencas por dia da semana (ano inteiro)', SEMANA
         .filter((d) => resumo.presencasPorDiaDaSemana[d])
         .map((d) => [d, resumo.presencasPorDiaDaSemana[d]]));
+      // Mes a mes, para o historico ficar todo no ficheiro
+      Object.keys(resumo.presencasPorDiaDaSemanaEMes).sort().forEach((mes) => {
+        tabela(`Presencas por dia da semana — ${rotuloDoMes(mes)}`, SEMANA
+          .filter((d) => resumo.presencasPorDiaDaSemanaEMes[mes][d])
+          .map((d) => [d, resumo.presencasPorDiaDaSemanaEMes[mes][d]]));
+      });
       tabela('Presencas por modalidade', porOrdemDeValor(resumo.presencasPorModalidade)
         .map((x) => [x.chave, x.valor]));
       tabela('Inscricoes por mes', Object.entries(resumo.inscricoesPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v]));
       tabela('Aulas experimentais por mes (quantas)',
         Object.entries(resumo.experimentaisPorMes).sort().map(([m, v]) => [rotuloDoMes(m), v]));
-      tabela('Aulas experimentais por mes (quanto renderam)',
-        Object.entries(resumo.receitaExperimentaisPorMes).sort()
-          .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
-      tabela('Socios por modalidade', porOrdemDeValor(resumo.sociosPorModalidade)
+      tabela('Socios por modalidade (ativos)', porOrdemDeValor(resumo.sociosAtivosPorModalidade)
         .map((x) => [x.chave, x.valor]));
+      tabela('Socios por modalidade (todos)', porOrdemDeValor(resumo.sociosPorModalidade)
+        .map((x) => [x.chave, x.valor]));
+      tabela('Resultado liquido por modalidade (despesa repartida pela receita)',
+        porOrdemDeValor(resumo.porModalidade.liquido).map((x) => [x.chave, x.valor.toFixed(2)]));
       tabela('Faturacao por mes', Object.entries(resumo.faturacaoPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
       tabela('Despesa por mes', Object.entries(resumo.despesaPorMes).sort()
@@ -550,12 +569,22 @@ const Reports = ({ language }) => {
    * pena carregar uma biblioteca de gráficos inteira para isto, depois do
    * trabalho que deu reduzir o tamanho da aplicação.
    */
-  const Barras = ({ titulo, dados, formatar = (v) => numero(v), cor = 'bg-amber-500', corNegativa = 'bg-red-500' }) => {
+  const Barras = ({
+    titulo, dados, formatar = (v) => numero(v), cor = 'bg-amber-500',
+    corNegativa = 'bg-red-500', nota, acessorio
+  }) => {
     const maximo = Math.max(...dados.map((d) => Math.abs(d.valor)), 0) || 1;
+    const total = dados.reduce((t, d) => t + d.valor, 0);
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{titulo}</CardTitle>
+          <div className="flex items-start justify-between gap-3">
+            <CardTitle className="text-base">{titulo}</CardTitle>
+            {acessorio}
+          </div>
+          {nota && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">{nota}</p>
+          )}
         </CardHeader>
         <CardContent>
           {dados.length === 0 ? (
@@ -581,6 +610,15 @@ const Reports = ({ language }) => {
                   </span>
                 </div>
               ))}
+              {/* O total do cartão, em pequeno, no canto de baixo à direita */}
+              <div className="pt-2 text-right">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {txt.total}:{' '}
+                  <span className="font-semibold" style={{ color: total < 0 ? '#dc2626' : 'var(--text-primary)' }}>
+                    {formatar(total)}
+                  </span>
+                </span>
+              </div>
             </div>
           )}
         </CardContent>
@@ -598,6 +636,13 @@ const Reports = ({ language }) => {
     SEMANA.filter((d) => grupos[d] !== undefined).map((d) => ({ rotulo: d, valor: grupos[d] }));
 
   /* ------------------------------------------------------------- ecrã */
+
+  // Os limites do ano escolhido, que as barras por mês usam
+  const doAno = {
+    de: { ano: anoEscolhido, mes: 1, dia: 1 },
+    ate: { ano: anoEscolhido, mes: 12, dia: 31 }
+  };
+  const mesesComPresencas = Object.keys(resumo.presencasPorDiaDaSemanaEMes || {}).sort();
 
   const periodoLegivel = `${new Date(inicio).toLocaleDateString('pt-PT')} — ${new Date(fim).toLocaleDateString('pt-PT')}`;
   const anteriorLegivel = (p) => p && p.inicio
@@ -771,32 +816,58 @@ const Reports = ({ language }) => {
                 </CardContent>
               </Card>
 
+              {/* A ordem pedida pelo dono do ginásio: primeiro quem são e
+                  quantos, depois o que fazem, depois o dinheiro */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Barras titulo={txt.attendanceByMonth}
-                  dados={porMes(resumo.presencasPorMes, { ano: anoEscolhido, mes: 1, dia: 1 }, { ano: anoEscolhido, mes: 12, dia: 31 })}
-                  cor="bg-blue-500" />
-                <Barras titulo={txt.attendanceByWeekday}
-                  dados={semanaOrdenada(resumo.presencasPorDiaDaSemana)} cor="bg-indigo-500" />
+                <Barras titulo={txt.activeMembersByActivity}
+                  dados={serie(resumo.sociosAtivosPorModalidade)} cor="bg-cyan-600" />
+                <Barras titulo={txt.signupsByMonth}
+                  dados={porMes(resumo.inscricoesPorMes, doAno.de, doAno.ate)}
+                  cor="bg-indigo-500" />
+
                 <Barras titulo={txt.attendanceByActivity}
                   dados={serie(resumo.presencasPorModalidade)} cor="bg-violet-500" />
-                <Barras titulo={txt.membersByActivity}
-                  dados={serie(resumo.sociosPorModalidade)} cor="bg-cyan-600" />
-                <Barras titulo={txt.signupsByMonth}
-                  dados={porMes(resumo.inscricoesPorMes, { ano: anoEscolhido, mes: 1, dia: 1 }, { ano: anoEscolhido, mes: 12, dia: 31 })}
-                  cor="bg-amber-500" />
+                <Barras titulo={txt.trialsByMonth}
+                  dados={porMes(resumo.experimentaisPorMes, doAno.de, doAno.ate)}
+                  cor="bg-fuchsia-500" />
+
+                <Barras titulo={txt.attendanceByMonth}
+                  dados={porMes(resumo.presencasPorMes, doAno.de, doAno.ate)}
+                  cor="bg-blue-500" />
+                <Barras
+                  titulo={txt.attendanceByWeekday}
+                  dados={semanaOrdenada(
+                    mesDaSemana === 'ano'
+                      ? resumo.presencasPorDiaDaSemana
+                      : (resumo.presencasPorDiaDaSemanaEMes[mesDaSemana] || {})
+                  )}
+                  cor="bg-indigo-500"
+                  acessorio={
+                    <Select value={mesDaSemana} onValueChange={setMesDaSemana}>
+                      <SelectTrigger className="w-40 h-8 text-xs" data-testid="weekday-month">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ano">{txt.wholeYear}</SelectItem>
+                        {mesesComPresencas.map((m) => (
+                          <SelectItem key={m} value={m}>{rotuloDoMes(m)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  }
+                />
+
                 <Barras titulo={txt.netByMonth}
-                  dados={porMes(resumo.liquidoPorMes, { ano: anoEscolhido, mes: 1, dia: 1 }, { ano: anoEscolhido, mes: 12, dia: 31 })}
+                  dados={porMes(resumo.liquidoPorMes, doAno.de, doAno.ate)}
                   formatar={euros} cor="bg-emerald-600" />
-                {resumo.totais.experimentais > 0 && (
-                  <>
-                    <Barras titulo={txt.trialsByMonth}
-                      dados={porMes(resumo.experimentaisPorMes, { ano: anoEscolhido, mes: 1, dia: 1 }, { ano: anoEscolhido, mes: 12, dia: 31 })}
-                      cor="bg-fuchsia-500" />
-                    <Barras titulo={txt.trialRevenueByMonth}
-                      dados={porMes(resumo.receitaExperimentaisPorMes, { ano: anoEscolhido, mes: 1, dia: 1 }, { ano: anoEscolhido, mes: 12, dia: 31 })}
-                      formatar={euros} cor="bg-violet-500" />
-                  </>
-                )}
+                <Barras titulo={txt.expensesByMonth}
+                  dados={porMes(resumo.despesaPorMes, doAno.de, doAno.ate)}
+                  formatar={euros} cor="bg-red-500" />
+
+                <Barras titulo={txt.netByActivity}
+                  dados={serie(resumo.porModalidade.liquido)}
+                  formatar={euros} cor="bg-emerald-600"
+                  nota={txt.netByActivityHint} />
               </div>
             </>
           )}

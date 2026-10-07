@@ -493,6 +493,55 @@ export const estatisticasDeSocios = ({
   };
 };
 
+/**
+ * Reparte o dinheiro do ano pelas modalidades.
+ *
+ * A **receita** sabe-se de onde vem: a quota de um sócio vai para as
+ * modalidades dele (dividida por igual quando tem mais do que uma), e cada
+ * aula experimental vai para a modalidade que foi experimentada.
+ *
+ * A **despesa não é registada por modalidade** — a renda e os salários não
+ * se dividem por Boxe e por Jiu-Jitsu. Reparte-se na proporção da receita de
+ * cada uma, que é a repartição habitual quando não há melhor: o total bate
+ * sempre certo com o resultado líquido verdadeiro, mas uma modalidade não
+ * "gasta" mesmo aquele dinheiro. É uma leitura, não uma contabilidade.
+ */
+export const resultadoPorModalidade = ({
+  pagos = [], vendas = [], experimentais = [], membros = [], modalidades = [], despesaTotal = 0
+}) => {
+  const SEM = 'Sem modalidade';
+  const doSocio = new Map(
+    membros.map((m) => {
+      const nomes = modalidadesDoSocio(m).map((id) => nomeDaModalidade(modalidades, id));
+      return [m.id, nomes.length > 0 ? nomes : [SEM]];
+    })
+  );
+
+  const receita = {};
+  const repartir = (memberId, valor) => {
+    const nomes = doSocio.get(memberId) || [SEM];
+    const fatia = (Number(valor) || 0) / nomes.length;
+    nomes.forEach((n) => { receita[n] = (receita[n] || 0) + fatia; });
+  };
+
+  pagos.forEach((p) => repartir(p.member_id, p.amount));
+  vendas.forEach((v) => repartir(v.member_id, v.total));
+  experimentais.forEach((e) => {
+    const n = e.activity_name || SEM;
+    receita[n] = (receita[n] || 0) + (Number(e.amount) || 0);
+  });
+
+  const total = Object.values(receita).reduce((a, b) => a + b, 0);
+  const despesa = {};
+  const liquido = {};
+  Object.entries(receita).forEach(([nome, valor]) => {
+    despesa[nome] = total > 0 ? (despesaTotal * valor) / total : 0;
+    liquido[nome] = valor - despesa[nome];
+  });
+
+  return { receita, despesa, liquido };
+};
+
 /* ---------------------------------------------------------------- destaques */
 
 const frase = (icone, titulo, texto) => ({ icone, titulo, texto });
@@ -694,6 +743,34 @@ export const destaquesDoAno = ({
     despesaPorMes,
     liquidoPorMes,
     sociosPorModalidade: porModalidade,
+    sociosAtivosPorModalidade: (() => {
+      const grupos = {};
+      membros.filter((m) => estaAtivo(m, hoje)).forEach((m) => {
+        modalidadesDoSocio(m).forEach((id) => {
+          const nome = nomeDaModalidade(modalidades, id);
+          grupos[nome] = (grupos[nome] || 0) + 1;
+        });
+      });
+      return grupos;
+    })(),
+    // As presenças por dia da semana, mês a mês: a contagem recomeça em cada
+    // mês, e os meses anteriores ficam todos disponíveis para consultar
+    presencasPorDiaDaSemanaEMes: (() => {
+      const porMesEDia = {};
+      presencasDoAno.forEach((p) => {
+        const mes = chaveDoMes(p.check_in_date);
+        const dia = NOMES_DIAS[diaDaSemana(p.check_in_date)];
+        if (!mes || !dia) return;
+        porMesEDia[mes] = porMesEDia[mes] || {};
+        porMesEDia[mes][dia] = (porMesEDia[mes][dia] || 0) + 1;
+      });
+      return porMesEDia;
+    })(),
+    porModalidade: resultadoPorModalidade({
+      pagos, vendas: vendasDoAno, experimentais: experimentaisDoAno,
+      membros, modalidades,
+      despesaTotal: despesasDoAno.reduce((t, e) => t + (Number(e.amount) || 0), 0)
+    }),
     totais: {
       presencas: presencasDoAno.length,
       inscricoes: inscricoesDoAno.length,
