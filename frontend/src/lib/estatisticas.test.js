@@ -784,32 +784,62 @@ describe('resultado por modalidade', () => {
     expect(r.receita).toEqual({ Boxe: 10 });
   });
 
-  test('a despesa reparte-se na proporção da receita', () => {
+  test('a despesa não é repartida por modalidade', () => {
+    // Decisao do dono: a despesa conta no Resultado Liquido por Mes e mais
+    // em lado nenhum. Reparti-la pela receita seria inventar um numero.
     const r = resultadoPorModalidade({
       pagos: [{ member_id: '1', amount: 75 }, { member_id: '2', amount: 25 }],
-      membros, modalidades, despesaTotal: 40
+      membros, modalidades
     });
-    // Boxe fez 75% da receita, por isso leva 75% da despesa
-    expect(r.despesa.Boxe).toBe(30);
-    expect(r.despesa.Kickboxing).toBe(10);
-    expect(r.liquido.Boxe).toBe(45);
-    expect(r.liquido.Kickboxing).toBe(15);
+    expect(r.despesa).toBeUndefined();
+    expect(r.receita).toEqual({ Boxe: 75, Kickboxing: 25 });
   });
 
-  test('o total do líquido por modalidade bate com o resultado verdadeiro', () => {
+  test('o total por modalidade é a receita toda do ano', () => {
     const r = resultadoPorModalidade({
       pagos: [{ member_id: '1', amount: 40 }, { member_id: '3', amount: 60 }],
       experimentais: [{ activity_name: 'Kickboxing', amount: 5 }],
-      membros, modalidades, despesaTotal: 200
+      membros, modalidades
     });
-    const soma = Object.values(r.liquido).reduce((a, b) => a + b, 0);
-    expect(soma).toBeCloseTo(40 + 60 + 5 - 200);
+    const soma = Object.values(r.receita).reduce((a, b) => a + b, 0);
+    expect(soma).toBeCloseTo(40 + 60 + 5);
   });
 
-  test('sem receita nenhuma, não se inventa despesa por modalidade', () => {
-    const r = resultadoPorModalidade({ membros, modalidades, despesaTotal: 500 });
+  test('sem receita nenhuma, não há repartição', () => {
+    const r = resultadoPorModalidade({ membros, modalidades });
     expect(r.receita).toEqual({});
-    expect(r.liquido).toEqual({});
+  });
+});
+
+describe('o dinheiro dos seguros, mês a mês', () => {
+  // A coluna em euros do cartao "Inscricoes por Mes": o que os seguros
+  // renderam nesse mes, de inscricoes novas e de renovacoes.
+
+  const d = destaquesDoAno({
+    ano: 2026,
+    pagamentos: [
+      { status: 'paid', amount: 20, payment_type: 'seguro', payment_date: '2026-10-05' },
+      { status: 'paid', amount: 55, payment_type: 'quota_seguro', payment_date: '2026-10-09' },
+      { status: 'paid', amount: 40, payment_type: 'quota', payment_date: '2026-10-10' },
+      { status: 'paid', amount: 20, payment_type: 'seguro', payment_date: '2026-11-03' }
+    ]
+  });
+
+  test('conta só a parte do seguro, não a quota', () => {
+    // Outubro: 20 do seguro avulso + 20 da parte de seguro da inscricao
+    expect(d.segurosPorMes['2026-10']).toBe(40);
+    expect(d.segurosPorMes['2026-11']).toBe(20);
+  });
+
+  test('a quota pura não entra', () => {
+    const soma = Object.values(d.segurosPorMes).reduce((a, b) => a + b, 0);
+    expect(soma).toBe(60);   // e nao 135
+  });
+
+  test('o dinheiro dos seguros conta na faturação do mês', () => {
+    // Ja contava: um pagamento de seguro e um pagamento como outro qualquer
+    expect(d.faturacaoPorMes['2026-10']).toBe(115);   // 20 + 55 + 40
+    expect(d.faturacaoPorMes['2026-11']).toBe(20);
   });
 });
 

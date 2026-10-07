@@ -496,18 +496,17 @@ export const estatisticasDeSocios = ({
 /**
  * Reparte o dinheiro do ano pelas modalidades.
  *
- * A **receita** sabe-se de onde vem: a quota de um sócio vai para as
- * modalidades dele (dividida por igual quando tem mais do que uma), e cada
- * aula experimental vai para a modalidade que foi experimentada.
+ * A quota de um sócio vai para as modalidades dele (dividida por igual quando
+ * tem mais do que uma), e cada aula experimental vai para a modalidade que foi
+ * experimentada.
  *
- * A **despesa não é registada por modalidade** — a renda e os salários não
- * se dividem por Boxe e por Jiu-Jitsu. Reparte-se na proporção da receita de
- * cada uma, que é a repartição habitual quando não há melhor: o total bate
- * sempre certo com o resultado líquido verdadeiro, mas uma modalidade não
- * "gasta" mesmo aquele dinheiro. É uma leitura, não uma contabilidade.
+ * **Só a receita.** A despesa não é registada por modalidade — a renda e os
+ * salários não se dividem por Boxe e por Jiu-Jitsu — e reparti-la pela receita
+ * seria inventar um número. Por decisão do dono do ginásio, a despesa conta no
+ * Resultado Líquido por Mês e mais em lado nenhum.
  */
 export const resultadoPorModalidade = ({
-  pagos = [], vendas = [], experimentais = [], membros = [], modalidades = [], despesaTotal = 0
+  pagos = [], vendas = [], experimentais = [], membros = [], modalidades = []
 }) => {
   const SEM = 'Sem modalidade';
   const doSocio = new Map(
@@ -531,15 +530,7 @@ export const resultadoPorModalidade = ({
     receita[n] = (receita[n] || 0) + (Number(e.amount) || 0);
   });
 
-  const total = Object.values(receita).reduce((a, b) => a + b, 0);
-  const despesa = {};
-  const liquido = {};
-  Object.entries(receita).forEach(([nome, valor]) => {
-    despesa[nome] = total > 0 ? (despesaTotal * valor) / total : 0;
-    liquido[nome] = valor - despesa[nome];
-  });
-
-  return { receita, despesa, liquido };
+  return { receita };
 };
 
 /* ---------------------------------------------------------------- destaques */
@@ -768,9 +759,10 @@ export const destaquesDoAno = ({
     })(),
     porModalidade: resultadoPorModalidade({
       pagos, vendas: vendasDoAno, experimentais: experimentaisDoAno,
-      membros, modalidades,
-      despesaTotal: despesasDoAno.reduce((t, e) => t + (Number(e.amount) || 0), 0)
+      membros, modalidades
     }),
+    // O dinheiro dos seguros, mes a mes: inscricoes novas e renovacoes
+    segurosPorMes: agrupar(pagos, (p) => chaveDoMes(dataDasContas(p)), parteDoSeguro),
     totais: {
       presencas: presencasDoAno.length,
       inscricoes: inscricoesDoAno.length,

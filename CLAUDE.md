@@ -181,7 +181,7 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios têm testes próprios, no site (103 testes, 2 segundos):
+As contas dos Relatórios têm testes próprios, no site (106 testes, 2 segundos):
 
 ```bash
 cd frontend && yarn test --watchAll=false
@@ -266,13 +266,19 @@ arranque de novo — não confie no `--reload`.
 Nas consultas ao servidor, o limite superior de um intervalo tem de ser o **dia
 seguinte** (`$lt`), senão exclui o próprio dia.
 
-**O "Resultado líquido por modalidade" é uma leitura, não uma contabilidade.**
-A receita sabe-se de onde vem (a quota vai para as modalidades do sócio,
-dividida por igual quando tem mais do que uma; a experimental vai para a
-modalidade experimentada). A **despesa não é registada por modalidade** — a
-renda não se divide por Boxe e Jiu-Jitsu — por isso é repartida na proporção
-da receita de cada uma. O total bate sempre com o resultado líquido verdadeiro,
-mas uma modalidade não "gasta" mesmo aquele dinheiro. O cartão diz isso.
+**O "Resultado líquido por modalidade" mostra só a receita.** A quota vai para
+as modalidades do sócio (dividida por igual quando tem mais do que uma) e a
+experimental vai para a modalidade experimentada. A **despesa não é repartida**:
+a renda não se divide por Boxe e Jiu-Jitsu, e reparti-la pela receita seria
+inventar um número. Por decisão do dono, a despesa conta no **Resultado Líquido
+por Mês** e mais em lado nenhum. O cartão diz isso.
+
+**Dois cartões têm duas colunas: a contagem e o dinheiro que ela gera.**
+"Inscrições por Mês" mostra quantas inscrições e quanto renderam de seguro
+(inscrições novas e renovações, só a parte do seguro). "Aulas Experimentais por
+Mês" mostra quantas aulas e quanto renderam. Cada coluna leva o seu total. Esse
+dinheiro **já contava** na faturação e no resultado líquido do mês — as colunas
+só mostram de onde vem.
 
 **Os nomes das categorias de despesa vivem em `frontend/src/lib/categorias.js`.**
 Estavam escritos duas vezes, nas Finanças e nos Relatórios, e bastava acrescentar

@@ -129,7 +129,9 @@ const Reports = ({ language }) => {
       trialsByActivity: 'Experimentais por Modalidade',
       trialsByMonth: 'Aulas Experimentais por Mês',
       netByActivity: 'Resultado Líquido por Modalidade',
-      netByActivityHint: 'A despesa não é registada por modalidade: está repartida na proporção da receita de cada uma.',
+      netByActivityHint: 'Só a receita que cada modalidade gerou. A despesa não é registada por modalidade e conta no Resultado Líquido por Mês.',
+      signupsHint: 'Quantas inscrições e quanto renderam de seguro, mês a mês.',
+      trialsHint: 'Quantas aulas experimentais e quanto renderam, mês a mês.',
       activeMembersByActivity: 'Sócios por Modalidade (ativos)',
       total: 'Total',
       wholeYear: 'Ano inteiro',
@@ -209,7 +211,9 @@ const Reports = ({ language }) => {
       trialsByActivity: 'Trials by Activity',
       trialsByMonth: 'Trial Classes by Month',
       netByActivity: 'Net Result by Activity',
-      netByActivityHint: 'Expenses are not recorded per activity: they are split in proportion to each one’s revenue.',
+      netByActivityHint: 'Only the revenue each activity generated. Expenses are not recorded per activity and count in the monthly net result.',
+      signupsHint: 'How many sign-ups and how much insurance they brought in, month by month.',
+      trialsHint: 'How many trial classes and how much they brought in, month by month.',
       activeMembersByActivity: 'Members by Activity (active)',
       total: 'Total',
       wholeYear: 'Whole year',
@@ -416,16 +420,18 @@ const Reports = ({ language }) => {
       });
       tabela('Presencas por modalidade', porOrdemDeValor(resumo.presencasPorModalidade)
         .map((x) => [x.chave, x.valor]));
-      tabela('Inscricoes por mes', Object.entries(resumo.inscricoesPorMes).sort()
-        .map(([m, v]) => [rotuloDoMes(m), v]));
-      tabela('Aulas experimentais por mes (quantas)',
-        Object.entries(resumo.experimentaisPorMes).sort().map(([m, v]) => [rotuloDoMes(m), v]));
+      tabela('Inscricoes por mes (quantas e quanto renderam de seguro)',
+        Object.entries(resumo.inscricoesPorMes).sort()
+          .map(([m, v]) => [rotuloDoMes(m), `${v} | ${(resumo.segurosPorMes[m] || 0).toFixed(2)} EUR`]));
+      tabela('Aulas experimentais por mes (quantas e quanto renderam)',
+        Object.entries(resumo.experimentaisPorMes).sort()
+          .map(([m, v]) => [rotuloDoMes(m), `${v} | ${(resumo.receitaExperimentaisPorMes[m] || 0).toFixed(2)} EUR`]));
       tabela('Socios por modalidade (ativos)', porOrdemDeValor(resumo.sociosAtivosPorModalidade)
         .map((x) => [x.chave, x.valor]));
       tabela('Socios por modalidade (todos)', porOrdemDeValor(resumo.sociosPorModalidade)
         .map((x) => [x.chave, x.valor]));
-      tabela('Resultado liquido por modalidade (despesa repartida pela receita)',
-        porOrdemDeValor(resumo.porModalidade.liquido).map((x) => [x.chave, x.valor.toFixed(2)]));
+      tabela('Resultado liquido por modalidade (so a receita que gerou)',
+        porOrdemDeValor(resumo.porModalidade.receita).map((x) => [x.chave, x.valor.toFixed(2)]));
       tabela('Faturacao por mes', Object.entries(resumo.faturacaoPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
       tabela('Despesa por mes', Object.entries(resumo.despesaPorMes).sort()
@@ -569,12 +575,21 @@ const Reports = ({ language }) => {
    * pena carregar uma biblioteca de gráficos inteira para isto, depois do
    * trabalho que deu reduzir o tamanho da aplicação.
    */
+  /**
+   * Gráfico de barras, com uma segunda coluna opcional.
+   *
+   * A segunda coluna serve para pôr lado a lado a contagem e o dinheiro que
+   * ela gera: quantas inscrições e quanto renderam de seguro, quantas aulas
+   * experimentais e quanto renderam. Cada coluna leva o seu total.
+   */
   const Barras = ({
     titulo, dados, formatar = (v) => numero(v), cor = 'bg-amber-500',
-    corNegativa = 'bg-red-500', nota, acessorio
+    corNegativa = 'bg-red-500', nota, acessorio, formatarSegundo = euros
   }) => {
     const maximo = Math.max(...dados.map((d) => Math.abs(d.valor)), 0) || 1;
     const total = dados.reduce((t, d) => t + d.valor, 0);
+    const temSegunda = dados.some((d) => d.segundo !== undefined && d.segundo !== null);
+    const totalSegundo = dados.reduce((t, d) => t + (Number(d.segundo) || 0), 0);
     return (
       <Card>
         <CardHeader className="pb-3">
@@ -593,7 +608,10 @@ const Reports = ({ language }) => {
             <div className="space-y-2">
               {dados.map((d) => (
                 <div key={d.rotulo} className="flex items-center gap-3">
-                  <span className="text-sm w-28 sm:w-36 shrink-0 truncate" title={d.rotulo}>
+                  <span
+                    className={`text-sm shrink-0 truncate ${temSegunda ? 'w-24 sm:w-28' : 'w-28 sm:w-36'}`}
+                    title={d.rotulo}
+                  >
                     {d.rotulo}
                   </span>
                   <div className="flex-1 min-w-0 h-5 rounded bg-gray-100 dark:bg-white/5 overflow-hidden">
@@ -603,21 +621,37 @@ const Reports = ({ language }) => {
                     />
                   </div>
                   <span
-                    className="text-sm font-semibold w-20 sm:w-24 shrink-0 text-right truncate"
+                    className={`text-sm font-semibold shrink-0 text-right truncate ${temSegunda ? 'w-12 sm:w-14' : 'w-20 sm:w-24'}`}
                     style={{ color: d.valor < 0 ? '#dc2626' : 'var(--text-primary)' }}
                   >
                     {formatar(d.valor)}
                   </span>
+                  {temSegunda && (
+                    <span
+                      className="text-sm font-semibold w-16 sm:w-20 shrink-0 text-right truncate"
+                      style={{ color: 'var(--ko-primary-orange)' }}
+                    >
+                      {formatarSegundo(d.segundo || 0)}
+                    </span>
+                  )}
                 </div>
               ))}
-              {/* O total do cartão, em pequeno, no canto de baixo à direita */}
-              <div className="pt-2 text-right">
+              {/* Os totais, em pequeno, no canto de baixo à direita */}
+              <div className="pt-2 flex justify-end gap-4">
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {txt.total}:{' '}
                   <span className="font-semibold" style={{ color: total < 0 ? '#dc2626' : 'var(--text-primary)' }}>
                     {formatar(total)}
                   </span>
                 </span>
+                {temSegunda && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {txt.total}:{' '}
+                    <span className="font-semibold" style={{ color: 'var(--ko-primary-orange)' }}>
+                      {formatarSegundo(totalSegundo)}
+                    </span>
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -631,6 +665,14 @@ const Reports = ({ language }) => {
 
   const porMes = (grupos, de, ate) =>
     serieMensal(grupos, de, ate).map((m) => ({ rotulo: m.rotulo, valor: m.valor }));
+
+  /** Por mês, com uma segunda coluna: a contagem e o dinheiro que ela gera. */
+  const porMesComDinheiro = (grupos, dinheiro, de, ate) =>
+    serieMensal(grupos, de, ate).map((m) => ({
+      rotulo: m.rotulo,
+      valor: m.valor,
+      segundo: dinheiro[m.chave] || 0
+    }));
 
   const semanaOrdenada = (grupos) =>
     SEMANA.filter((d) => grupos[d] !== undefined).map((d) => ({ rotulo: d, valor: grupos[d] }));
@@ -822,14 +864,14 @@ const Reports = ({ language }) => {
                 <Barras titulo={txt.activeMembersByActivity}
                   dados={serie(resumo.sociosAtivosPorModalidade)} cor="bg-cyan-600" />
                 <Barras titulo={txt.signupsByMonth}
-                  dados={porMes(resumo.inscricoesPorMes, doAno.de, doAno.ate)}
-                  cor="bg-indigo-500" />
+                  dados={porMesComDinheiro(resumo.inscricoesPorMes, resumo.segurosPorMes, doAno.de, doAno.ate)}
+                  cor="bg-indigo-500" nota={txt.signupsHint} />
 
                 <Barras titulo={txt.attendanceByActivity}
                   dados={serie(resumo.presencasPorModalidade)} cor="bg-violet-500" />
                 <Barras titulo={txt.trialsByMonth}
-                  dados={porMes(resumo.experimentaisPorMes, doAno.de, doAno.ate)}
-                  cor="bg-fuchsia-500" />
+                  dados={porMesComDinheiro(resumo.experimentaisPorMes, resumo.receitaExperimentaisPorMes, doAno.de, doAno.ate)}
+                  cor="bg-fuchsia-500" nota={txt.trialsHint} />
 
                 <Barras titulo={txt.attendanceByMonth}
                   dados={porMes(resumo.presencasPorMes, doAno.de, doAno.ate)}
@@ -865,7 +907,7 @@ const Reports = ({ language }) => {
                   formatar={euros} cor="bg-red-500" />
 
                 <Barras titulo={txt.netByActivity}
-                  dados={serie(resumo.porModalidade.liquido)}
+                  dados={serie(resumo.porModalidade.receita)}
                   formatar={euros} cor="bg-emerald-600"
                   nota={txt.netByActivityHint} />
               </div>
