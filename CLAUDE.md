@@ -60,6 +60,18 @@ inteiro e certo.
 
 Para mudar a data, é só esse `INICIO_DAS_CONTAS`. Há testes a protegê-lo.
 
+**A data do dinheiro e a data do pagamento são campos diferentes.** Seis
+pagamentos lançados no fim de setembro de 2026 eram a mensalidade de outubro.
+Esses têm `accounting_date` (1 de outubro): é por aí que o dinheiro entra nas
+contas. A `payment_date` continua a ser o dia em que o sócio pagou, e é dela
+que nasce a validade da quota — pago a 22, inativo a 23 do mês seguinte. Em
+todos os outros pagamentos `accounting_date` é `None` e vale a `payment_date`.
+
+Sem esta separação, mudar a data para as contas dava dias de ginásio a mais
+ao sócio, e corrigir o pagamento mexia-lhe na validade sem ninguém perceber
+porquê. Na lista de pagamentos aparece "Conta em <mês>" quando as duas datas
+diferem.
+
 ### Despesas
 
 A **descrição é opcional**. Uma despesa fica identificada pela **categoria** e
@@ -161,7 +173,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 142 testes e demoram 5 segundos.
+backend** — são 149 testes e demoram 5 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -169,7 +181,7 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios têm testes próprios, no site (86 testes, 2 segundos):
+As contas dos Relatórios têm testes próprios, no site (92 testes, 2 segundos):
 
 ```bash
 cd frontend && yarn test --watchAll=false

@@ -219,3 +219,46 @@ def test_corrigir_um_pagamento_de_inscricao_refaz_o_seguro(cliente, admin, criar
     )
 
     assert ficha(cliente, admin, socio["id"])["insurance_valid_until"] == "2027-06-20"
+
+
+# --- A data das contas e a data do pagamento sao coisas diferentes ---
+# Os pagamentos lancados no fim de setembro de 2026 eram a mensalidade de
+# outubro. O dinheiro conta em outubro; a validade da quota continua a
+# nascer do dia em que o socio pagou.
+
+def test_a_validade_nasce_do_dia_em_que_o_socio_pagou(cliente, admin, criar_socio, pagar, bd):
+    socio = criar_socio(telefone="912960001")
+    pagamento = pagar(socio["id"], quando=date(2026, 9, 22))
+    bd.payments.update_one({"id": pagamento["id"]},
+                           {"$set": {"accounting_date": "2026-10-01T00:00:00+00:00"}})
+
+    # Pago a 22 de setembro: valido ate 22 de outubro, inativo a 23
+    assert ficha(cliente, admin, socio["id"])["membership_valid_until"] == "2026-10-22"
+
+
+def test_a_data_das_contas_sobrevive_a_uma_correcao(cliente, admin, criar_socio, pagar, bd):
+    """Corrigir o valor nao pode fazer o pagamento saltar de mes nas contas."""
+    socio = criar_socio(telefone="912960002")
+    pagamento = pagar(socio["id"], quando=date(2026, 9, 30))
+    bd.payments.update_one({"id": pagamento["id"]},
+                           {"$set": {"accounting_date": "2026-10-01T00:00:00+00:00"}})
+
+    cliente.put(
+        f"/api/payments/{pagamento['id']}",
+        headers=admin,
+        json={"member_id": socio["id"], "amount": 45, "payment_type": "quota",
+              "payment_method": "cash", "payment_date": "2026-09-30"},
+    )
+
+    guardado = bd.payments.find_one({"id": pagamento["id"]})
+    assert str(guardado["accounting_date"]).startswith("2026-10-01")
+    assert ficha(cliente, admin, socio["id"])["membership_valid_until"] == "2026-10-30"
+
+
+def test_um_pagamento_normal_nao_tem_data_de_contas(cliente, admin, criar_socio, pagar):
+    """Quase sempre as duas datas sao a mesma, e o campo fica vazio."""
+    socio = criar_socio(telefone="912960003")
+    pagamento = pagar(socio["id"])
+    r = cliente.get("/api/payments", headers=admin, params={"member_id": socio["id"]})
+    assert r.json()[0]["accounting_date"] is None
+    assert r.json()[0]["payment_date"] == pagamento["payment_date"]

@@ -139,6 +139,17 @@ export const intervaloAnterior = (inicio, fim) => {
 
 /* ------------------------------------------------- início das contas */
 
+/**
+ * O dia em que o dinheiro de um pagamento conta para as contas.
+ *
+ * Quase sempre é o próprio dia do pagamento. Difere nos pagamentos do fim de
+ * setembro de 2026, que eram a mensalidade de outubro: o dinheiro conta em
+ * outubro, mas a **validade da quota** continua a nascer do dia em que o
+ * sócio pagou — pago a 22, inativo a 23 do mês seguinte.
+ */
+export const dataDasContas = (pagamento) =>
+  pagamento?.accounting_date || pagamento?.payment_date;
+
 /** O início do período, nunca anterior ao dia em que as contas começam. */
 export const desdeOInicioDasContas = (inicio) => {
   const pedido = numeroDaData(inicio);
@@ -357,7 +368,9 @@ export const estatisticasFinanceiras = ({
     const desde = desdeOInicioDasContas(de);
     const foraDoPeriodo = anteriorAoInicioDasContas(ate);
 
-    const quotas = foraDoPeriodo ? [] : noPeriodo(pagos, 'payment_date', desde, ate);
+    const quotas = foraDoPeriodo
+      ? []
+      : pagos.filter((p) => dentroDoIntervalo(dataDasContas(p), desde, ate));
     const vendasDo = foraDoPeriodo ? [] : noPeriodo(vendas, 'sale_date', desde, ate);
     const despesasDo = foraDoPeriodo ? [] : noPeriodo(despesas, 'expense_date', desde, ate);
     const trialsDo = foraDoPeriodo ? [] : noPeriodo(experimentais, 'trial_date', desde, ate);
@@ -377,8 +390,9 @@ export const estatisticasFinanceiras = ({
   const agora = contas(inicio, fim);
   const antes = contas(anterior.inicio, anterior.fim);
 
-  const pendentes = noPeriodo(pagamentos.filter((p) => p.status === 'pending'),
-    'payment_date', desdeOInicioDasContas(inicio), fim).length;
+  const pendentes = pagamentos
+    .filter((p) => p.status === 'pending')
+    .filter((p) => dentroDoIntervalo(dataDasContas(p), desdeOInicioDasContas(inicio), fim)).length;
 
   // Comparar com um período inteiramente anterior ao início das contas daria
   // sempre "subiu tudo", a partir de um zero que não é verdade
@@ -409,7 +423,7 @@ export const estatisticasFinanceiras = ({
     },
     periodoAnterior: semComparacao ? null : anterior,
     faturacaoPorMes: (() => {
-      const porMes = agrupar(agora.quotas, (p) => chaveDoMes(p.payment_date), (p) => p.amount);
+      const porMes = agrupar(agora.quotas, (p) => chaveDoMes(dataDasContas(p)), (p) => p.amount);
       agora.vendasDo.forEach((v) => {
         const k = chaveDoMes(v.sale_date);
         if (k) porMes[k] = (porMes[k] || 0) + (Number(v.total) || 0);
@@ -507,7 +521,9 @@ export const destaquesDoAno = ({
   const presencasDoAno = noAno(presencas, 'check_in_date');
   const experimentaisDoAno = noAnoEComContas(experimentais, 'trial_date');
   const inscricoesDoAno = noAno(membros, 'join_date');
-  const pagos = noAnoEComContas(pagamentos.filter((p) => p.status === 'paid'), 'payment_date');
+  const pagos = pagamentos
+    .filter((p) => p.status === 'paid')
+    .filter((p) => dentroDoIntervalo(dataDasContas(p), desde, fim));
   const vendasDoAno = noAnoEComContas(vendas, 'sale_date');
   const despesasDoAno = noAnoEComContas(despesas, 'expense_date');
 
@@ -599,7 +615,7 @@ export const destaquesDoAno = ({
         : '.')));
   }
 
-  const faturacaoPorMes = agrupar(pagos, (p) => chaveDoMes(p.payment_date), (p) => p.amount);
+  const faturacaoPorMes = agrupar(pagos, (p) => chaveDoMes(dataDasContas(p)), (p) => p.amount);
   vendasDoAno.forEach((v) => {
     const k = chaveDoMes(v.sale_date);
     if (k) faturacaoPorMes[k] = (faturacaoPorMes[k] || 0) + (Number(v.total) || 0);

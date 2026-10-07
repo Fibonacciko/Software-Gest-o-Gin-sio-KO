@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { corresponde, filtrarEOrdenar } from '../lib/pesquisa';
 import { CATEGORIAS_DE_DESPESA, nomeDaCategoria } from '../lib/categorias';
-import { INICIO_DAS_CONTAS } from '../lib/estatisticas';
+import { INICIO_DAS_CONTAS, dataDasContas } from '../lib/estatisticas';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -68,8 +68,8 @@ const Payments = ({ language, translations }) => {
 
   const todayISO = () => new Date().toISOString().split('T')[0];
 
-  const nomeDoMes = () => {
-    const texto = new Date().toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+  const nomeDoMes = (quando = new Date()) => {
+    const texto = quando.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
     return texto.charAt(0).toUpperCase() + texto.slice(1);
   };
 
@@ -122,6 +122,7 @@ const Payments = ({ language, translations }) => {
     categoryFnb: 'F&B (Alimentos e bebidas)',
     expensesList: 'Despesas Registadas',
     openExpenses: 'Ver, corrigir e apagar →',
+    countsIn: 'Conta em',
     accountsStart: 'As contas começam a 1 de outubro de 2026, quando o ginásio passou a registar tudo. O que é anterior continua guardado na ficha de cada sócio, mas não entra nestes totais.',
     expenseDescriptionHint: 'Opcional — sem texto, fica identificada pela categoria',
     allCategories: 'Todos os tipos',
@@ -231,6 +232,7 @@ const Payments = ({ language, translations }) => {
     categoryFnb: 'F&B (food and drinks)',
     expensesList: 'Recorded Expenses',
     openExpenses: 'View, edit and delete →',
+    countsIn: 'Counts in',
     accountsStart: 'The accounts start on 1 October 2026, when the gym began recording everything. Earlier records are kept on each member’s file but do not count towards these totals.',
     expenseDescriptionHint: 'Optional — without text, the category identifies it',
     allCategories: 'All types',
@@ -711,8 +713,15 @@ const Payments = ({ language, translations }) => {
 
     // FATURAÇÃO = tudo o que o ginásio faturou: quotas, seguros, merchandise
     // e aulas experimentais, que são pagas
+    // Os pagamentos contam pela data das contas, que só difere nos do fim de
+    // setembro de 2026: eram a mensalidade de outubro
+    const somarPagamentos = (desde) =>
+      pagos
+        .filter((p) => noPeriodo(dataDasContas(p), desde))
+        .reduce((total, p) => total + (p.amount || 0), 0);
+
     const faturacao = (desde) =>
-      somar(pagos, 'payment_date', (p) => p.amount, desde) +
+      somarPagamentos(desde) +
       somar(sales, 'sale_date', (v) => v.total, desde) +
       somar(trials, 'trial_date', (e) => e.amount, desde);
 
@@ -738,8 +747,12 @@ const Payments = ({ language, translations }) => {
       liquidoAnual: faturacaoAnual - despesaAnual,
       liquidoMensal: faturacaoMensal - despesaMensal,
       // Detalhe, para quem quiser perceber de onde vem a faturação
-      quotasAnual: somar(pagos, 'payment_date', (p) => p.amount - parteSeguro(p), inicioDoAno),
-      segurosAnual: somar(pagos, 'payment_date', parteSeguro, inicioDoAno),
+      quotasAnual: pagos
+        .filter((p) => noPeriodo(dataDasContas(p), inicioDoAno))
+        .reduce((t, p) => t + (p.amount - parteSeguro(p)), 0),
+      segurosAnual: pagos
+        .filter((p) => noPeriodo(dataDasContas(p), inicioDoAno))
+        .reduce((t, p) => t + parteSeguro(p), 0),
       experimentaisAnual: somar(trials, 'trial_date', (e) => e.amount, inicioDoAno),
       merchandiseAnual: somar(sales, 'sale_date', (v) => v.total, inicioDoAno),
       pendingCount: payments.filter((p) => p.status === 'pending').length
@@ -1349,6 +1362,17 @@ const Payments = ({ language, translations }) => {
                           <Calendar size={16} className="text-gray-400 dark:text-gray-500 mr-2" />
                           {new Date(payment.payment_date).toLocaleDateString('pt-PT')}
                         </div>
+                        {/* Um pagamento do fim do mês pode ser a mensalidade do
+                            mês seguinte: a data diz quando se pagou, esta nota
+                            diz em que mês o dinheiro conta */}
+                        {payment.accounting_date
+                          && String(payment.accounting_date).split('T')[0]
+                             !== String(payment.payment_date).split('T')[0] && (
+                          <p className="text-xs mt-1" style={{ color: 'var(--ko-primary-orange)' }}>
+                            {t[language].countsIn}{' '}
+                            {nomeDoMes(new Date(payment.accounting_date))}
+                          </p>
+                        )}
                       </td>
                       <td className="p-4">
                         {(() => {

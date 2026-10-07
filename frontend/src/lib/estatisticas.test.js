@@ -22,7 +22,7 @@ import {
   porOrdemDeValor, mesesDoIntervalo, idade, escalaoEtario, modalidadesDoSocio,
   estaAtivo, estatisticasDePresencas, estatisticasFinanceiras,
   estatisticasDeSocios, destaquesDoAno, anosComDados, parteDoSeguro, NOMES_DIAS, SEMANA,
-  INICIO_DAS_CONTAS, desdeOInicioDasContas, anteriorAoInicioDasContas
+  INICIO_DAS_CONTAS, desdeOInicioDasContas, anteriorAoInicioDasContas, dataDasContas
 } from './estatisticas';
 
 /* ------------------------------------------------------------------ datas */
@@ -688,6 +688,61 @@ describe('o dinheiro antigo não entra nas contas', () => {
     expect(d.totais.inscricoes).toBe(1);
   });
 });
+
+describe('a data das contas e a data do pagamento', () => {
+  // Os pagamentos do fim de setembro de 2026 eram a mensalidade de outubro:
+  // o dinheiro conta em outubro, mas a validade da quota nasce do dia em que
+  // o socio pagou. Sao duas datas diferentes, de proposito.
+
+  test('sem data de contas, vale a data do pagamento', () => {
+    expect(dataDasContas({ payment_date: '2026-10-05' })).toBe('2026-10-05');
+    expect(dataDasContas({ payment_date: '2026-10-05', accounting_date: null })).toBe('2026-10-05');
+  });
+
+  test('com data de contas, é essa que manda', () => {
+    expect(dataDasContas({ payment_date: '2026-09-30', accounting_date: '2026-10-01' }))
+      .toBe('2026-10-01');
+  });
+
+  test('um pagamento de setembro marcado para outubro entra nas contas', () => {
+    const r = estatisticasFinanceiras({
+      pagamentos: [
+        { status: 'paid', amount: 50, payment_date: '2026-09-22', accounting_date: '2026-10-01' },
+        { status: 'paid', amount: 35, payment_date: '2026-10-05' }
+      ],
+      inicio: new Date(2026, 9, 1), fim: new Date(2026, 9, 31)
+    });
+    expect(r.faturacao).toBe(85);
+    expect(r.nPagamentos).toBe(2);
+  });
+
+  test('e deixa de aparecer em setembro', () => {
+    const r = estatisticasFinanceiras({
+      pagamentos: [{ status: 'paid', amount: 50, payment_date: '2026-09-22', accounting_date: '2026-10-01' }],
+      inicio: new Date(2026, 8, 1), fim: new Date(2026, 8, 30)
+    });
+    expect(r.faturacao).toBe(0);
+  });
+
+  test('a repartição por mês segue a data das contas', () => {
+    const r = estatisticasFinanceiras({
+      pagamentos: [{ status: 'paid', amount: 50, payment_date: '2026-09-22', accounting_date: '2026-10-01' }],
+      inicio: new Date(2026, 0, 1), fim: new Date(2026, 11, 31)
+    });
+    expect(r.faturacaoPorMes['2026-10']).toBe(50);
+    expect(r.faturacaoPorMes['2026-09']).toBeUndefined();
+  });
+
+  test('os destaques do ano seguem a mesma data', () => {
+    const d = destaquesDoAno({
+      ano: 2026,
+      pagamentos: [{ status: 'paid', amount: 50, payment_date: '2026-09-22', accounting_date: '2026-10-01' }]
+    });
+    expect(d.faturacaoPorMes['2026-10']).toBe(50);
+    expect(d.totais.faturacao).toBe(50);
+  });
+});
+
 
 describe('anos com dados', () => {
   test('junta os anos de todas as listas, do mais recente para trás', () => {

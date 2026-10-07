@@ -359,6 +359,12 @@ class Payment(BaseModel):
     member_id: str
     amount: float
     payment_date: date = Field(default_factory=lambda: date.today())
+    # O dia em que o dinheiro conta para as contas do ginasio. Quase sempre e
+    # o proprio dia do pagamento, e fica a None. So difere nos pagamentos do
+    # fim de setembro de 2026, que eram a mensalidade de outubro: contam em
+    # outubro, mas a validade da quota continua a nascer do dia em que o
+    # socio pagou, que e o que lhe interessa a ele.
+    accounting_date: Optional[date] = None
     payment_type: PaymentType = PaymentType.QUOTA
     payment_method: PaymentMethod = PaymentMethod.CASH
     status: PaymentStatus = PaymentStatus.PAID
