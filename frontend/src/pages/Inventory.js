@@ -57,7 +57,6 @@ const Inventory = ({ language, translations }) => {
     pt: {
       inventory: 'Gestão de Stock',
       addItem: 'Adicionar Item',
-      sellItem: 'Vender Item',
       sell: 'Vender',
       client: 'Cliente (opcional)',
       soldFor: 'Preço de venda por unidade',
@@ -66,12 +65,10 @@ const Inventory = ({ language, translations }) => {
       surcharge: 'acima da tabela',
       noClient: 'Sem sócio associado',
       sellTitle: 'Vender Artigo',
-      chooseItem: 'Escolher artigo',
       inStock: 'em stock',
       total: 'Total',
       confirmSale: 'Confirmar Venda',
       saleDone: 'Venda registada e stock atualizado!',
-      noStock: 'Não há artigos com stock disponível',
       searchItems: 'Procurar items...',
       allCategories: 'Todas as Categorias',
       clothing: 'Roupa',
@@ -122,7 +119,6 @@ const Inventory = ({ language, translations }) => {
     en: {
       inventory: 'Inventory Management',
       addItem: 'Add Item',
-      sellItem: 'Sell Item',
       sell: 'Sell',
       client: 'Customer (optional)',
       soldFor: 'Unit sale price',
@@ -131,12 +127,10 @@ const Inventory = ({ language, translations }) => {
       surcharge: 'above list',
       noClient: 'No member linked',
       sellTitle: 'Sell Item',
-      chooseItem: 'Choose item',
       inStock: 'in stock',
       total: 'Total',
       confirmSale: 'Confirm Sale',
       saleDone: 'Sale recorded and stock updated!',
-      noStock: 'No items with stock available',
       searchItems: 'Search items...',
       allCategories: 'All Categories',
       clothing: 'Clothing',
@@ -199,14 +193,13 @@ const Inventory = ({ language, translations }) => {
     }
   };
 
-  const itemsComStock = () => inventory.filter((i) => (i.quantity || 0) > 0);
-
   /** O artigo escrito por extenso: nome, tamanho e cor. */
   const descreverArtigo = (item) =>
     [item.name, item.size, item.color].filter(Boolean).join(' · ');
 
   /** Vender a partir do cartao do artigo, sem o ter de procurar numa lista. */
   const abrirVendaDoArtigo = (item) => {
+    fetchMembers();            // a venda pode ficar associada a um socio
     setArtigoFixo(item);
     setSellData({
       item_id: item.id,
@@ -416,15 +409,6 @@ const Inventory = ({ language, translations }) => {
         </h1>
         
         <div className="flex flex-wrap gap-3">
-        <Button
-          className="btn-hover bg-green-600 hover:bg-green-700 text-white"
-          onClick={() => { setSellData({ item_id: '', quantity: '1', member_id: '', unit_price: '' }); fetchMembers(); setShowSellDialog(true); }}
-          data-testid="sell-item-btn"
-        >
-          <ShoppingCart className="mr-2" size={16} />
-          {t[language].sellItem}
-        </Button>
-
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
             <Button 
@@ -569,7 +553,10 @@ const Inventory = ({ language, translations }) => {
             </DialogHeader>
 
             <form onSubmit={handleSell} className="space-y-4">
-              {artigoFixo ? (
+              {/* O artigo nao se escolhe aqui: a venda comeca sempre no cartao
+                  do proprio artigo, e e por isso que se ve o nome, o tamanho e
+                  a cor em vez de uma lista onde se podiam confundir */}
+              {artigoFixo && (
                 <div
                   className="rounded-lg p-3"
                   style={{ background: 'var(--background-elevated)' }}
@@ -582,36 +569,6 @@ const Inventory = ({ language, translations }) => {
                     €{artigoFixo.price.toFixed(2)} · {artigoFixo.quantity} {t[language].inStock}
                   </p>
                 </div>
-              ) : (
-              <div>
-                <Label htmlFor="sell-item">{t[language].chooseItem} *</Label>
-                {itemsComStock().length > 0 ? (
-                  <Select
-                    value={sellData.item_id}
-                    onValueChange={(value) => {
-                      const artigo = inventory.find((i) => i.id === value);
-                      setSellData({
-                        ...sellData,
-                        item_id: value,
-                        unit_price: artigo ? String(artigo.price.toFixed(2)) : ''
-                      });
-                    }}
-                  >
-                    <SelectTrigger id="sell-item" data-testid="sell-item-select">
-                      <SelectValue placeholder={t[language].chooseItem} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {itemsComStock().map((item) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {descreverArtigo(item)} — €{item.price.toFixed(2)} · {item.quantity} {t[language].inStock}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">{t[language].noStock}</p>
-                )}
-              </div>
               )}
 
               <div>
@@ -685,7 +642,7 @@ const Inventory = ({ language, translations }) => {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={selling || itemsComStock().length === 0}
+                  disabled={selling || !artigoFixo || artigoFixo.quantity === 0}
                   className="bg-green-600 hover:bg-green-700 text-white"
                   data-testid="confirm-sale-btn"
                 >

@@ -114,11 +114,13 @@ das outras deixa o stock errado nas duas. Por isso o artigo mostra-se sempre
 por extenso — `nome · tamanho · cor` — tanto na lista de escolha como na
 janela de venda.
 
-Vende-se pelo **botão Vender do próprio cartão do artigo**, ao lado do editar
-e do eliminar. Aí não há nada para escolher: o artigo já vem fixo, e só se
-indica a quantidade e o preço. O botão fica desativado quando o stock é zero.
-O botão "Vender Item" do topo continua a existir, com a lista, para quem
-preferir começar por aí.
+Vende-se **só pelo botão Vender do cartão do artigo**, ao lado do editar e do
+eliminar. Não há nada para escolher: o artigo já vem fixo, e só se indica a
+quantidade e o preço. O botão fica desativado quando o stock é zero.
+
+Não há botão de venda no topo da página, nem lista de artigos para escolher —
+foi de propósito, para não haver sítio nenhum onde se possa trocar um artigo
+por outro igual de cor diferente.
 
 ### Modalidades
 
