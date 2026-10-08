@@ -21,6 +21,8 @@ sys.path.insert(0, str(RAIZ))
 os.environ["DB_NAME"] = "ko_gym_test"
 os.environ.setdefault("MONGO_URL", "mongodb://localhost:27017")
 os.environ["RATE_LIMITS_ENABLED"] = "false"  # os testes fazem muitos pedidos seguidos
+# As imagens dos testes nao vao parar a pasta de producao
+os.environ["UPLOADS_DIR"] = str(RAIZ / "tests" / "_uploads")
 
 from fastapi.testclient import TestClient  # noqa: E402
 import server  # noqa: E402
@@ -49,12 +51,17 @@ def bd():
 
 @pytest.fixture(autouse=True)
 def base_limpa(bd):
-    """Apaga os dados de cada teste, para nenhum depender do anterior."""
-    for coleccao in [
-        "members", "attendance", "payments", "expenses",
-        "sales", "trial_classes", "inventory", "audit_logs",
-    ]:
-        bd[coleccao].delete_many({})
+    """Apaga os dados de cada teste, para nenhum depender do anterior.
+
+    Limpa **tudo** menos o que tem de sobreviver à sessão: os utilizadores
+    (é com eles que os testes entram) e as modalidades (criadas no arranque
+    do servidor). Era uma lista escrita à mão, e cada coleção nova que se
+    esquecia de lá pôr fazia os dados passarem de um teste para o seguinte.
+    """
+    sobrevivem = {"users", "activities"}
+    for coleccao in bd.list_collection_names():
+        if coleccao not in sobrevivem:
+            bd[coleccao].delete_many({})
 
     # O cache guarda números já calculados e enganaria os testes
     server.gym_cache.clear_pattern("")

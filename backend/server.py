@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Query, Depends, status, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Depends, status, Request, UploadFile, File
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -422,6 +423,7 @@ class InventoryItem(BaseModel):
     quantity: int = 0
     price: float
     description: Optional[str] = None
+    photo_url: Optional[str] = None      # A fotografia que a montra da app mostra
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Sale(BaseModel):
@@ -453,6 +455,96 @@ class InventoryItemCreate(BaseModel):
     quantity: int = 0
     price: float
     description: Optional[str] = None
+    photo_url: Optional[str] = None
+
+
+# ----------------------------------------------------------------- Parceiros
+# Protocolos de parceria: entidades que dao vantagens a quem e socio do KO.
+
+class Partner(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    benefit: str                          # "10% em consultas", e o que mais conta
+    category: Optional[str] = None        # Saude, Restauracao, Desporto...
+    description: Optional[str] = None
+    logo_url: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PartnerCreate(BaseModel):
+    name: str
+    benefit: str
+    category: Optional[str] = None
+    description: Optional[str] = None
+    logo_url: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
+    is_active: bool = True
+
+
+# ---------------------------------------------------------------- Multimedia
+# Fotografias dos treinos, alojadas aqui, e videos por link para as redes do
+# ginasio: um minuto de video de telemovel sao 50 a 100 MB, e as redes ja
+# tem o conteudo e ja tem publico.
+
+class MediaKind(str, Enum):
+    PHOTO = "photo"
+    VIDEO_LINK = "video_link"
+
+
+class MediaItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    kind: MediaKind = MediaKind.PHOTO
+    url: str                              # Ficheiro nosso, ou link do Instagram
+    caption: Optional[str] = None
+    taken_on: Optional[date] = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class MediaItemCreate(BaseModel):
+    kind: MediaKind = MediaKind.PHOTO
+    url: str
+    caption: Optional[str] = None
+    taken_on: Optional[date] = None
+    is_active: bool = True
+
+
+# --------------------------------------------------------------- Reservas
+# O socio reserva na app e levanta no ginasio. Nao e uma venda: so avisa o
+# balcao para deixar o artigo preparado. A venda faz-se quando ele chega.
+
+class ReservationStatus(str, Enum):
+    PENDING = "pending"        # Pedida, por preparar
+    READY = "ready"            # Preparada, a espera que o socio venha
+    DELIVERED = "delivered"    # Entregue (e vendida)
+    CANCELLED = "cancelled"
+
+
+class Reservation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    item_id: str
+    item_name: str
+    item_details: Optional[str] = None    # Tamanho e cor, para o balcao nao se enganar
+    quantity: int = 1
+    member_id: str
+    member_name: Optional[str] = None
+    member_number: Optional[str] = None
+    status: ReservationStatus = ReservationStatus.PENDING
+    note: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ReservationCreate(BaseModel):
+    item_id: str
+    member_id: str
+    quantity: int = 1
+    note: Optional[str] = None
 
 # Automated Messaging Models
 class AutomatedMessage(BaseModel):
@@ -3854,7 +3946,257 @@ async def check_member_triggers(
 original_create_member = api_router.routes[0]  # Will be properly applied after all routes
 
 # Include router
+# ============================================================================
+# FOTOGRAFIAS
+# ============================================================================
+# Ficam em disco, num volume do Docker, e sao servidas pelo proprio servidor
+# em /api/uploads/... Assim passam pelo encaminhamento que o site ja tem e
+# nao e preciso mexer no nginx da maquina.
+#
+# Nao vao para a base de dados: as copias de seguranca sao despejos da base, e
+# meia duzia de fotografias punham um ficheiro de 15 MB a pesar centenas.
+
+PASTA_UPLOADS = Path(os.environ.get("UPLOADS_DIR", "/app/uploads"))
+EXTENSOES_DE_IMAGEM = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+TAMANHO_MAXIMO = 8 * 1024 * 1024   # 8 MB: uma fotografia de telemovel cabe
+
+
+@api_router.post("/uploads")
+async def guardar_imagem(
+    ficheiro: UploadFile = File(...),
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Recebe uma imagem e devolve o endereco onde ela fica."""
+    extensao = Path(ficheiro.filename or "").suffix.lower()
+    if extensao not in EXTENSOES_DE_IMAGEM:
+        raise HTTPException(status_code=400, detail="So aceito imagens: jpg, png, webp ou gif.")
+
+    conteudo = await ficheiro.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="O ficheiro esta vazio.")
+    if len(conteudo) > TAMANHO_MAXIMO:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A imagem e demasiado grande ({len(conteudo) // (1024 * 1024)} MB). O limite sao 8 MB."
+        )
+
+    PASTA_UPLOADS.mkdir(parents=True, exist_ok=True)
+    nome = f"{uuid.uuid4().hex}{extensao}"
+    (PASTA_UPLOADS / nome).write_bytes(conteudo)
+
+    await log_audit(current_user, "create", "upload", entity_id=nome,
+                    details=f"Carregou a imagem {ficheiro.filename}")
+    return {"url": f"/api/uploads/{nome}", "bytes": len(conteudo)}
+
+
+@api_router.delete("/uploads/{nome}")
+async def apagar_imagem(nome: str, current_user: User = Depends(require_admin_or_staff)):
+    # So o proprio nome do ficheiro, para ninguem sair da pasta das imagens
+    if "/" in nome or chr(92) in nome or ".." in nome:
+        raise HTTPException(status_code=400, detail="Nome invalido.")
+    caminho = PASTA_UPLOADS / nome
+    if caminho.exists():
+        caminho.unlink()
+    return {"message": "Imagem eliminada"}
+
+
+# ============================================================================
+# PARCEIROS
+# ============================================================================
+
+@api_router.post("/partners", response_model=Partner)
+async def criar_parceiro(dados: PartnerCreate, current_user: User = Depends(require_admin)):
+    parceiro = Partner(**dados.dict())
+    await db.partners.insert_one(prepare_for_mongo(parceiro.dict()))
+    await log_audit(current_user, "create", "partner", entity_id=parceiro.id,
+                    details=f"Criou o parceiro {parceiro.name}")
+    return parceiro
+
+
+@api_router.get("/partners", response_model=List[Partner])
+async def listar_parceiros(current_user: User = Depends(require_admin_or_staff)):
+    parceiros = await db.partners.find().sort("name", 1).to_list(500)
+    return [Partner(**parse_from_mongo(x)) for x in parceiros]
+
+
+@api_router.put("/partners/{partner_id}", response_model=Partner)
+async def corrigir_parceiro(
+    partner_id: str, dados: PartnerCreate, current_user: User = Depends(require_admin)
+):
+    antigo = await db.partners.find_one({"id": partner_id})
+    if not antigo:
+        raise HTTPException(status_code=404, detail="Parceiro nao encontrado")
+    novo = Partner(**dados.dict(), id=partner_id, created_at=antigo.get("created_at"))
+    await db.partners.replace_one({"id": partner_id}, prepare_for_mongo(novo.dict()))
+    await log_audit(current_user, "update", "partner", entity_id=partner_id,
+                    details=f"Corrigiu o parceiro {novo.name}")
+    return novo
+
+
+@api_router.delete("/partners/{partner_id}")
+async def apagar_parceiro(partner_id: str, current_user: User = Depends(require_admin)):
+    parceiro = await db.partners.find_one({"id": partner_id})
+    if not parceiro:
+        raise HTTPException(status_code=404, detail="Parceiro nao encontrado")
+    await db.partners.delete_one({"id": partner_id})
+    await log_audit(current_user, "delete", "partner", entity_id=partner_id,
+                    details=f"Eliminou o parceiro {parceiro.get('name')}")
+    return {"message": "Parceiro eliminado"}
+
+
+# ============================================================================
+# MULTIMEDIA
+# ============================================================================
+
+@api_router.post("/media", response_model=MediaItem)
+async def criar_media(dados: MediaItemCreate, current_user: User = Depends(require_admin_or_staff)):
+    item = MediaItem(**dados.dict())
+    await db.media.insert_one(prepare_for_mongo(item.dict()))
+    await log_audit(current_user, "create", "media", entity_id=item.id,
+                    details="Publicou um item de multimedia")
+    return item
+
+
+@api_router.get("/media", response_model=List[MediaItem])
+async def listar_media(current_user: User = Depends(require_admin_or_staff)):
+    itens = await db.media.find().sort("created_at", -1).to_list(2000)
+    return [MediaItem(**parse_from_mongo(m)) for m in itens]
+
+
+@api_router.put("/media/{media_id}", response_model=MediaItem)
+async def corrigir_media(
+    media_id: str, dados: MediaItemCreate, current_user: User = Depends(require_admin_or_staff)
+):
+    antigo = await db.media.find_one({"id": media_id})
+    if not antigo:
+        raise HTTPException(status_code=404, detail="Item nao encontrado")
+    novo = MediaItem(**dados.dict(), id=media_id, created_at=antigo.get("created_at"))
+    await db.media.replace_one({"id": media_id}, prepare_for_mongo(novo.dict()))
+    return novo
+
+
+@api_router.delete("/media/{media_id}")
+async def apagar_media(media_id: str, current_user: User = Depends(require_admin_or_staff)):
+    item = await db.media.find_one({"id": media_id})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item nao encontrado")
+    await db.media.delete_one({"id": media_id})
+    await log_audit(current_user, "delete", "media", entity_id=media_id,
+                    details="Eliminou um item de multimedia")
+    return {"message": "Item eliminado"}
+
+
+# ============================================================================
+# RESERVAS
+# ============================================================================
+
+@api_router.get("/reservations", response_model=List[Reservation])
+async def listar_reservas(
+    status_filtro: Optional[ReservationStatus] = Query(None, alias="status"),
+    current_user: User = Depends(require_admin_or_staff)
+):
+    filtro = {"status": status_filtro.value} if status_filtro else {}
+    reservas = await db.reservations.find(filtro).sort("created_at", -1).to_list(2000)
+    return [Reservation(**parse_from_mongo(r)) for r in reservas]
+
+
+@api_router.put("/reservations/{reservation_id}", response_model=Reservation)
+async def mudar_estado_da_reserva(
+    reservation_id: str,
+    novo_estado: ReservationStatus = Query(..., alias="status"),
+    current_user: User = Depends(require_admin_or_staff)
+):
+    reserva = await db.reservations.find_one({"id": reservation_id})
+    if not reserva:
+        raise HTTPException(status_code=404, detail="Reserva nao encontrada")
+    await db.reservations.update_one(
+        {"id": reservation_id}, {"$set": {"status": novo_estado.value}}
+    )
+    await log_audit(current_user, "update", "reservation", entity_id=reservation_id,
+                    details=f"Reserva de {reserva.get('item_name')} passou a {novo_estado.value}")
+    atualizada = await db.reservations.find_one({"id": reservation_id})
+    return Reservation(**parse_from_mongo(atualizada))
+
+
+@api_router.delete("/reservations/{reservation_id}")
+async def apagar_reserva(reservation_id: str, current_user: User = Depends(require_admin_or_staff)):
+    if (await db.reservations.delete_one({"id": reservation_id})).deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Reserva nao encontrada")
+    return {"message": "Reserva eliminada"}
+
+
+# ============================================================================
+# O QUE A APLICACAO DO SOCIO LE
+# ============================================================================
+# Como as outras rotas /mobile, nao pedem sessao: o que mostram e publico do
+# ginasio (parceiros, fotografias, montra) e nao tem dados de ninguem.
+
+@api_router.get("/mobile/partners", response_model=List[Partner])
+async def parceiros_para_a_app():
+    parceiros = await db.partners.find({"is_active": True}).sort("name", 1).to_list(500)
+    return [Partner(**parse_from_mongo(x)) for x in parceiros]
+
+
+@api_router.get("/mobile/media", response_model=List[MediaItem])
+async def multimedia_para_a_app():
+    itens = await db.media.find({"is_active": True}).sort("created_at", -1).to_list(300)
+    return [MediaItem(**parse_from_mongo(m)) for m in itens]
+
+
+@api_router.get("/mobile/shop", response_model=List[InventoryItem])
+async def montra_para_a_app():
+    """A montra: so o que tem stock e fotografia."""
+    artigos = await db.inventory.find({
+        "quantity": {"$gt": 0},
+        "photo_url": {"$nin": [None, ""]}
+    }).sort("name", 1).to_list(500)
+    return [InventoryItem(**parse_from_mongo(a)) for a in artigos]
+
+
+@api_router.post("/mobile/reservations", response_model=Reservation)
+async def reservar_pela_app(dados: ReservationCreate):
+    """O socio reserva; o balcao prepara. Nao mexe no stock nem no dinheiro."""
+    if dados.quantity < 1:
+        raise HTTPException(status_code=400, detail="A quantidade tem de ser pelo menos 1.")
+
+    artigo = await db.inventory.find_one({"id": dados.item_id})
+    if not artigo:
+        raise HTTPException(status_code=404, detail="Artigo nao encontrado")
+    if artigo.get("quantity", 0) < dados.quantity:
+        raise HTTPException(
+            status_code=400, detail=f"So restam {artigo.get('quantity', 0)} unidades."
+        )
+
+    socio = await db.members.find_one({"id": dados.member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
+    detalhes = " - ".join(x for x in [artigo.get("size"), artigo.get("color")] if x)
+    reserva = Reservation(
+        item_id=artigo["id"],
+        item_name=artigo["name"],
+        item_details=detalhes or None,
+        quantity=dados.quantity,
+        member_id=socio["id"],
+        member_name=socio.get("name"),
+        member_number=socio.get("member_number"),
+        note=dados.note,
+    )
+    await db.reservations.insert_one(prepare_for_mongo(reserva.dict()))
+    return reserva
+
+
+@api_router.get("/mobile/reservations/{member_id}", response_model=List[Reservation])
+async def reservas_do_socio(member_id: str):
+    reservas = await db.reservations.find({"member_id": member_id}).sort("created_at", -1).to_list(200)
+    return [Reservation(**parse_from_mongo(r)) for r in reservas]
+
+
 app.include_router(api_router)
+
+# As fotografias sao servidas depois do router, para nao tapar as rotas da API
+PASTA_UPLOADS.mkdir(parents=True, exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory=str(PASTA_UPLOADS)), name="uploads")
 
 # CORS middleware
 app.add_middleware(

@@ -127,6 +127,43 @@ campo só atrasava quem estava a cobrar. O servidor continua a aceitar
 `member_id` e as vendas antigas que o tenham continuam a mostrar o nome nas
 Finanças — só deixou de se perguntar.
 
+### Aplicação do sócio: parceiros, multimédia e montra
+
+O conteúdo que o sócio vê no telemóvel carrega-se na gestão, em **App do
+Sócio** (só administrador) e no **Stock**:
+
+- **Parceiros** — protocolos de parceria. O que mais conta é a **vantagem**
+  ("10% em consultas"); o resto é contexto. Só o administrador os cria.
+- **Multimédia** — **fotografias alojadas aqui**, **vídeos por link** para as
+  redes do ginásio. Um minuto de vídeo de telemóvel são 50 a 100 MB e as redes
+  já têm o conteúdo e já têm público. O colaborador também pode publicar: é
+  quem está no ginásio a tirar as fotos.
+- **Montra** — é o Stock. Um artigo só aparece na aplicação se tiver
+  **fotografia e stock**.
+
+### Reservas
+
+O sócio reserva na aplicação, o balcão prepara. **Reservar não é vender**: o
+stock não se mexe. As reservas por tratar aparecem num cartão no topo do Stock.
+
+**"Entregue" abre a venda**, com o artigo e a quantidade já preenchidos, e só
+depois de a venda ser confirmada é que a reserva se fecha. São a mesma coisa —
+o sócio leva e paga — e separá-las em dois botões deixava o stock por dar baixa
+sempre que alguém se esquecesse do segundo.
+
+### Fotografias
+
+Ficam em **disco**, num volume do Docker (`uploads`), servidas pelo próprio
+servidor em `/api/uploads/...`. Passam pelo encaminhamento que o site já tem,
+por isso não é preciso mexer no nginx da máquina.
+
+**Não vão para a base de dados.** As cópias de segurança são despejos da base,
+e meia dúzia de fotografias punham um ficheiro de 15 MB a pesar centenas.
+Limite de 8 MB por imagem; só jpg, png, webp e gif.
+
+Em desenvolvimento a pasta é a de `UPLOADS_DIR` no `backend/.env`; nos testes é
+`tests/_uploads`. Ambas fora do Git.
+
 ### Modalidades
 
 Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal e é a
@@ -194,7 +231,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 149 testes e demoram 5 segundos.
+backend** — são 174 testes e demoram 6 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q

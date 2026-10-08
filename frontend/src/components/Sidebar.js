@@ -13,7 +13,8 @@ import {
   Globe,
   LogOut,
   Shield,
-  User
+  User,
+  Smartphone
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
@@ -33,6 +34,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
     { path: '/payments', icon: CreditCard, label: translations.payments },
     { path: '/inventory', icon: Package, label: translations.inventory },
     ...(isAdmin() ? [{ path: '/reports', icon: BarChart, label: translations.reports }] : []),
+    ...(isAdmin() ? [{ path: '/app-socio', icon: Smartphone, label: 'App do Sócio' }] : []),
     ...(isAdmin() ? [{ path: '/users', icon: Shield, label: 'Utilizadores' }] : []),
   ];
 

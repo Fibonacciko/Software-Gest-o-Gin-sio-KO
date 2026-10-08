@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -18,7 +18,8 @@ import {
   TrendingUp,
   Shirt,
   ShoppingCart,
-  Minus
+  Minus,
+  Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { filtrarEOrdenar } from '../lib/pesquisa';
@@ -48,8 +49,15 @@ const Inventory = ({ language, translations }) => {
     color: '',
     quantity: '',
     price: '',
-    description: ''
+    description: '',
+    photo_url: ''
   });
+  const ficheiroArtigo = useRef(null);
+  const [aEnviarFoto, setAEnviarFoto] = useState(false);
+  // Reservas feitas na aplicacao do socio, para o balcao preparar
+  const [reservas, setReservas] = useState([]);
+  // A reserva que esta a ser entregue: a venda fecha-a no fim
+  const [reservaAEntregar, setReservaAEntregar] = useState(null);
 
   const t = {
     pt: {
@@ -79,6 +87,18 @@ const Inventory = ({ language, translations }) => {
       save: 'Guardar',
       cancel: 'Cancelar',
       edit: 'Editar',
+      photo: 'Fotografia',
+      reservations: 'Reservas da Aplicação',
+      reservationsHint: 'Pedidos feitos pelos sócios no telemóvel. Prepare o artigo e entregue quando ele chegar.',
+      pending: 'Por preparar',
+      ready: 'Preparada',
+      markReady: 'Preparada',
+      markDelivered: 'Entregue',
+      fromReservation: 'Reserva de',
+      cancelReservation: 'Cancelar a reserva',
+      choosePhoto: 'Escolher fotografia',
+      uploading: 'A enviar…',
+      photoHint: 'Só os artigos com fotografia aparecem na montra da aplicação do sócio.',
       delete: 'Eliminar',
       view: 'Ver',
       totalItems: 'Total de Items',
@@ -139,6 +159,18 @@ const Inventory = ({ language, translations }) => {
       save: 'Save',
       cancel: 'Cancel',
       edit: 'Edit',
+      photo: 'Photo',
+      reservations: 'App Reservations',
+      reservationsHint: 'Requests made by members on their phone.',
+      pending: 'To prepare',
+      ready: 'Ready',
+      markReady: 'Ready',
+      markDelivered: 'Delivered',
+      fromReservation: 'Reserved by',
+      cancelReservation: 'Cancel reservation',
+      choosePhoto: 'Choose photo',
+      uploading: 'Uploading…',
+      photoHint: 'Only items with a photo appear in the member app shop.',
       delete: 'Delete',
       view: 'View',
       totalItems: 'Total Items',
@@ -239,6 +271,12 @@ const Inventory = ({ language, translations }) => {
         quantity: qtd,
         unit_price: sellData.unit_price === '' ? null : precoCobrado()
       });
+      if (reservaAEntregar) {
+        await axios.put(`${API}/reservations/${reservaAEntregar.id}?status=delivered`);
+        setReservaAEntregar(null);
+        carregarReservas();
+      }
+
       toast.success(t[language].saleDone);
       setShowSellDialog(false);
       setArtigoFixo(null);
@@ -287,6 +325,11 @@ const Inventory = ({ language, translations }) => {
     return () => clearTimeout(debounceTimer);
   }, [searchTerm, categoryFilter]);
 
+  useEffect(() => {
+    carregarReservas();
+    // eslint-disable-line
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -323,7 +366,8 @@ const Inventory = ({ language, translations }) => {
       color: item.color || '',
       quantity: item.quantity?.toString() || '',
       price: item.price?.toString() || '',
-      description: item.description || ''
+      description: item.description || '',
+      photo_url: item.photo_url || ''
     });
     setShowAddDialog(true);
   };
@@ -349,8 +393,76 @@ const Inventory = ({ language, translations }) => {
       color: '',
       quantity: '',
       price: '',
-      description: ''
+      description: '',
+      photo_url: ''
     });
+  };
+
+  /** Envia a fotografia do artigo e guarda o endereco no formulario. */
+  const escolherFotoDoArtigo = async (evento) => {
+    const ficheiro = evento.target.files?.[0];
+    if (!ficheiro) return;
+    try {
+      setAEnviarFoto(true);
+      const corpo = new FormData();
+      corpo.append('ficheiro', ficheiro);
+      const r = await axios.post(`${API}/uploads`, corpo, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setFormData((f) => ({ ...f, photo_url: r.data.url }));
+    } catch (erro) {
+      toast.error(erro.response?.data?.detail || 'Não consegui enviar a fotografia.');
+    } finally {
+      setAEnviarFoto(false);
+      evento.target.value = '';
+    }
+  };
+
+  const carregarReservas = async () => {
+    try {
+      const r = await axios.get(`${API}/reservations`);
+      // So interessa o que esta por tratar: o que ja foi entregue sai da lista
+      setReservas(r.data.filter((x) => x.status === 'pending' || x.status === 'ready'));
+    } catch {
+      setReservas([]);
+    }
+  };
+
+  /**
+   * Entregar uma reserva e vender o artigo.
+   *
+   * Sao a mesma coisa: o socio leva o artigo e paga. Se fossem dois botoes
+   * separados, o stock ficava por dar baixa sempre que alguem se esquecesse
+   * do segundo.
+   */
+  const entregarReserva = (reserva) => {
+    const artigo = inventory.find((i) => i.id === reserva.item_id);
+    if (!artigo) {
+      toast.error('O artigo desta reserva já não existe no stock.');
+      return;
+    }
+    setReservaAEntregar(reserva);
+    setArtigoFixo(artigo);
+    setSellData({
+      item_id: artigo.id,
+      quantity: String(reserva.quantity || 1),
+      unit_price: artigo.price.toFixed(2)
+    });
+    setShowSellDialog(true);
+  };
+
+  const mudarReserva = async (reserva, estado) => {
+    try {
+      await axios.put(`${API}/reservations/${reserva.id}?status=${estado}`);
+      toast.success(
+        estado === 'ready' ? 'Reserva marcada como preparada.'
+          : estado === 'delivered' ? 'Reserva entregue.'
+            : 'Reserva cancelada.'
+      );
+      carregarReservas();
+    } catch {
+      toast.error('Erro ao alterar a reserva');
+    }
   };
 
   const getCategoryIcon = (category) => {
@@ -500,6 +612,46 @@ const Inventory = ({ language, translations }) => {
                   data-testid="item-description"
                 />
               </div>
+
+              {/* A fotografia e o que faz o artigo aparecer na montra da app */}
+              <div>
+                <Label>{t[language].photo}</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  {formData.photo_url && (
+                    <img
+                      src={formData.photo_url.startsWith('http')
+                        ? formData.photo_url
+                        : `${BACKEND_URL}${formData.photo_url}`}
+                      alt=""
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+                  )}
+                  <input
+                    ref={ficheiroArtigo}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={escolherFotoDoArtigo}
+                    data-testid="item-photo-input"
+                  />
+                  <Button type="button" variant="outline" disabled={aEnviarFoto}
+                          onClick={() => ficheiroArtigo.current?.click()}
+                          data-testid="item-photo-btn">
+                    <Upload className="mr-2" size={14} />
+                    {aEnviarFoto ? t[language].uploading : t[language].choosePhoto}
+                  </Button>
+                  {formData.photo_url && (
+                    <Button type="button" variant="ghost" size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => setFormData({ ...formData, photo_url: '' })}>
+                      <Trash2 size={14} />
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {t[language].photoHint}
+                </p>
+              </div>
               
               <div className="flex justify-end gap-3 pt-4">
                 <Button 
@@ -525,6 +677,7 @@ const Inventory = ({ language, translations }) => {
             setShowSellDialog(aberto);
             if (!aberto) {
               setArtigoFixo(null);
+              setReservaAEntregar(null);
               setSellData({ item_id: '', quantity: '1', unit_price: '' });
             }
           }}
@@ -550,6 +703,12 @@ const Inventory = ({ language, translations }) => {
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                     €{artigoFixo.price.toFixed(2)} · {artigoFixo.quantity} {t[language].inStock}
                   </p>
+                  {reservaAEntregar && (
+                    <p className="text-sm mt-1" style={{ color: 'var(--ko-primary-orange)' }}>
+                      {t[language].fromReservation} #{reservaAEntregar.member_number} —{' '}
+                      {reservaAEntregar.member_name}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -685,6 +844,76 @@ const Inventory = ({ language, translations }) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Reservas feitas na aplicacao: aparecem so quando ha alguma por tratar */}
+      {reservas.length > 0 && (
+        <Card className="card-shadow" style={{ borderColor: 'var(--ko-primary-orange)' }}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center">
+              <ShoppingCart className="mr-2" size={20} style={{ color: 'var(--ko-primary-orange)' }} />
+              {t[language].reservations} ({reservas.length})
+            </CardTitle>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              {t[language].reservationsHint}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {reservas.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg"
+                  style={{ background: 'var(--background-elevated)' }}
+                  data-testid={`reserva-${r.id}`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                      {r.quantity}x {r.item_name}
+                      {r.item_details ? ` · ${r.item_details}` : ''}
+                    </p>
+                    <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
+                      #{r.member_number} — {r.member_name}
+                      {r.created_at ? ` · ${new Date(r.created_at).toLocaleDateString('pt-PT')}` : ''}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge
+                      variant="outline"
+                      style={{
+                        borderColor: r.status === 'ready' ? '#16a34a' : 'var(--ko-primary-orange)',
+                        color: r.status === 'ready' ? '#16a34a' : 'var(--ko-primary-orange)'
+                      }}
+                    >
+                      {r.status === 'ready' ? t[language].ready : t[language].pending}
+                    </Badge>
+                    {r.status === 'pending' && (
+                      <Button size="sm" variant="outline"
+                              onClick={() => mudarReserva(r, 'ready')}
+                              data-testid={`preparar-${r.id}`}>
+                        {t[language].markReady}
+                      </Button>
+                    )}
+                    <Button size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => entregarReserva(r)}
+                            data-testid={`entregar-${r.id}`}>
+                      {t[language].markDelivered}
+                    </Button>
+                    <Button size="sm" variant="ghost"
+                            className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                            title={t[language].cancelReservation}
+                            onClick={() => mudarReserva(r, 'cancelled')}
+                            data-testid={`cancelar-${r.id}`}>
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>

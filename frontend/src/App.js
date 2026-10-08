@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AppDoSocio from './pages/AppDoSocio';
 import Sidebar from './components/Sidebar';
 import CommandPalette from './components/CommandPalette';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -170,6 +171,11 @@ function App() {
                   <Route path="/payments" element={
                     <ProtectedRoute>
                       <Payments language={language} />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app-socio" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AppDoSocio language={language} />
                     </ProtectedRoute>
                   } />
                   <Route path="/reports" element={
