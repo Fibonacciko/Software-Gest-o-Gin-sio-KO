@@ -122,6 +122,11 @@ Não há botão de venda no topo da página, nem lista de artigos para escolher 
 foi de propósito, para não haver sítio nenhum onde se possa trocar um artigo
 por outro igual de cor diferente.
 
+**A venda não se associa a sócio.** O dono não precisa disso ao balcão, e o
+campo só atrasava quem estava a cobrar. O servidor continua a aceitar
+`member_id` e as vendas antigas que o tenham continuam a mostrar o nome nas
+Finanças — só deixou de se perguntar.
+
 ### Modalidades
 
 Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal e é a

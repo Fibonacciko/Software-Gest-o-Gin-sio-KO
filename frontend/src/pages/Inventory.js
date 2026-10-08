@@ -18,8 +18,7 @@ import {
   TrendingUp,
   Shirt,
   ShoppingCart,
-  Minus,
-  Eye
+  Minus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { filtrarEOrdenar } from '../lib/pesquisa';
@@ -35,12 +34,11 @@ const Inventory = ({ language, translations }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showSellDialog, setShowSellDialog] = useState(false);
-  const [sellData, setSellData] = useState({ item_id: '', quantity: '1', member_id: '', unit_price: '' });
+  const [sellData, setSellData] = useState({ item_id: '', quantity: '1', unit_price: '' });
   // Quando a venda arranca do botao de um cartao, o artigo ja vem escolhido e
   // nao se mostra a lista: era aí que se enganava o artigo, porque a lista nao
   // dizia a cor
   const [artigoFixo, setArtigoFixo] = useState(null);
-  const [members, setMembers] = useState([]);
   const [selling, setSelling] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -58,12 +56,10 @@ const Inventory = ({ language, translations }) => {
       inventory: 'Gestão de Stock',
       addItem: 'Adicionar Item',
       sell: 'Vender',
-      client: 'Cliente (opcional)',
       soldFor: 'Preço de venda por unidade',
       listPrice: 'Preço de tabela',
       discount: 'com desconto',
       surcharge: 'acima da tabela',
-      noClient: 'Sem sócio associado',
       sellTitle: 'Vender Artigo',
       inStock: 'em stock',
       total: 'Total',
@@ -120,12 +116,10 @@ const Inventory = ({ language, translations }) => {
       inventory: 'Inventory Management',
       addItem: 'Add Item',
       sell: 'Sell',
-      client: 'Customer (optional)',
       soldFor: 'Unit sale price',
       listPrice: 'List price',
       discount: 'discounted',
       surcharge: 'above list',
-      noClient: 'No member linked',
       sellTitle: 'Sell Item',
       inStock: 'in stock',
       total: 'Total',
@@ -184,27 +178,16 @@ const Inventory = ({ language, translations }) => {
     fetchInventory();
   }, []);
 
-  const fetchMembers = async () => {
-    try {
-      const response = await axios.get(`${API}/members`);
-      setMembers(response.data);
-    } catch (error) {
-      console.error('Error fetching members:', error);
-    }
-  };
-
   /** O artigo escrito por extenso: nome, tamanho e cor. */
   const descreverArtigo = (item) =>
     [item.name, item.size, item.color].filter(Boolean).join(' · ');
 
   /** Vender a partir do cartao do artigo, sem o ter de procurar numa lista. */
   const abrirVendaDoArtigo = (item) => {
-    fetchMembers();            // a venda pode ficar associada a um socio
     setArtigoFixo(item);
     setSellData({
       item_id: item.id,
       quantity: '1',
-      member_id: '',
       unit_price: item.price.toFixed(2)
     });
     setShowSellDialog(true);
@@ -254,13 +237,12 @@ const Inventory = ({ language, translations }) => {
       await axios.post(`${API}/sales`, {
         item_id: artigo.id,
         quantity: qtd,
-        unit_price: sellData.unit_price === '' ? null : precoCobrado(),
-        member_id: sellData.member_id || null
+        unit_price: sellData.unit_price === '' ? null : precoCobrado()
       });
       toast.success(t[language].saleDone);
       setShowSellDialog(false);
       setArtigoFixo(null);
-      setSellData({ item_id: '', quantity: '1', member_id: '', unit_price: '' });
+      setSellData({ item_id: '', quantity: '1', unit_price: '' });
       fetchInventory();
     } catch (error) {
       console.error('Error selling item:', error);
@@ -543,7 +525,7 @@ const Inventory = ({ language, translations }) => {
             setShowSellDialog(aberto);
             if (!aberto) {
               setArtigoFixo(null);
-              setSellData({ item_id: '', quantity: '1', member_id: '', unit_price: '' });
+              setSellData({ item_id: '', quantity: '1', unit_price: '' });
             }
           }}
         >
@@ -603,26 +585,6 @@ const Inventory = ({ language, translations }) => {
                     {precoCobrado() < artigoSelecionado().price ? t[language].discount : t[language].surcharge}
                   </p>
                 )}
-              </div>
-
-              <div>
-                <Label htmlFor="sell-member">{t[language].client}</Label>
-                <Select
-                  value={sellData.member_id || 'none'}
-                  onValueChange={(value) => setSellData({ ...sellData, member_id: value === 'none' ? '' : value })}
-                >
-                  <SelectTrigger id="sell-member" data-testid="sell-member-select">
-                    <SelectValue placeholder={t[language].noClient} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    <SelectItem value="none">{t[language].noClient}</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        #{m.member_number} — {m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               {artigoSelecionado() && (
