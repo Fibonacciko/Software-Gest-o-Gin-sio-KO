@@ -106,6 +106,20 @@ pode mexer nas contas do ginásio.
 - Um **check-in errado** corrige-se (a modalidade) ou apaga-se, no Painel. Uma
   presença a mais estraga as estatísticas do mês.
 
+### Stock e vendas
+
+Cada artigo tem **nome, tamanho e cor**, e são as três juntas que o
+identificam: há Luvas de Boxe 12oz vermelhas e pretas, e vender umas em vez
+das outras deixa o stock errado nas duas. Por isso o artigo mostra-se sempre
+por extenso — `nome · tamanho · cor` — tanto na lista de escolha como na
+janela de venda.
+
+Vende-se pelo **botão Vender do próprio cartão do artigo**, ao lado do editar
+e do eliminar. Aí não há nada para escolher: o artigo já vem fixo, e só se
+indica a quantidade e o preço. O botão fica desativado quando o stock é zero.
+O botão "Vender Item" do topo continua a existir, com a lista, para quem
+preferir começar por aí.
+
 ### Modalidades
 
 Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal e é a

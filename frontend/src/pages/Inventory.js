@@ -36,6 +36,10 @@ const Inventory = ({ language, translations }) => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showSellDialog, setShowSellDialog] = useState(false);
   const [sellData, setSellData] = useState({ item_id: '', quantity: '1', member_id: '', unit_price: '' });
+  // Quando a venda arranca do botao de um cartao, o artigo ja vem escolhido e
+  // nao se mostra a lista: era aí que se enganava o artigo, porque a lista nao
+  // dizia a cor
+  const [artigoFixo, setArtigoFixo] = useState(null);
   const [members, setMembers] = useState([]);
   const [selling, setSelling] = useState(false);
 
@@ -54,6 +58,7 @@ const Inventory = ({ language, translations }) => {
       inventory: 'Gestão de Stock',
       addItem: 'Adicionar Item',
       sellItem: 'Vender Item',
+      sell: 'Vender',
       client: 'Cliente (opcional)',
       soldFor: 'Preço de venda por unidade',
       listPrice: 'Preço de tabela',
@@ -118,6 +123,7 @@ const Inventory = ({ language, translations }) => {
       inventory: 'Inventory Management',
       addItem: 'Add Item',
       sellItem: 'Sell Item',
+      sell: 'Sell',
       client: 'Customer (optional)',
       soldFor: 'Unit sale price',
       listPrice: 'List price',
@@ -195,6 +201,22 @@ const Inventory = ({ language, translations }) => {
 
   const itemsComStock = () => inventory.filter((i) => (i.quantity || 0) > 0);
 
+  /** O artigo escrito por extenso: nome, tamanho e cor. */
+  const descreverArtigo = (item) =>
+    [item.name, item.size, item.color].filter(Boolean).join(' · ');
+
+  /** Vender a partir do cartao do artigo, sem o ter de procurar numa lista. */
+  const abrirVendaDoArtigo = (item) => {
+    setArtigoFixo(item);
+    setSellData({
+      item_id: item.id,
+      quantity: '1',
+      member_id: '',
+      unit_price: item.price.toFixed(2)
+    });
+    setShowSellDialog(true);
+  };
+
   const artigoSelecionado = () => inventory.find((i) => i.id === sellData.item_id);
 
   const precoCobrado = () => {
@@ -244,6 +266,7 @@ const Inventory = ({ language, translations }) => {
       });
       toast.success(t[language].saleDone);
       setShowSellDialog(false);
+      setArtigoFixo(null);
       setSellData({ item_id: '', quantity: '1', member_id: '', unit_price: '' });
       fetchInventory();
     } catch (error) {
@@ -530,13 +553,36 @@ const Inventory = ({ language, translations }) => {
         </div>
 
         {/* Janela de venda */}
-        <Dialog open={showSellDialog} onOpenChange={setShowSellDialog}>
+        <Dialog
+          open={showSellDialog}
+          onOpenChange={(aberto) => {
+            setShowSellDialog(aberto);
+            if (!aberto) {
+              setArtigoFixo(null);
+              setSellData({ item_id: '', quantity: '1', member_id: '', unit_price: '' });
+            }
+          }}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t[language].sellTitle}</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSell} className="space-y-4">
+              {artigoFixo ? (
+                <div
+                  className="rounded-lg p-3"
+                  style={{ background: 'var(--background-elevated)' }}
+                  data-testid="artigo-fixo"
+                >
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {descreverArtigo(artigoFixo)}
+                  </p>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    €{artigoFixo.price.toFixed(2)} · {artigoFixo.quantity} {t[language].inStock}
+                  </p>
+                </div>
+              ) : (
               <div>
                 <Label htmlFor="sell-item">{t[language].chooseItem} *</Label>
                 {itemsComStock().length > 0 ? (
@@ -557,7 +603,7 @@ const Inventory = ({ language, translations }) => {
                     <SelectContent className="max-h-72">
                       {itemsComStock().map((item) => (
                         <SelectItem key={item.id} value={item.id}>
-                          {item.name}{item.size ? ` (${item.size})` : ''} — €{item.price.toFixed(2)} · {item.quantity} {t[language].inStock}
+                          {descreverArtigo(item)} — €{item.price.toFixed(2)} · {item.quantity} {t[language].inStock}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -566,6 +612,7 @@ const Inventory = ({ language, translations }) => {
                   <p className="text-sm text-gray-500 dark:text-gray-400 py-2">{t[language].noStock}</p>
                 )}
               </div>
+              )}
 
               <div>
                 <Label htmlFor="sell-quantity">{t[language].quantity} *</Label>
@@ -655,14 +702,14 @@ const Inventory = ({ language, translations }) => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="card-shadow">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 truncate">
                   {t[language].totalItems}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalItems}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">{stats.totalItems}</p>
               </div>
-              <div className="p-3 rounded-full bg-blue-500">
+              <div className="p-3 rounded-full shrink-0 bg-blue-500">
                 <Package size={24} className="text-white" />
               </div>
             </div>
@@ -671,16 +718,16 @@ const Inventory = ({ language, translations }) => {
         
         <Card className="card-shadow">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 truncate">
                   {t[language].totalValue}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                   €{stats.totalValue.toFixed(2)}
                 </p>
               </div>
-              <div className="p-3 rounded-full bg-green-500">
+              <div className="p-3 rounded-full shrink-0 bg-green-500">
                 <TrendingUp size={24} className="text-white" />
               </div>
             </div>
@@ -689,14 +736,14 @@ const Inventory = ({ language, translations }) => {
         
         <Card className="card-shadow">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 truncate">
                   {t[language].lowStock}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.lowStockItems}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">{stats.lowStockItems}</p>
               </div>
-              <div className="p-3 rounded-full bg-yellow-500">
+              <div className="p-3 rounded-full shrink-0 bg-yellow-500">
                 <AlertTriangle size={24} className="text-white" />
               </div>
             </div>
@@ -705,14 +752,14 @@ const Inventory = ({ language, translations }) => {
         
         <Card className="card-shadow">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 truncate">
                   {t[language].outOfStock}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.outOfStockItems}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">{stats.outOfStockItems}</p>
               </div>
-              <div className="p-3 rounded-full bg-red-500">
+              <div className="p-3 rounded-full shrink-0 bg-red-500">
                 <Minus size={24} className="text-white" />
               </div>
             </div>
@@ -771,23 +818,37 @@ const Inventory = ({ language, translations }) => {
               ))}
             </div>
           ) : inventory.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {inventory.map((item) => {
                 const stockStatus = getStockStatus(item.quantity);
                 return (
                   <Card key={item.id} className="card-shadow hover:shadow-lg transition-all duration-200">
                     <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
+                      {/* Os botoes passam para baixo quando o nome do artigo
+                          nao cabe ao lado deles */}
+                      <div className="flex items-start justify-between gap-2 mb-4 flex-wrap">
+                        <div className="flex items-center space-x-3 min-w-0">
                           {getCategoryIcon(item.category)}
-                          <div>
-                            <h3 className="font-semibold text-lg">{item.name}</h3>
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-lg truncate" title={item.name}>{item.name}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                               {t[language][item.category]}
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 shrink-0 ml-auto">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => abrirVendaDoArtigo(item)}
+                            disabled={item.quantity === 0}
+                            title={item.quantity === 0 ? t[language].outOfStock : t[language].sell}
+                            className="text-green-700 hover:text-green-800 border-green-600/40"
+                            data-testid={`sell-item-${item.id}`}
+                          >
+                            <ShoppingCart size={14} className="mr-1" />
+                            {t[language].sell}
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
