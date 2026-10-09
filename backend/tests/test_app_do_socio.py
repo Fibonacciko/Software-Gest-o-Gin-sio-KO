@@ -249,3 +249,47 @@ def test_o_colaborador_trata_das_reservas(cliente, admin, colaborador, criar_soc
     r = cliente.put(f"/api/reservations/{reserva['id']}", headers=colaborador,
                     params={"status": "ready"})
     assert r.status_code == 200
+
+
+# ------------------------------------------------------------ ficha do ginásio
+
+def test_a_ficha_do_ginasio_comeca_com_valores_de_omissao(cliente, admin):
+    r = cliente.get("/api/gym-info", headers=admin)
+    assert r.status_code == 200
+    assert r.json()["name"] == "Ginásio KO"
+    assert r.json()["address"] is None
+
+
+def test_guardar_a_ficha_do_ginasio(cliente, admin):
+    r = cliente.put("/api/gym-info", headers=admin, json={
+        "address": "Rua do Ginásio 1, Almada",
+        "phone": "212345678",
+        "hours": "Seg a Sex 7h-22h · Sáb 9h-13h",
+        "maps_url": "https://maps.google.com/?q=ginasio",
+        "review_url": "https://g.page/r/avaliar",
+    })
+    assert r.status_code == 200, r.text
+    assert r.json()["address"] == "Rua do Ginásio 1, Almada"
+    assert r.json()["name"] == "Ginásio KO"   # o que não se mexeu fica
+
+
+def test_guardar_so_um_campo_nao_apaga_os_outros(cliente, admin):
+    cliente.put("/api/gym-info", headers=admin, json={"phone": "212345678"})
+    cliente.put("/api/gym-info", headers=admin, json={"email": "geral@ko.pt"})
+
+    ficha = cliente.get("/api/gym-info", headers=admin).json()
+    assert ficha["phone"] == "212345678"
+    assert ficha["email"] == "geral@ko.pt"
+
+
+def test_a_app_le_a_ficha_sem_sessao(cliente, admin):
+    cliente.put("/api/gym-info", headers=admin, json={"address": "Rua do Ginásio 1"})
+    r = cliente.get("/api/mobile/gym-info")
+    assert r.status_code == 200
+    assert r.json()["address"] == "Rua do Ginásio 1"
+
+
+def test_o_colaborador_ve_mas_nao_altera_a_ficha(cliente, colaborador):
+    assert cliente.get("/api/gym-info", headers=colaborador).status_code == 200
+    r = cliente.put("/api/gym-info", headers=colaborador, json={"phone": "999"})
+    assert r.status_code == 403

@@ -17,7 +17,8 @@ import {
   Upload,
   Link as LinkIcon,
   Eye,
-  EyeOff
+  EyeOff,
+  MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -37,6 +38,20 @@ const PARCEIRO_VAZIO = {
 
 const MEDIA_VAZIA = { kind: 'photo', url: '', caption: '', taken_on: '', is_active: true };
 
+// A ficha do ginásio: o que o sócio vê no separador "O Ginásio"
+const CAMPOS_DO_GINASIO = [
+  { campo: 'name', etiqueta: 'Nome' },
+  { campo: 'address', etiqueta: 'Morada' },
+  { campo: 'phone', etiqueta: 'Telefone' },
+  { campo: 'email', etiqueta: 'Email' },
+  { campo: 'hours', etiqueta: 'Horário', ajuda: 'Ex: Seg a Sex 7h-22h · Sáb 9h-13h' },
+  { campo: 'whatsapp', etiqueta: 'WhatsApp', ajuda: 'Só o número, com indicativo. Ex: 351912345678' },
+  { campo: 'maps_url', etiqueta: 'Link do Google Maps', ajuda: 'No Maps: Partilhar → Copiar link' },
+  { campo: 'review_url', etiqueta: 'Link para avaliações', ajuda: 'No perfil do negócio: Pedir avaliações → Copiar link' },
+  { campo: 'instagram', etiqueta: 'Instagram' },
+  { campo: 'facebook', etiqueta: 'Facebook' },
+];
+
 const AppDoSocio = ({ language }) => {
   const [aba, setAba] = useState('parceiros');
   const [parceiros, setParceiros] = useState([]);
@@ -50,9 +65,12 @@ const AppDoSocio = ({ language }) => {
   const [mediaAberta, setMediaAberta] = useState(false);
   const [mediaForm, setMediaForm] = useState(MEDIA_VAZIA);
   const [aEnviar, setAEnviar] = useState(false);
+  const [ginasio, setGinasio] = useState(null);
+  const [aGuardarGinasio, setAGuardarGinasio] = useState(false);
 
   const ficheiroLogo = useRef(null);
   const ficheiroFoto = useRef(null);
+  const ficheiroGinasio = useRef(null);
 
   const t = {
     pt: {
@@ -87,7 +105,11 @@ const AppDoSocio = ({ language }) => {
       semMedia: 'Ainda não há fotografias nem vídeos publicados.',
       escondido: 'Escondido',
       apagar: 'Apagar',
-      editar: 'Editar'
+      editar: 'Editar',
+      ginasio: 'O Ginásio',
+      ginasioAjuda: 'Contactos, horário e localização. É o que o sócio vê no separador "O Ginásio" da aplicação.',
+      sobre: 'Sobre o ginásio',
+      fotoDoGinasio: 'Fotografia do ginásio'
     },
     en: {
       titulo: 'Member App',
@@ -121,7 +143,11 @@ const AppDoSocio = ({ language }) => {
       semMedia: 'No photos or videos published yet.',
       escondido: 'Hidden',
       apagar: 'Delete',
-      editar: 'Edit'
+      editar: 'Edit',
+      ginasio: 'The Gym',
+      ginasioAjuda: 'Contacts, hours and location.',
+      sobre: 'About the gym',
+      fotoDoGinasio: 'Gym photo'
     }
   };
   const txt = t[language] || t.pt;
@@ -133,12 +159,14 @@ const AppDoSocio = ({ language }) => {
   const carregarTudo = async () => {
     try {
       setACarregar(true);
-      const [p, m] = await Promise.all([
+      const [p, m, g] = await Promise.all([
         axios.get(`${API}/partners`).catch(() => ({ data: [] })),
-        axios.get(`${API}/media`).catch(() => ({ data: [] }))
+        axios.get(`${API}/media`).catch(() => ({ data: [] })),
+        axios.get(`${API}/gym-info`).catch(() => ({ data: {} }))
       ]);
       setParceiros(p.data);
       setMedia(m.data);
+      setGinasio(g.data || {});
     } finally {
       setACarregar(false);
     }
@@ -263,6 +291,26 @@ const AppDoSocio = ({ language }) => {
     }
   };
 
+  const guardarGinasio = async (e) => {
+    e.preventDefault();
+    try {
+      setAGuardarGinasio(true);
+      const corpo = {};
+      CAMPOS_DO_GINASIO.forEach(({ campo }) => {
+        corpo[campo] = (ginasio[campo] || '').trim();
+      });
+      corpo.about = (ginasio.about || '').trim();
+      corpo.photo_url = ginasio.photo_url || '';
+      await axios.put(`${API}/gym-info`, corpo);
+      toast.success('Ficha do ginásio guardada.');
+      carregarTudo();
+    } catch (erro) {
+      toast.error(erro.response?.data?.detail || 'Erro ao guardar');
+    } finally {
+      setAGuardarGinasio(false);
+    }
+  };
+
   /* ---------------------------------------------------------------- ecrã */
 
   const Separador = ({ id, icone: Icone, texto, quantos }) => (
@@ -291,19 +339,34 @@ const AppDoSocio = ({ language }) => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{txt.titulo}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{txt.subtitulo}</p>
         </div>
-        <Button
-          onClick={() => (aba === 'parceiros' ? abrirParceiro(null) : setMediaAberta(true))}
-          className="btn-hover"
-          data-testid="novo-item"
-        >
-          <Plus className="mr-2" size={16} />
-          {aba === 'parceiros' ? txt.novoParceiro : txt.novaFoto}
-        </Button>
+        {aba !== 'ginasio' && (
+          <Button
+            onClick={() => (aba === 'parceiros' ? abrirParceiro(null) : setMediaAberta(true))}
+            className="btn-hover"
+            data-testid="novo-item"
+          >
+            <Plus className="mr-2" size={16} />
+            {aba === 'parceiros' ? txt.novoParceiro : txt.novaFoto}
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Separador id="parceiros" icone={Handshake} texto={txt.parceiros} quantos={parceiros.length} />
         <Separador id="multimedia" icone={ImageIcon} texto={txt.multimedia} quantos={media.length} />
+        <button
+          type="button"
+          onClick={() => setAba('ginasio')}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200"
+          style={{
+            backgroundColor: aba === 'ginasio' ? 'var(--ko-primary-orange)' : 'var(--background-elevated)',
+            color: aba === 'ginasio' ? 'white' : 'var(--text-primary)'
+          }}
+          data-testid="aba-ginasio"
+        >
+          <MapPin size={16} />
+          {txt.ginasio}
+        </button>
       </div>
 
       {aCarregar ? (
@@ -372,6 +435,80 @@ const AppDoSocio = ({ language }) => {
             ))}
           </div>
         )
+      ) : aba === 'ginasio' ? (
+        <Card className="card-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center text-base">
+              <MapPin className="mr-2" size={18} />
+              {txt.ginasio}
+            </CardTitle>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{txt.ginasioAjuda}</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={guardarGinasio} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {CAMPOS_DO_GINASIO.map(({ campo, etiqueta, ajuda }) => (
+                  <div key={campo}>
+                    <Label htmlFor={`g-${campo}`}>{etiqueta}</Label>
+                    <Input
+                      id={`g-${campo}`}
+                      value={(ginasio && ginasio[campo]) || ''}
+                      onChange={(e) => setGinasio({ ...ginasio, [campo]: e.target.value })}
+                      data-testid={`ginasio-${campo}`}
+                    />
+                    {ajuda && (
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{ajuda}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <Label htmlFor="g-about">{txt.sobre}</Label>
+                <Textarea
+                  id="g-about"
+                  rows={3}
+                  value={(ginasio && ginasio.about) || ''}
+                  onChange={(e) => setGinasio({ ...ginasio, about: e.target.value })}
+                  data-testid="ginasio-about"
+                />
+              </div>
+
+              <div>
+                <Label>{txt.fotoDoGinasio}</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  {ginasio && ginasio.photo_url && (
+                    <img src={enderecoDaImagem(ginasio.photo_url)} alt=""
+                         className="w-24 h-24 rounded-lg object-cover" />
+                  )}
+                  <input ref={ficheiroGinasio} type="file" accept="image/*" className="hidden"
+                         onChange={(e) => escolherImagem(e, (url) =>
+                           setGinasio((g) => ({ ...g, photo_url: url })))}
+                         data-testid="ginasio-foto-input" />
+                  <Button type="button" variant="outline" disabled={aEnviar}
+                          onClick={() => ficheiroGinasio.current?.click()}
+                          data-testid="ginasio-foto-btn">
+                    <Upload className="mr-2" size={14} />
+                    {aEnviar ? txt.aEnviar : txt.escolherFicheiro}
+                  </Button>
+                  {ginasio && ginasio.photo_url && (
+                    <Button type="button" variant="ghost" size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => setGinasio({ ...ginasio, photo_url: '' })}>
+                      <Trash2 size={14} />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button type="submit" disabled={aGuardarGinasio} data-testid="guardar-ginasio">
+                  {txt.guardar}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       ) : media.length === 0 ? (
         <Card><CardContent className="p-12 text-center text-gray-500 dark:text-gray-400">
           {txt.semMedia}

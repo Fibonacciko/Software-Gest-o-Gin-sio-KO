@@ -141,6 +141,15 @@ Sócio** (só administrador) e no **Stock**:
 - **Montra** — é o Stock. Um artigo só aparece na aplicação se tiver
   **fotografia e stock**.
 
+### A ficha do ginásio
+
+Morada, horário, contactos e links (Google Maps, avaliações, redes). Preenche-se
+em **App do Sócio → O Ginásio** e é um registo único (`gym_info`). Só o
+administrador a altera; o colaborador vê.
+
+O botão de **deixar uma avaliação** no Google é o primeiro do ecrã na aplicação:
+é o que mais ajuda o ginásio e é o que as pessoas se esquecem de fazer.
+
 ### Reservas
 
 O sócio reserva na aplicação, o balcão prepara. **Reservar não é vender**: o
@@ -231,7 +240,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 174 testes e demoram 6 segundos.
+backend** — são 179 testes e demoram 6 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -302,7 +311,37 @@ propósito**: a biblioteca de NFC ainda não está testada nela, e o NFC é o
 essencial da aplicação.
 
 **Só é preciso gerar de novo quando muda algo no que se vê ou se faz no
-telemóvel.** Regras de negócio e dados vêm do servidor e chegam sozinhos.
+telemóvel.** Regras de negócio e dados vêm do servidor e chegam sozinhos — os
+parceiros, as fotografias, a montra e a ficha do ginásio aparecem na aplicação
+que já está instalada, sem gerar nada.
+
+### O que a aplicação tem
+
+Cinco separadores numa barra em baixo, feita à mão: não há biblioteca de
+navegação, que traria meia dúzia de dependências a uma aplicação que ainda é
+instalada à mão em cada telemóvel.
+
+| Separador | O que é |
+|---|---|
+| **Início** | Nome, estado da quota, botão de check-in, treinos, frase, validades |
+| **Parceiros** | Protocolos de parceria, com a vantagem em destaque |
+| **Multimédia** | Fotografias dos treinos e vídeos por link |
+| **Loja** | A montra e as reservas do sócio |
+| **Ginásio** | Morada, horário, contactos, mapa e avaliações |
+
+**O QR não está à vista.** Abre-se no botão "Mostrar o meu QR", em ecrã inteiro
+e com fundo branco — que é como se lê bem na receção. Um QR pequeno no meio da
+página era mau para ler e feio de ver.
+
+**O check-in só se faz com a etiqueta NFC.** Carregar no botão começa a leitura;
+a presença só é registada depois de o telemóvel tocar no autocolante. Num
+telemóvel sem NFC o botão abre o QR, para a receção o ler. Antes disto, um
+telemóvel sem NFC registava a presença só por se carregar no botão — de casa, do
+carro, de qualquer lado — e isso estragava as contas de presenças.
+
+**O fundo** (`src/componentes/Fundo.tsx`) são camadas de ecrã inteiro que
+respiram devagar. Não são manchas redondas: um gradiente linear dentro de um
+círculo deixa um bordo a atravessar o ecrã, que se via.
 
 ---
 

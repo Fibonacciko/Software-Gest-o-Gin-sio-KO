@@ -13,6 +13,7 @@ import {
 import {
   carregarCartao,
   carregarModalidades,
+  enderecoDaImagem,
   fazerCheckin,
   Modalidade,
   ResultadoCheckin,
@@ -30,13 +31,16 @@ type Props = {
 const dataPt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleDateString('pt-PT') : null;
 
+const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0];
+
 export default function EcraCartao({ socio: inicial, aoSair }: Props) {
   const [socio, setSocio] = useState(inicial);
   const [modalidades, setModalidades] = useState<Modalidade[]>([]);
   const [aAtualizar, setAAtualizar] = useState(false);
-  const [temNfc, setTemNfc] = useState(false);
+  const [temNfc, setTemNfc] = useState<boolean | null>(null);
   const [aLerNfc, setALerNfc] = useState(false);
   const [escolhaAberta, setEscolhaAberta] = useState(false);
+  const [qrAberto, setQrAberto] = useState(false);
   const [resultado, setResultado] = useState<ResultadoCheckin | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -61,10 +65,10 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
 
   const minhasModalidades = modalidades.filter((m) => socio.activity_ids?.includes(m.id));
 
-  const registar = async (activityId: string | null, metodo: 'mobile_qr' | 'mobile_nfc') => {
+  const registar = async (activityId: string | null) => {
     setErro(null);
     try {
-      const r = await fazerCheckin(socio.id, activityId, metodo);
+      const r = await fazerCheckin(socio.id, activityId, 'mobile_nfc');
       setResultado(r);
       atualizar();
     } catch (e: any) {
@@ -73,7 +77,13 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
   };
 
   const comecarCheckin = async () => {
-    // Com mais do que uma modalidade, o socio escolhe qual esta a treinar
+    // Sem NFC neste telemovel, o check-in faz-se na recepcao com o QR. Nunca
+    // se regista so por carregar no botao: a presenca tem de ser mesmo no
+    // ginasio, senao as contas de presencas deixam de valer alguma coisa.
+    if (temNfc === false) {
+      setQrAberto(true);
+      return;
+    }
     if (minhasModalidades.length > 1) {
       setEscolhaAberta(true);
       return;
@@ -81,21 +91,19 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
     await encostarTelemovel(minhasModalidades[0]?.id ?? null);
   };
 
+  /** Espera pela etiqueta. Só depois de a ler é que a entrada é registada. */
   const encostarTelemovel = async (activityId: string | null) => {
     setEscolhaAberta(false);
-    if (!temNfc) {
-      // Sem NFC neste telemovel, regista na mesma
-      await registar(activityId, 'mobile_qr');
-      return;
-    }
     setALerNfc(true);
     setErro(null);
     try {
       await lerEtiqueta();
-      await registar(activityId, 'mobile_nfc');
+      await registar(activityId);
     } catch (e: any) {
       const bruto = String(e?.message ?? '');
-      if (!/cancel/i.test(bruto)) setErro('Não consegui ler. Encosta o telemóvel ao autocolante.');
+      if (!/cancel/i.test(bruto)) {
+        setErro('Não consegui ler. Encosta o telemóvel ao autocolante KO.');
+      }
     } finally {
       setALerNfc(false);
     }
@@ -119,6 +127,8 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           ? 'EM DIA'
           : 'SÓCIO';
 
+  const retrato = enderecoDaImagem(socio.photo_url);
+
   return (
     <ScrollView
       style={estilos.raiz}
@@ -127,40 +137,29 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         <RefreshControl refreshing={aAtualizar} onRefresh={atualizar} tintColor={cores.laranjaClaro} />
       }
     >
-      {/* Cartao do socio */}
-      <View style={estilos.cartao}>
-        <View style={estilos.cartaoTopo}>
-          <Text style={estilos.nome}>{socio.name}</Text>
-          <Text style={estilos.numero}>Sócio n.º {socio.member_number}</Text>
-          {/* Por baixo do numero: o texto e longo e nao cabe ao lado do nome */}
+      {/* Quem é e como está */}
+      <View style={estilos.cabecalho}>
+        <View style={estilos.cabecalhoTexto}>
+          <Text style={estilos.ola}>Olá,</Text>
+          <Text style={estilos.nome} numberOfLines={1}>
+            {primeiroNome(socio.name)}
+          </Text>
           <View style={[estilos.selo, { borderColor: corEstado }]}>
             <Text style={[estilos.seloTexto, { color: corEstado }]}>{textoEstado}</Text>
           </View>
         </View>
 
-        {socio.qr_code ? (
-          <View style={estilos.qrCaixa}>
-            <Image source={{ uri: socio.qr_code }} style={estilos.qr} resizeMode="contain" />
+        {/* No lugar onde estava o QR: o retrato do sócio, ou as iniciais */}
+        {retrato ? (
+          <Image source={{ uri: retrato }} style={estilos.retrato} resizeMode="cover" />
+        ) : (
+          <View style={[estilos.retrato, estilos.retratoVazio]}>
+            <Text style={estilos.retratoLetra}>{socio.name.charAt(0).toUpperCase()}</Text>
           </View>
-        ) : null}
-
-        <View style={estilos.linhaValidades}>
-          <View style={estilos.validade}>
-            <Text style={estilos.validadeEtiqueta}>Quota até</Text>
-            <Text style={estilos.validadeValor}>
-              {dataPt(socio.membership_valid_until) ?? '—'}
-            </Text>
-          </View>
-          <View style={estilos.validade}>
-            <Text style={estilos.validadeEtiqueta}>Seguro até</Text>
-            <Text style={estilos.validadeValor}>
-              {dataPt(socio.insurance_valid_until) ?? '—'}
-            </Text>
-          </View>
-        </View>
+        )}
       </View>
 
-      {/* Botao de check-in */}
+      {/* O que se faz todos os dias */}
       <Pressable
         style={({ pressed }) => [
           estilos.botaoCheckin,
@@ -173,7 +172,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         {aLerNfc ? (
           <>
             <ActivityIndicator color={cores.texto} />
-            <Text style={estilos.botaoCheckinTexto}>ENCOSTA O TELEMÓVEL</Text>
+            <Text style={estilos.botaoCheckinTexto}>ENCOSTA AO AUTOCOLANTE</Text>
           </>
         ) : (
           <Text style={estilos.botaoCheckinTexto}>
@@ -182,15 +181,15 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         )}
       </Pressable>
 
-      {temNfc ? (
-        <Text style={estilos.dica}>Encosta o telemóvel ao autocolante KO à entrada.</Text>
-      ) : (
-        <Text style={estilos.dica}>Mostra o teu QR code na receção.</Text>
-      )}
+      <Text style={estilos.dica}>
+        {temNfc === false
+          ? 'Este telemóvel não lê etiquetas. Mostra o teu QR na receção.'
+          : 'Carrega e encosta o telemóvel ao autocolante KO à entrada.'}
+      </Text>
 
-      {erro && <Text style={estilos.erro}>{erro}</Text>}
+      {erro ? <Text style={estilos.erro}>{erro}</Text> : null}
 
-      {/* Numeros */}
+      {/* Números */}
       <View style={estilos.numeros}>
         <View style={estilos.numeroCaixa}>
           <Text style={estilos.numeroGrande}>{socio.workout_count}</Text>
@@ -204,12 +203,33 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         </View>
       </View>
 
-      {/* Frase satirica */}
       {socio.current_motivational_note ? (
         <View style={estilos.frase}>
           <Text style={estilos.fraseTexto}>{socio.current_motivational_note}</Text>
         </View>
       ) : null}
+
+      {/* Validades e número de sócio */}
+      <View style={estilos.cartao}>
+        <View style={estilos.linhaValidades}>
+          <View style={estilos.validade}>
+            <Text style={estilos.validadeEtiqueta}>Quota até</Text>
+            <Text style={estilos.validadeValor}>{dataPt(socio.membership_valid_until) ?? '—'}</Text>
+          </View>
+          <View style={estilos.validade}>
+            <Text style={estilos.validadeEtiqueta}>Seguro até</Text>
+            <Text style={estilos.validadeValor}>{dataPt(socio.insurance_valid_until) ?? '—'}</Text>
+          </View>
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [estilos.botaoQr, pressed && { opacity: 0.8 }]}
+          onPress={() => setQrAberto(true)}
+        >
+          <Text style={estilos.botaoQrTexto}>Mostrar o meu QR</Text>
+          <Text style={estilos.numeroSocio}>Sócio n.º {socio.member_number}</Text>
+        </Pressable>
+      </View>
 
       {/* Modalidades */}
       {minhasModalidades.length > 0 && (
@@ -226,6 +246,21 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       <Pressable onPress={() => sair().then(aoSair)} style={estilos.sair}>
         <Text style={estilos.sairTexto}>Terminar sessão</Text>
       </Pressable>
+
+      {/* O QR em grande, em fundo branco: é assim que se lê bem na receção */}
+      <Modal visible={qrAberto} animationType="fade" onRequestClose={() => setQrAberto(false)}>
+        <Pressable style={estilos.ecraQr} onPress={() => setQrAberto(false)}>
+          <Text style={estilos.qrNome}>{socio.name}</Text>
+          <Text style={estilos.qrNumero}>Sócio n.º {socio.member_number}</Text>
+          {socio.qr_code ? (
+            <Image source={{ uri: socio.qr_code }} style={estilos.qrGrande} resizeMode="contain" />
+          ) : (
+            <Text style={estilos.qrSem}>Este sócio ainda não tem código.</Text>
+          )}
+          <Text style={estilos.qrAjuda}>Mostra este código na receção</Text>
+          <Text style={estilos.qrFechar}>Toca para fechar</Text>
+        </Pressable>
+      </Modal>
 
       {/* Escolha de modalidade */}
       <Modal visible={escolhaAberta} transparent animationType="fade">
@@ -249,7 +284,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         </View>
       </Modal>
 
-      {/* Celebracao apos o check-in */}
+      {/* Celebração após o check-in */}
       <Modal visible={!!resultado} transparent animationType="slide">
         <View style={estilos.fundoModal}>
           <View style={estilos.caixaModal}>
@@ -290,139 +325,160 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: cores.fundo },
-  conteudo: { padding: espaco.m, paddingTop: 60, paddingBottom: 40, gap: espaco.m },
+  raiz: { flex: 1 },
+  conteudo: { padding: espaco.m, paddingBottom: espaco.xg },
 
-  cartao: {
-    backgroundColor: cores.fundoCartao,
-    borderRadius: 20,
-    padding: espaco.g,
-    borderWidth: 1,
-    borderColor: cores.borda,
-    gap: espaco.m,
-  },
-  cartaoTopo: { gap: 6 },
-  nome: { color: cores.texto, fontSize: 22, fontWeight: '800' },
-  numero: { color: cores.textoSecundario, fontSize: 14, marginTop: 2 },
+  cabecalho: { flexDirection: 'row', alignItems: 'center', gap: espaco.m },
+  cabecalhoTexto: { flex: 1 },
+  ola: { color: cores.textoSecundario, fontSize: 15 },
+  nome: { color: cores.texto, fontSize: 30, fontWeight: '800' },
   selo: {
-    borderWidth: 1.5,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    alignSelf: 'flex-start',   // acompanha o texto, em vez de ocupar a largura toda
-    marginTop: 2,
+    paddingHorizontal: espaco.s,
+    paddingVertical: 3,
+    marginTop: espaco.s,
   },
-  seloTexto: { fontSize: 12, fontWeight: '800' },
-
-  qrCaixa: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: espaco.m,
-    alignItems: 'center',
-  },
-  qr: { width: 200, height: 200 },
-
-  linhaValidades: { flexDirection: 'row', gap: espaco.m },
-  validade: { flex: 1 },
-  validadeEtiqueta: { color: cores.textoSecundario, fontSize: 12 },
-  validadeValor: { color: cores.texto, fontSize: 15, fontWeight: '700', marginTop: 2 },
+  seloTexto: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
+  retrato: { width: 78, height: 78, borderRadius: 39, backgroundColor: cores.fundoElevado },
+  retratoVazio: { alignItems: 'center', justifyContent: 'center' },
+  retratoLetra: { color: cores.laranjaClaro, fontSize: 32, fontWeight: '800' },
 
   botaoCheckin: {
     backgroundColor: cores.laranja,
     borderRadius: 16,
-    paddingVertical: 22,
+    paddingVertical: espaco.g,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
     gap: espaco.s,
+    marginTop: espaco.g,
   },
   botaoFeito: { backgroundColor: cores.verde },
-  botaoCheckinTexto: { color: cores.texto, fontSize: 18, fontWeight: '900', letterSpacing: 1 },
-  dica: { color: cores.textoSecundario, fontSize: 13, textAlign: 'center' },
-  erro: { color: cores.vermelho, fontSize: 14, textAlign: 'center' },
+  botaoCheckinTexto: { color: cores.texto, fontSize: 18, fontWeight: '800', letterSpacing: 1 },
+  dica: { color: cores.textoSecundario, fontSize: 13, textAlign: 'center', marginTop: espaco.s },
+  erro: { color: cores.vermelho, textAlign: 'center', marginTop: espaco.s },
 
-  numeros: { flexDirection: 'row', gap: espaco.m },
+  numeros: { flexDirection: 'row', gap: espaco.m, marginTop: espaco.g },
   numeroCaixa: {
     flex: 1,
-    backgroundColor: cores.fundoCartao,
+    backgroundColor: 'rgba(45,45,45,0.82)',
     borderRadius: 16,
     padding: espaco.m,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: cores.borda,
   },
-  numeroGrande: { color: cores.laranjaClaro, fontSize: 32, fontWeight: '900' },
+  numeroGrande: { color: cores.dourado, fontSize: 32, fontWeight: '800' },
   numeroEtiqueta: { color: cores.textoSecundario, fontSize: 12, marginTop: 2 },
 
   frase: {
-    backgroundColor: cores.fundoElevado,
+    backgroundColor: 'rgba(45,45,45,0.82)',
     borderRadius: 16,
     padding: espaco.m,
-    borderLeftWidth: 4,
+    marginTop: espaco.m,
+    borderLeftWidth: 3,
     borderLeftColor: cores.dourado,
   },
   fraseTexto: { color: cores.texto, fontSize: 15, fontStyle: 'italic', lineHeight: 22 },
 
-  modalidades: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.s },
+  cartao: {
+    backgroundColor: 'rgba(45,45,45,0.82)',
+    borderRadius: 20,
+    padding: espaco.m,
+    marginTop: espaco.m,
+  },
+  linhaValidades: { flexDirection: 'row', gap: espaco.m },
+  validade: { flex: 1 },
+  validadeEtiqueta: { color: cores.textoSecundario, fontSize: 12 },
+  validadeValor: { color: cores.texto, fontSize: 16, fontWeight: '700', marginTop: 2 },
+  botaoQr: {
+    borderTopWidth: 1,
+    borderTopColor: cores.borda,
+    marginTop: espaco.m,
+    paddingTop: espaco.m,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  botaoQrTexto: { color: cores.laranjaClaro, fontSize: 15, fontWeight: '700' },
+  numeroSocio: { color: cores.textoSecundario, fontSize: 13 },
+
+  modalidades: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.s, marginTop: espaco.m },
   modalidade: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: espaco.xs,
     borderWidth: 1,
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: espaco.m,
+    paddingVertical: espaco.s,
   },
   pontoCor: { width: 8, height: 8, borderRadius: 4 },
   modalidadeTexto: { color: cores.texto, fontSize: 13 },
 
-  sair: { alignItems: 'center', paddingVertical: espaco.m },
+  sair: { alignItems: 'center', paddingVertical: espaco.g },
   sairTexto: { color: cores.textoSecundario, fontSize: 14 },
+
+  // O QR em ecra inteiro, fundo branco para o leitor o apanhar bem
+  ecraQr: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: espaco.g,
+  },
+  qrNome: { color: '#1A1A1A', fontSize: 20, fontWeight: '800' },
+  qrNumero: { color: '#555555', fontSize: 14, marginTop: 2, marginBottom: espaco.g },
+  qrGrande: { width: 280, height: 280 },
+  qrSem: { color: '#555555', marginVertical: espaco.g },
+  qrAjuda: { color: '#1A1A1A', fontSize: 16, marginTop: espaco.g, fontWeight: '600' },
+  qrFechar: { color: '#888888', fontSize: 12, marginTop: espaco.s },
 
   fundoModal: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    alignItems: 'center',
     justifyContent: 'center',
-    padding: espaco.g,
+    padding: espaco.m,
   },
   caixaModal: {
     backgroundColor: cores.fundoCartao,
     borderRadius: 20,
     padding: espaco.g,
-    gap: espaco.m,
-    borderWidth: 1,
-    borderColor: cores.borda,
+    width: '100%',
+    alignItems: 'center',
   },
-  tituloModal: { color: cores.texto, fontSize: 18, fontWeight: '800', textAlign: 'center' },
+  tituloModal: { color: cores.texto, fontSize: 18, fontWeight: '700', marginBottom: espaco.m },
   opcao: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: espaco.s,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderRadius: 12,
-    padding: espaco.m,
+    paddingHorizontal: espaco.m,
+    paddingVertical: espaco.m,
+    marginBottom: espaco.s,
+    width: '100%',
   },
-  opcaoTexto: { color: cores.texto, fontSize: 16, fontWeight: '600' },
-  cancelar: { alignItems: 'center', paddingTop: espaco.s },
+  opcaoTexto: { color: cores.texto, fontSize: 15 },
+  cancelar: { paddingVertical: espaco.m },
 
-  celebracaoNumero: {
-    color: cores.laranjaClaro,
-    fontSize: 64,
-    fontWeight: '900',
-    textAlign: 'center',
-  },
-  celebracaoTitulo: { color: cores.texto, fontSize: 20, fontWeight: '800', textAlign: 'center' },
-  celebracaoSub: { color: cores.textoSecundario, fontSize: 15, textAlign: 'center' },
+  celebracaoNumero: { color: cores.dourado, fontSize: 56, fontWeight: '800' },
+  celebracaoTitulo: { color: cores.texto, fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  celebracaoSub: { color: cores.textoSecundario, fontSize: 14, marginTop: espaco.xs, textAlign: 'center' },
   celebracaoFrase: {
     color: cores.texto,
-    fontSize: 16,
+    fontSize: 15,
     fontStyle: 'italic',
     textAlign: 'center',
-    lineHeight: 24,
-    paddingVertical: espaco.s,
+    marginTop: espaco.m,
+    lineHeight: 22,
   },
   botaoFechar: {
     backgroundColor: cores.laranja,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
+    borderRadius: 14,
+    paddingVertical: espaco.m,
+    paddingHorizontal: espaco.xg,
+    marginTop: espaco.g,
   },
 });

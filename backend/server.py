@@ -458,6 +458,40 @@ class InventoryItemCreate(BaseModel):
     photo_url: Optional[str] = None
 
 
+# ------------------------------------------------------------- O ginasio
+# Morada, contactos, horario e links. E um registo unico: ha so um ginasio.
+# Serve a aplicacao do socio, que o mostra no separador "O Ginasio".
+
+class GymInfo(BaseModel):
+    id: str = "ginasio"                   # Registo unico
+    name: str = "Ginásio KO"
+    about: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    hours: Optional[str] = None           # Texto livre: "Seg a Sex 7h-22h"
+    maps_url: Optional[str] = None        # Abrir no Google Maps
+    review_url: Optional[str] = None      # Deixar uma avaliacao
+    instagram: Optional[str] = None
+    facebook: Optional[str] = None
+    whatsapp: Optional[str] = None        # Numero, para abrir a conversa
+    photo_url: Optional[str] = None       # A foto que a app mostra em grande
+
+
+class GymInfoUpdate(BaseModel):
+    name: Optional[str] = None
+    about: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    hours: Optional[str] = None
+    maps_url: Optional[str] = None
+    review_url: Optional[str] = None
+    instagram: Optional[str] = None
+    facebook: Optional[str] = None
+    whatsapp: Optional[str] = None
+    photo_url: Optional[str] = None
+
 # ----------------------------------------------------------------- Parceiros
 # Protocolos de parceria: entidades que dao vantagens a quem e socio do KO.
 
@@ -3998,6 +4032,43 @@ async def apagar_imagem(nome: str, current_user: User = Depends(require_admin_or
     if caminho.exists():
         caminho.unlink()
     return {"message": "Imagem eliminada"}
+
+
+# ============================================================================
+# A FICHA DO GINASIO
+# ============================================================================
+
+async def ler_ficha_do_ginasio() -> GymInfo:
+    guardado = await db.gym_info.find_one({"id": "ginasio"})
+    return GymInfo(**parse_from_mongo(guardado)) if guardado else GymInfo()
+
+
+@api_router.get("/gym-info", response_model=GymInfo)
+async def ficha_do_ginasio(current_user: User = Depends(require_admin_or_staff)):
+    return await ler_ficha_do_ginasio()
+
+
+@api_router.put("/gym-info", response_model=GymInfo)
+async def guardar_ficha_do_ginasio(
+    dados: GymInfoUpdate, current_user: User = Depends(require_admin)
+):
+    atual = await ler_ficha_do_ginasio()
+    # So se altera o que vem preenchido: assim o formulario pode mandar
+    # apenas os campos que mexeu
+    novos = {k: v for k, v in dados.dict().items() if v is not None}
+    nova = GymInfo(**{**atual.dict(), **novos, "id": "ginasio"})
+
+    await db.gym_info.replace_one(
+        {"id": "ginasio"}, prepare_for_mongo(nova.dict()), upsert=True
+    )
+    await log_audit(current_user, "update", "gym_info", entity_id="ginasio",
+                    details="Atualizou a ficha do ginasio")
+    return nova
+
+
+@api_router.get("/mobile/gym-info", response_model=GymInfo)
+async def ficha_do_ginasio_para_a_app():
+    return await ler_ficha_do_ginasio()
 
 
 # ============================================================================
