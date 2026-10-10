@@ -360,6 +360,16 @@ círculo deixa um bordo a atravessar o ecrã, que se via.
 decisão do dono. O laranja fica para o que é para carregar (o check-in, os
 números, o logótipo); num fundo tingido de laranja deixava de se destacar.
 
+**Logótipos nunca se cortam; fotografias sim.** Um logótipo entra com
+`resizeMode="contain"` — cortar um logótipo estraga-o, e eles vêm de todos os
+feitios. Uma fotografia entra com `cover`, que enche o espaço.
+
+Na ficha do ginásio o mesmo campo pode ter as duas coisas, por isso o ecrã
+mede a imagem (`Image.getSize`) e decide: **mais alta do que larga ou quase
+quadrada é um logótipo** — 150x150 ao centro, inteiro; **bem mais larga é uma
+fotografia** — a toda a largura, 180 de altura. Foi assim que se resolveu o
+logótipo KO aparecer gigante e cortado neste separador.
+
 **A fotografia do sócio é a mesma dos dois lados.** No canto superior direito
 do cartão está o logótipo do ginásio, que também é botão: o sócio escolhe uma
 fotografia no telemóvel e ela vai para o campo `photo_url` da ficha dele — o

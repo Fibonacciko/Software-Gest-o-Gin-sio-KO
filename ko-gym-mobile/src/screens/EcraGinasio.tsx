@@ -28,6 +28,9 @@ const abrir = (endereco?: string | null) => {
 export default function EcraGinasio() {
   const [ficha, setFicha] = useState<FichaDoGinasio | null>(null);
   const [aAtualizar, setAAtualizar] = useState(false);
+  // Largura a dividir pela altura da imagem da ficha. Decide se o que la esta
+  // e uma fotografia larga do ginasio ou um logotipo quadrado.
+  const [proporcao, setProporcao] = useState<number | null>(null);
 
   const buscar = async () => {
     try {
@@ -40,6 +43,21 @@ export default function EcraGinasio() {
   useEffect(() => {
     buscar();
   }, []);
+
+  // Mede a imagem da ficha. Enquanto nao se sabe o tamanho, nao se mostra
+  // nada: mostrar um logotipo esticado e pior do que esperar meio segundo.
+  useEffect(() => {
+    const url = enderecoDaImagem(ficha?.photo_url);
+    if (!url) {
+      setProporcao(null);
+      return;
+    }
+    Image.getSize(
+      url,
+      (largura, altura) => setProporcao(altura ? largura / altura : 1),
+      () => setProporcao(2) // nao deu para medir: trata-se como fotografia
+    );
+  }, [ficha?.photo_url]);
 
   const atualizar = async () => {
     setAAtualizar(true);
@@ -56,6 +74,8 @@ export default function EcraGinasio() {
   }
 
   const foto = enderecoDaImagem(ficha.photo_url);
+  // Um quadrado e um logotipo; algo bem mais largo e uma fotografia do ginasio
+  const eLogotipo = proporcao !== null && proporcao < 1.3;
   const whatsapp = ficha.whatsapp
     ? `https://wa.me/${ficha.whatsapp.replace(/\D/g, '')}`
     : null;
@@ -97,7 +117,15 @@ export default function EcraGinasio() {
         <RefreshControl refreshing={aAtualizar} onRefresh={atualizar} tintColor={cores.laranjaClaro} />
       }
     >
-      {foto ? <Image source={{ uri: foto }} style={estilos.foto} resizeMode="cover" /> : null}
+      {foto && proporcao !== null ? (
+        eLogotipo ? (
+          <View style={estilos.molduraLogotipo}>
+            <Image source={{ uri: foto }} style={estilos.logotipo} resizeMode="contain" />
+          </View>
+        ) : (
+          <Image source={{ uri: foto }} style={estilos.foto} resizeMode="cover" />
+        )
+      ) : null}
 
       <Text style={estilos.titulo}>{ficha.name || 'Ginásio KO'}</Text>
       {ficha.about ? <Text style={estilos.sobre}>{ficha.about}</Text> : null}
@@ -157,6 +185,9 @@ const estilos = StyleSheet.create({
     backgroundColor: cores.fundoElevado,
     marginBottom: espaco.m,
   },
+  // O logotipo nao enche a largura: fica ao centro, do tamanho que lhe assenta
+  molduraLogotipo: { alignItems: 'center', marginBottom: espaco.m },
+  logotipo: { width: 150, height: 150 },
   titulo: { color: cores.texto, fontSize: 28, fontWeight: '800' },
   sobre: { color: cores.textoSecundario, fontSize: 14, marginTop: espaco.s, lineHeight: 21 },
   destaque: {

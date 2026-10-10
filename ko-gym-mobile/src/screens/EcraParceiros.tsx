@@ -84,8 +84,10 @@ export default function EcraParceiros() {
         return (
           <View key={p.id} style={estilos.cartao}>
             <View style={estilos.topo}>
+              {/* "contain": um logotipo nunca se corta. Com "cover", um logotipo
+                  largo perdia as pontas e um alto perdia o topo. */}
               {logo ? (
-                <Image source={{ uri: logo }} style={estilos.logo} resizeMode="cover" />
+                <Image source={{ uri: logo }} style={estilos.logo} resizeMode="contain" />
               ) : (
                 <View style={[estilos.logo, estilos.logoVazio]}>
                   <Text style={estilos.logoLetra}>{p.name.charAt(0).toUpperCase()}</Text>
