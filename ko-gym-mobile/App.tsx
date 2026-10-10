@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { ComicNeue_400Regular, ComicNeue_700Bold, useFonts } from '@expo-google-fonts/comic-neue';
 import { carregarCartao, sessaoGuardada, Socio } from './src/api';
 import BarraDeSeparadores, { Separador } from './src/componentes/BarraDeSeparadores';
 import Fundo from './src/componentes/Fundo';
@@ -16,6 +17,10 @@ export default function App() {
   const [socio, setSocio] = useState<Socio | null>(null);
   const [aArrancar, setAArrancar] = useState(true);
   const [separador, setSeparador] = useState<Separador>('inicio');
+  // A fonte do nome no cartao, parecida com a Comic Sans MS. Se falhar o
+  // carregamento seguimos em frente: o sistema escolhe a sua e ninguem fica
+  // sem app por causa de uma letra.
+  const [fontesProntas, erroDasFontes] = useFonts({ ComicNeue_400Regular, ComicNeue_700Bold });
 
   // O socio fica com sessao iniciada; a app abre logo no cartao
   useEffect(() => {
@@ -31,7 +36,7 @@ export default function App() {
     })();
   }, []);
 
-  if (aArrancar) {
+  if (aArrancar || (!fontesProntas && !erroDasFontes)) {
     return (
       <View style={estilos.centro}>
         <StatusBar style="light" />

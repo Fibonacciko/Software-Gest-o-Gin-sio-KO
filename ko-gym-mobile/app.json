@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "KO Gym",
+    "name": "Ginásio KO",
     "slug": "ko-gym-mobile",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -35,7 +35,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "react-native-nfc-manager"
+      "react-native-nfc-manager",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Precisamos das tuas fotografias para poderes escolher a tua foto de atleta."
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -356,6 +356,18 @@ carro, de qualquer lado — e isso estragava as contas de presenças.
 respiram devagar. Não são manchas redondas: um gradiente linear dentro de um
 círculo deixa um bordo a atravessar o ecrã, que se via.
 
+**A fotografia do sócio é a mesma dos dois lados.** No canto superior direito
+do cartão está o logótipo do ginásio, que também é botão: o sócio escolhe uma
+fotografia no telemóvel e ela vai para o campo `photo_url` da ficha dele — o
+que já lá estava para isso. A gestão passa a vê-la na ficha, sem ter de a
+pedir. Quem não carrega nenhuma fica com o logótipo.
+(`POST`/`DELETE /api/mobile/members/{id}/photo`; trocar apaga a anterior do
+disco, senão a pasta enchia-se de fotografias que ninguém vê.)
+
+**O nome no cartão é só o próprio e o apelido**, em Comic Neue (a fonte livre
+parecida com a Comic Sans MS, carregada no `App.tsx`). Um nome completo
+português não cabe na largura de um telemóvel.
+
 ---
 
 ## Armadilhas que já custaram tempo

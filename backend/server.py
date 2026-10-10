@@ -4257,6 +4257,63 @@ async def reservar_pela_app(dados: ReservationCreate):
     return reserva
 
 
+@api_router.post("/mobile/members/{member_id}/photo")
+async def guardar_foto_do_socio(member_id: str, ficheiro: UploadFile = File(...)):
+    """O socio escolhe uma fotografia no telemovel e ela fica na ficha dele.
+
+    E a mesma fotografia que a gestao mostra: fica no campo `photo_url` da
+    ficha, o que ja la estava para isso. Nao ha fotografia a mais nem ficha
+    a duplicar.
+    """
+    socio = await db.members.find_one({"id": member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
+    extensao = Path(ficheiro.filename or "").suffix.lower()
+    if extensao not in EXTENSOES_DE_IMAGEM:
+        raise HTTPException(status_code=400, detail="So aceito imagens.")
+
+    conteudo = await ficheiro.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="O ficheiro esta vazio.")
+    if len(conteudo) > TAMANHO_MAXIMO:
+        raise HTTPException(status_code=400, detail="A imagem e demasiado grande. O limite sao 8 MB.")
+
+    PASTA_UPLOADS.mkdir(parents=True, exist_ok=True)
+    nome = f"{uuid.uuid4().hex}{extensao}"
+    (PASTA_UPLOADS / nome).write_bytes(conteudo)
+    url = f"/api/uploads/{nome}"
+
+    # A fotografia anterior do socio deixa de ser precisa
+    antiga = socio.get("photo_url") or ""
+    if antiga.startswith("/api/uploads/"):
+        anterior = PASTA_UPLOADS / antiga.rsplit("/", 1)[-1]
+        if anterior.exists():
+            anterior.unlink()
+
+    await db.members.update_one({"id": member_id}, {"$set": {"photo_url": url}})
+    BusinessCache.invalidate_member_cache()
+    return {"photo_url": url}
+
+
+@api_router.delete("/mobile/members/{member_id}/photo")
+async def tirar_foto_do_socio(member_id: str):
+    """Volta ao logotipo do ginasio."""
+    socio = await db.members.find_one({"id": member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
+    antiga = socio.get("photo_url") or ""
+    if antiga.startswith("/api/uploads/"):
+        caminho = PASTA_UPLOADS / antiga.rsplit("/", 1)[-1]
+        if caminho.exists():
+            caminho.unlink()
+
+    await db.members.update_one({"id": member_id}, {"$set": {"photo_url": None}})
+    BusinessCache.invalidate_member_cache()
+    return {"message": "Fotografia removida"}
+
+
 @api_router.get("/mobile/reservations/{member_id}", response_model=List[Reservation])
 async def reservas_do_socio(member_id: str):
     reservas = await db.reservations.find({"member_id": member_id}).sort("created_at", -1).to_list(200)

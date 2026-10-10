@@ -186,6 +186,54 @@ export function reservarArtigo(memberId: string, itemId: string, quantidade: num
 }
 
 /**
+ * Guarda a fotografia que o socio escolheu no telemovel.
+ *
+ * Vai como ficheiro, nao como JSON: por isso nao passa pelo `pedir`, que poe
+ * sempre o cabecalho de JSON. A fotografia fica na ficha de membro, no mesmo
+ * campo que a gestao usa.
+ */
+export async function guardarFotoDoSocio(
+  memberId: string,
+  uri: string,
+  nome = 'foto.jpg'
+): Promise<string> {
+  const formulario = new FormData();
+  // No React Native um ficheiro local vai assim; o `as any` e preciso porque
+  // o FormData dos tipos da web nao conhece esta forma.
+  formulario.append('ficheiro', {
+    uri,
+    name: nome,
+    type: nome.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg',
+  } as any);
+
+  const resposta = await fetch(
+    `${API_BASE}/mobile/members/${encodeURIComponent(memberId)}/photo`,
+    { method: 'POST', body: formulario }
+  );
+
+  if (!resposta.ok) {
+    let detalhe = 'Nao consegui guardar a fotografia.';
+    try {
+      const corpo = await resposta.json();
+      if (corpo?.detail) detalhe = String(corpo.detail);
+    } catch {
+      // resposta sem corpo util
+    }
+    throw new Error(detalhe);
+  }
+
+  const dados = (await resposta.json()) as { photo_url: string };
+  return dados.photo_url;
+}
+
+export function removerFotoDoSocio(memberId: string) {
+  return pedir<{ ok: boolean }>(
+    `/mobile/members/${encodeURIComponent(memberId)}/photo`,
+    { method: 'DELETE' }
+  );
+}
+
+/**
  * O endereco completo de uma imagem do servidor.
  *
  * O servidor devolve caminhos como /api/uploads/abc.jpg, que sao relativos ao

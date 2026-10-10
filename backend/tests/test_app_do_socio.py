@@ -293,3 +293,72 @@ def test_o_colaborador_ve_mas_nao_altera_a_ficha(cliente, colaborador):
     assert cliente.get("/api/gym-info", headers=colaborador).status_code == 200
     r = cliente.put("/api/gym-info", headers=colaborador, json={"phone": "999"})
     assert r.status_code == 403
+
+
+# ------------------------------------------- a fotografia do sócio, pela app
+
+def test_o_socio_carrega_a_sua_fotografia(cliente, admin, criar_socio):
+    socio = criar_socio(telefone="913500001")
+    r = cliente.post(f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa("eu.jpg"))
+    assert r.status_code == 200, r.text
+    assert r.json()["photo_url"].startswith("/api/uploads/")
+
+    # Fica na ficha do sócio, que é a mesma que a gestão mostra
+    ficha = cliente.get(f"/api/members/{socio['id']}", headers=admin).json()
+    assert ficha["photo_url"] == r.json()["photo_url"]
+
+
+def test_a_fotografia_aparece_no_cartao_da_app(cliente, criar_socio):
+    socio = criar_socio(telefone="913500002")
+    url = cliente.post(
+        f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa()
+    ).json()["photo_url"]
+
+    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    assert cartao["photo_url"] == url
+
+
+def test_trocar_a_fotografia_apaga_a_anterior(cliente, criar_socio):
+    """Senão o disco enchia-se de fotografias que ninguém vê."""
+    from pathlib import Path
+    import os
+
+    socio = criar_socio(telefone="913500003")
+    primeira = cliente.post(
+        f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa("a.jpg")
+    ).json()["photo_url"]
+
+    pasta = Path(os.environ["UPLOADS_DIR"])
+    assert (pasta / primeira.rsplit("/", 1)[-1]).exists()
+
+    segunda = cliente.post(
+        f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa("b.jpg")
+    ).json()["photo_url"]
+
+    assert not (pasta / primeira.rsplit("/", 1)[-1]).exists()
+    assert (pasta / segunda.rsplit("/", 1)[-1]).exists()
+
+
+def test_tirar_a_fotografia_volta_ao_logotipo(cliente, admin, criar_socio):
+    socio = criar_socio(telefone="913500004")
+    cliente.post(f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa())
+
+    r = cliente.delete(f"/api/mobile/members/{socio['id']}/photo")
+    assert r.status_code == 200
+
+    ficha = cliente.get(f"/api/members/{socio['id']}", headers=admin).json()
+    assert ficha["photo_url"] is None
+
+
+def test_a_fotografia_so_aceita_imagens(cliente, criar_socio):
+    socio = criar_socio(telefone="913500005")
+    r = cliente.post(
+        f"/api/mobile/members/{socio['id']}/photo",
+        files={"ficheiro": ("video.mp4", io.BytesIO(b"nao e imagem"), "video/mp4")},
+    )
+    assert r.status_code == 400
+
+
+def test_nao_se_poe_fotografia_num_socio_que_nao_existe(cliente):
+    r = cliente.post("/api/mobile/members/nao-existe/photo", files=imagem_falsa())
+    assert r.status_code == 404

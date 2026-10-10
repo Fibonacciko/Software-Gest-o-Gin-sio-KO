@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Modal,
   Pressable,
@@ -10,18 +11,24 @@ import {
   Text,
   View,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import {
   carregarCartao,
   carregarModalidades,
   enderecoDaImagem,
   fazerCheckin,
+  guardarFotoDoSocio,
   Modalidade,
+  removerFotoDoSocio,
   ResultadoCheckin,
   sair,
   Socio,
 } from '../api';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
 import { cores, espaco } from '../theme';
+
+const LOGOTIPO = require('../../assets/logo-ko.png');
+const FOTO_DO_GINASIO = require('../../assets/ginasio.jpg');
 
 type Props = {
   socio: Socio;
@@ -31,7 +38,17 @@ type Props = {
 const dataPt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleDateString('pt-PT') : null;
 
-const primeiroNome = (nome: string) => nome.trim().split(/\s+/)[0];
+/**
+ * Nome próprio e apelido.
+ *
+ * O dono quis só estes dois: "José Manuel dos Santos Oliveira" num telemóvel
+ * dá uma linha cortada a meio, e o sócio já sabe como se chama.
+ */
+const nomeCurto = (nome: string) => {
+  const partes = nome.trim().split(/\s+/).filter(Boolean);
+  if (partes.length <= 1) return partes[0] ?? '';
+  return `${partes[0]} ${partes[partes.length - 1]}`;
+};
 
 export default function EcraCartao({ socio: inicial, aoSair }: Props) {
   const [socio, setSocio] = useState(inicial);
@@ -41,6 +58,8 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
   const [aLerNfc, setALerNfc] = useState(false);
   const [escolhaAberta, setEscolhaAberta] = useState(false);
   const [qrAberto, setQrAberto] = useState(false);
+  const [fotoAberta, setFotoAberta] = useState(false);
+  const [aEnviarFoto, setAEnviarFoto] = useState(false);
   const [resultado, setResultado] = useState<ResultadoCheckin | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -109,6 +128,60 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
     }
   };
 
+  // ------------------------------------------------ a fotografia do atleta
+
+  const retrato = enderecoDaImagem(socio.photo_url);
+
+  const escolherFotografia = async () => {
+    setFotoAberta(false);
+    const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissao.granted) {
+      Alert.alert(
+        'Sem acesso às fotografias',
+        'Autoriza o acesso nas definições do telemóvel para escolheres a tua foto.'
+      );
+      return;
+    }
+
+    const escolha = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (escolha.canceled || !escolha.assets?.[0]) return;
+
+    const ficheiro = escolha.assets[0];
+    setAEnviarFoto(true);
+    try {
+      const url = await guardarFotoDoSocio(
+        socio.id,
+        ficheiro.uri,
+        ficheiro.fileName ?? 'foto.jpg'
+      );
+      setSocio((s) => ({ ...s, photo_url: url }));
+    } catch (e: any) {
+      Alert.alert('Não consegui guardar', String(e?.message ?? 'Tenta outra vez.'));
+    } finally {
+      setAEnviarFoto(false);
+    }
+  };
+
+  const tirarFotografia = async () => {
+    setFotoAberta(false);
+    setAEnviarFoto(true);
+    try {
+      await removerFotoDoSocio(socio.id);
+      setSocio((s) => ({ ...s, photo_url: null }));
+    } catch (e: any) {
+      Alert.alert('Não consegui remover', String(e?.message ?? 'Tenta outra vez.'));
+    } finally {
+      setAEnviarFoto(false);
+    }
+  };
+
+  // --------------------------------------------------- estado da inscrição
+
   // Sem quota registada no sistema, o estado fica por determinar: nao se
   // acusa de atraso quem talvez esteja em dia e so nao tem historico
   const estado = socio.membership_status;
@@ -122,12 +195,10 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
     estado === 'suspended'
       ? 'SUSPENSO'
       : estado === 'inactive'
-        ? 'QUOTA POR REGULARIZAR'
+        ? 'INACTIVO'
         : estado === 'active'
-          ? 'EM DIA'
+          ? 'ACTIVO'
           : 'SÓCIO';
-
-  const retrato = enderecoDaImagem(socio.photo_url);
 
   return (
     <ScrollView
@@ -137,26 +208,40 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         <RefreshControl refreshing={aAtualizar} onRefresh={atualizar} tintColor={cores.laranjaClaro} />
       }
     >
-      {/* Quem é e como está */}
+      {/* Quem é, e o retrato que também é botão */}
       <View style={estilos.cabecalho}>
         <View style={estilos.cabecalhoTexto}>
-          <Text style={estilos.ola}>Olá,</Text>
-          <Text style={estilos.nome} numberOfLines={1}>
-            {primeiroNome(socio.name)}
+          <Text style={estilos.nome} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {nomeCurto(socio.name)}
           </Text>
-          <View style={[estilos.selo, { borderColor: corEstado }]}>
-            <Text style={[estilos.seloTexto, { color: corEstado }]}>{textoEstado}</Text>
-          </View>
+          <Text style={estilos.numeroSocio}>Sócio n.º {socio.member_number}</Text>
         </View>
 
-        {/* No lugar onde estava o QR: o retrato do sócio, ou as iniciais */}
-        {retrato ? (
-          <Image source={{ uri: retrato }} style={estilos.retrato} resizeMode="cover" />
-        ) : (
-          <View style={[estilos.retrato, estilos.retratoVazio]}>
-            <Text style={estilos.retratoLetra}>{socio.name.charAt(0).toUpperCase()}</Text>
-          </View>
-        )}
+        <Pressable
+          style={({ pressed }) => [estilos.retratoBotao, pressed && { opacity: 0.8 }]}
+          onPress={() => (retrato ? setFotoAberta(true) : escolherFotografia())}
+          disabled={aEnviarFoto}
+        >
+          {aEnviarFoto ? (
+            <View style={[estilos.retrato, estilos.retratoVazio]}>
+              <ActivityIndicator color={cores.laranjaClaro} />
+            </View>
+          ) : retrato ? (
+            <Image source={{ uri: retrato }} style={estilos.retrato} resizeMode="cover" />
+          ) : (
+            <Image source={LOGOTIPO} style={estilos.retrato} resizeMode="contain" />
+          )}
+          {!retrato && !aEnviarFoto ? (
+            <View style={estilos.maisFoto}>
+              <Text style={estilos.maisFotoTexto}>+</Text>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
+
+      {/* O ginásio, onde antes havia espaço vazio */}
+      <View style={estilos.molduraGinasio}>
+        <Image source={FOTO_DO_GINASIO} style={estilos.fotoGinasio} resizeMode="cover" />
       </View>
 
       {/* O que se faz todos os dias */}
@@ -189,6 +274,24 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
 
       {erro ? <Text style={estilos.erro}>{erro}</Text> : null}
 
+      {/* Estado, quota e seguro — tudo numa linha, logo abaixo do check-in */}
+      <View style={estilos.cartaoEstado}>
+        <View style={estilos.colunaEstado}>
+          <Text style={estilos.validadeEtiqueta}>Inscrição</Text>
+          <Text style={[estilos.estadoValor, { color: corEstado }]}>{textoEstado}</Text>
+        </View>
+        <View style={estilos.separadorVertical} />
+        <View style={estilos.colunaEstado}>
+          <Text style={estilos.validadeEtiqueta}>Quota até</Text>
+          <Text style={estilos.validadeValor}>{dataPt(socio.membership_valid_until) ?? '—'}</Text>
+        </View>
+        <View style={estilos.separadorVertical} />
+        <View style={estilos.colunaEstado}>
+          <Text style={estilos.validadeEtiqueta}>Seguro até</Text>
+          <Text style={estilos.validadeValor}>{dataPt(socio.insurance_valid_until) ?? '—'}</Text>
+        </View>
+      </View>
+
       {/* Números */}
       <View style={estilos.numeros}>
         <View style={estilos.numeroCaixa}>
@@ -209,28 +312,6 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         </View>
       ) : null}
 
-      {/* Validades e número de sócio */}
-      <View style={estilos.cartao}>
-        <View style={estilos.linhaValidades}>
-          <View style={estilos.validade}>
-            <Text style={estilos.validadeEtiqueta}>Quota até</Text>
-            <Text style={estilos.validadeValor}>{dataPt(socio.membership_valid_until) ?? '—'}</Text>
-          </View>
-          <View style={estilos.validade}>
-            <Text style={estilos.validadeEtiqueta}>Seguro até</Text>
-            <Text style={estilos.validadeValor}>{dataPt(socio.insurance_valid_until) ?? '—'}</Text>
-          </View>
-        </View>
-
-        <Pressable
-          style={({ pressed }) => [estilos.botaoQr, pressed && { opacity: 0.8 }]}
-          onPress={() => setQrAberto(true)}
-        >
-          <Text style={estilos.botaoQrTexto}>Mostrar o meu QR</Text>
-          <Text style={estilos.numeroSocio}>Sócio n.º {socio.member_number}</Text>
-        </Pressable>
-      </View>
-
       {/* Modalidades */}
       {minhasModalidades.length > 0 && (
         <View style={estilos.modalidades}>
@@ -243,9 +324,39 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         </View>
       )}
 
+      <Pressable
+        style={({ pressed }) => [estilos.botaoQr, pressed && { opacity: 0.8 }]}
+        onPress={() => setQrAberto(true)}
+      >
+        <Text style={estilos.botaoQrTexto}>Mostrar o meu QR</Text>
+      </Pressable>
+
+      {/* Empurra o terminar sessao para o fim, mesmo quando ha pouco conteudo */}
+      <View style={estilos.empurrao} />
+
       <Pressable onPress={() => sair().then(aoSair)} style={estilos.sair}>
         <Text style={estilos.sairTexto}>Terminar sessão</Text>
       </Pressable>
+
+      {/* Trocar ou remover a fotografia */}
+      <Modal visible={fotoAberta} transparent animationType="fade" onRequestClose={() => setFotoAberta(false)}>
+        <Pressable style={estilos.fundoModal} onPress={() => setFotoAberta(false)}>
+          <View style={estilos.caixaModal}>
+            <Text style={estilos.tituloModal}>A tua fotografia</Text>
+            <Pressable style={estilos.opcaoFoto} onPress={escolherFotografia}>
+              <Text style={estilos.opcaoFotoTexto}>Escolher outra fotografia</Text>
+            </Pressable>
+            <Pressable style={estilos.opcaoFoto} onPress={tirarFotografia}>
+              <Text style={[estilos.opcaoFotoTexto, { color: cores.vermelho }]}>
+                Remover e voltar ao logotipo
+              </Text>
+            </Pressable>
+            <Pressable style={estilos.cancelar} onPress={() => setFotoAberta(false)}>
+              <Text style={estilos.sairTexto}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* O QR em grande, em fundo branco: é assim que se lê bem na receção */}
       <Modal visible={qrAberto} animationType="fade" onRequestClose={() => setQrAberto(false)}>
@@ -326,24 +437,45 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
 
 const estilos = StyleSheet.create({
   raiz: { flex: 1 },
-  conteudo: { padding: espaco.m, paddingBottom: espaco.xg },
+  // flexGrow para o "Terminar sessao" poder ser empurrado para o fundo
+  conteudo: { padding: espaco.m, paddingBottom: espaco.s, flexGrow: 1 },
 
   cabecalho: { flexDirection: 'row', alignItems: 'center', gap: espaco.m },
   cabecalhoTexto: { flex: 1 },
-  ola: { color: cores.textoSecundario, fontSize: 15 },
-  nome: { color: cores.texto, fontSize: 30, fontWeight: '800' },
-  selo: {
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: espaco.s,
-    paddingVertical: 3,
-    marginTop: espaco.s,
+  nome: {
+    color: cores.texto,
+    fontSize: 27,
+    // A fonte que o dono pediu, parecida com a Comic Sans MS. Carregada no
+    // App.tsx; se ainda nao estiver pronta, o sistema escolhe a sua.
+    fontFamily: 'ComicNeue_700Bold',
   },
-  seloTexto: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
-  retrato: { width: 78, height: 78, borderRadius: 39, backgroundColor: cores.fundoElevado },
+  numeroSocio: { color: cores.textoSecundario, fontSize: 14, marginTop: 2 },
+
+  retratoBotao: { width: 72, height: 72 },
+  retrato: { width: 72, height: 72, borderRadius: 36, backgroundColor: cores.fundoElevado },
   retratoVazio: { alignItems: 'center', justifyContent: 'center' },
-  retratoLetra: { color: cores.laranjaClaro, fontSize: 32, fontWeight: '800' },
+  maisFoto: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: cores.laranja,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: cores.fundo,
+  },
+  maisFotoTexto: { color: cores.texto, fontSize: 16, fontWeight: '800', lineHeight: 18 },
+
+  molduraGinasio: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginTop: espaco.m,
+    backgroundColor: cores.fundoCartao,
+  },
+  fotoGinasio: { width: '100%', height: 100 },
 
   botaoCheckin: {
     backgroundColor: cores.laranja,
@@ -353,14 +485,29 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: espaco.s,
-    marginTop: espaco.g,
+    marginTop: espaco.m,
   },
   botaoFeito: { backgroundColor: cores.verde },
   botaoCheckinTexto: { color: cores.texto, fontSize: 18, fontWeight: '800', letterSpacing: 1 },
   dica: { color: cores.textoSecundario, fontSize: 13, textAlign: 'center', marginTop: espaco.s },
   erro: { color: cores.vermelho, textAlign: 'center', marginTop: espaco.s },
 
-  numeros: { flexDirection: 'row', gap: espaco.m, marginTop: espaco.g },
+  cartaoEstado: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(45,45,45,0.82)',
+    borderRadius: 16,
+    paddingVertical: espaco.m,
+    paddingHorizontal: espaco.s,
+    marginTop: espaco.m,
+  },
+  colunaEstado: { flex: 1, alignItems: 'center' },
+  separadorVertical: { width: 1, alignSelf: 'stretch', backgroundColor: cores.borda },
+  validadeEtiqueta: { color: cores.textoSecundario, fontSize: 11 },
+  validadeValor: { color: cores.texto, fontSize: 15, fontWeight: '700', marginTop: 3 },
+  estadoValor: { fontSize: 15, fontWeight: '800', marginTop: 3, letterSpacing: 0.5 },
+
+  numeros: { flexDirection: 'row', gap: espaco.m, marginTop: espaco.m },
   numeroCaixa: {
     flex: 1,
     backgroundColor: 'rgba(45,45,45,0.82)',
@@ -381,28 +528,6 @@ const estilos = StyleSheet.create({
   },
   fraseTexto: { color: cores.texto, fontSize: 15, fontStyle: 'italic', lineHeight: 22 },
 
-  cartao: {
-    backgroundColor: 'rgba(45,45,45,0.82)',
-    borderRadius: 20,
-    padding: espaco.m,
-    marginTop: espaco.m,
-  },
-  linhaValidades: { flexDirection: 'row', gap: espaco.m },
-  validade: { flex: 1 },
-  validadeEtiqueta: { color: cores.textoSecundario, fontSize: 12 },
-  validadeValor: { color: cores.texto, fontSize: 16, fontWeight: '700', marginTop: 2 },
-  botaoQr: {
-    borderTopWidth: 1,
-    borderTopColor: cores.borda,
-    marginTop: espaco.m,
-    paddingTop: espaco.m,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  botaoQrTexto: { color: cores.laranjaClaro, fontSize: 15, fontWeight: '700' },
-  numeroSocio: { color: cores.textoSecundario, fontSize: 13 },
-
   modalidades: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.s, marginTop: espaco.m },
   modalidade: {
     flexDirection: 'row',
@@ -416,7 +541,17 @@ const estilos = StyleSheet.create({
   pontoCor: { width: 8, height: 8, borderRadius: 4 },
   modalidadeTexto: { color: cores.texto, fontSize: 13 },
 
-  sair: { alignItems: 'center', paddingVertical: espaco.g },
+  botaoQr: {
+    backgroundColor: 'rgba(45,45,45,0.82)',
+    borderRadius: 16,
+    paddingVertical: espaco.m,
+    alignItems: 'center',
+    marginTop: espaco.m,
+  },
+  botaoQrTexto: { color: cores.laranjaClaro, fontSize: 15, fontWeight: '700' },
+
+  empurrao: { flexGrow: 1, minHeight: espaco.s },
+  sair: { alignItems: 'center', paddingVertical: espaco.s },
   sairTexto: { color: cores.textoSecundario, fontSize: 14 },
 
   // O QR em ecra inteiro, fundo branco para o leitor o apanhar bem
@@ -461,6 +596,15 @@ const estilos = StyleSheet.create({
     width: '100%',
   },
   opcaoTexto: { color: cores.texto, fontSize: 15 },
+  opcaoFoto: {
+    width: '100%',
+    paddingVertical: espaco.m,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: cores.fundoElevado,
+    marginBottom: espaco.s,
+  },
+  opcaoFotoTexto: { color: cores.texto, fontSize: 15, fontWeight: '600' },
   cancelar: { paddingVertical: espaco.m },
 
   celebracaoNumero: { color: cores.dourado, fontSize: 56, fontWeight: '800' },
