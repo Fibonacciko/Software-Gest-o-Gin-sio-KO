@@ -6,10 +6,14 @@ import { cores } from '../theme';
 /**
  * O fundo da aplicação.
  *
- * Três camadas de cor da marca que atravessam o ecrã em ângulos diferentes e
+ * Três camadas de cinzento que atravessam o ecrã em ângulos diferentes e
  * respiram devagar, umas sobre as outras. O movimento é lento de propósito:
  * um fundo que salta à vista rouba a atenção ao que interessa, que é o botão
  * de check-in.
+ *
+ * Os tons vão do preto ao cinzento, e não ao laranja da marca: por decisão do
+ * dono. O laranja fica para o que é para carregar — o check-in, os números —
+ * e num fundo tingido deixava de se destacar.
  *
  * São camadas de **ecrã inteiro**, e não manchas redondas: uma mancha redonda
  * com um gradiente linear deixa um bordo a atravessar o ecrã, que se via.
@@ -55,7 +59,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
     <View style={estilos.raiz}>
       {/* Base escura, do canto superior direito para o inferior esquerdo */}
       <LinearGradient
-        colors={['#241a12', cores.fundo, '#141110']}
+        colors={['#2E2E2E', cores.fundo, '#0E0E0E']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -63,7 +67,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
 
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: camada1 }]} pointerEvents="none">
         <LinearGradient
-          colors={['rgba(232,132,42,0.30)', 'rgba(232,132,42,0.06)', 'rgba(232,132,42,0)']}
+          colors={['rgba(170,170,170,0.22)', 'rgba(170,170,170,0.05)', 'rgba(170,170,170,0)']}
           locations={[0, 0.45, 1]}
           start={{ x: 1, y: 0 }}
           end={{ x: 0.1, y: 0.8 }}
@@ -73,7 +77,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
 
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: camada2 }]} pointerEvents="none">
         <LinearGradient
-          colors={['rgba(245,166,35,0)', 'rgba(245,166,35,0.07)', 'rgba(245,166,35,0.20)']}
+          colors={['rgba(140,140,140,0)', 'rgba(140,140,140,0.06)', 'rgba(140,140,140,0.16)']}
           locations={[0, 0.55, 1]}
           start={{ x: 0, y: 0.2 }}
           end={{ x: 0.9, y: 1 }}
@@ -83,7 +87,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
 
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: camada3 }]} pointerEvents="none">
         <LinearGradient
-          colors={['rgba(184,101,27,0.22)', 'rgba(184,101,27,0)']}
+          colors={['rgba(100,100,100,0.20)', 'rgba(100,100,100,0)']}
           start={{ x: 0.2, y: 1 }}
           end={{ x: 0.8, y: 0 }}
           style={StyleSheet.absoluteFill}
