@@ -306,6 +306,19 @@ as últimas 30 em `/root/backups/`, registo em `/var/log/ko-gym-backup.log`.
 cd ko-gym-mobile && npx eas-cli@latest build --platform android --profile teste --non-interactive
 ```
 
+**A aplicação distribui-se pelo próprio site: https://ginasioko.site/app**
+
+O endereço que a Expo devolve é comprido e o Chrome desconfia de ficheiros
+`.apk` vindos de fora. O ficheiro fica em `/var/www/ko-app/ko-gym.apk` no
+servidor, com uma página de instruções em `/var/www/ko-app/index.html`, servidos
+pelo nginx da máquina (ver `servidor/nginx-servir-app.sh`, que é idempotente).
+
+Depois de gerar uma versão nova:
+
+```bash
+ssh root@187.77.90.171 "curl -sL -o /var/www/ko-app/ko-gym.apk '<url da Expo>'"
+```
+
 Conta Expo `ginasio-ko`. A arquitetura nova do React Native está **desligada de
 propósito**: a biblioteca de NFC ainda não está testada nela, e o NFC é o
 essencial da aplicação.
