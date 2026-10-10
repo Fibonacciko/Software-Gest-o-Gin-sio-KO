@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -52,10 +53,12 @@ export default function EcraLogin({ aoEntrar }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
-        <View style={estilos.logo}>
-          <Text style={estilos.logoTexto}>KO</Text>
-        </View>
-        <Text style={estilos.titulo}>KO Gym</Text>
+        <Image
+          source={require('../../assets/logo-ko.png')}
+          style={estilos.logo}
+          resizeMode="contain"
+        />
+        <Text style={estilos.titulo}>Ginásio KO</Text>
         <Text style={estilos.subtitulo}>O teu cartão de sócio</Text>
 
         <View style={estilos.campo}>
@@ -106,18 +109,14 @@ export default function EcraLogin({ aoEntrar }: Props) {
 }
 
 const estilos = StyleSheet.create({
-  raiz: { flex: 1, backgroundColor: cores.fundo },
+  raiz: { flex: 1 },
   conteudo: { padding: espaco.g, paddingTop: 80, gap: espaco.m },
+  // O logotipo ja traz o circulo e o fundo: nao leva caixa nenhuma por baixo
   logo: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: cores.laranja,
+    width: 132,
+    height: 132,
     alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  logoTexto: { color: cores.texto, fontSize: 34, fontWeight: '900', letterSpacing: 1 },
   titulo: {
     color: cores.laranjaClaro,
     fontSize: 30,
@@ -132,7 +131,7 @@ const estilos = StyleSheet.create({
   campo: { gap: espaco.xs },
   etiqueta: { color: cores.textoSecundario, fontSize: 13, fontWeight: '600' },
   entrada: {
-    backgroundColor: cores.fundoCartao,
+    backgroundColor: 'rgba(45,45,45,0.82)',
     borderWidth: 1,
     borderColor: cores.borda,
     borderRadius: 12,

@@ -42,10 +42,10 @@ export default function App() {
 
   if (!socio) {
     return (
-      <View style={estilos.raiz}>
+      <Fundo>
         <StatusBar style="light" />
         <EcraLogin aoEntrar={(s) => { setSocio(s); setSeparador('inicio'); }} />
-      </View>
+      </Fundo>
     );
   }
 

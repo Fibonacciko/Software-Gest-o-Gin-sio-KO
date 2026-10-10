@@ -19,14 +19,11 @@
       background: linear-gradient(160deg, #241a12 0%, #1A1A1A 55%, #141110 100%);
     }
     .caixa { width: 100%; max-width: 420px; text-align: center; }
-    .logo {
-      width: 88px; height: 88px; border-radius: 50%;
-      background: linear-gradient(135deg, #B8651B, #F5A623);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 34px; font-weight: 800; margin: 0 auto 24px;
-    }
+    /* O logotipo ja traz o circulo: nao leva fundo nenhum por baixo */
+    .logo { width: 132px; height: 132px; display: block; margin: 0 auto 24px; }
     h1 { font-size: 28px; margin: 0 0 8px; }
     .sub { color: #B8B8B8; margin: 0 0 32px; line-height: 1.5; }
+    .sub2 { color: #F5A623; font-weight: 700; margin: 0 0 8px; letter-spacing: .5px; }
     .botao {
       display: block; background: #B8651B; color: #fff; text-decoration: none;
       padding: 18px; border-radius: 16px; font-size: 17px; font-weight: 800;
@@ -44,8 +41,9 @@
 </head>
 <body>
   <div class="caixa">
-    <div class="logo">KO</div>
-    <h1>Aplicação do Sócio</h1>
+    <img class="logo" src="/ko-logo.png" alt="Ginásio KO">
+    <h1>Ginásio KO</h1>
+    <p class="sub2">Aplicação do Sócio</p>
     <p class="sub">Check-in por NFC, o teu cartão, parceiros, fotografias e a loja do ginásio.</p>
 
     <a class="botao" href="/ko-gym.apk">DESCARREGAR &nbsp;·&nbsp; 77 MB</a>
