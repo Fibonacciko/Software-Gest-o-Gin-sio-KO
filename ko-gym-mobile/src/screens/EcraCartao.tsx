@@ -438,7 +438,9 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
 const estilos = StyleSheet.create({
   raiz: { flex: 1 },
   // flexGrow para o "Terminar sessao" poder ser empurrado para o fundo
-  conteudo: { padding: espaco.m, paddingBottom: espaco.s, flexGrow: 1 },
+  // O paddingTop e maior que o resto: no Android o ecra vai ate cima e a
+  // barra de estado passava por cima do nome.
+  conteudo: { padding: espaco.m, paddingTop: 40, paddingBottom: espaco.s, flexGrow: 1 },
 
   cabecalho: { flexDirection: 'row', alignItems: 'center', gap: espaco.m },
   cabecalhoTexto: { flex: 1 },
@@ -475,7 +477,7 @@ const estilos = StyleSheet.create({
     marginTop: espaco.m,
     backgroundColor: cores.fundoCartao,
   },
-  fotoGinasio: { width: '100%', height: 100 },
+  fotoGinasio: { width: '100%', height: 200 },
 
   botaoCheckin: {
     backgroundColor: cores.laranja,
