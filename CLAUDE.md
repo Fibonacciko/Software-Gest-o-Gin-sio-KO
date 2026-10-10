@@ -240,7 +240,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 179 testes e demoram 6 segundos.
+backend** — são 185 testes e demoram 7 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
