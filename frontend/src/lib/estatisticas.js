@@ -279,6 +279,19 @@ export const estaAtivo = (socio, hoje = new Date()) => {
   return ate !== null && ate >= numeroDaData(hoje);
 };
 
+/**
+ * O seguro está válido enquanto a data da ficha não passar.
+ *
+ * Devolve `null` quando não há seguro nenhum registado — que é coisa
+ * diferente de estar expirado, e no ecrã diz-se por palavras. A validade vem
+ * sempre da ficha do sócio, nunca das somas das contas.
+ */
+export const seguroValido = (socio, hoje = new Date()) => {
+  const ate = numeroDaData(socio?.insurance_valid_until);
+  if (ate === null) return null;
+  return ate >= numeroDaData(hoje);
+};
+
 /* --------------------------------------------------------------- relatórios */
 
 const nomeDaModalidade = (modalidades, id) =>

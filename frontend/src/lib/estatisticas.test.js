@@ -20,7 +20,7 @@ import {
   partesDaData, numeroDaData, dentroDoIntervalo, diaDaSemana, chaveDoMes,
   rotuloDoMes, diasDoIntervalo, intervaloAnterior, variacao, agrupar, maiorDe,
   porOrdemDeValor, mesesDoIntervalo, idade, escalaoEtario, modalidadesDoSocio,
-  estaAtivo, estatisticasDePresencas, estatisticasFinanceiras,
+  estaAtivo, seguroValido, estatisticasDePresencas, estatisticasFinanceiras,
   estatisticasDeSocios, destaquesDoAno, anosComDados, parteDoSeguro, NOMES_DIAS, SEMANA,
   INICIO_DAS_CONTAS, desdeOInicioDasContas, anteriorAoInicioDasContas, dataDasContas,
   resultadoPorModalidade
@@ -243,6 +243,26 @@ describe('quem está ativo', () => {
     expect(estaAtivo({ membership_valid_until: '2026-10-05' }, hoje)).toBe(true);
     expect(estaAtivo({ membership_valid_until: '2026-10-04' }, hoje)).toBe(false);
     expect(estaAtivo({}, hoje)).toBe(false);
+  });
+});
+
+describe('validade do seguro', () => {
+  const hoje = new Date(2026, 9, 5); // 5 de outubro de 2026
+
+  test('o seguro vale até ao dia da ficha, inclusive', () => {
+    expect(seguroValido({ insurance_valid_until: '2026-10-05' }, hoje)).toBe(true);
+    expect(seguroValido({ insurance_valid_until: '2026-10-04' }, hoje)).toBe(false);
+    expect(seguroValido({ insurance_valid_until: '2027-10-06' }, hoje)).toBe(true);
+  });
+
+  test('sem seguro registado devolve null, que não é o mesmo que expirado', () => {
+    expect(seguroValido({}, hoje)).toBe(null);
+    expect(seguroValido({ insurance_valid_until: null }, hoje)).toBe(null);
+  });
+
+  test('a hora não entra na conta', () => {
+    // No horário de verão português, new Date() sobre este texto recuava um dia
+    expect(seguroValido({ insurance_valid_until: '2026-10-05T00:00:00+00:00' }, hoje)).toBe(true);
   });
 });
 

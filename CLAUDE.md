@@ -29,6 +29,12 @@ da validade**. Sem pagamento registado, fica Inativo.
 - A **validade da inscrição** (`expiry_date`) acompanha sempre o seguro.
 - O aviso no painel usa a validade real: avisa a 30 dias, avisa quando expira, e
   cala-se assim que é pago.
+- No **Painel**, a ficha que abre depois do check-in mostra duas linhas, cada
+  uma com o seu selo: a quota e o seguro. Num ginásio de artes marciais quem
+  está ao balcão precisa de ver as duas ao mesmo tempo, e só a quota estava lá.
+  Sem seguro na ficha o selo é **Inativo** e a linha diz "Sem seguro registado"
+  — que não é o mesmo que ter expirado, e por isso se diz por palavras.
+  (`seguroValido()`, em `frontend/src/lib/estatisticas.js`, com testes.)
 
 ### Pagamentos
 
@@ -248,7 +254,7 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios têm testes próprios, no site (106 testes, 2 segundos):
+As contas dos Relatórios têm testes próprios, no site (109 testes, 2 segundos):
 
 ```bash
 cd frontend && yarn test --watchAll=false

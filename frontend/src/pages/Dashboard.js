@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { seguroValido } from '../lib/estatisticas';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -52,7 +53,7 @@ const Dashboard = ({ language, translations }) => {
   const [presencaAEditar, setPresencaAEditar] = useState(null);
   const [modalidadeEscolhida, setModalidadeEscolhida] = useState('');
   const [experimentaisHoje, setExperimentaisHoje] = useState(0);
-  const [presencasMes, setPresencasMes] = useState({ total: 0, media: '0.0' });
+  const [presencasMes, setPresencasMes] = useState({ total: 0 });
   const [loading, setLoading] = useState(true);
   const [checkinMemberId, setCheckinMemberId] = useState('');
   const [qrMode, setQrMode] = useState(false);
@@ -74,7 +75,6 @@ const Dashboard = ({ language, translations }) => {
       activeMembers: 'Membros Ativos',
       todayAttendance: 'Presenças Hoje',
       monthAttendance: 'Presenças do Mês',
-      dailyAverage: 'Média Diária',
       monthlyRevenue: 'Receita Mensal',
       attendanceByModality: 'Presenças por Modalidade',
       quickCheckin: 'Check-in Rápido',
@@ -110,7 +110,6 @@ const Dashboard = ({ language, translations }) => {
       activeMembers: 'Active Members',
       todayAttendance: "Today's Attendance",
       monthAttendance: 'Attendance This Month',
-      dailyAverage: 'Daily Average',
       monthlyRevenue: 'Monthly Revenue',
       attendanceByModality: 'Attendance by Modality',
       quickCheckin: 'Quick Check-in',
@@ -225,11 +224,7 @@ const Dashboard = ({ language, translations }) => {
       const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
 
       const response = await axios.get(`${API}/attendance?start_date=${iso(inicio)}&end_date=${iso(fim)}`);
-      const diasDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-      setPresencasMes({
-        total: response.data.length,
-        media: (response.data.length / diasDoMes).toFixed(1)
-      });
+      setPresencasMes({ total: response.data.length });
     } catch (error) {
       console.error('Error fetching monthly attendance:', error);
     }
@@ -446,11 +441,31 @@ const Dashboard = ({ language, translations }) => {
     const ate = member?.membership_valid_until
       ? new Date(member.membership_valid_until).toLocaleDateString('pt-PT')
       : null;
-    if (estado === 'suspended') return { texto: 'SUSPENSO', cor: '#dc2626', detalhe: null };
+    if (estado === 'suspended') return { texto: 'SUSPENSO', cor: '#dc2626', detalhe: 'Inscrição suspensa' };
     if (estado === 'inactive') {
       return { texto: 'INATIVO', cor: '#dc2626', detalhe: ate ? `Quota expirou em ${ate}` : 'Sem quota registada' };
     }
     return { texto: 'ATIVO', cor: '#16a34a', detalhe: ate ? `Quota paga até ${ate}` : null };
+  };
+
+  /**
+   * O seguro é anual e a validade vem da ficha do sócio.
+   *
+   * Sem seguro registado também é Inativo — mas a linha diz que não há
+   * registo nenhum, que não é o mesmo que ter expirado.
+   */
+  const estadoSeguro = (member) => {
+    const valido = seguroValido(member);
+    const ate = member?.insurance_valid_until
+      ? new Date(member.insurance_valid_until).toLocaleDateString('pt-PT')
+      : null;
+    if (valido === null) {
+      return { texto: 'INATIVO', cor: '#dc2626', detalhe: 'Sem seguro registado' };
+    }
+    if (valido) {
+      return { texto: 'ATIVO', cor: '#16a34a', detalhe: `Seguro pago até ${ate}` };
+    }
+    return { texto: 'INATIVO', cor: '#dc2626', detalhe: `Seguro expirou em ${ate}` };
   };
 
   const getMemberActivityIds = (member) => {
@@ -594,7 +609,7 @@ const Dashboard = ({ language, translations }) => {
         </div>
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isAdmin() ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-6`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isAdmin() ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-6`}>
         <StatCard
           title={t[language].totalMembers}
           value={stats.total_members}
@@ -618,12 +633,6 @@ const Dashboard = ({ language, translations }) => {
           value={presencasMes.total}
           icon={Activity}
           color="ko-primary"
-        />
-        <StatCard
-          title={t[language].dailyAverage}
-          value={presencasMes.media}
-          icon={TrendingUp}
-          color="ko-amber"
         />
         {isAdmin() && (
         <Card
@@ -1048,22 +1057,33 @@ const Dashboard = ({ language, translations }) => {
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                       N.º {selectedMember.member_number} · {selectedMember.phone}
                     </p>
-                    {estadoQuota(selectedMember).detalhe && (
-                      <p className="text-sm font-medium" style={{ color: estadoQuota(selectedMember).cor }}>
-                        {estadoQuota(selectedMember).detalhe}
-                      </p>
-                    )}
+                    {/* Quota e seguro, cada um com o seu estado: ao balcão
+                        é isto que se precisa de saber num relance. */}
+                    <div className="mt-2 space-y-1">
+                      {[
+                        { chave: 'quota', ...estadoQuota(selectedMember) },
+                        { chave: 'seguro', ...estadoSeguro(selectedMember) }
+                      ].map((linha) => (
+                        <div key={linha.chave} className="flex items-center gap-2" data-testid={`estado-${linha.chave}`}>
+                          <Badge
+                            variant="outline"
+                            className="text-xs px-2 py-0"
+                            style={{ borderColor: linha.cor, color: linha.cor }}
+                          >
+                            {linha.texto}
+                          </Badge>
+                          {linha.detalhe && (
+                            <span className="text-sm font-medium" style={{ color: linha.cor }}>
+                              {linha.detalhe}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge
-                    className="text-sm px-3 py-1"
-                    variant="outline"
-                    style={{ borderColor: estadoQuota(selectedMember).cor, color: estadoQuota(selectedMember).cor }}
-                  >
-                    {estadoQuota(selectedMember).texto}
-                  </Badge>
                   {getMemberActivityIds(selectedMember).map((id) => {
                     const activity = activities.find((a) => a.id === id);
                     if (!activity) return null;
