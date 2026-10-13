@@ -10,14 +10,16 @@
  * - A ordem das palavras não importa: "silva joao" encontra "João da Silva".
  * - Quem tem o **nome principal** a começar pelas letras escritas aparece
  *   primeiro na lista.
- * - **Escrever só dígitos é procurar um número de sócio.** O 002 encontra-se
- *   escrevendo "2", e a lista vem por número: 2, 20, 21, 22… e só mais à
- *   frente o 200. Dentro do telefone só se procura a partir de três dígitos,
- *   senão "2" trazia toda a gente que tem um 2 no número.
+ * - **Até três dígitos, um número escrito é um número de sócio** e mais nada:
+ *   os números do ginásio têm três casas. O 002 encontra-se escrevendo "2", e
+ *   a lista vem por número: 2, 20, 21, 22… e só mais à frente o 200.
+ * - **Do quarto dígito em diante já é um telemóvel**, procurado em qualquer
+ *   posição, e a lista vem por nome. Sem este degrau, "2" trazia toda a gente
+ *   que tem um 2 no número e "913" trazia meio ginásio.
  */
 
-/** A partir de quantos dígitos é que se procura dentro do telefone. */
-const DIGITOS_PARA_TELEFONE = 3;
+/** Do quarto dígito em diante, um número escrito é um telemóvel. */
+const DIGITOS_PARA_TELEFONE = 4;
 
 const soDigitos = (texto) => /^\d+$/.test(String(texto ?? '').trim());
 
@@ -49,7 +51,7 @@ const emPalavras = (texto) =>
  *                   artigo): procura-se pelo início, com ou sem os zeros da
  *                   frente. Os restantes são telefones e afins: aceitam parte
  *                   em qualquer posição, porque as pessoas lembram-se do fim,
- *                   mas só a partir de três dígitos.
+ *                   mas só do quarto dígito em diante.
  */
 export const corresponde = (procurado, principal, extras = [], numeros = []) => {
   const termos = emPalavras(procurado);
@@ -87,8 +89,9 @@ export const filtrarEOrdenar = (lista, procurado, obter) => {
       })
     : [...lista];
 
-  // Quem escreve dígitos procura um número: a lista vem por número
-  if (termo && soDigitos(termo)) {
+  // Poucos dígitos é um número de sócio: a lista vem por número. Do quarto
+  // dígito em diante já se procura um telemóvel, e aí mandam os nomes.
+  if (termo && soDigitos(termo) && termo.length < DIGITOS_PARA_TELEFONE) {
     return filtrada.sort((a, b) => {
       const na = comoNumero(obter(a).numeros?.[0]);
       const nb = comoNumero(obter(b).numeros?.[0]);

@@ -170,12 +170,32 @@ def test_o_numero_encontra_se_sem_escrever_os_zeros():
     assert not corresponde_pesquisa("2", "Outro Qualquer", "913000000", None, "003")
 
 
-def test_um_digito_so_nao_procura_dentro_do_telefone():
-    """Senao "2" trazia toda a gente que tem um 2 no telefone, que e quase toda."""
+def test_ate_tres_digitos_procura_so_o_numero_de_socio():
+    """Os numeros do ginasio tem tres casas: ate la, um numero e um socio.
+
+    Senao "2" trazia toda a gente que tem um 2 no telefone, que e quase toda,
+    e "913" trazia meio ginasio.
+    """
     assert not corresponde_pesquisa("2", "João Silva", telefone="912345678", numero="007")
     assert not corresponde_pesquisa("45", "João Silva", telefone="912345678", numero="007")
-    # Tres digitos ja e uma procura a serio pelo telefone
-    assert corresponde_pesquisa("456", "João Silva", telefone="912345678", numero="007")
+    assert not corresponde_pesquisa("456", "João Silva", telefone="912345678", numero="007")
+    # Do quarto digito em diante ja e uma procura pelo telemovel
+    assert corresponde_pesquisa("4567", "João Silva", telefone="912345678", numero="007")
+    assert corresponde_pesquisa("5678", "João Silva", telefone="912345678", numero="007")
+
+
+def test_procurar_um_telemovel_ordena_pelos_nomes(cliente, admin, criar_socio, bd):
+    """Do quarto digito em diante e uma procura de telemovel: mandam os nomes."""
+    for numero, nome, telefone in [
+        ("030", "Zulmira Nunes", "915500100"),
+        ("031", "Aurora Pinto", "915500200"),
+    ]:
+        socio = criar_socio(nome=nome, telefone=telefone)
+        bd.members.update_one({"id": socio["id"]}, {"$set": {"member_number": numero}})
+
+    nomes = [m["name"] for m in
+             cliente.get("/api/members", headers=admin, params={"search": "9155"}).json()]
+    assert nomes == ["Aurora Pinto", "Zulmira Nunes"]
 
 
 def test_procurar_por_numero_ordena_por_numero(cliente, admin, criar_socio, bd):

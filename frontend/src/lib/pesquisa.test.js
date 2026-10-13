@@ -40,14 +40,16 @@ describe('procurar por número de sócio', () => {
     expect(corresponde('2', 'Outro', [], ['003', '913000000'])).toBe(false);
   });
 
-  test('um ou dois dígitos não procuram dentro do telefone', () => {
-    // Senão "2" trazia toda a gente que tem um 2 no número, que é quase toda
+  test('até três dígitos procura-se só o número de sócio', () => {
+    // Senão "2" trazia toda a gente que tem um 2 no número, que é quase toda,
+    // e "913" trazia meio ginásio
     expect(corresponde('2', 'João', [], ['007', '912345678'])).toBe(false);
     expect(corresponde('45', 'João', [], ['007', '912345678'])).toBe(false);
+    expect(corresponde('456', 'João', [], ['007', '912345678'])).toBe(false);
   });
 
-  test('a partir de três dígitos já se procura no telefone, em qualquer posição', () => {
-    expect(corresponde('456', 'João', [], ['007', '912345678'])).toBe(true);
+  test('do quarto dígito em diante já se procura no telemóvel, em qualquer posição', () => {
+    expect(corresponde('4567', 'João', [], ['007', '912345678'])).toBe(true);
     expect(corresponde('5678', 'João', [], ['007', '912345678'])).toBe(true);
   });
 });
@@ -65,6 +67,15 @@ describe('ordem dos resultados', () => {
     ];
     expect(filtrarEOrdenar(lista, '2', campos).map((s) => s.numero))
       .toEqual(['002', '020', '021', '022', '200', '201']);
+  });
+
+  test('procurar um telemóvel ordena pelos nomes, não por número', () => {
+    const lista = [
+      socio('030', 'Zulmira Nunes', '915500100'),
+      socio('031', 'Aurora Pinto', '915500200')
+    ];
+    expect(filtrarEOrdenar(lista, '9155', campos).map((s) => s.nome))
+      .toEqual(['Aurora Pinto', 'Zulmira Nunes']);
   });
 
   test('escrever letras continua a mandar nos nomes', () => {

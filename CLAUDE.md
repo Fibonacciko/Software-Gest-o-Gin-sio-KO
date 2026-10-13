@@ -246,7 +246,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 189 testes e demoram 9 segundos.
+backend** — são 190 testes e demoram 9 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -254,7 +254,7 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios e a pesquisa têm testes próprios, no site (120 testes,
+As contas dos Relatórios e a pesquisa têm testes próprios, no site (121 testes,
 3 segundos):
 
 ```bash
@@ -461,12 +461,16 @@ testes com nomes portugueses, use Python.
   "dos"): `corresponde_pesquisa()` no backend, `corresponde()` em
   `frontend/src/lib/pesquisa.js`. Resultados por ordem alfabética, com os
   **nomes próprios primeiro**.
-- **Escrever só dígitos é procurar um número de sócio.** O sócio 002 encontra-se
-  escrevendo `2`, sem os zeros, e a lista vem **por número**: 2, 20, 21, 22… e
-  só mais à frente o 200. Dentro do **telefone** só se procura a partir de
-  **três dígitos** (`DIGITOS_PARA_TELEFONE`): abaixo disso, `2` trazia toda a
-  gente que tem um 2 no número, que é quase toda. As duas pesquisas têm de dar
-  o mesmo — há testes dos dois lados.
+- **Até três dígitos, um número escrito é um número de sócio** e mais nada —
+  os números do ginásio têm três casas. O sócio 002 encontra-se escrevendo `2`,
+  sem os zeros, e a lista vem **por número**: 2, 20, 21, 22… e só mais à frente
+  o 200.
+- **Do quarto dígito em diante já é um telemóvel** (`DIGITOS_PARA_TELEFONE`),
+  procurado em qualquer posição porque as pessoas lembram-se do fim, e aí a
+  lista vem **por nome**. Sem este degrau, `2` trazia toda a gente que tem um 2
+  no número — que é quase toda — e `913` trazia meio ginásio por ordem de
+  número, que não ajuda a encontrar ninguém.
+- As duas pesquisas têm de dar o mesmo — há testes dos dois lados.
 - **A lista de sócios, sem pesquisa, vem por número de sócio** (001, 002, 010 —
   não por texto, senão o 10 vinha a seguir ao 1). É assim que se encontra alguém
   a correr os olhos pela lista. A pesquisa mantém a ordem dos nomes.
