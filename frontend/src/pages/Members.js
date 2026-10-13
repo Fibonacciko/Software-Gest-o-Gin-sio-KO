@@ -65,6 +65,7 @@ const Members = ({ language, translations }) => {
       active: 'Ativo',
       inactive: 'Inativo',
       suspended: 'Suspenso',
+      seguroInativo: 'Seguro por regularizar',
       allMemberships: 'Todos os Tipos',
       basic: 'Básico',
       premium: 'Premium',
@@ -101,6 +102,7 @@ const Members = ({ language, translations }) => {
       active: 'Active',
       inactive: 'Inactive',
       suspended: 'Suspended',
+      seguroInativo: 'Insurance to renew',
       allMemberships: 'All Types',
       basic: 'Basic',
       premium: 'Premium',
@@ -492,6 +494,9 @@ const Members = ({ language, translations }) => {
                 <SelectItem value="active">{t[language].active}</SelectItem>
                 <SelectItem value="inactive">{t[language].inactive}</SelectItem>
                 <SelectItem value="suspended">{t[language].suspended}</SelectItem>
+                {/* Só quem esteve ativo nos últimos três meses: sem isso eram
+                    quase 300 nomes, a maior parte de gente que já não treina. */}
+                <SelectItem value="seguro_inativo">{t[language].seguroInativo}</SelectItem>
               </SelectContent>
             </Select>
           </div>

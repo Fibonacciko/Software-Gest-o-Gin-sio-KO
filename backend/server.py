@@ -87,6 +87,13 @@ class MemberStatus(str, Enum):
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
 
+class FiltroDeMembros(str, Enum):
+    """O que se pode escolher na caixa "Estado" da lista de membros."""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    SUSPENDED = "suspended"
+    SEGURO_INATIVO = "seguro_inativo"
+
 class PaymentStatus(str, Enum):
     PAID = "paid"
     PENDING = "pending"
@@ -1682,6 +1689,59 @@ async def recalcular_validades(member_id: str, mexer_no_seguro: bool = True):
         await db.members.update_one({"id": member_id}, operacao)
         BusinessCache.invalidate_member_cache()
 
+MESES_PARA_SEGURO = 3
+
+def como_data(valor):
+    """Uma data, venha ela como data, como datetime ou como texto ISO."""
+    if isinstance(valor, datetime):
+        return valor.date()
+    if isinstance(valor, date):
+        return valor
+    if isinstance(valor, str):
+        try:
+            return datetime.fromisoformat(valor).date()
+        except (ValueError, TypeError):
+            return None
+    return None
+
+
+def ha_meses(hoje: date, meses: int) -> date:
+    """A mesma data, uns meses atras. 31 de maio menos 3 da 28 de fevereiro."""
+    mes = hoje.month - meses
+    ano = hoje.year
+    while mes <= 0:
+        mes += 12
+        ano -= 1
+    dia = hoje.day
+    while dia > 1:
+        try:
+            return date(ano, mes, dia)
+        except ValueError:
+            dia -= 1
+    return date(ano, mes, 1)
+
+
+def seguro_por_regularizar(ficha: dict, hoje: date = None) -> bool:
+    """Seguro em falta ou fora da validade, em quem ainda anda pelo ginasio.
+
+    O seguro e obrigatorio e muita ficha antiga nunca o teve registado: sem
+    mais nada, esta lista eram quase 300 nomes, a maior parte de gente que ja
+    nao treina ha anos — uma lista que ninguem chega a usar.
+
+    Por isso so entram os que estiveram **ativos nos ultimos tres meses**, ou
+    seja, com a quota dentro da validade em algum momento desse periodo. Sao
+    esses que ainda ca aparecem e a quem faz sentido pedir o seguro.
+    """
+    hoje = hoje or date.today()
+
+    seguro = como_data(ficha.get("insurance_valid_until"))
+    if seguro and seguro >= hoje:
+        return False
+
+    quota = como_data(ficha.get("membership_valid_until"))
+    return bool(quota and quota >= ha_meses(hoje, MESES_PARA_SEGURO))
+
+
 def numero_de_socio(numero):
     """O numero de socio como numero, para a lista vir 1, 2, 10 e nao 1, 10, 2.
 
@@ -1886,17 +1946,14 @@ async def create_member(
 @api_router.get("/members", response_model=List[Member])
 @api_rate_limit()
 async def get_members(
-    status: Optional[MemberStatus] = None,
+    status: Optional[FiltroDeMembros] = None,
     search: Optional[str] = None,
     current_user: User = Depends(require_admin_or_staff),
     request: Request = None
 ):
-    filter_dict = {}
-    if status:
-        filter_dict['status'] = status
     # A pesquisa e feita aqui e nao na base de dados: assim ignora acentos,
     # maiusculas e as ligacoes dos nomes, que o Mongo nao sabe ignorar
-    members = await db.members.find(filter_dict).to_list(2000)
+    members = await db.members.find({}).to_list(2000)
 
     if search:
         members = [
@@ -1906,6 +1963,17 @@ async def get_members(
                 m.get("name"), m.get("phone"), m.get("email"), m.get("member_number")
             )
         ]
+
+    # As fichas sao preparadas antes de se filtrar pelo estado, porque o
+    # estado e **calculado** e nao esta gravado. Filtrar pelo campo `status`
+    # da ficha, como se fazia, dava outra lista: ele guarda historico antigo,
+    # e pedir "Ativos" trazia fichas que apareciam como Inativas mesmo ao lado.
+    members = [normalize_member_read(parse_from_mongo(m)) for m in members]
+
+    if status == FiltroDeMembros.SEGURO_INATIVO:
+        members = [m for m in members if seguro_por_regularizar(m)]
+    elif status:
+        members = [m for m in members if m.get("membership_status") == status.value]
 
     # O QR code e uma imagem em texto e vale 58% do peso da resposta.
     # A lista nao o mostra: quem precisa dele e a ficha individual e a app.
@@ -1932,7 +2000,7 @@ async def get_members(
     else:
         members.sort(key=lambda m: numero_de_socio(m.get("member_number")))
 
-    return [Member(**normalize_member_read(parse_from_mongo(member))) for member in members]
+    return [Member(**member) for member in members]
 
 @api_router.get("/members/{member_id}", response_model=Member)
 async def get_member(

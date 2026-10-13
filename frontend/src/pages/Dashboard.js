@@ -441,11 +441,19 @@ const Dashboard = ({ language, translations }) => {
     const ate = member?.membership_valid_until
       ? new Date(member.membership_valid_until).toLocaleDateString('pt-PT')
       : null;
-    if (estado === 'suspended') return { texto: 'SUSPENSO', cor: '#dc2626', detalhe: 'Inscrição suspensa' };
-    if (estado === 'inactive') {
-      return { texto: 'INATIVO', cor: '#dc2626', detalhe: ate ? `Quota expirou em ${ate}` : 'Sem quota registada' };
+    if (estado === 'suspended') {
+      return { texto: 'SUSPENSO', curto: 'Quota suspensa', cor: '#dc2626', detalhe: 'Inscrição suspensa' };
     }
-    return { texto: 'ATIVO', cor: '#16a34a', detalhe: ate ? `Quota paga até ${ate}` : null };
+    if (estado === 'inactive') {
+      return {
+        texto: 'INATIVO', curto: 'Quota inativa', cor: '#dc2626',
+        detalhe: ate ? `Quota expirou em ${ate}` : 'Sem quota registada'
+      };
+    }
+    return {
+      texto: 'ATIVO', curto: 'Quota ativa', cor: '#16a34a',
+      detalhe: ate ? `Quota paga até ${ate}` : null
+    };
   };
 
   /**
@@ -460,12 +468,12 @@ const Dashboard = ({ language, translations }) => {
       ? new Date(member.insurance_valid_until).toLocaleDateString('pt-PT')
       : null;
     if (valido === null) {
-      return { texto: 'INATIVO', cor: '#dc2626', detalhe: 'Sem seguro registado' };
+      return { texto: 'INATIVO', curto: 'Seguro inativo', cor: '#dc2626', detalhe: 'Sem seguro registado' };
     }
     if (valido) {
-      return { texto: 'ATIVO', cor: '#16a34a', detalhe: `Seguro pago até ${ate}` };
+      return { texto: 'ATIVO', curto: 'Seguro ativo', cor: '#16a34a', detalhe: `Seguro pago até ${ate}` };
     }
-    return { texto: 'INATIVO', cor: '#dc2626', detalhe: `Seguro expirou em ${ate}` };
+    return { texto: 'INATIVO', curto: 'Seguro inativo', cor: '#dc2626', detalhe: `Seguro expirou em ${ate}` };
   };
 
   const getMemberActivityIds = (member) => {
@@ -1047,52 +1055,60 @@ const Dashboard = ({ language, translations }) => {
           {selectedMember ? (
             <div className="space-y-6">
               {/* Short profile summary */}
-              <div className="flex flex-wrap items-center gap-4 p-4 rounded-lg" style={{ background: 'var(--background-elevated)' }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
-                    <Users size={24} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{selectedMember.name}</p>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      N.º {selectedMember.member_number} · {selectedMember.phone}
-                    </p>
-                    {/* Quota e seguro, cada um com o seu estado: ao balcão
-                        é isto que se precisa de saber num relance. */}
-                    <div className="mt-2 space-y-1">
-                      {[
-                        { chave: 'quota', ...estadoQuota(selectedMember) },
-                        { chave: 'seguro', ...estadoSeguro(selectedMember) }
-                      ].map((linha) => (
-                        <div key={linha.chave} className="flex items-center gap-2" data-testid={`estado-${linha.chave}`}>
-                          <Badge
-                            variant="outline"
-                            className="text-xs px-2 py-0"
-                            style={{ borderColor: linha.cor, color: linha.cor }}
-                          >
-                            {linha.texto}
-                          </Badge>
-                          {linha.detalhe && (
-                            <span className="text-sm font-medium" style={{ color: linha.cor }}>
-                              {linha.detalhe}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+              <div className="p-4 rounded-lg" style={{ background: 'var(--background-elevated)' }}>
+                {/* Quem é, e o que treina */}
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--gradient-primary)' }}>
+                      <Users size={24} className="text-white" />
                     </div>
+                    <div>
+                      <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{selectedMember.name}</p>
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        N.º {selectedMember.member_number} · {selectedMember.phone}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {getMemberActivityIds(selectedMember).map((id) => {
+                      const activity = activities.find((a) => a.id === id);
+                      if (!activity) return null;
+                      return (
+                        <Badge key={id} variant="outline" style={{ borderColor: activity.color, color: activity.color }}>
+                          {activity.name}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {getMemberActivityIds(selectedMember).map((id) => {
-                    const activity = activities.find((a) => a.id === id);
-                    if (!activity) return null;
-                    return (
-                      <Badge key={id} variant="outline" style={{ borderColor: activity.color, color: activity.color }}>
-                        {activity.name}
+                {/* Quota e seguro, cada um com o seu estado. Ao balcão é isto
+                    que se precisa de saber num relance, por isso o selo vai no
+                    fim da linha, encostado à direita como as modalidades: ficam
+                    os três em coluna, fáceis de ler de uma vez. */}
+                <div className="mt-3 pt-3 space-y-1.5 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                  {[
+                    { chave: 'quota', ...estadoQuota(selectedMember) },
+                    { chave: 'seguro', ...estadoSeguro(selectedMember) }
+                  ].map((linha) => (
+                    <div
+                      key={linha.chave}
+                      className="flex items-center justify-between gap-3"
+                      data-testid={`estado-${linha.chave}`}
+                    >
+                      <span className="text-sm font-medium" style={{ color: linha.cor }}>
+                        {linha.detalhe}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="shrink-0"
+                        style={{ borderColor: linha.cor, color: linha.cor }}
+                      >
+                        {linha.texto}
                       </Badge>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -1134,7 +1150,7 @@ const Dashboard = ({ language, translations }) => {
               </div>
             </div>
           ) : todayAttendance.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
               {[...todayAttendance]
                 .sort((a, b) => new Date(b.check_in_time) - new Date(a.check_in_time))
                 .map((attendance) => {
@@ -1142,7 +1158,7 @@ const Dashboard = ({ language, translations }) => {
                 return (
                   <div
                     key={attendance.id}
-                    className="flex items-center justify-between gap-2 p-3 rounded-lg transition-all duration-200"
+                    className="p-3 rounded-lg transition-all duration-200"
                     style={{
                       background: 'var(--background-elevated)',
                       color: 'var(--text-primary)',
@@ -1150,54 +1166,68 @@ const Dashboard = ({ language, translations }) => {
                     }}
                     data-testid={`attendance-${attendance.id}`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleSelectAttendanceMember(attendance.member)}
-                      className="min-w-0 flex-1 text-left hover:opacity-80"
-                    >
-                      <p className="font-medium truncate">{attendance.member?.name}</p>
-                      <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
-                        {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                        {activity ? ` · ${activity.name}` : ''}
-                      </p>
-                    </button>
+                    <div className="flex items-start justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectAttendanceMember(attendance.member)}
+                        className="min-w-0 flex-1 text-left hover:opacity-80"
+                      >
+                        <p className="font-medium truncate">{attendance.member?.name}</p>
+                        <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
+                          {new Date(attendance.check_in_time).toLocaleTimeString('pt-PT', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                          {activity ? ` · ${activity.name}` : ''}
+                        </p>
+                      </button>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Badge
-                        variant="outline"
-                        style={{
-                          borderColor: estadoQuota(attendance.member).cor,
-                          color: estadoQuota(attendance.member).cor
-                        }}
-                        title={estadoQuota(attendance.member).detalhe || ''}
-                      >
-                        {estadoQuota(attendance.member).texto}
-                      </Badge>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        title="Corrigir a modalidade"
-                        onClick={() => abrirCorrecaoDaPresenca(attendance)}
-                        data-testid={`edit-attendance-${attendance.id}`}
-                      >
-                        <Edit size={15} />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-600 hover:text-red-700"
-                        title="Apagar o check-in"
-                        onClick={() => apagarPresenca(attendance)}
-                        data-testid={`delete-attendance-${attendance.id}`}
-                      >
-                        <Trash2 size={15} />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Corrigir a modalidade"
+                          onClick={() => abrirCorrecaoDaPresenca(attendance)}
+                          data-testid={`edit-attendance-${attendance.id}`}
+                        >
+                          <Edit size={15} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          title="Apagar o check-in"
+                          onClick={() => apagarPresenca(attendance)}
+                          data-testid={`delete-attendance-${attendance.id}`}
+                        >
+                          <Trash2 size={15} />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Os dois estados, em linha própria: ao lado do nome
+                        espremiam-no até ficar "Sofi...". Vão com o nome à
+                        frente porque dois selos a dizer só "ATIVO" não
+                        diziam a que se referiam. */}
+                    <div className="flex flex-wrap items-center gap-1 mt-2">
+                      {[
+                        { chave: 'quota', ...estadoQuota(attendance.member) },
+                        { chave: 'seguro', ...estadoSeguro(attendance.member) }
+                      ].map((e) => (
+                        <Badge
+                          key={e.chave}
+                          variant="outline"
+                          className="text-xs font-normal"
+                          style={{ borderColor: e.cor, color: e.cor }}
+                          title={e.detalhe || ''}
+                          data-testid={`presenca-${e.chave}`}
+                        >
+                          {e.curto}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                 );

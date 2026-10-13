@@ -29,12 +29,24 @@ da validade**. Sem pagamento registado, fica Inativo.
 - A **validade da inscrição** (`expiry_date`) acompanha sempre o seguro.
 - O aviso no painel usa a validade real: avisa a 30 dias, avisa quando expira, e
   cala-se assim que é pago.
-- No **Painel**, a ficha que abre depois do check-in mostra duas linhas, cada
-  uma com o seu selo: a quota e o seguro. Num ginásio de artes marciais quem
-  está ao balcão precisa de ver as duas ao mesmo tempo, e só a quota estava lá.
-  Sem seguro na ficha o selo é **Inativo** e a linha diz "Sem seguro registado"
-  — que não é o mesmo que ter expirado, e por isso se diz por palavras.
+- No **Painel**, a quota e o seguro aparecem sempre juntos: na ficha que abre
+  depois do check-in (uma linha cada, com o selo no fim, alinhado com as
+  modalidades) e em cada cartão das **Presenças de Hoje** ("Quota ativa",
+  "Seguro inativo"). Num ginásio de artes marciais quem está ao balcão precisa
+  de ver as duas ao mesmo tempo, e só a quota estava lá. Sem seguro na ficha o
+  selo é **Inativo** e a linha diz "Sem seguro registado" — que não é o mesmo
+  que ter expirado, e por isso se diz por palavras.
   (`seguroValido()`, em `frontend/src/lib/estatisticas.js`, com testes.)
+- Na lista de **Membros**, o filtro de estado tem **"Seguro por regularizar"**:
+  seguro em falta ou fora da validade, mas **só de quem esteve ativo nos
+  últimos três meses** (`MESES_PARA_SEGURO`). Sem esse limite eram 289 fichas
+  das 340, a maior parte de gente que já não treina há anos — uma lista que
+  ninguém chega a usar. Com ele são 72, que é a lista a quem faz sentido pedir
+  o seguro.
+- **O filtro de estado segue o estado calculado**, não o campo `status` da
+  ficha. Filtrar por esse campo dava uma lista que se contradizia: pedir
+  "Ativos" trazia 131 fichas, 17 das quais apareciam com o selo INATIVO mesmo
+  ao lado.
 
 ### Pagamentos
 
@@ -246,7 +258,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 190 testes e demoram 9 segundos.
+backend** — são 193 testes e demoram 9 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
