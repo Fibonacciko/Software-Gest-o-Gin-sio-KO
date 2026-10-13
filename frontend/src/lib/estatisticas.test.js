@@ -476,9 +476,9 @@ describe('estatísticas de sócios', () => {
 describe('destaques do ano', () => {
   const modalidades = [{ id: 'bx', name: 'Boxe' }, { id: 'kb', name: 'Kickboxing' }];
   const membros = [
-    { id: '1', join_date: '2026-03-10', date_of_birth: '1990-01-01', activity_ids: ['bx'], membership_status: 'active' },
-    { id: '2', join_date: '2026-03-20', date_of_birth: '1995-01-01', activity_ids: ['bx'], membership_status: 'active' },
-    { id: '3', join_date: '2026-07-01', date_of_birth: '1985-01-01', activity_ids: ['kb'], membership_status: 'inactive' }
+    { id: '1', name: 'Fábio Guerreiro', join_date: '2026-03-10', date_of_birth: '1990-01-01', activity_ids: ['bx'], membership_status: 'active' },
+    { id: '2', name: 'Ana Antunes', join_date: '2026-03-20', date_of_birth: '1995-01-01', activity_ids: ['bx'], membership_status: 'active' },
+    { id: '3', name: 'Bruno Dias', join_date: '2026-07-01', date_of_birth: '1985-01-01', activity_ids: ['kb'], membership_status: 'inactive' }
   ];
   const presencas = [
     { member_id: '1', activity_id: 'bx', check_in_date: '2026-03-02' },   // segunda
@@ -537,11 +537,38 @@ describe('destaques do ano', () => {
     expect(d.faturacaoPorMes['2026-11']).toBe(60);
   });
 
-  test('diz o que as experimentais renderam', () => {
+  test('o que as experimentais renderam continua nos totais, mas já não é nota', () => {
     expect(d.totais.receitaExperimentais).toBe(10);
     expect(d.totais.experimentais).toBe(3);
-    expect(nota('O que as experimentais renderam')).toContain('10.00 €');
-    expect(nota('O que as experimentais renderam')).toContain('3 aulas');
+    expect(nota('O que as experimentais renderam')).toBe('');
+  });
+
+  test('diz quem é o aluno mais presente', () => {
+    // Duas presenças em 2026; a terceira é de 2025 e não conta para este ano
+    expect(nota('Aluno mais presente')).toContain('Fábio Guerreiro');
+    expect(nota('Aluno mais presente')).toContain('2 treinos');
+  });
+
+  test('as notas da semana só olham para os dias úteis', () => {
+    // O ginásio fecha ao fim de semana: um sábado com uma presença perdida
+    // não pode ser o "dia mais calmo", nem roubar o lugar a uma segunda vazia
+    const comFimDeSemana = destaquesDoAno({
+      ano: 2026,
+      membros,
+      modalidades,
+      presencas: [
+        { member_id: '1', activity_id: 'bx', check_in_date: '2026-03-03' },  // terça
+        { member_id: '1', activity_id: 'bx', check_in_date: '2026-03-10' },  // terça
+        { member_id: '2', activity_id: 'bx', check_in_date: '2026-03-04' },  // quarta
+        { member_id: '2', activity_id: 'bx', check_in_date: '2026-03-07' }   // sábado
+      ]
+    });
+    const texto = (t) => comFimDeSemana.notas.find((n) => n.titulo === t)?.texto || '';
+    expect(texto('Dia mais calmo')).not.toContain('Sábado');
+    expect(texto('Dia mais calmo')).not.toContain('Domingo');
+    expect(texto('Dia da semana com mais gente')).toContain('Terça-feira');
+    // Segunda, quinta e sexta estão a zero: o mais calmo é um desses
+    expect(texto('Dia mais calmo')).toContain('0 presenças');
   });
 
   test('uma experimental oferecida conta como aula e rende zero', () => {

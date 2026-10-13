@@ -1562,6 +1562,10 @@ async def send_push_notification(fcm_token: str, title: str, body: str, data: di
 
 LIGACOES_NOME = {"de", "da", "do", "das", "dos", "e", "du", "del", "di", "van", "von"}
 
+# A partir de quantos digitos e que a pesquisa procura dentro do telefone.
+# Abaixo disto, um numero escrito e o numero de socio.
+DIGITOS_PARA_TELEFONE = 3
+
 def normalizar_texto(texto: str) -> str:
     """Minusculas e sem acentos, para a pesquisa nao depender de preciosismos."""
     if not texto:
@@ -1584,7 +1588,10 @@ def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, n
     e a ordem das palavras nao importa.
 
     O telefone e a excecao: aceita parte do numero em qualquer posicao,
-    porque as pessoas costumam lembrar-se dos ultimos digitos.
+    porque as pessoas costumam lembrar-se dos ultimos digitos. Mas so a
+    partir de **tres digitos**: escrever "2" e procurar o socio numero 2,
+    nao toda a gente que tem um 2 algures no telefone — e isso era quase
+    toda a gente.
     """
     termos = [t for t in normalizar_texto(procurado).split() if t and t not in LIGACOES_NOME]
     if not termos:
@@ -1602,7 +1609,7 @@ def corresponde_pesquisa(procurado: str, nome=None, telefone=None, email=None, n
             continue
         if any(p.startswith(termo) for p in email_partes):
             continue
-        if telefone_digitos and termo.isdigit() and termo in telefone_digitos:
+        if telefone_digitos and termo.isdigit() and len(termo) >= DIGITOS_PARA_TELEFONE and termo in telefone_digitos:
             continue
         return False
 
@@ -1903,7 +1910,13 @@ async def get_members(
     # Sem pesquisa, a lista vem por numero de socio: e assim que se procura
     # alguem a correr os olhos pela lista. A pesquisar, mandam os nomes
     # proprios, como o dono do ginasio pediu.
-    if search:
+    #
+    # Excecao: quem escreve so digitos esta a procurar um numero de socio, e
+    # entao a lista vem por numero. Escrever "2" da o 2, depois o 20, o 21,
+    # o 22 e so mais a frente o 200 — nao era isso que dava a ordem dos nomes.
+    if search and search.strip().isdigit():
+        members.sort(key=lambda m: numero_de_socio(m.get("member_number")))
+    elif search:
         members.sort(
             key=lambda m: (
                 relevancia_pesquisa(search, m.get("name")),

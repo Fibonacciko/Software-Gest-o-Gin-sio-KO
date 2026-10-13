@@ -246,7 +246,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 185 testes e demoram 7 segundos.
+backend** — são 189 testes e demoram 9 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -254,7 +254,8 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios têm testes próprios, no site (109 testes, 2 segundos):
+As contas dos Relatórios e a pesquisa têm testes próprios, no site (120 testes,
+3 segundos):
 
 ```bash
 cd frontend && yarn test --watchAll=false
@@ -408,6 +409,12 @@ arranque de novo — não confie no `--reload`.
 Nas consultas ao servidor, o limite superior de um intervalo tem de ser o **dia
 seguinte** (`$lt`), senão exclui o próprio dia.
 
+**As notas da semana só contam dias úteis.** O ginásio fecha ao fim de semana,
+e dizer que o domingo é o "dia mais calmo" não informa ninguém. As notas do
+ano olham só para segunda a sexta (`DIAS_UTEIS`), com os **zeros preenchidos**:
+uma segunda-feira sem ninguém é o dia mais calmo, e sem isso nem aparecia,
+porque o agrupamento só cria chaves para os dias que existem.
+
 **O "Resultado líquido por modalidade" mostra só a receita.** A quota vai para
 as modalidades do sócio (dividida por igual quando tem mais do que uma) e a
 experimental vai para a modalidade experimentada. A **despesa não é repartida**:
@@ -451,8 +458,15 @@ testes com nomes portugueses, use Python.
   tem português e inglês misturados por razões históricas; siga o que estiver à
   volta.
 - **Pesquisas** ignoram maiúsculas, acentos e as ligações dos nomes ("de", "da",
-  "dos"): `corresponde_pesquisa()` no backend, `correspondePesquisa()` no
-  frontend. Resultados por ordem alfabética, com os **nomes próprios primeiro**.
+  "dos"): `corresponde_pesquisa()` no backend, `corresponde()` em
+  `frontend/src/lib/pesquisa.js`. Resultados por ordem alfabética, com os
+  **nomes próprios primeiro**.
+- **Escrever só dígitos é procurar um número de sócio.** O sócio 002 encontra-se
+  escrevendo `2`, sem os zeros, e a lista vem **por número**: 2, 20, 21, 22… e
+  só mais à frente o 200. Dentro do **telefone** só se procura a partir de
+  **três dígitos** (`DIGITOS_PARA_TELEFONE`): abaixo disso, `2` trazia toda a
+  gente que tem um 2 no número, que é quase toda. As duas pesquisas têm de dar
+  o mesmo — há testes dos dois lados.
 - **A lista de sócios, sem pesquisa, vem por número de sócio** (001, 002, 010 —
   não por texto, senão o 10 vinha a seguir ao 1). É assim que se encontra alguém
   a correr os olhos pela lista. A pesquisa mantém a ordem dos nomes.

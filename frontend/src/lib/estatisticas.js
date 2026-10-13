@@ -48,6 +48,15 @@ export const NOMES_DIAS = [
   'Quinta-feira', 'Sexta-feira', 'Sábado'
 ];
 
+/**
+ * Os dias em que o ginásio abre, pela numeração do `getDay()`.
+ *
+ * O ginásio fecha ao fim de semana. As notas sobre dias da semana só olham
+ * para estes: dizer que o domingo é o dia mais calmo, quando está fechado,
+ * não informa ninguém de nada.
+ */
+export const DIAS_UTEIS = [1, 2, 3, 4, 5];
+
 /** Pela ordem em que a semana se lê em Portugal, para mostrar no ecrã. */
 export const SEMANA = [
   'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira',
@@ -588,24 +597,43 @@ export const destaquesDoAno = ({
       `${rotuloDoMes(mesCheio.chave)}, com ${mesCheio.valor} presenças.`));
   }
 
-  const diaCheio = maiorDe(agrupar(presencasDoAno, (p) => NOMES_DIAS[diaDaSemana(p.check_in_date)]));
-  if (diaCheio) {
-    const total = presencasDoAno.length;
-    const quota = total ? Math.round((diaCheio.valor / total) * 100) : 0;
-    notas.push(frase('semana', 'Dia da semana com mais gente',
-      `${diaCheio.chave}, com ${diaCheio.valor} presenças — ${quota}% do ano.`));
+  const alunoMaisPresente = maiorDe(agrupar(presencasDoAno, (p) => p.member_id));
+  if (alunoMaisPresente) {
+    const nomes = new Map((membros || []).map((m) => [m.id, m.name]));
+    const nome = nomes.get(alunoMaisPresente.chave);
+    if (nome) {
+      notas.push(frase('presencas', 'Aluno mais presente',
+        `${nome}, com ${alunoMaisPresente.valor} treinos.`));
+    }
   }
 
-  const diaVazio = (() => {
-    const porDia = agrupar(presencasDoAno, (p) => NOMES_DIAS[diaDaSemana(p.check_in_date)]);
-    const entradas = Object.entries(porDia);
-    if (entradas.length < 2) return null;
-    const [chave, valor] = entradas.reduce((a, b) => (b[1] < a[1] ? b : a));
-    return { chave, valor };
-  })();
-  if (diaVazio) {
-    notas.push(frase('semana', 'Dia mais calmo',
-      `${diaVazio.chave}, com ${diaVazio.valor} presenças.`));
+  // Só os dias em que o ginásio abre, e com os zeros preenchidos: uma
+  // segunda-feira sem ninguém é o dia mais calmo, e sem isto nem aparecia.
+  const porDiaUtil = {};
+  DIAS_UTEIS.forEach((d) => { porDiaUtil[NOMES_DIAS[d]] = 0; });
+  let presencasEmDiasUteis = 0;
+  presencasDoAno.forEach((p) => {
+    const d = diaDaSemana(p.check_in_date);
+    if (DIAS_UTEIS.includes(d)) {
+      porDiaUtil[NOMES_DIAS[d]] += 1;
+      presencasEmDiasUteis += 1;
+    }
+  });
+
+  if (presencasEmDiasUteis > 0) {
+    const entradas = Object.entries(porDiaUtil);
+    const total = presencasDoAno.length;
+
+    const [diaCheio, cheias] = entradas.reduce((a, b) => (b[1] > a[1] ? b : a));
+    const quota = total ? Math.round((cheias / total) * 100) : 0;
+    notas.push(frase('semana', 'Dia da semana com mais gente',
+      `${diaCheio}, com ${cheias} presenças — ${quota}% do ano.`));
+
+    const [diaVazio, vazias] = entradas.reduce((a, b) => (b[1] < a[1] ? b : a));
+    if (diaVazio !== diaCheio) {
+      notas.push(frase('semana', 'Dia mais calmo',
+        `${diaVazio}, com ${vazias} presenças. (Só dias úteis: ao fim de semana o ginásio está fechado.)`));
+    }
   }
 
   const modalidadeCheia = maiorDe(agrupar(presencasDoAno,
@@ -660,12 +688,6 @@ export const destaquesDoAno = ({
       notas.push(frase('experimental', 'Experimentais: modalidade mais procurada',
         `${modalidadeExperimentais.chave}, com ${modalidadeExperimentais.valor} aulas.`));
     }
-    const rendeu = experimentaisDoAno.reduce((t, e) => t + (Number(e.amount) || 0), 0);
-    notas.push(frase('experimental', 'O que as experimentais renderam',
-      `${rendeu.toFixed(2)} € em ${experimentaisDoAno.length} aulas` +
-      (experimentaisDoAno.length
-        ? `, a uma média de ${(rendeu / experimentaisDoAno.length).toFixed(2)} € por aula.`
-        : '.')));
   }
 
   const faturacaoPorMes = agrupar(pagos, (p) => chaveDoMes(dataDasContas(p)), (p) => p.amount);

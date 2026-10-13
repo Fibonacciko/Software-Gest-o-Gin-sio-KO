@@ -10,7 +10,22 @@
  * - A ordem das palavras não importa: "silva joao" encontra "João da Silva".
  * - Quem tem o **nome principal** a começar pelas letras escritas aparece
  *   primeiro na lista.
+ * - **Escrever só dígitos é procurar um número de sócio.** O 002 encontra-se
+ *   escrevendo "2", e a lista vem por número: 2, 20, 21, 22… e só mais à
+ *   frente o 200. Dentro do telefone só se procura a partir de três dígitos,
+ *   senão "2" trazia toda a gente que tem um 2 no número.
  */
+
+/** A partir de quantos dígitos é que se procura dentro do telefone. */
+const DIGITOS_PARA_TELEFONE = 3;
+
+const soDigitos = (texto) => /^\d+$/.test(String(texto ?? '').trim());
+
+/** O número de sócio como número, para 2 vir antes de 20 e de 200. */
+const comoNumero = (valor) => {
+  const n = parseInt(String(valor ?? '').trim(), 10);
+  return Number.isNaN(n) ? Infinity : n;
+};
 
 const LIGACOES = ['de', 'da', 'do', 'das', 'dos', 'e', 'du', 'del', 'di', 'van', 'von'];
 
@@ -30,21 +45,25 @@ const emPalavras = (texto) =>
  * @param procurado  O que foi escrito na caixa de pesquisa.
  * @param principal  O texto que manda: nome do sócio, do artigo, do utilizador.
  * @param extras     Outros campos onde também vale procurar (descrição, email...).
- * @param numeros    Campos numéricos: telefone e números aceitam parte em
- *                   qualquer posição, porque as pessoas lembram-se do fim.
+ * @param numeros    Campos numéricos. O **primeiro é o número** (de sócio, de
+ *                   artigo): procura-se pelo início, com ou sem os zeros da
+ *                   frente. Os restantes são telefones e afins: aceitam parte
+ *                   em qualquer posição, porque as pessoas lembram-se do fim,
+ *                   mas só a partir de três dígitos.
  */
 export const corresponde = (procurado, principal, extras = [], numeros = []) => {
   const termos = emPalavras(procurado);
   if (termos.length === 0) return true;
 
   const palavras = [...emPalavras(principal), ...extras.flatMap(emPalavras)];
+  const numero = normalizar(numeros[0]);
   const digitos = numeros.map((n) => String(n ?? '').replace(/\D/g, '')).filter(Boolean);
-  const textos = numeros.map(normalizar).filter(Boolean);
 
   return termos.every((termo) => {
     if (palavras.some((p) => p.startsWith(termo))) return true;
-    if (textos.some((t) => t.startsWith(termo) || t.replace(/^0+/, '').startsWith(termo))) return true;
-    if (/^\d+$/.test(termo) && digitos.some((d) => d.includes(termo))) return true;
+    if (numero && (numero.startsWith(termo) || numero.replace(/^0+/, '').startsWith(termo))) return true;
+    if (termo.length >= DIGITOS_PARA_TELEFONE && /^\d+$/.test(termo)
+        && digitos.some((d) => d.includes(termo))) return true;
     return false;
   });
 };
@@ -67,6 +86,16 @@ export const filtrarEOrdenar = (lista, procurado, obter) => {
         return corresponde(termo, principal, extras, numeros);
       })
     : [...lista];
+
+  // Quem escreve dígitos procura um número: a lista vem por número
+  if (termo && soDigitos(termo)) {
+    return filtrada.sort((a, b) => {
+      const na = comoNumero(obter(a).numeros?.[0]);
+      const nb = comoNumero(obter(b).numeros?.[0]);
+      if (na !== nb) return na - nb;
+      return normalizar(obter(a).principal).localeCompare(normalizar(obter(b).principal));
+    });
+  }
 
   return filtrada.sort((a, b) => {
     const pa = obter(a).principal;

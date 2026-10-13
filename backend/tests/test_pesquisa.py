@@ -158,3 +158,52 @@ def test_apelido_aparece_logo_a_primeira_letra(cliente, admin, criar_socio):
     nomes = [m["name"] for m in
              cliente.get("/api/members", headers=admin, params={"search": "f"}).json()]
     assert nomes == ["Inês Ferreira"]
+
+
+# ------------------------------------- procurar pelo numero de socio, sem zeros
+
+def test_o_numero_encontra_se_sem_escrever_os_zeros():
+    """Quem e o socio 002 escreve "2", nao "002"."""
+    assert corresponde_pesquisa("2", "Fábio Guerreiro", "912345678", None, "002")
+    assert corresponde_pesquisa("2", "Outro Qualquer", "913000000", None, "020")
+    assert corresponde_pesquisa("2", "Outro Qualquer", "913000000", None, "200")
+    assert not corresponde_pesquisa("2", "Outro Qualquer", "913000000", None, "003")
+
+
+def test_um_digito_so_nao_procura_dentro_do_telefone():
+    """Senao "2" trazia toda a gente que tem um 2 no telefone, que e quase toda."""
+    assert not corresponde_pesquisa("2", "João Silva", telefone="912345678", numero="007")
+    assert not corresponde_pesquisa("45", "João Silva", telefone="912345678", numero="007")
+    # Tres digitos ja e uma procura a serio pelo telefone
+    assert corresponde_pesquisa("456", "João Silva", telefone="912345678", numero="007")
+
+
+def test_procurar_por_numero_ordena_por_numero(cliente, admin, criar_socio, bd):
+    """Escrever "2" da 2, 20, 21, 22 e so depois 200 — nao a ordem dos nomes."""
+    for numero, nome in [
+        ("002", "Fábio Guerreiro"),
+        ("020", "Ana Antunes"),
+        ("021", "Zacarias Nunes"),
+        ("022", "Bruno Dias"),
+        ("200", "Carlos Melo"),
+        ("201", "Daniela Reis"),
+        ("003", "Elsa Pinto"),      # nao deve aparecer
+    ]:
+        socio = criar_socio(nome=nome, telefone=f"9137{numero}0")
+        # O numero de socio e atribuido pelo servidor; aqui fixa-se a mao
+        bd.members.update_one({"id": socio["id"]}, {"$set": {"member_number": numero}})
+
+    r = cliente.get("/api/members", headers=admin, params={"search": "2"})
+    assert r.status_code == 200
+    numeros = [m["member_number"] for m in r.json()]
+    assert numeros == ["002", "020", "021", "022", "200", "201"]
+
+
+def test_procurar_por_nome_continua_a_mandar_nos_nomes(cliente, admin, criar_socio):
+    """A ordem por numero e so para quem escreve digitos."""
+    criar_socio(nome="Dias Costa", telefone="912400001")
+    criar_socio(nome="Dias Antunes", telefone="912400002")
+
+    nomes = [m["name"] for m in
+             cliente.get("/api/members", headers=admin, params={"search": "dias"}).json()]
+    assert nomes == ["Dias Antunes", "Dias Costa"]
