@@ -168,6 +168,27 @@ Sócio** (só administrador) e no **Stock**:
 - Um artigo só aparece na aplicação se tiver **fotografia e stock**
   (`GET /api/mobile/shop`).
 
+**A montra é um artigo por cor. Os tamanhos são do Stock.**
+
+O Stock desdobra cada modelo por tamanho *e* cor — os capacetes são nove
+linhas, três cores a três tamanhos. Na montra isso davam nove cartões iguais,
+só com a letra diferente, e por decisão do dono não é isso que o sócio deve
+ver: **um artigo por cor**, sem o número do stock à vista.
+
+- O agrupamento é por **nome e cor**, e o nome compara-se sem espaços nas
+  pontas: há `T-Shirt` e `T-Shirt ` na base de dados e para o sócio são o
+  mesmo artigo.
+- Basta **um** dos tamanhos ter fotografia para o artigo aparecer: a
+  fotografia é do produto, não do tamanho.
+- Os tamanhos ainda com stock vão dentro do artigo (`sizes`), por ordem de
+  vestuário e não alfabética (S antes de M), para a aplicação os oferecer.
+- **A reserva continua a ser de um tamanho certo** (`item_id` daquela linha):
+  a montra junta, a reserva não, senão o balcão não sabia qual preparar e o
+  stock não dava baixa no sítio certo.
+- Na gestão, o que se guarda na janela da Loja **vale para todos os tamanhos
+  daquela cor** (nome, preço, descrição, fotografia). O tamanho e a
+  quantidade de cada um só se mexem no Stock, e a janela avisa disso.
+
 ### A ficha do ginásio
 
 Morada, horário, contactos e links (Google Maps, avaliações, redes). Preenche-se
@@ -267,7 +288,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 193 testes e demoram 9 segundos.
+backend** — são 199 testes e demoram 9 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q

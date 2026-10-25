@@ -44,15 +44,28 @@ export type ItemMultimedia = {
   taken_on?: string | null;
 };
 
+/** Um tamanho de um artigo da montra. O `item_id` e o artigo mesmo, no Stock. */
+export type TamanhoDoArtigo = {
+  item_id: string;
+  size?: string | null;
+  quantity: number;
+};
+
+/**
+ * Um artigo da montra: **um por nome e cor**.
+ *
+ * Os tamanhos sao coisa do Stock. Aqui vao dentro do artigo, para se
+ * perguntarem na altura de reservar — nove linhas de capacete davam nove
+ * cartoes iguais, so com a letra diferente.
+ */
 export type Artigo = {
   id: string;
   name: string;
-  size?: string | null;
   color?: string | null;
   price: number;
-  quantity: number;
   description?: string | null;
   photo_url?: string | null;
+  sizes: TamanhoDoArtigo[];
 };
 
 export type FichaDoGinasio = {

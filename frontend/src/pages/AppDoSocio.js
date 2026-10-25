@@ -41,8 +41,11 @@ const PARCEIRO_VAZIO = {
 // Um artigo da montra. É o mesmo registo que o Stock usa — há uma só lista
 // de artigos. O que esta página acrescenta é mostrar se ele chega mesmo à
 // aplicação, que depende da fotografia e do stock.
+// Um artigo da montra. Sem tamanho: os tamanhos são coisa do Stock, e aqui
+// mostra-se um artigo por cor — nove linhas de capacete davam nove cartões
+// iguais, só com a letra diferente.
 const ARTIGO_VAZIO = {
-  name: '', category: 'clothing', size: '', color: '',
+  name: '', category: 'clothing', color: '',
   price: '', quantity: '', description: '', photo_url: ''
 };
 
@@ -127,12 +130,12 @@ const AppDoSocio = ({ language }) => {
       fotoDoGinasio: 'Fotografia do ginásio',
       loja: 'Loja',
       novoArtigo: 'Novo Artigo',
-      lojaAjuda: 'A montra da aplicação. Um artigo só aparece ao sócio se tiver fotografia e stock.',
+      lojaAjuda: 'A montra da aplicação: um artigo por cor. Os tamanhos ficam no Stock e são perguntados ao sócio na altura de reservar. Um artigo só aparece se tiver fotografia e stock.',
       semArtigos: 'Ainda não há artigos. Carregue em Novo Artigo para começar: t-shirts, hoodies, luvas, caneleiras, capacetes, ligaduras…',
       naApp: 'Na aplicação',
       faltaFoto: 'Falta a fotografia',
       semStock: 'Sem stock',
-      tamanho: 'Tamanho',
+      tamanhos: 'Tamanhos',
       cor: 'Cor',
       preco: 'Preço',
       quantidade: 'Quantidade',
@@ -325,26 +328,54 @@ const AppDoSocio = ({ language }) => {
   /* ---------------------------------------------------------------- loja */
 
   /**
+   * Os artigos juntos por nome e cor, como a montra os mostra.
+   *
+   * O Stock desdobra cada modelo por tamanho — nove linhas só para os
+   * capacetes. Na montra isso davam nove cartões iguais, só com a letra
+   * diferente. Os tamanhos ficam no Stock e perguntam-se na reserva.
+   */
+  const gruposDeArtigos = () => {
+    const grupos = new Map();
+    artigos.forEach((a) => {
+      const nome = (a.name || '').trim();
+      const cor = (a.color || '').trim();
+      const chave = `${nome.toLowerCase()}|${cor.toLowerCase()}`;
+      const g = grupos.get(chave) || {
+        chave, name: nome, color: cor, price: 0, description: null,
+        photo_url: null, category: a.category, linhas: []
+      };
+      g.price = Math.max(g.price, Number(a.price) || 0);
+      if (!g.photo_url && a.photo_url) g.photo_url = a.photo_url;
+      if (!g.description && a.description) g.description = a.description;
+      g.linhas.push(a);
+      grupos.set(chave, g);
+    });
+    return [...grupos.values()].sort((x, y) =>
+      `${x.name} ${x.color}`.localeCompare(`${y.name} ${y.color}`, 'pt'));
+  };
+
+  /**
    * Porque é que um artigo não chega à aplicação.
    *
    * A montra do sócio só mostra o que tem fotografia e stock (ver
    * `GET /api/mobile/shop`). Sem isto, um artigo criado ficava invisível e
    * ninguém percebia porquê.
    */
-  const estadoDoArtigo = (a) => {
-    if (!a.photo_url) return { ok: false, texto: txt.faltaFoto, cor: '#dc2626' };
-    if (!a.quantity || a.quantity <= 0) return { ok: false, texto: txt.semStock, cor: '#dc2626' };
+  const estadoDoArtigo = (g) => {
+    if (!g.photo_url) return { ok: false, texto: txt.faltaFoto, cor: '#dc2626' };
+    const stock = g.linhas.reduce((t, a) => t + (Number(a.quantity) || 0), 0);
+    if (stock <= 0) return { ok: false, texto: txt.semStock, cor: '#dc2626' };
     return { ok: true, texto: txt.naApp, cor: '#16a34a' };
   };
 
-  const abrirArtigo = (a) => {
-    setArtigoAEditar(a || null);
-    setArtigoForm(a
+  const abrirArtigo = (g) => {
+    setArtigoAEditar(g || null);
+    setArtigoForm(g
       ? {
-          ...ARTIGO_VAZIO, ...a,
-          size: a.size || '', color: a.color || '', description: a.description || '',
-          photo_url: a.photo_url || '',
-          price: String(a.price ?? ''), quantity: String(a.quantity ?? '')
+          ...ARTIGO_VAZIO,
+          name: g.name, category: g.category || 'clothing', color: g.color,
+          description: g.description || '', photo_url: g.photo_url || '',
+          price: String(g.price ?? ''), quantity: ''
         }
       : ARTIGO_VAZIO);
     setArtigoAberto(true);
@@ -352,22 +383,27 @@ const AppDoSocio = ({ language }) => {
 
   const guardarArtigo = async (e) => {
     e.preventDefault();
-    const corpo = {
+    const comuns = {
       name: artigoForm.name.trim(),
       category: artigoForm.category,
-      size: artigoForm.size.trim() || null,
       color: artigoForm.color.trim() || null,
       price: parseFloat(artigoForm.price) || 0,
-      quantity: parseInt(artigoForm.quantity, 10) || 0,
       description: artigoForm.description.trim() || null,
       photo_url: artigoForm.photo_url || null
     };
     try {
       if (artigoAEditar) {
-        await axios.put(`${API}/inventory/${artigoAEditar.id}`, corpo);
+        // O que se escreve aqui vale para todos os tamanhos desta cor; o
+        // tamanho e a quantidade de cada um ficam como estão, que são do Stock.
+        await Promise.all(artigoAEditar.linhas.map((a) =>
+          axios.put(`${API}/inventory/${a.id}`, {
+            ...comuns, size: a.size || null, quantity: a.quantity
+          })));
         toast.success('Artigo guardado.');
       } else {
-        await axios.post(`${API}/inventory`, corpo);
+        await axios.post(`${API}/inventory`, {
+          ...comuns, size: null, quantity: parseInt(artigoForm.quantity, 10) || 0
+        });
         toast.success('Artigo criado.');
       }
       setArtigoAberto(false);
@@ -377,11 +413,15 @@ const AppDoSocio = ({ language }) => {
     }
   };
 
-  const apagarArtigo = async (a) => {
-    if (!window.confirm(`Apagar "${a.name}"? Deixa de aparecer no Stock e na aplicação.`)) return;
+  const apagarArtigo = async (g) => {
+    const quantos = g.linhas.length;
+    const aviso = quantos > 1
+      ? `Apagar "${g.name}${g.color ? ` · ${g.color}` : ''}"? São ${quantos} tamanhos no Stock, e vão todos.`
+      : `Apagar "${g.name}"? Deixa de aparecer no Stock e na aplicação.`;
+    if (!window.confirm(aviso)) return;
     try {
-      await axios.delete(`${API}/inventory/${a.id}`);
-      toast.success('Artigo eliminado.');
+      await Promise.all(g.linhas.map((a) => axios.delete(`${API}/inventory/${a.id}`)));
+      toast.success(quantos > 1 ? `${quantos} tamanhos eliminados.` : 'Artigo eliminado.');
       carregarTudo();
     } catch {
       toast.error('Erro ao eliminar');
@@ -455,7 +495,7 @@ const AppDoSocio = ({ language }) => {
       <div className="flex flex-wrap gap-2">
         <Separador id="parceiros" icone={Handshake} texto={txt.parceiros} quantos={parceiros.length} />
         <Separador id="multimedia" icone={ImageIcon} texto={txt.multimedia} quantos={media.length} />
-        <Separador id="loja" icone={ShoppingBag} texto={txt.loja} quantos={artigos.length} />
+        <Separador id="loja" icone={ShoppingBag} texto={txt.loja} quantos={gruposDeArtigos().length} />
         <button
           type="button"
           onClick={() => setAba('ginasio')}
@@ -546,14 +586,15 @@ const AppDoSocio = ({ language }) => {
             </CardContent></Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {artigos.map((a) => {
-                const estado = estadoDoArtigo(a);
+              {gruposDeArtigos().map((g) => {
+                const estado = estadoDoArtigo(g);
+                const tamanhos = g.linhas.map((a) => a.size).filter(Boolean);
                 return (
-                  <Card key={a.id} className="card-shadow overflow-hidden" data-testid={`artigo-${a.id}`}>
-                    {a.photo_url ? (
+                  <Card key={g.chave} className="card-shadow overflow-hidden" data-testid={`artigo-${g.chave}`}>
+                    {g.photo_url ? (
                       <img
-                        src={enderecoDaImagem(a.photo_url)}
-                        alt={a.name}
+                        src={enderecoDaImagem(g.photo_url)}
+                        alt={g.name}
                         className="w-full h-40 object-cover"
                       />
                     ) : (
@@ -567,14 +608,14 @@ const AppDoSocio = ({ language }) => {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                            {a.name}
+                            {g.name}
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {[a.size, a.color].filter(Boolean).join(' · ') || '—'}
+                            {g.color || '—'}
                           </p>
                         </div>
                         <p className="font-bold shrink-0" style={{ color: 'var(--ko-primary-orange)' }}>
-                          {Number(a.price || 0).toFixed(2)} €
+                          {Number(g.price || 0).toFixed(2)} €
                         </p>
                       </div>
 
@@ -583,24 +624,28 @@ const AppDoSocio = ({ language }) => {
                           variant="outline"
                           className="text-xs font-normal"
                           style={{ borderColor: estado.cor, color: estado.cor }}
-                          data-testid={`estado-artigo-${a.id}`}
+                          data-testid={`estado-artigo-${g.chave}`}
                         >
                           {estado.ok ? <Eye size={12} className="mr-1" /> : <AlertCircle size={12} className="mr-1" />}
                           {estado.texto}
                         </Badge>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {a.quantity} em stock
-                        </span>
+                        {/* Os tamanhos são do Stock; aqui só se diz quais há,
+                            para se saber o que o sócio vai poder escolher. */}
+                        {tamanhos.length > 0 && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {txt.tamanhos}: {tamanhos.join(', ')}
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex gap-2 mt-3">
                         <Button variant="outline" size="sm" className="flex-1"
-                                onClick={() => abrirArtigo(a)} data-testid={`editar-artigo-${a.id}`}>
+                                onClick={() => abrirArtigo(g)} data-testid={`editar-artigo-${g.chave}`}>
                           <Edit size={14} className="mr-1" /> {txt.editar}
                         </Button>
                         <Button variant="outline" size="sm"
                                 className="text-red-600 hover:text-red-700"
-                                onClick={() => apagarArtigo(a)} data-testid={`apagar-artigo-${a.id}`}>
+                                onClick={() => apagarArtigo(g)} data-testid={`apagar-artigo-${g.chave}`}>
                           <Trash2 size={14} />
                         </Button>
                       </div>
@@ -827,6 +872,13 @@ const AppDoSocio = ({ language }) => {
           <DialogHeader>
             <DialogTitle>{artigoAEditar ? txt.editar : txt.novoArtigo}</DialogTitle>
           </DialogHeader>
+          {artigoAEditar && artigoAEditar.linhas.length > 1 && (
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              Este artigo tem {artigoAEditar.linhas.length} tamanhos no Stock
+              ({artigoAEditar.linhas.map((a) => a.size).filter(Boolean).join(', ')}).
+              O que guardar aqui vale para todos.
+            </p>
+          )}
           <form onSubmit={guardarArtigo} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -853,15 +905,6 @@ const AppDoSocio = ({ language }) => {
                 </Select>
               </div>
               <div>
-                <Label>{txt.tamanho}</Label>
-                <Input
-                  value={artigoForm.size}
-                  onChange={(e) => setArtigoForm({ ...artigoForm, size: e.target.value })}
-                  placeholder="XS, S, M, L, XL, 12oz…"
-                  data-testid="artigo-tamanho"
-                />
-              </div>
-              <div>
                 <Label>{txt.cor}</Label>
                 <Input
                   value={artigoForm.color}
@@ -880,16 +923,20 @@ const AppDoSocio = ({ language }) => {
                   data-testid="artigo-preco"
                 />
               </div>
-              <div>
-                <Label>{txt.quantidade} *</Label>
-                <Input
-                  type="number" min="0"
-                  value={artigoForm.quantity}
-                  onChange={(e) => setArtigoForm({ ...artigoForm, quantity: e.target.value })}
-                  required
-                  data-testid="artigo-quantidade"
-                />
-              </div>
+              {/* A quantidade só se pergunta ao criar. Num artigo que já
+                  existe ela é de cada tamanho, e isso é do Stock. */}
+              {!artigoAEditar && (
+                <div>
+                  <Label>{txt.quantidade} *</Label>
+                  <Input
+                    type="number" min="0"
+                    value={artigoForm.quantity}
+                    onChange={(e) => setArtigoForm({ ...artigoForm, quantity: e.target.value })}
+                    required
+                    data-testid="artigo-quantidade"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -925,6 +972,7 @@ const AppDoSocio = ({ language }) => {
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Sem fotografia o artigo não aparece na montra da aplicação.
+                É a mesma para todos os tamanhos desta cor.
               </p>
             </div>
 

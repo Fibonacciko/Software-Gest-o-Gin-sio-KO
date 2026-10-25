@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import {
   Artigo,
+  TamanhoDoArtigo,
   carregarMontra,
   carregarReservas,
   enderecoDaImagem,
@@ -41,6 +42,7 @@ export default function EcraLoja({ socio }: Props) {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [aAtualizar, setAAtualizar] = useState(false);
   const [escolhido, setEscolhido] = useState<Artigo | null>(null);
+  const [tamanho, setTamanho] = useState<TamanhoDoArtigo | null>(null);
   const [quantidade, setQuantidade] = useState(1);
   const [aReservar, setAReservar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -73,16 +75,24 @@ export default function EcraLoja({ socio }: Props) {
 
   const abrir = (artigo: Artigo) => {
     setEscolhido(artigo);
+    // Com um tamanho so, nao se pergunta nada: escolhe-se sozinho
+    setTamanho(artigo.sizes?.length === 1 ? artigo.sizes[0] : null);
     setQuantidade(1);
     setErro(null);
   };
 
   const confirmar = async () => {
     if (!escolhido) return;
+    if (!tamanho) {
+      setErro('Escolhe o tamanho.');
+      return;
+    }
     setAReservar(true);
     setErro(null);
     try {
-      await reservarArtigo(socio.id, escolhido.id, quantidade);
+      // Reserva-se o tamanho certo, e não o artigo em geral: é o que o
+      // balcão tem de preparar e é onde o stock dá baixa.
+      await reservarArtigo(socio.id, tamanho.item_id, quantidade);
       setFeito(`${escolhido.name} reservado. Levanta no ginásio.`);
       setEscolhido(null);
       await buscar();
@@ -156,7 +166,7 @@ export default function EcraLoja({ socio }: Props) {
 
         {artigos.map((a) => {
           const foto = enderecoDaImagem(a.photo_url);
-          const detalhes = [a.size, a.color].filter(Boolean).join(' · ');
+          const detalhes = a.color || '';
           return (
             <Pressable
               key={a.id}
@@ -191,13 +201,39 @@ export default function EcraLoja({ socio }: Props) {
             {escolhido ? (
               <>
                 <Text style={estilos.janelaTitulo}>{escolhido.name}</Text>
-                {[escolhido.size, escolhido.color].filter(Boolean).length > 0 ? (
-                  <Text style={estilos.janelaDetalhes}>
-                    {[escolhido.size, escolhido.color].filter(Boolean).join(' · ')}
-                  </Text>
+                {escolhido.color ? (
+                  <Text style={estilos.janelaDetalhes}>{escolhido.color}</Text>
                 ) : null}
                 {escolhido.description ? (
                   <Text style={estilos.janelaDescricao}>{escolhido.description}</Text>
+                ) : null}
+
+                {/* O tamanho pergunta-se aqui, e não na montra: lá mostra-se
+                    o artigo e a cor, que é o que se escolhe com os olhos. */}
+                {escolhido.sizes.length > 1 ? (
+                  <View style={estilos.tamanhos}>
+                    <Text style={estilos.quantidadeEtiqueta}>Tamanho</Text>
+                    <View style={estilos.tamanhosLinha}>
+                      {escolhido.sizes.map((t) => {
+                        const activo = tamanho?.item_id === t.item_id;
+                        return (
+                          <Pressable
+                            key={t.item_id}
+                            style={[estilos.tamanho, activo && estilos.tamanhoEscolhido]}
+                            onPress={() => {
+                              setTamanho(t);
+                              setQuantidade((q) => Math.min(q, t.quantity));
+                              setErro(null);
+                            }}
+                          >
+                            <Text style={[estilos.tamanhoTexto, activo && estilos.tamanhoTextoEscolhido]}>
+                              {t.size || 'Único'}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
                 ) : null}
 
                 <View style={estilos.quantidadeLinha}>
@@ -212,7 +248,7 @@ export default function EcraLoja({ socio }: Props) {
                     <Text style={estilos.contadorValor}>{quantidade}</Text>
                     <Pressable
                       style={estilos.contadorBotao}
-                      onPress={() => setQuantidade((q) => Math.min(escolhido.quantity, q + 1))}
+                      onPress={() => setQuantidade((q) => Math.min(tamanho?.quantity ?? 1, q + 1))}
                     >
                       <Text style={estilos.contadorTexto}>+</Text>
                     </Pressable>
@@ -305,6 +341,21 @@ const estilos = StyleSheet.create({
   janelaTitulo: { color: cores.texto, fontSize: 20, fontWeight: '800' },
   janelaDetalhes: { color: cores.textoSecundario, fontSize: 14, marginTop: 2 },
   janelaDescricao: { color: cores.textoSecundario, fontSize: 14, marginTop: espaco.s, lineHeight: 20 },
+  tamanhos: { marginTop: espaco.g },
+  tamanhosLinha: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.s, marginTop: espaco.s },
+  tamanho: {
+    minWidth: 54,
+    paddingVertical: espaco.s,
+    paddingHorizontal: espaco.m,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    backgroundColor: cores.fundoElevado,
+    alignItems: 'center',
+  },
+  tamanhoEscolhido: { borderColor: cores.laranjaClaro, backgroundColor: cores.laranja },
+  tamanhoTexto: { color: cores.texto, fontSize: 15, fontWeight: '600' },
+  tamanhoTextoEscolhido: { color: cores.texto },
   quantidadeLinha: {
     flexDirection: 'row',
     alignItems: 'center',

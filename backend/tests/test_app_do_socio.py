@@ -172,6 +172,88 @@ def test_a_fotografia_fica_guardada_no_artigo(cliente, admin, artigo_com_foto):
     assert artigo_com_foto["photo_url"] == "/api/uploads/luvas.jpg"
 
 
+# ------------------------------------ a montra junta os tamanhos, nao as cores
+
+def _capacete(cliente, admin, tamanho, cor, quantidade, foto=None):
+    return cliente.post("/api/inventory", headers=admin, json={
+        "name": "Capacete de Boxe", "category": "equipment",
+        "size": tamanho, "color": cor, "quantity": quantidade, "price": 40.0,
+        "photo_url": foto,
+    }).json()
+
+
+def test_a_montra_mostra_um_artigo_por_cor_e_nao_por_tamanho(cliente, admin):
+    """Nove linhas de capacete no Stock davam nove cartoes iguais na montra."""
+    for cor in ("Preto", "Branco"):
+        for tamanho, quantos in (("S", 2), ("M", 5), ("L", 1)):
+            _capacete(cliente, admin, tamanho, cor, quantos, "/api/uploads/cap.jpg")
+
+    montra = cliente.get("/api/mobile/shop").json()
+    assert len(montra) == 2
+    assert sorted(a["color"] for a in montra) == ["Branco", "Preto"]
+    assert all(a["name"] == "Capacete de Boxe" for a in montra)
+
+
+def test_os_tamanhos_vao_dentro_do_artigo_para_a_app_perguntar(cliente, admin):
+    for tamanho, quantos in (("L", 1), ("S", 2), ("M", 5)):
+        _capacete(cliente, admin, tamanho, "Preto", quantos, "/api/uploads/cap.jpg")
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    # Por ordem de vestuario, nao alfabetica
+    assert [t["size"] for t in artigo["sizes"]] == ["S", "M", "L"]
+    assert [t["quantity"] for t in artigo["sizes"]] == [2, 5, 1]
+    # Cada tamanho leva o id do artigo mesmo, para a reserva dar baixa no certo
+    assert all(t["item_id"] for t in artigo["sizes"])
+
+
+def test_um_tamanho_esgotado_nao_aparece_para_reserva(cliente, admin):
+    _capacete(cliente, admin, "S", "Preto", 0, "/api/uploads/cap.jpg")
+    _capacete(cliente, admin, "M", "Preto", 4, "/api/uploads/cap.jpg")
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    assert [t["size"] for t in artigo["sizes"]] == ["M"]
+
+
+def test_basta_um_tamanho_ter_fotografia_para_o_artigo_aparecer(cliente, admin):
+    """A fotografia e do produto, nao do tamanho."""
+    _capacete(cliente, admin, "S", "Preto", 2, None)
+    _capacete(cliente, admin, "M", "Preto", 4, "/api/uploads/cap.jpg")
+
+    montra = cliente.get("/api/mobile/shop").json()
+    assert len(montra) == 1
+    assert montra[0]["photo_url"] == "/api/uploads/cap.jpg"
+    assert len(montra[0]["sizes"]) == 2
+
+
+def test_o_nome_com_espaco_a_mais_e_o_mesmo_artigo(cliente, admin):
+    """Ha "T-Shirt" e "T-Shirt " na base de dados; para o socio e um so."""
+    for nome in ("T-Shirt", "T-Shirt "):
+        cliente.post("/api/inventory", headers=admin, json={
+            "name": nome, "category": "clothing", "size": "M", "color": "Preto",
+            "quantity": 3, "price": 15.0, "photo_url": "/api/uploads/t.jpg",
+        })
+
+    montra = cliente.get("/api/mobile/shop").json()
+    assert len(montra) == 1
+    assert montra[0]["name"] == "T-Shirt"
+
+
+def test_reservar_continua_a_ser_de_um_tamanho_certo(cliente, admin, criar_socio):
+    """A montra junta, a reserva nao: o balcao tem de saber qual preparar."""
+    _capacete(cliente, admin, "S", "Preto", 2, "/api/uploads/cap.jpg")
+    _capacete(cliente, admin, "M", "Preto", 4, "/api/uploads/cap.jpg")
+    socio = criar_socio(telefone="913700001")
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    medio = next(t for t in artigo["sizes"] if t["size"] == "M")
+
+    r = cliente.post("/api/mobile/reservations", json={
+        "item_id": medio["item_id"], "member_id": socio["id"], "quantity": 1,
+    })
+    assert r.status_code == 200, r.text
+    assert r.json()["item_details"] == "M - Preto"
+
+
 # ---------------------------------------------------------------------- reservas
 
 def test_reservar_pela_app(cliente, admin, criar_socio, artigo_com_foto):

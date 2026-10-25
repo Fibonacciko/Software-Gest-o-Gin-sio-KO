@@ -560,6 +560,29 @@ class MediaItemCreate(BaseModel):
 # O socio reserva na app e levanta no ginasio. Nao e uma venda: so avisa o
 # balcao para deixar o artigo preparado. A venda faz-se quando ele chega.
 
+class ShopSize(BaseModel):
+    """Um tamanho disponivel de um artigo da montra."""
+    item_id: str                          # O artigo mesmo, no Stock
+    size: Optional[str] = None
+    quantity: int
+
+
+class ShopItem(BaseModel):
+    """Um artigo da montra: **um por nome e cor**.
+
+    Os tamanhos sao coisa do Stock, nao da montra: ao socio mostra-se o
+    artigo e a cor, e o tamanho pergunta-se no momento de reservar. Nove
+    linhas de capacete davam nove cartoes iguais, so com a letra diferente.
+    """
+    id: str                               # O primeiro tamanho; serve de chave
+    name: str
+    color: Optional[str] = None
+    price: float
+    description: Optional[str] = None
+    photo_url: Optional[str] = None
+    sizes: List[ShopSize] = Field(default_factory=list)
+
+
 class ReservationStatus(str, Enum):
     PENDING = "pending"        # Pedida, por preparar
     READY = "ready"            # Preparada, a espera que o socio venha
@@ -1688,6 +1711,17 @@ async def recalcular_validades(member_id: str, mexer_no_seguro: bool = True):
     if operacao:
         await db.members.update_one({"id": member_id}, operacao)
         BusinessCache.invalidate_member_cache()
+
+# Ordem por que os tamanhos se leem, e nao a alfabetica: XS, S, M, L, XL.
+# O que nao esta na lista (12oz, 16oz) vai a seguir, por ordem natural.
+ORDEM_DOS_TAMANHOS = ["xxs", "xs", "s", "m", "l", "xl", "xxl", "xxxl"]
+
+def ordem_do_tamanho(tamanho):
+    t = (tamanho or "").strip().lower()
+    if t in ORDEM_DOS_TAMANHOS:
+        return (0, ORDEM_DOS_TAMANHOS.index(t), "")
+    return (1, 0, t)
+
 
 MESES_PARA_SEGURO = 3
 
@@ -4301,14 +4335,55 @@ async def multimedia_para_a_app():
     return [MediaItem(**parse_from_mongo(m)) for m in itens]
 
 
-@api_router.get("/mobile/shop", response_model=List[InventoryItem])
+@api_router.get("/mobile/shop", response_model=List[ShopItem])
 async def montra_para_a_app():
-    """A montra: so o que tem stock e fotografia."""
-    artigos = await db.inventory.find({
-        "quantity": {"$gt": 0},
-        "photo_url": {"$nin": [None, ""]}
-    }).sort("name", 1).to_list(500)
-    return [InventoryItem(**parse_from_mongo(a)) for a in artigos]
+    """A montra: um artigo por nome e cor, so o que tem stock e fotografia.
+
+    O Stock desdobra cada modelo por tamanho — nove linhas so para os
+    capacetes. Na montra isso dava nove cartoes iguais, so com a letra
+    diferente. Aqui juntam-se por nome e cor, e os tamanhos que ainda ha vao
+    dentro, para a aplicacao os perguntar na altura de reservar.
+
+    O nome e comparado sem espacos nas pontas: ha "T-Shirt" e "T-Shirt " na
+    base de dados, e para o socio sao o mesmo artigo.
+    """
+    artigos = await db.inventory.find({"quantity": {"$gt": 0}}).to_list(1000)
+
+    grupos: Dict[tuple, dict] = {}
+    for a in artigos:
+        nome = (a.get("name") or "").strip()
+        cor = (a.get("color") or "").strip()
+        chave = (nome.lower(), cor.lower())
+
+        grupo = grupos.get(chave)
+        if grupo is None:
+            grupo = grupos[chave] = {
+                "id": a["id"], "name": nome, "color": cor or None,
+                "price": 0.0, "description": None, "photo_url": None, "sizes": []
+            }
+
+        # Os precos sao iguais dentro da mesma cor; se algum dia diferirem,
+        # mostra-se o mais alto para ninguem ser surpreendido ao balcao.
+        grupo["price"] = max(grupo["price"], float(a.get("price") or 0))
+        if not grupo["photo_url"] and a.get("photo_url"):
+            grupo["photo_url"] = a["photo_url"]
+            grupo["id"] = a["id"]
+        if not grupo["description"] and a.get("description"):
+            grupo["description"] = a["description"]
+
+        grupo["sizes"].append(ShopSize(
+            item_id=a["id"],
+            size=(a.get("size") or "").strip() or None,
+            quantity=int(a.get("quantity") or 0),
+        ))
+
+    # So entra na montra o que tem fotografia; sem ela o cartao fica vazio
+    montra = [g for g in grupos.values() if g["photo_url"]]
+    for g in montra:
+        # Os tamanhos por ordem de vestuario, e nao alfabetica: S antes de M
+        g["sizes"].sort(key=lambda t: ordem_do_tamanho(t.size))
+    montra.sort(key=lambda g: (g["name"].lower(), (g["color"] or "").lower()))
+    return [ShopItem(**g) for g in montra]
 
 
 @api_router.post("/mobile/reservations", response_model=Reservation)
