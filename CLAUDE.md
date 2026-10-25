@@ -27,8 +27,11 @@ da validade**. Sem pagamento registado, fica Inativo.
 
 - **Anual, 20 €.** Renova por 365 dias a partir da data de pagamento.
 - A **validade da inscrição** (`expiry_date`) acompanha sempre o seguro.
-- O aviso no painel usa a validade real: avisa a 30 dias, avisa quando expira, e
-  cala-se assim que é pago.
+- O painel avisa **30 dias antes** ("Seguros a renovar em breve"), pela validade
+  real da ficha. O aviso grande de **seguro já expirado saiu do painel**: o
+  estado do seguro aparece agora em cada check-in e em cada presença de hoje,
+  e os Membros têm o filtro "Seguro por regularizar". Estava a dizer três
+  vezes a mesma coisa.
 - No **Painel**, a quota e o seguro aparecem sempre juntos: na ficha que abre
   depois do check-in (uma linha cada, com o selo no fim, alinhado com as
   modalidades) e em cada cartão das **Presenças de Hoje** ("Quota ativa",
@@ -156,8 +159,14 @@ Sócio** (só administrador) e no **Stock**:
   redes do ginásio. Um minuto de vídeo de telemóvel são 50 a 100 MB e as redes
   já têm o conteúdo e já têm público. O colaborador também pode publicar: é
   quem está no ginásio a tirar as fotos.
-- **Montra** — é o Stock. Um artigo só aparece na aplicação se tiver
-  **fotografia e stock**.
+- **Loja** — a montra, vista do lado de cá. É a **mesma lista do Stock**:
+  um artigo criado aqui aparece lá e vice-versa, porque é um só registo em
+  `inventory`. O que esta página acrescenta é dizer, artigo a artigo, se ele
+  chega mesmo ao telemóvel — **Na aplicação**, **Falta a fotografia** ou
+  **Sem stock**. Sem isso, um artigo criado ficava invisível ao sócio e
+  ninguém percebia porquê.
+- Um artigo só aparece na aplicação se tiver **fotografia e stock**
+  (`GET /api/mobile/shop`).
 
 ### A ficha do ginásio
 

@@ -678,7 +678,11 @@ const Dashboard = ({ language, translations }) => {
       )}
       </div>
 
-      {(alerts.birthdays_today.length > 0 || alerts.insurance_due_today.length > 0 || alerts.birthdays_upcoming.length > 0 || alerts.insurance_upcoming.length > 0) && (
+      {/* O aviso de seguro expirado saiu do Painel: o estado do seguro
+          aparece agora em cada check-in e em cada presença de hoje, e há
+          um filtro próprio nos Membros. O que ficou é o que ainda não se
+          vê noutro lado: aniversários e seguros a acabar em breve. */}
+      {(alerts.birthdays_today.length > 0 || alerts.birthdays_upcoming.length > 0 || alerts.insurance_upcoming.length > 0) && (
         <div className="space-y-3">
           {alerts.birthdays_today.length > 0 && (
             <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #fff7ed, #ffedd5)', border: '1px solid #fdba74' }}>
@@ -687,24 +691,6 @@ const Dashboard = ({ language, translations }) => {
                 <p className="font-semibold" style={{ color: '#c2410c' }}>Aniversário hoje!</p>
                 <p className="text-sm" style={{ color: '#9a3412' }}>
                   {alerts.birthdays_today.map((b) => `${b.name} (${b.age} anos)`).join(', ')}
-                </p>
-              </div>
-            </div>
-          )}
-          {alerts.insurance_due_today.length > 0 && (
-            <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #fff7ed, #ffedd5)', border: '1px solid #fb923c' }}>
-              <span className="text-2xl">🛡️</span>
-              <div>
-                <p className="font-semibold" style={{ color: '#c2410c' }}>Renovação de seguro necessária</p>
-                <p className="text-sm" style={{ color: '#9a3412' }}>
-                  {alerts.insurance_due_today.map((i) => {
-                    if (i.expired) {
-                      const dias = Math.abs(i.days_until);
-                      return `${i.name}: seguro expirado há ${dias} dia(s)`;
-                    }
-                    if (i.paid) return `${i.name}: seguro termina hoje`;
-                    return `${i.name} completa ${i.years} ano(s) de inscrição hoje`;
-                  }).join(', ')}
                 </p>
               </div>
             </div>

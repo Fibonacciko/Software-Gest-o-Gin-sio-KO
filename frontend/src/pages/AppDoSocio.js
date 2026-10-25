@@ -18,7 +18,9 @@ import {
   Link as LinkIcon,
   Eye,
   EyeOff,
-  MapPin
+  MapPin,
+  ShoppingBag,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -34,6 +36,14 @@ export const enderecoDaImagem = (url) => {
 const PARCEIRO_VAZIO = {
   name: '', benefit: '', category: '', description: '',
   logo_url: '', address: '', phone: '', website: '', is_active: true
+};
+
+// Um artigo da montra. É o mesmo registo que o Stock usa — há uma só lista
+// de artigos. O que esta página acrescenta é mostrar se ele chega mesmo à
+// aplicação, que depende da fotografia e do stock.
+const ARTIGO_VAZIO = {
+  name: '', category: 'clothing', size: '', color: '',
+  price: '', quantity: '', description: '', photo_url: ''
 };
 
 const MEDIA_VAZIA = { kind: 'photo', url: '', caption: '', taken_on: '', is_active: true };
@@ -64,6 +74,10 @@ const AppDoSocio = ({ language }) => {
 
   const [mediaAberta, setMediaAberta] = useState(false);
   const [mediaForm, setMediaForm] = useState(MEDIA_VAZIA);
+  const [artigos, setArtigos] = useState([]);
+  const [artigoAberto, setArtigoAberto] = useState(false);
+  const [artigoForm, setArtigoForm] = useState(ARTIGO_VAZIO);
+  const [artigoAEditar, setArtigoAEditar] = useState(null);
   const [aEnviar, setAEnviar] = useState(false);
   const [ginasio, setGinasio] = useState(null);
   const [aGuardarGinasio, setAGuardarGinasio] = useState(false);
@@ -71,6 +85,7 @@ const AppDoSocio = ({ language }) => {
   const ficheiroLogo = useRef(null);
   const ficheiroFoto = useRef(null);
   const ficheiroGinasio = useRef(null);
+  const ficheiroArtigo = useRef(null);
 
   const t = {
     pt: {
@@ -109,7 +124,19 @@ const AppDoSocio = ({ language }) => {
       ginasio: 'O Ginásio',
       ginasioAjuda: 'Contactos, horário e localização. É o que o sócio vê no separador "O Ginásio" da aplicação.',
       sobre: 'Sobre o ginásio',
-      fotoDoGinasio: 'Fotografia do ginásio'
+      fotoDoGinasio: 'Fotografia do ginásio',
+      loja: 'Loja',
+      novoArtigo: 'Novo Artigo',
+      lojaAjuda: 'A montra da aplicação. Um artigo só aparece ao sócio se tiver fotografia e stock.',
+      semArtigos: 'Ainda não há artigos. Carregue em Novo Artigo para começar: t-shirts, hoodies, luvas, caneleiras, capacetes, ligaduras…',
+      naApp: 'Na aplicação',
+      faltaFoto: 'Falta a fotografia',
+      semStock: 'Sem stock',
+      tamanho: 'Tamanho',
+      cor: 'Cor',
+      preco: 'Preço',
+      quantidade: 'Quantidade',
+      fotografiaDoArtigo: 'Fotografia do artigo'
     },
     en: {
       titulo: 'Member App',
@@ -132,6 +159,8 @@ const AppDoSocio = ({ language }) => {
       aEnviar: 'Uploading…',
       guardar: 'Save',
       cancelar: 'Cancel',
+      loja: 'Shop',
+      novoArtigo: 'New Item',
       tipo: 'Type',
       fotografia: 'Photo',
       videoLink: 'Video (link)',
@@ -159,14 +188,16 @@ const AppDoSocio = ({ language }) => {
   const carregarTudo = async () => {
     try {
       setACarregar(true);
-      const [p, m, g] = await Promise.all([
+      const [p, m, g, a] = await Promise.all([
         axios.get(`${API}/partners`).catch(() => ({ data: [] })),
         axios.get(`${API}/media`).catch(() => ({ data: [] })),
-        axios.get(`${API}/gym-info`).catch(() => ({ data: {} }))
+        axios.get(`${API}/gym-info`).catch(() => ({ data: {} })),
+        axios.get(`${API}/inventory`).catch(() => ({ data: [] }))
       ]);
       setParceiros(p.data);
       setMedia(m.data);
       setGinasio(g.data || {});
+      setArtigos(a.data);
     } finally {
       setACarregar(false);
     }
@@ -291,6 +322,72 @@ const AppDoSocio = ({ language }) => {
     }
   };
 
+  /* ---------------------------------------------------------------- loja */
+
+  /**
+   * Porque é que um artigo não chega à aplicação.
+   *
+   * A montra do sócio só mostra o que tem fotografia e stock (ver
+   * `GET /api/mobile/shop`). Sem isto, um artigo criado ficava invisível e
+   * ninguém percebia porquê.
+   */
+  const estadoDoArtigo = (a) => {
+    if (!a.photo_url) return { ok: false, texto: txt.faltaFoto, cor: '#dc2626' };
+    if (!a.quantity || a.quantity <= 0) return { ok: false, texto: txt.semStock, cor: '#dc2626' };
+    return { ok: true, texto: txt.naApp, cor: '#16a34a' };
+  };
+
+  const abrirArtigo = (a) => {
+    setArtigoAEditar(a || null);
+    setArtigoForm(a
+      ? {
+          ...ARTIGO_VAZIO, ...a,
+          size: a.size || '', color: a.color || '', description: a.description || '',
+          photo_url: a.photo_url || '',
+          price: String(a.price ?? ''), quantity: String(a.quantity ?? '')
+        }
+      : ARTIGO_VAZIO);
+    setArtigoAberto(true);
+  };
+
+  const guardarArtigo = async (e) => {
+    e.preventDefault();
+    const corpo = {
+      name: artigoForm.name.trim(),
+      category: artigoForm.category,
+      size: artigoForm.size.trim() || null,
+      color: artigoForm.color.trim() || null,
+      price: parseFloat(artigoForm.price) || 0,
+      quantity: parseInt(artigoForm.quantity, 10) || 0,
+      description: artigoForm.description.trim() || null,
+      photo_url: artigoForm.photo_url || null
+    };
+    try {
+      if (artigoAEditar) {
+        await axios.put(`${API}/inventory/${artigoAEditar.id}`, corpo);
+        toast.success('Artigo guardado.');
+      } else {
+        await axios.post(`${API}/inventory`, corpo);
+        toast.success('Artigo criado.');
+      }
+      setArtigoAberto(false);
+      carregarTudo();
+    } catch (erro) {
+      toast.error(erro.response?.data?.detail || 'Erro ao guardar');
+    }
+  };
+
+  const apagarArtigo = async (a) => {
+    if (!window.confirm(`Apagar "${a.name}"? Deixa de aparecer no Stock e na aplicação.`)) return;
+    try {
+      await axios.delete(`${API}/inventory/${a.id}`);
+      toast.success('Artigo eliminado.');
+      carregarTudo();
+    } catch {
+      toast.error('Erro ao eliminar');
+    }
+  };
+
   const guardarGinasio = async (e) => {
     e.preventDefault();
     try {
@@ -341,12 +438,16 @@ const AppDoSocio = ({ language }) => {
         </div>
         {aba !== 'ginasio' && (
           <Button
-            onClick={() => (aba === 'parceiros' ? abrirParceiro(null) : setMediaAberta(true))}
+            onClick={() => {
+              if (aba === 'parceiros') return abrirParceiro(null);
+              if (aba === 'loja') return abrirArtigo(null);
+              return setMediaAberta(true);
+            }}
             className="btn-hover"
             data-testid="novo-item"
           >
             <Plus className="mr-2" size={16} />
-            {aba === 'parceiros' ? txt.novoParceiro : txt.novaFoto}
+            {aba === 'parceiros' ? txt.novoParceiro : aba === 'loja' ? txt.novoArtigo : txt.novaFoto}
           </Button>
         )}
       </div>
@@ -354,6 +455,7 @@ const AppDoSocio = ({ language }) => {
       <div className="flex flex-wrap gap-2">
         <Separador id="parceiros" icone={Handshake} texto={txt.parceiros} quantos={parceiros.length} />
         <Separador id="multimedia" icone={ImageIcon} texto={txt.multimedia} quantos={media.length} />
+        <Separador id="loja" icone={ShoppingBag} texto={txt.loja} quantos={artigos.length} />
         <button
           type="button"
           onClick={() => setAba('ginasio')}
@@ -435,6 +537,80 @@ const AppDoSocio = ({ language }) => {
             ))}
           </div>
         )
+      ) : aba === 'loja' ? (
+        <>
+          <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2">{txt.lojaAjuda}</p>
+          {artigos.length === 0 ? (
+            <Card><CardContent className="p-12 text-center text-gray-500 dark:text-gray-400">
+              {txt.semArtigos}
+            </CardContent></Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {artigos.map((a) => {
+                const estado = estadoDoArtigo(a);
+                return (
+                  <Card key={a.id} className="card-shadow overflow-hidden" data-testid={`artigo-${a.id}`}>
+                    {a.photo_url ? (
+                      <img
+                        src={enderecoDaImagem(a.photo_url)}
+                        alt={a.name}
+                        className="w-full h-40 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-40 flex flex-col items-center justify-center gap-2"
+                           style={{ background: 'var(--background-elevated)' }}>
+                        <ShoppingBag size={28} className="text-gray-400" />
+                        <span className="text-xs text-gray-400">{txt.faltaFoto}</span>
+                      </div>
+                    )}
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                            {a.name}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                            {[a.size, a.color].filter(Boolean).join(' · ') || '—'}
+                          </p>
+                        </div>
+                        <p className="font-bold shrink-0" style={{ color: 'var(--ko-primary-orange)' }}>
+                          {Number(a.price || 0).toFixed(2)} €
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 mt-3">
+                        <Badge
+                          variant="outline"
+                          className="text-xs font-normal"
+                          style={{ borderColor: estado.cor, color: estado.cor }}
+                          data-testid={`estado-artigo-${a.id}`}
+                        >
+                          {estado.ok ? <Eye size={12} className="mr-1" /> : <AlertCircle size={12} className="mr-1" />}
+                          {estado.texto}
+                        </Badge>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {a.quantity} em stock
+                        </span>
+                      </div>
+
+                      <div className="flex gap-2 mt-3">
+                        <Button variant="outline" size="sm" className="flex-1"
+                                onClick={() => abrirArtigo(a)} data-testid={`editar-artigo-${a.id}`}>
+                          <Edit size={14} className="mr-1" /> {txt.editar}
+                        </Button>
+                        <Button variant="outline" size="sm"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => apagarArtigo(a)} data-testid={`apagar-artigo-${a.id}`}>
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </>
       ) : aba === 'ginasio' ? (
         <Card className="card-shadow">
           <CardHeader>
@@ -639,6 +815,126 @@ const AppDoSocio = ({ language }) => {
                 {txt.cancelar}
               </Button>
               <Button type="submit" data-testid="guardar-parceiro">{txt.guardar}</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Janela do artigo. Escreve na mesma lista que o Stock usa: há uma só
+          lista de artigos, e o que se criar aqui aparece lá e vice-versa. */}
+      <Dialog open={artigoAberto} onOpenChange={setArtigoAberto}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{artigoAEditar ? txt.editar : txt.novoArtigo}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={guardarArtigo} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>{txt.nome} *</Label>
+                <Input
+                  value={artigoForm.name}
+                  onChange={(e) => setArtigoForm({ ...artigoForm, name: e.target.value })}
+                  placeholder="T-shirt KO, Luvas de Boxe, Caneleiras…"
+                  required
+                  data-testid="artigo-nome"
+                />
+              </div>
+              <div>
+                <Label>{txt.categoria} *</Label>
+                <Select
+                  value={artigoForm.category}
+                  onValueChange={(v) => setArtigoForm({ ...artigoForm, category: v })}
+                >
+                  <SelectTrigger data-testid="artigo-categoria"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="clothing">Vestuário</SelectItem>
+                    <SelectItem value="equipment">Equipamento</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{txt.tamanho}</Label>
+                <Input
+                  value={artigoForm.size}
+                  onChange={(e) => setArtigoForm({ ...artigoForm, size: e.target.value })}
+                  placeholder="XS, S, M, L, XL, 12oz…"
+                  data-testid="artigo-tamanho"
+                />
+              </div>
+              <div>
+                <Label>{txt.cor}</Label>
+                <Input
+                  value={artigoForm.color}
+                  onChange={(e) => setArtigoForm({ ...artigoForm, color: e.target.value })}
+                  placeholder="Preto, Vermelho…"
+                  data-testid="artigo-cor"
+                />
+              </div>
+              <div>
+                <Label>{txt.preco} (€) *</Label>
+                <Input
+                  type="number" step="0.01" min="0"
+                  value={artigoForm.price}
+                  onChange={(e) => setArtigoForm({ ...artigoForm, price: e.target.value })}
+                  required
+                  data-testid="artigo-preco"
+                />
+              </div>
+              <div>
+                <Label>{txt.quantidade} *</Label>
+                <Input
+                  type="number" min="0"
+                  value={artigoForm.quantity}
+                  onChange={(e) => setArtigoForm({ ...artigoForm, quantity: e.target.value })}
+                  required
+                  data-testid="artigo-quantidade"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>{txt.descricao}</Label>
+              <Textarea
+                value={artigoForm.description}
+                onChange={(e) => setArtigoForm({ ...artigoForm, description: e.target.value })}
+                rows={2}
+                data-testid="artigo-descricao"
+              />
+            </div>
+
+            <div>
+              <Label>{txt.fotografiaDoArtigo}</Label>
+              <div className="flex items-center gap-3 mt-1">
+                {artigoForm.photo_url && (
+                  <img
+                    src={enderecoDaImagem(artigoForm.photo_url)}
+                    alt=""
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />
+                )}
+                <input
+                  type="file" accept="image/*" hidden ref={ficheiroArtigo}
+                  onChange={(e) => escolherImagem(e, (url) => setArtigoForm((f) => ({ ...f, photo_url: url })))}
+                />
+                <Button type="button" variant="outline" disabled={aEnviar}
+                        onClick={() => ficheiroArtigo.current?.click()}
+                        data-testid="artigo-foto">
+                  <Upload size={15} className="mr-2" />
+                  {aEnviar ? txt.aEnviar : txt.escolherFicheiro}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Sem fotografia o artigo não aparece na montra da aplicação.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setArtigoAberto(false)}>
+                {txt.cancelar}
+              </Button>
+              <Button type="submit" className="btn-hover" data-testid="guardar-artigo">
+                {txt.guardar}
+              </Button>
             </div>
           </form>
         </DialogContent>
