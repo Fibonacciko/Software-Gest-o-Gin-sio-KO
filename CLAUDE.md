@@ -396,10 +396,44 @@ Conta Expo `ginasio-ko`. A arquitetura nova do React Native está **desligada de
 propósito**: a biblioteca de NFC ainda não está testada nela, e o NFC é o
 essencial da aplicação.
 
-**Só é preciso gerar de novo quando muda algo no que se vê ou se faz no
-telemóvel.** Regras de negócio e dados vêm do servidor e chegam sozinhos — os
-parceiros, as fotografias, a montra e a ficha do ginásio aparecem na aplicação
-que já está instalada, sem gerar nada.
+### Atualizações pelo ar (OTA)
+
+**Da versão 1.1.8 em diante, a aplicação atualiza-se sozinha.** Ao abrir, vai
+buscar a versão nova e aplica-a na abertura seguinte. O sócio não instala nada.
+
+```bash
+cd ko-gym-mobile && npx eas-cli@latest update --branch producao --message "o que mudou"
+```
+
+**O que vai pelo ar e o que não vai.** A aplicação tem duas partes: o *motor*
+(o código nativo) e o *caderno de instruções* (o JavaScript e as imagens). O
+OTA troca o caderno.
+
+- **Vai:** ecrãs, textos, cores, disposição, regras de negócio, imagens
+  dentro de `assets/`.
+- **Não vai:** uma biblioteca nova com código nativo (`expo-image-picker`,
+  `expo-video`, o NFC), uma permissão nova, uma subida de SDK, ou qualquer
+  coisa em `app.json` que mexa no nativo. Aí é preciso **gerar e instalar um
+  APK**, e só depois voltam a chegar atualizações pelo ar.
+
+**`runtimeVersion` é `fingerprint`**, e é o que torna isto seguro: a Expo
+calcula uma impressão digital do lado nativo, e uma atualização só chega a
+quem tem a mesma. Sem isso, mandar código que precisa de uma peça que a
+aplicação instalada não tem rebentava-a no arranque — e nessa altura já não há
+como lhe mandar a correção. Em troca, mudar o nativo *obriga* a um APK novo; é
+o preço certo a pagar.
+
+O canal é **`producao`** nos dois perfis de compilação, e o ramo das
+atualizações tem o mesmo nome.
+
+**Como confirmar que chegou:** no fundo do cartão do sócio há uma linha
+miudinha — `Versão 1.1.8 · a1b2c3`. O primeiro número é a versão instalada; as
+seis letras são a atualização que veio pelo ar, e mudam a cada publicação.
+Numa aplicação acabada de instalar ainda não há letras nenhumas.
+
+**Só é preciso gerar um APK quando se mexe no motor.** Tudo o resto — regras de
+negócio, dados e ecrãs — chega sozinho: os parceiros, as fotografias, a montra
+e a ficha do ginásio aparecem na aplicação que já está instalada.
 
 ### O que a aplicação tem
 
