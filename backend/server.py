@@ -476,6 +476,61 @@ class InventoryItemCreate(BaseModel):
     media: List[MediaDoArtigo] = Field(default_factory=list)
 
 
+# ---------------------------------------------------- Avaliacoes fisicas
+# O que a balanca de bioimpedancia mede, mais a altura, que ela nao mede e
+# sem a qual nao ha IMC. Tudo opcional menos o peso e a data: nem todas as
+# balancas dao tudo, e e melhor uma avaliacao com tres numeros certos do que
+# obrigar a inventar os outros.
+
+class Assessment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_id: str
+    assessment_date: date = Field(default_factory=lambda: date.today())
+    weight_kg: float
+    height_cm: Optional[float] = None
+    body_fat_pct: Optional[float] = None       # Massa gorda, em %
+    muscle_mass_kg: Optional[float] = None     # Massa muscular, em kg
+    water_pct: Optional[float] = None          # Agua, em %
+    visceral_fat: Optional[float] = None       # Gordura visceral, indice
+    metabolic_age: Optional[int] = None        # Idade metabolica, em anos
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # O IMC nao se grava: calcula-se do peso e da altura desta avaliacao, pela
+    # mesma razao por que o estado do socio nao se grava — um numero gravado
+    # sobrevive a correcao do numero que lhe deu origem.
+    bmi: Optional[float] = None
+
+
+class AssessmentCreate(BaseModel):
+    assessment_date: Optional[date] = None
+    weight_kg: float
+    height_cm: Optional[float] = None
+    body_fat_pct: Optional[float] = None
+    muscle_mass_kg: Optional[float] = None
+    water_pct: Optional[float] = None
+    visceral_fat: Optional[float] = None
+    metabolic_age: Optional[int] = None
+    notes: Optional[str] = None
+
+
+def calcular_imc(avaliacao: dict) -> dict:
+    """O IMC, do peso e da altura da propria avaliacao.
+
+    Sem altura nao ha IMC, e diz-se isso com `None` em vez de se inventar um
+    numero. A altura vem na avaliacao e nao na ficha do socio porque e assim
+    que ela acompanha a data: um sócio que cresceu entre duas medicoes tem o
+    IMC certo nas duas.
+    """
+    peso = avaliacao.get("weight_kg")
+    altura = avaliacao.get("height_cm")
+    if peso and altura and altura > 0:
+        metros = float(altura) / 100
+        avaliacao["bmi"] = round(float(peso) / (metros * metros), 1)
+    else:
+        avaliacao["bmi"] = None
+    return avaliacao
+
+
 # ------------------------------------------------------------- O ginasio
 # Morada, contactos, horario e links. E um registo unico: ha so um ginasio.
 # Serve a aplicacao do socio, que o mostra no separador "O Ginasio".
@@ -4516,6 +4571,92 @@ async def tirar_foto_do_socio(member_id: str):
     await db.members.update_one({"id": member_id}, {"$set": {"photo_url": None}})
     BusinessCache.invalidate_member_cache()
     return {"message": "Fotografia removida"}
+
+
+# ---------------------------------------------------- Avaliacoes fisicas
+
+@api_router.get("/members/{member_id}/assessments", response_model=List[Assessment])
+async def avaliacoes_do_socio(
+    member_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """As avaliacoes de um socio, da mais recente para tras."""
+    avaliacoes = await db.assessments.find({"member_id": member_id}).to_list(500)
+    avaliacoes = [calcular_imc(parse_from_mongo(a)) for a in avaliacoes]
+    avaliacoes.sort(key=lambda a: str(a.get("assessment_date") or ""), reverse=True)
+    return [Assessment(**a) for a in avaliacoes]
+
+
+@api_router.post("/members/{member_id}/assessments", response_model=Assessment)
+async def registar_avaliacao(
+    member_id: str,
+    dados: AssessmentCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Regista uma medicao. O colaborador lanca o que a balanca deu."""
+    socio = await db.members.find_one({"id": member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+    if dados.weight_kg <= 0:
+        raise HTTPException(status_code=400, detail="O peso tem de ser maior do que zero.")
+
+    corpo = dados.dict()
+    corpo["assessment_date"] = dados.assessment_date or date.today()
+    avaliacao = Assessment(member_id=member_id, **corpo)
+
+    await db.assessments.insert_one(prepare_for_mongo(avaliacao.dict()))
+    await log_audit(current_user, "create", "assessment", entity_id=avaliacao.id,
+                    details=f"Avaliacao fisica de {socio.get('name')}")
+    return Assessment(**calcular_imc(avaliacao.dict()))
+
+
+@api_router.put("/assessments/{assessment_id}", response_model=Assessment)
+async def corrigir_avaliacao(
+    assessment_id: str,
+    dados: AssessmentCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Quem lanca tem de poder emendar: um numero trocado estraga o grafico."""
+    antiga = await db.assessments.find_one({"id": assessment_id})
+    if not antiga:
+        raise HTTPException(status_code=404, detail="Avaliacao nao encontrada")
+    if dados.weight_kg <= 0:
+        raise HTTPException(status_code=400, detail="O peso tem de ser maior do que zero.")
+
+    corpo = dados.dict()
+    corpo["assessment_date"] = dados.assessment_date or antiga.get("assessment_date") or date.today()
+    await db.assessments.update_one({"id": assessment_id}, {"$set": prepare_for_mongo(corpo)})
+
+    nova = await db.assessments.find_one({"id": assessment_id})
+    await log_audit(current_user, "update", "assessment", entity_id=assessment_id,
+                    details="Corrigiu uma avaliacao fisica")
+    return Assessment(**calcular_imc(parse_from_mongo(nova)))
+
+
+@api_router.delete("/assessments/{assessment_id}")
+async def apagar_avaliacao(
+    assessment_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    r = await db.assessments.delete_one({"id": assessment_id})
+    if r.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Avaliacao nao encontrada")
+    await log_audit(current_user, "delete", "assessment", entity_id=assessment_id,
+                    details="Apagou uma avaliacao fisica")
+    return {"message": "Avaliacao eliminada"}
+
+
+@api_router.get("/mobile/assessments/{member_id}", response_model=List[Assessment])
+async def avaliacoes_para_a_app(member_id: str):
+    """A evolucao do socio, da mais antiga para a mais recente.
+
+    Ao contrario da lista da gestao, esta vem por ordem crescente: e assim
+    que se desenha uma linha de evolucao, da esquerda para a direita.
+    """
+    avaliacoes = await db.assessments.find({"member_id": member_id}).to_list(500)
+    avaliacoes = [calcular_imc(parse_from_mongo(a)) for a in avaliacoes]
+    avaliacoes.sort(key=lambda a: str(a.get("assessment_date") or ""))
+    return [Assessment(**a) for a in avaliacoes]
 
 
 @api_router.get("/mobile/reservations/{member_id}", response_model=List[Reservation])

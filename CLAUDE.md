@@ -245,6 +245,40 @@ se o que entrou foi fotografia ou vídeo.
 Em desenvolvimento a pasta é a de `UPLOADS_DIR` no `backend/.env`; nos testes é
 `tests/_uploads`. Ambas fora do Git.
 
+### Avaliações físicas
+
+O que a balança de bioimpedância mede, lançado à mão pelo colaborador na ficha
+do sócio (**Membros → ver a ficha → Avaliação física**) e mostrado na aplicação
+em **A tua evolução**. A balança não fala com nada: se um dia exportar um
+ficheiro, importa-se; não valia a pena esperar por isso para começar.
+
+- Guarda-se o que foi medido: **peso** (o único obrigatório), altura, massa
+  gorda (%), massa muscular (kg), água (%), gordura visceral e idade
+  metabólica. Tudo o resto é opcional — nem todas as balanças dão tudo, e é
+  melhor uma avaliação com três números certos do que obrigar a inventar os
+  outros.
+- **O IMC é calculado, nunca gravado** (`calcular_imc`), do peso e da altura
+  da própria avaliação. Pela mesma razão por que o estado do sócio não se
+  grava: um número gravado sobrevive à correção do número que lhe deu origem,
+  e aí o gráfico passa a mentir sem ninguém dar por isso. Há um teste só para
+  isto.
+- A **altura fica na avaliação** e não na ficha, para acompanhar a data: um
+  sócio que cresceu entre duas medições tem o IMC certo nas duas. Ao criar
+  uma avaliação nova, o ecrã traz a altura da anterior.
+- A gestão vê **da mais recente para trás** (interessa o que foi medido da
+  última vez); a aplicação vê **da mais antiga para a frente**, que é como se
+  desenha uma linha de evolução.
+- As setas de tendência sabem **para que lado é boa notícia**: descer no peso
+  e na massa gorda, subir na massa muscular e na água.
+- O **colaborador regista e corrige** — é ele que está ao balcão com a
+  balança.
+- O gráfico da aplicação é feito de **barras com `View`**, e não com uma
+  biblioteca de gráficos: uma biblioteca eram mais uns megabytes e uma peça
+  do motor, que obrigava a instalar a aplicação de novo a cada afinação.
+  Assim chega pelo ar como tudo o resto. A escala **não começa no zero** —
+  num sócio entre os 80 e os 84 quilos, começar no zero dava barras todas
+  iguais.
+
 ### Modalidades
 
 Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal e é a
@@ -282,7 +316,7 @@ da quota. Fichas antigas podem ter o campo gravado — é ignorado.
 | `tests/` | Scripts de teste antigos, contra a API |
 
 Coleções em MongoDB: `members`, `attendance`, `payments`, `expenses`, `sales`,
-`trial_classes`, `inventory`, `activities`, `users`, `audit_logs`,
+`trial_classes`, `inventory`, `activities`, `assessments`, `users`, `audit_logs`,
 `automated_messages`, `motivational_notes`.
 
 ---
@@ -312,7 +346,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 205 testes e demoram 10 segundos.
+backend** — são 217 testes e demoram 10 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q

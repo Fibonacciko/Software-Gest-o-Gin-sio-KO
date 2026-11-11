@@ -25,6 +25,7 @@ import {
   sair,
   Socio,
 } from '../api';
+import MinhasMetricas from '../componentes/MinhasMetricas';
 import RoloDoInicio from '../componentes/RoloDoInicio';
 import type { Separador } from '../componentes/BarraDeSeparadores';
 import Versao from '../componentes/Versao';
@@ -315,6 +316,10 @@ export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) 
           </Text>
         </Vidro>
       </View>
+
+      {/* O que a balanca mediu. Vem a seguir aos treinos porque sao as duas
+          leituras do mesmo esforco. Nao aparece a quem nunca foi medido. */}
+      <MinhasMetricas socioId={socio.id} />
 
       {socio.current_motivational_note ? (
         <Vidro estilo={estilos.frase}>

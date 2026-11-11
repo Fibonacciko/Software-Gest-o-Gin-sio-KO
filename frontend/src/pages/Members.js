@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
+import AvaliacoesDoSocio from '../components/AvaliacoesDoSocio';
 import MultiActivitySelector from '../components/MultiActivitySelector';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -813,6 +814,15 @@ const Members = ({ language, translations }) => {
                   memberId={selectedMember.id}
                   language={language}
                 />
+
+                {/* O que a balança mediu. Fica ao lado das presenças porque
+                    são as duas leituras da mesma coisa: se vem, e o que mudou. */}
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ background: 'var(--gradient-card-bg)', border: '1px solid var(--border-light)' }}
+                >
+                  <AvaliacoesDoSocio socio={selectedMember} />
+                </div>
               </div>
             </div>
           )}

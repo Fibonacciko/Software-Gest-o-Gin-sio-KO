@@ -99,6 +99,27 @@ export type Reserva = {
   created_at: string;
 };
 
+/**
+ * Uma medicao da balanca.
+ *
+ * Tudo opcional menos o peso e a data: nem todas as balancas dao tudo, e o
+ * `bmi` vem calculado do servidor — nunca se grava, para sobreviver a uma
+ * correcao do peso.
+ */
+export type Avaliacao = {
+  id: string;
+  assessment_date: string;
+  weight_kg: number;
+  height_cm?: number | null;
+  bmi?: number | null;
+  body_fat_pct?: number | null;
+  muscle_mass_kg?: number | null;
+  water_pct?: number | null;
+  visceral_fat?: number | null;
+  metabolic_age?: number | null;
+  notes?: string | null;
+};
+
 export type Modalidade = {
   id: string;
   name: string;
@@ -172,6 +193,11 @@ export async function sair() {
 
 export function carregarCartao(memberId: string) {
   return pedir<Socio>(`/mobile/profile?member_id=${encodeURIComponent(memberId)}`);
+}
+
+/** A evolucao do socio, da medicao mais antiga para a mais recente. */
+export function carregarAvaliacoes(memberId: string) {
+  return pedir<Avaliacao[]>(`/mobile/assessments/${encodeURIComponent(memberId)}`);
 }
 
 export function carregarModalidades() {
