@@ -5,6 +5,7 @@
   },
   "build": {
     "teste": {
+      "channel": "producao",
       "android": {
         "buildType": "apk"
       },
@@ -13,6 +14,7 @@
       }
     },
     "producao": {
+      "channel": "producao",
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"

@@ -24,6 +24,7 @@ import {
   sair,
   Socio,
 } from '../api';
+import Versao from '../componentes/Versao';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
 import { cores, espaco } from '../theme';
 
@@ -337,6 +338,8 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       <Pressable onPress={() => sair().then(aoSair)} style={estilos.sair}>
         <Text style={estilos.sairTexto}>Terminar sessão</Text>
       </Pressable>
+
+      <Versao />
 
       {/* Trocar ou remover a fotografia */}
       <Modal visible={fotoAberta} transparent animationType="fade" onRequestClose={() => setFotoAberta(false)}>

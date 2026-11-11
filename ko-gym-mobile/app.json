@@ -2,11 +2,18 @@
   "expo": {
     "name": "Ginásio KO",
     "slug": "ko-gym-mobile",
-    "version": "1.1.7",
+    "version": "1.1.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
+    "updates": {
+      "url": "https://u.expo.dev/0f8d3251-81fb-48cf-8b8e-8b33f8f92500",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
