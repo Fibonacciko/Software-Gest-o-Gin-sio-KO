@@ -58,13 +58,20 @@ export type TamanhoDoArtigo = {
  * perguntarem na altura de reservar — nove linhas de capacete davam nove
  * cartoes iguais, so com a letra diferente.
  */
+/** Uma fotografia ou um video curto do artigo. */
+export type MediaDoArtigo = {
+  kind: 'photo' | 'video';
+  url: string;
+};
+
 export type Artigo = {
   id: string;
   name: string;
   color?: string | null;
   price: number;
   description?: string | null;
-  photo_url?: string | null;
+  photo_url?: string | null;   // A principal: e a que aparece na lista
+  media: MediaDoArtigo[];      // Todas as fotografias e os videos
   sizes: TamanhoDoArtigo[];
 };
 

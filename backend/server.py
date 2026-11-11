@@ -421,6 +421,12 @@ class TrialClassCreate(BaseModel):
     trial_date: Optional[date] = None
     amount: Optional[float] = None   # Sem valor, vale o preco normal
 
+class MediaDoArtigo(BaseModel):
+    """Uma fotografia ou um video curto de um artigo da loja."""
+    kind: str = "photo"                   # "photo" ou "video"
+    url: str
+
+
 class InventoryItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -430,7 +436,11 @@ class InventoryItem(BaseModel):
     quantity: int = 0
     price: float
     description: Optional[str] = None
-    photo_url: Optional[str] = None      # A fotografia que a montra da app mostra
+    photo_url: Optional[str] = None      # A principal: e a que a montra mostra na lista
+    # As outras fotografias e os videos curtos do artigo. A `photo_url` e
+    # sempre a primeira desta lista; fica a parte por ser a que o Stock, as
+    # vendas e as fichas antigas ja usavam.
+    media: List[MediaDoArtigo] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Sale(BaseModel):
@@ -463,6 +473,7 @@ class InventoryItemCreate(BaseModel):
     price: float
     description: Optional[str] = None
     photo_url: Optional[str] = None
+    media: List[MediaDoArtigo] = Field(default_factory=list)
 
 
 # ------------------------------------------------------------- O ginasio
@@ -580,6 +591,7 @@ class ShopItem(BaseModel):
     price: float
     description: Optional[str] = None
     photo_url: Optional[str] = None
+    media: List[MediaDoArtigo] = Field(default_factory=list)
     sizes: List[ShopSize] = Field(default_factory=list)
 
 
@@ -4113,7 +4125,13 @@ original_create_member = api_router.routes[0]  # Will be properly applied after 
 
 PASTA_UPLOADS = Path(os.environ.get("UPLOADS_DIR", "/app/uploads"))
 EXTENSOES_DE_IMAGEM = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
-TAMANHO_MAXIMO = 8 * 1024 * 1024   # 8 MB: uma fotografia de telemovel cabe
+# Videos curtos de artigos da loja: dez segundos de telemovel sao 5 a 15 MB.
+# O limite e maior do que o das imagens mas continua curto de proposito — isto
+# e uma montra, nao um canal de video, e as copias de seguranca sao da base de
+# dados, nao do disco.
+EXTENSOES_DE_VIDEO = {".mp4", ".mov", ".m4v", ".webm"}
+TAMANHO_MAXIMO = 8 * 1024 * 1024          # 8 MB: uma fotografia de telemovel cabe
+TAMANHO_MAXIMO_VIDEO = 30 * 1024 * 1024   # 30 MB: um video curto cabe
 
 
 @api_router.post("/uploads")
@@ -4121,18 +4139,26 @@ async def guardar_imagem(
     ficheiro: UploadFile = File(...),
     current_user: User = Depends(require_admin_or_staff)
 ):
-    """Recebe uma imagem e devolve o endereco onde ela fica."""
+    """Recebe uma imagem ou um video curto e devolve o endereco onde fica."""
     extensao = Path(ficheiro.filename or "").suffix.lower()
-    if extensao not in EXTENSOES_DE_IMAGEM:
-        raise HTTPException(status_code=400, detail="So aceito imagens: jpg, png, webp ou gif.")
+    e_video = extensao in EXTENSOES_DE_VIDEO
+    if not e_video and extensao not in EXTENSOES_DE_IMAGEM:
+        raise HTTPException(
+            status_code=400,
+            detail="So aceito imagens (jpg, png, webp, gif) ou videos (mp4, mov, webm)."
+        )
 
     conteudo = await ficheiro.read()
     if not conteudo:
         raise HTTPException(status_code=400, detail="O ficheiro esta vazio.")
-    if len(conteudo) > TAMANHO_MAXIMO:
+
+    limite = TAMANHO_MAXIMO_VIDEO if e_video else TAMANHO_MAXIMO
+    if len(conteudo) > limite:
+        que = "O video" if e_video else "A imagem"
         raise HTTPException(
             status_code=400,
-            detail=f"A imagem e demasiado grande ({len(conteudo) // (1024 * 1024)} MB). O limite sao 8 MB."
+            detail=(f"{que} e demasiado grande ({len(conteudo) // (1024 * 1024)} MB). "
+                    f"O limite sao {limite // (1024 * 1024)} MB.")
         )
 
     PASTA_UPLOADS.mkdir(parents=True, exist_ok=True)
@@ -4140,8 +4166,9 @@ async def guardar_imagem(
     (PASTA_UPLOADS / nome).write_bytes(conteudo)
 
     await log_audit(current_user, "create", "upload", entity_id=nome,
-                    details=f"Carregou a imagem {ficheiro.filename}")
-    return {"url": f"/api/uploads/{nome}", "bytes": len(conteudo)}
+                    details=f"Carregou {'o video' if e_video else 'a imagem'} {ficheiro.filename}")
+    return {"url": f"/api/uploads/{nome}", "bytes": len(conteudo),
+            "kind": "video" if e_video else "photo"}
 
 
 @api_router.delete("/uploads/{nome}")
@@ -4359,7 +4386,8 @@ async def montra_para_a_app():
         if grupo is None:
             grupo = grupos[chave] = {
                 "id": a["id"], "name": nome, "color": cor or None,
-                "price": 0.0, "description": None, "photo_url": None, "sizes": []
+                "price": 0.0, "description": None, "photo_url": None,
+                "media": [], "vistos": set(), "sizes": []
             }
 
         # Os precos sao iguais dentro da mesma cor; se algum dia diferirem,
@@ -4370,6 +4398,16 @@ async def montra_para_a_app():
             grupo["id"] = a["id"]
         if not grupo["description"] and a.get("description"):
             grupo["description"] = a["description"]
+
+        # A galeria e do produto, nao do tamanho: junta-se a dos tamanhos
+        # todos, sem repetir o mesmo ficheiro.
+        for m in (a.get("media") or []):
+            endereco = (m or {}).get("url")
+            if endereco and endereco not in grupo["vistos"]:
+                grupo["vistos"].add(endereco)
+                grupo["media"].append(MediaDoArtigo(
+                    kind=(m.get("kind") or "photo"), url=endereco
+                ))
 
         grupo["sizes"].append(ShopSize(
             item_id=a["id"],
@@ -4382,6 +4420,10 @@ async def montra_para_a_app():
     for g in montra:
         # Os tamanhos por ordem de vestuario, e nao alfabetica: S antes de M
         g["sizes"].sort(key=lambda t: ordem_do_tamanho(t.size))
+        g.pop("vistos", None)
+        # Fichas antigas nao tem galeria nenhuma: a principal e a galeria toda
+        if not g["media"]:
+            g["media"] = [MediaDoArtigo(kind="photo", url=g["photo_url"])]
     montra.sort(key=lambda g: (g["name"].lower(), (g["color"] or "").lower()))
     return [ShopItem(**g) for g in montra]
 

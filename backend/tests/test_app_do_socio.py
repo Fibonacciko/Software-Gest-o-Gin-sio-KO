@@ -444,3 +444,75 @@ def test_a_fotografia_so_aceita_imagens(cliente, criar_socio):
 def test_nao_se_poe_fotografia_num_socio_que_nao_existe(cliente):
     r = cliente.post("/api/mobile/members/nao-existe/photo", files=imagem_falsa())
     assert r.status_code == 404
+
+
+
+# ----------------------------------- a galeria do artigo: varias fotos e videos
+
+def test_um_artigo_pode_ter_varias_fotografias_e_um_video(cliente, admin):
+    cliente.post("/api/inventory", headers=admin, json={
+        "name": "Luvas", "category": "equipment", "color": "Preto",
+        "quantity": 4, "price": 65.0,
+        "photo_url": "/api/uploads/1.jpg",
+        "media": [
+            {"kind": "photo", "url": "/api/uploads/1.jpg"},
+            {"kind": "photo", "url": "/api/uploads/2.jpg"},
+            {"kind": "video", "url": "/api/uploads/luvas.mp4"},
+        ],
+    })
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    assert [m["url"] for m in artigo["media"]] == [
+        "/api/uploads/1.jpg", "/api/uploads/2.jpg", "/api/uploads/luvas.mp4"
+    ]
+    assert [m["kind"] for m in artigo["media"]] == ["photo", "photo", "video"]
+    # A principal continua a ser a da lista da montra
+    assert artigo["photo_url"] == "/api/uploads/1.jpg"
+
+
+def test_sem_galeria_vale_a_fotografia_principal(cliente, admin):
+    """As fichas que ja la estavam nao tem `media` e tem de continuar a servir."""
+    cliente.post("/api/inventory", headers=admin, json={
+        "name": "Hoodie", "category": "clothing", "color": "Preto",
+        "quantity": 2, "price": 40.0, "photo_url": "/api/uploads/antiga.jpg",
+    })
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    assert artigo["media"] == [{"kind": "photo", "url": "/api/uploads/antiga.jpg"}]
+
+
+def test_a_galeria_e_do_produto_e_junta_se_entre_tamanhos(cliente, admin):
+    """A galeria e do produto, nao do tamanho; e o mesmo ficheiro nao se repete."""
+    for tamanho, media in (
+        ("S", [{"kind": "photo", "url": "/api/uploads/a.jpg"}]),
+        ("M", [{"kind": "photo", "url": "/api/uploads/a.jpg"},
+               {"kind": "video", "url": "/api/uploads/b.mp4"}]),
+    ):
+        cliente.post("/api/inventory", headers=admin, json={
+            "name": "Capacete", "category": "equipment", "size": tamanho,
+            "color": "Preto", "quantity": 3, "price": 65.0,
+            "photo_url": "/api/uploads/a.jpg", "media": media,
+        })
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    assert [m["url"] for m in artigo["media"]] == ["/api/uploads/a.jpg", "/api/uploads/b.mp4"]
+
+
+def test_carregar_um_video_curto(cliente, admin):
+    r = cliente.post("/api/uploads", headers=admin,
+                     files={"ficheiro": ("treino.mp4", io.BytesIO(b"nao e video a serio"), "video/mp4")})
+    assert r.status_code == 200, r.text
+    assert r.json()["kind"] == "video"
+    assert r.json()["url"].endswith(".mp4")
+
+
+def test_carregar_uma_imagem_continua_a_dizer_que_e_imagem(cliente, admin):
+    r = cliente.post("/api/uploads", headers=admin, files=imagem_falsa("foto.jpg"))
+    assert r.status_code == 200
+    assert r.json()["kind"] == "photo"
+
+
+def test_o_que_nao_e_imagem_nem_video_continua_a_ser_recusado(cliente, admin):
+    r = cliente.post("/api/uploads", headers=admin,
+                     files={"ficheiro": ("contas.pdf", io.BytesIO(b"%PDF"), "application/pdf")})
+    assert r.status_code == 400

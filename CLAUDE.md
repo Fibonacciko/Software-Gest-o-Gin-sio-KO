@@ -186,8 +186,30 @@ ver: **um artigo por cor**, sem o número do stock à vista.
   a montra junta, a reserva não, senão o balcão não sabia qual preparar e o
   stock não dava baixa no sítio certo.
 - Na gestão, o que se guarda na janela da Loja **vale para todos os tamanhos
-  daquela cor** (nome, preço, descrição, fotografia). O tamanho e a
-  quantidade de cada um só se mexem no Stock, e a janela avisa disso.
+  daquela cor** (nome, preço, descrição, galeria). O tamanho e a quantidade de
+  cada um só se mexem no Stock, e a janela avisa disso.
+
+**Cada artigo tem uma galeria: várias fotografias e vídeos curtos.**
+
+Um artigo mostra-se por mais do que um lado — a frente, as costas, um detalhe —
+e um vídeo de dez segundos diz de um par de luvas o que três fotografias não
+dizem. A galeria é o campo `media` (`[{kind: "photo"|"video", url}]`).
+
+- A **`photo_url` continua a ser a principal** e é a que aparece na lista da
+  montra e no Stock. É sempre uma das fotografias da galeria. Ficou à parte,
+  e não como "a primeira da lista", porque o Stock, as vendas e as 47 fichas
+  que já existiam só conhecem esse campo.
+- Uma ficha **sem galeria** (as que já lá estavam) devolve a principal como
+  galeria de um só item. Não foi preciso migrar nada.
+- A galeria é **do produto, não do tamanho**: junta-se a dos tamanhos todos
+  daquela cor, sem repetir o mesmo ficheiro.
+- Os **vídeos ficam alojados aqui**, ao contrário dos da Multimédia, que são
+  links. A diferença é o tamanho e o propósito: um vídeo de montra são dez
+  segundos de um artigo (limite de **30 MB**, contra 8 MB das imagens), e
+  mandar o sócio ao Instagram a meio de uma compra fá-lo-ia não voltar.
+- Na aplicação, a galeria desliza para o lado e o vídeo **arranca parado e
+  sem som**: um vídeo a tocar sozinho no meio da loja rouba a atenção e gasta
+  dados a quem só queria ver o preço.
 
 ### A ficha do ginásio
 
@@ -216,7 +238,9 @@ por isso não é preciso mexer no nginx da máquina.
 
 **Não vão para a base de dados.** As cópias de segurança são despejos da base,
 e meia dúzia de fotografias punham um ficheiro de 15 MB a pesar centenas.
-Limite de 8 MB por imagem; só jpg, png, webp e gif.
+Limites: **8 MB** por imagem (jpg, png, webp, gif) e **30 MB** por vídeo
+(mp4, mov, m4v, webm). `POST /api/uploads` devolve também o `kind`, que diz
+se o que entrou foi fotografia ou vídeo.
 
 Em desenvolvimento a pasta é a de `UPLOADS_DIR` no `backend/.env`; nos testes é
 `tests/_uploads`. Ambas fora do Git.
@@ -288,7 +312,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 199 testes e demoram 9 segundos.
+backend** — são 205 testes e demoram 10 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q

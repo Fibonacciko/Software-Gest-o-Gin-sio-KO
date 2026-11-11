@@ -20,6 +20,7 @@ import {
   Reserva,
   Socio,
 } from '../api';
+import GaleriaDoArtigo from '../componentes/GaleriaDoArtigo';
 import { cores, espaco } from '../theme';
 
 type Props = { socio: Socio };
@@ -173,7 +174,20 @@ export default function EcraLoja({ socio }: Props) {
               style={({ pressed }) => [estilos.cartao, pressed && estilos.premido]}
               onPress={() => abrir(a)}
             >
-              {foto ? <Image source={{ uri: foto }} style={estilos.foto} resizeMode="cover" /> : null}
+              {foto ? (
+                <View>
+                  <Image source={{ uri: foto }} style={estilos.foto} resizeMode="cover" />
+                  {/* Diz que há mais para ver, senão ninguém toca no cartão */}
+                  {a.media?.length > 1 ? (
+                    <View style={estilos.contaMedia}>
+                      <Text style={estilos.contaMediaTexto}>
+                        {a.media.some((m) => m.kind === 'video') ? '▶ ' : ''}
+                        {a.media.length}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
               <View style={estilos.info}>
                 <Text style={estilos.nome} numberOfLines={2}>
                   {a.name}
@@ -199,7 +213,14 @@ export default function EcraLoja({ socio }: Props) {
         <View style={estilos.fundoModal}>
           <View style={estilos.janela}>
             {escolhido ? (
-              <>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={estilos.janelaConteudo}
+              >
+                {/* As fotografias e os vídeos do artigo, a deslizar para o
+                    lado. Vêm antes do nome: é pela imagem que se escolhe. */}
+                <GaleriaDoArtigo media={escolhido.media} />
+
                 <Text style={estilos.janelaTitulo}>{escolhido.name}</Text>
                 {escolhido.color ? (
                   <Text style={estilos.janelaDetalhes}>{escolhido.color}</Text>
@@ -275,7 +296,7 @@ export default function EcraLoja({ socio }: Props) {
                 <Pressable style={estilos.cancelar} onPress={() => setEscolhido(null)}>
                   <Text style={estilos.cancelarTexto}>Cancelar</Text>
                 </Pressable>
-              </>
+              </ScrollView>
             ) : null}
           </View>
         </View>
@@ -320,6 +341,16 @@ const estilos = StyleSheet.create({
   },
   premido: { opacity: 0.85 },
   foto: { width: '100%', height: 200, backgroundColor: cores.fundoElevado },
+  contaMedia: {
+    position: 'absolute',
+    top: espaco.s,
+    right: espaco.s,
+    paddingHorizontal: espaco.s,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  contaMediaTexto: { color: cores.texto, fontSize: 12, fontWeight: '600' },
   info: { padding: espaco.m },
   nome: { color: cores.texto, fontSize: 17, fontWeight: '700' },
   detalhes: { color: cores.textoSecundario, fontSize: 13, marginTop: 2 },
@@ -336,8 +367,11 @@ const estilos = StyleSheet.create({
     backgroundColor: cores.fundoCartao,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: espaco.g,
+    // Com a galeria lá dentro, a janela cresceu: limita-se a quatro quintos
+    // do ecrã e o resto rola, em vez de empurrar os botões para fora.
+    maxHeight: '88%',
   },
+  janelaConteudo: { padding: espaco.g },
   janelaTitulo: { color: cores.texto, fontSize: 20, fontWeight: '800' },
   janelaDetalhes: { color: cores.textoSecundario, fontSize: 14, marginTop: 2 },
   janelaDescricao: { color: cores.textoSecundario, fontSize: 14, marginTop: espaco.s, lineHeight: 20 },

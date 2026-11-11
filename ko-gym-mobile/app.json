@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ginásio KO",
     "slug": "ko-gym-mobile",
-    "version": "1.1.6",
+    "version": "1.1.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -42,7 +42,8 @@
         {
           "photosPermission": "Precisamos das tuas fotografias para poderes escolher a tua foto de atleta."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "extra": {
       "eas": {

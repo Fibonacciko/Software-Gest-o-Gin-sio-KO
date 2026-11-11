@@ -20,7 +20,8 @@ import {
   EyeOff,
   MapPin,
   ShoppingBag,
-  AlertCircle
+  AlertCircle,
+  Video
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,7 +47,7 @@ const PARCEIRO_VAZIO = {
 // iguais, só com a letra diferente.
 const ARTIGO_VAZIO = {
   name: '', category: 'clothing', color: '',
-  price: '', quantity: '', description: '', photo_url: ''
+  price: '', quantity: '', description: '', photo_url: '', media: []
 };
 
 const MEDIA_VAZIA = { kind: 'photo', url: '', caption: '', taken_on: '', is_active: true };
@@ -139,7 +140,13 @@ const AppDoSocio = ({ language }) => {
       cor: 'Cor',
       preco: 'Preço',
       quantidade: 'Quantidade',
-      fotografiaDoArtigo: 'Fotografia do artigo'
+      fotografiaDoArtigo: 'Fotografia do artigo',
+      galeria: 'Fotografias e vídeos',
+      principal: 'Principal',
+      tornarPrincipal: 'Passar a principal',
+      video: 'Vídeo',
+      acrescentarFicheiros: 'Acrescentar fotografias ou vídeos',
+      galeriaAjuda: 'Pode escolher vários de uma vez. A primeira fotografia é a que aparece na lista da montra; as outras e os vídeos vêem-se ao abrir o artigo. Sem nenhuma fotografia o artigo não aparece na aplicação. A galeria é a mesma para todos os tamanhos desta cor.'
     },
     en: {
       titulo: 'Member App',
@@ -214,6 +221,61 @@ const AppDoSocio = ({ language }) => {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return r.data.url;
+  };
+
+  /**
+   * Envia vários ficheiros de uma vez e devolve-os com o tipo.
+   *
+   * Um a um e não todos em paralelo: são vídeos de dezenas de MB e a ligação
+   * do ginásio não é larga. Assim também se sabe qual falhou.
+   */
+  const enviarVarios = async (ficheiros) => {
+    const enviados = [];
+    for (const ficheiro of ficheiros) {
+      const corpo = new FormData();
+      corpo.append('ficheiro', ficheiro);
+      const r = await axios.post(`${API}/uploads`, corpo, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      enviados.push({ kind: r.data.kind || 'photo', url: r.data.url });
+    }
+    return enviados;
+  };
+
+  const escolherVarios = async (evento) => {
+    const ficheiros = [...(evento.target.files || [])];
+    if (ficheiros.length === 0) return;
+    try {
+      setAEnviar(true);
+      const novos = await enviarVarios(ficheiros);
+      setArtigoForm((f) => {
+        const media = [...(f.media || []), ...novos];
+        // A principal é sempre a primeira fotografia da galeria
+        const principal = f.photo_url || media.find((m) => m.kind === 'photo')?.url || '';
+        return { ...f, media, photo_url: principal };
+      });
+    } catch (erro) {
+      toast.error(erro.response?.data?.detail || 'Não consegui enviar o ficheiro.');
+    } finally {
+      setAEnviar(false);
+      evento.target.value = '';
+    }
+  };
+
+  /** Tira um item da galeria; se era a principal, promove a fotografia seguinte. */
+  const tirarDaGaleria = (url) => {
+    setArtigoForm((f) => {
+      const media = (f.media || []).filter((m) => m.url !== url);
+      const principal = f.photo_url === url
+        ? (media.find((m) => m.kind === 'photo')?.url || '')
+        : f.photo_url;
+      return { ...f, media, photo_url: principal };
+    });
+  };
+
+  /** A fotografia que a montra mostra na lista. Um vídeo nunca é a principal. */
+  const tornarPrincipal = (url) => {
+    setArtigoForm((f) => ({ ...f, photo_url: url }));
   };
 
   const escolherImagem = async (evento, aoTerminar) => {
@@ -342,11 +404,15 @@ const AppDoSocio = ({ language }) => {
       const chave = `${nome.toLowerCase()}|${cor.toLowerCase()}`;
       const g = grupos.get(chave) || {
         chave, name: nome, color: cor, price: 0, description: null,
-        photo_url: null, category: a.category, linhas: []
+        photo_url: null, media: [], category: a.category, linhas: []
       };
       g.price = Math.max(g.price, Number(a.price) || 0);
       if (!g.photo_url && a.photo_url) g.photo_url = a.photo_url;
       if (!g.description && a.description) g.description = a.description;
+      // A galeria é do produto, não do tamanho: junta-se sem repetir
+      (a.media || []).forEach((m) => {
+        if (m?.url && !g.media.some((x) => x.url === m.url)) g.media.push(m);
+      });
       g.linhas.push(a);
       grupos.set(chave, g);
     });
@@ -375,6 +441,7 @@ const AppDoSocio = ({ language }) => {
           ...ARTIGO_VAZIO,
           name: g.name, category: g.category || 'clothing', color: g.color,
           description: g.description || '', photo_url: g.photo_url || '',
+          media: g.media || [],
           price: String(g.price ?? ''), quantity: ''
         }
       : ARTIGO_VAZIO);
@@ -389,7 +456,8 @@ const AppDoSocio = ({ language }) => {
       color: artigoForm.color.trim() || null,
       price: parseFloat(artigoForm.price) || 0,
       description: artigoForm.description.trim() || null,
-      photo_url: artigoForm.photo_url || null
+      photo_url: artigoForm.photo_url || null,
+      media: artigoForm.media || []
     };
     try {
       if (artigoAEditar) {
@@ -592,11 +660,23 @@ const AppDoSocio = ({ language }) => {
                 return (
                   <Card key={g.chave} className="card-shadow overflow-hidden" data-testid={`artigo-${g.chave}`}>
                     {g.photo_url ? (
-                      <img
-                        src={enderecoDaImagem(g.photo_url)}
-                        alt={g.name}
-                        className="w-full h-40 object-cover"
-                      />
+                      <div className="relative">
+                        <img
+                          src={enderecoDaImagem(g.photo_url)}
+                          alt={g.name}
+                          className="w-full h-40 object-cover"
+                        />
+                        {/* Quantos ficheiros tem a galeria, para se saber de
+                            relance quais os artigos que ainda só têm uma foto */}
+                        {g.media.length > 1 && (
+                          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs text-white flex items-center gap-1"
+                                style={{ background: 'rgba(0,0,0,0.65)' }}
+                                data-testid={`galeria-${g.chave}`}>
+                            {g.media.some((m) => m.kind === 'video') && <Video size={11} />}
+                            {g.media.length}
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <div className="w-full h-40 flex flex-col items-center justify-center gap-2"
                            style={{ background: 'var(--background-elevated)' }}>
@@ -949,30 +1029,83 @@ const AppDoSocio = ({ language }) => {
               />
             </div>
 
+            {/* A galeria do artigo: várias fotografias e vídeos curtos. A
+                primeira fotografia é a principal — é a que aparece na lista
+                da montra; as outras vêem-se ao abrir o artigo. */}
             <div>
-              <Label>{txt.fotografiaDoArtigo}</Label>
-              <div className="flex items-center gap-3 mt-1">
-                {artigoForm.photo_url && (
-                  <img
-                    src={enderecoDaImagem(artigoForm.photo_url)}
-                    alt=""
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                )}
+              <Label>{txt.galeria}</Label>
+
+              {(artigoForm.media || []).length > 0 && (
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {artigoForm.media.map((m) => {
+                    const principal = m.url === artigoForm.photo_url;
+                    return (
+                      <div
+                        key={m.url}
+                        className="relative w-24 h-24 rounded-lg overflow-hidden group"
+                        style={{ border: principal ? '2px solid var(--ko-primary-orange)' : '1px solid var(--border-light)' }}
+                        data-testid={`media-${m.url.split('/').pop()}`}
+                      >
+                        {m.kind === 'video' ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-1"
+                               style={{ background: 'var(--background-elevated)' }}>
+                            <Video size={22} className="text-gray-400" />
+                            <span className="text-[10px] text-gray-400">{txt.video}</span>
+                          </div>
+                        ) : (
+                          <img src={enderecoDaImagem(m.url)} alt="" className="w-full h-full object-cover" />
+                        )}
+
+                        {principal && (
+                          <span className="absolute bottom-0 inset-x-0 text-[10px] text-center text-white py-0.5"
+                                style={{ background: 'var(--ko-primary-orange)' }}>
+                            {txt.principal}
+                          </span>
+                        )}
+
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {m.kind === 'photo' && !principal && (
+                            <button
+                              type="button"
+                              title={txt.tornarPrincipal}
+                              onClick={() => tornarPrincipal(m.url)}
+                              className="w-6 h-6 rounded bg-black/70 text-white flex items-center justify-center"
+                              data-testid={`principal-${m.url.split('/').pop()}`}
+                            >
+                              <Eye size={13} />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            title={txt.apagar}
+                            onClick={() => tirarDaGaleria(m.url)}
+                            className="w-6 h-6 rounded bg-black/70 text-red-400 flex items-center justify-center"
+                            data-testid={`tirar-${m.url.split('/').pop()}`}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mt-3">
                 <input
-                  type="file" accept="image/*" hidden ref={ficheiroArtigo}
-                  onChange={(e) => escolherImagem(e, (url) => setArtigoForm((f) => ({ ...f, photo_url: url })))}
+                  type="file" accept="image/*,video/*" multiple hidden ref={ficheiroArtigo}
+                  onChange={escolherVarios}
                 />
                 <Button type="button" variant="outline" disabled={aEnviar}
                         onClick={() => ficheiroArtigo.current?.click()}
                         data-testid="artigo-foto">
                   <Upload size={15} className="mr-2" />
-                  {aEnviar ? txt.aEnviar : txt.escolherFicheiro}
+                  {aEnviar ? txt.aEnviar : txt.acrescentarFicheiros}
                 </Button>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Sem fotografia o artigo não aparece na montra da aplicação.
-                É a mesma para todos os tamanhos desta cor.
+
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {txt.galeriaAjuda}
               </p>
             </div>
 
