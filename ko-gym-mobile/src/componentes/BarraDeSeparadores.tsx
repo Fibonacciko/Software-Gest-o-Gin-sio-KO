@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { cores, espaco, raio } from '../theme';
+import { cores, espaco, raio, sombra } from '../theme';
 
 export type Separador = 'inicio' | 'parceiros' | 'multimedia' | 'loja' | 'ginasio';
 
@@ -33,50 +33,59 @@ export default function BarraDeSeparadores({ activo, aoEscolher }: Props) {
   const margens = useSafeAreaInsets();
 
   return (
-    <BlurView
-      intensity={Platform.OS === 'android' ? 32 : 50}
-      tint="dark"
-      experimentalBlurMethod="dimezisBlurView"
-      style={[estilos.barra, { paddingBottom: Math.max(margens.bottom, espaco.m) }]}
-    >
-      {/* O risco de luz no topo: é o que separa a barra do que passa por
-          baixo dela, agora que deixou de ser uma faixa opaca. */}
-      <View style={estilos.brilho} pointerEvents="none" />
+    <View style={[estilos.moldura, { paddingBottom: Math.max(margens.bottom, espaco.s) }]}>
+      <BlurView
+        intensity={Platform.OS === 'android' ? 40 : 60}
+        tint="dark"
+        experimentalBlurMethod="dimezisBlurView"
+        style={estilos.barra}
+      >
+        {/* O risco de luz no bordo de cima, que é o que dá o ar de vidro */}
+        <View style={estilos.brilho} pointerEvents="none" />
 
-      {SEPARADORES.map((s) => {
-        const seleccionado = s.id === activo;
-        return (
-          <Pressable
-            key={s.id}
-            style={({ pressed }) => [estilos.item, pressed && { opacity: 0.6 }]}
-            onPress={() => aoEscolher(s.id)}
-          >
-            {/* A pastilha por trás do separador escolhido. Antes só mudava a
-                cor do texto, e num fundo que se mexe isso lia-se mal. */}
-            {seleccionado ? <View style={estilos.pastilha} pointerEvents="none" /> : null}
-            <Text style={[estilos.icone, seleccionado && estilos.icaneActivo]}>{s.icone}</Text>
-            <Text style={[estilos.texto, seleccionado && estilos.textoActivo]}>{s.texto}</Text>
-          </Pressable>
-        );
-      })}
-    </BlurView>
+        {SEPARADORES.map((s) => {
+          const seleccionado = s.id === activo;
+          return (
+            <Pressable
+              key={s.id}
+              style={({ pressed }) => [estilos.item, pressed && { opacity: 0.6 }]}
+              onPress={() => aoEscolher(s.id)}
+            >
+              {/* A marca por trás do separador escolhido. Antes só mudava a
+                  cor do texto, e num fundo que se mexe isso lia-se mal. */}
+              {seleccionado ? <View style={estilos.marca} pointerEvents="none" /> : null}
+              <Text style={[estilos.icone, seleccionado && estilos.icaneActivo]}>{s.icone}</Text>
+              <Text style={[estilos.texto, seleccionado && estilos.textoActivo]}>{s.texto}</Text>
+            </Pressable>
+          );
+        })}
+      </BlurView>
+    </View>
   );
 }
 
 const estilos = StyleSheet.create({
+  // A barra deixou de ser uma faixa encostada ao fundo e passou a flutuar.
+  // A moldura é o que a afasta dos bordos; a barra é a pastilha em si.
+  moldura: { paddingHorizontal: espaco.m, paddingTop: espaco.xs },
   barra: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(18,18,18,0.55)',
-    paddingTop: espaco.s,
+    backgroundColor: 'rgba(18,18,18,0.62)',
+    borderRadius: raio.redondo,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: cores.vidroBordo,
+    paddingVertical: espaco.s,
+    paddingHorizontal: espaco.xs,
     overflow: 'hidden',
+    ...sombra.flutuante,
   },
   brilho: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
+    left: raio.g,
+    right: raio.g,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: cores.vidroBordo,
+    backgroundColor: cores.vidroBrilho,
   },
   item: {
     flex: 1,
@@ -84,14 +93,14 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     gap: 3,
     paddingVertical: espaco.s,
-    marginHorizontal: 2,
+    marginHorizontal: 1,
   },
-  pastilha: {
+  marca: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(232,132,42,0.14)',
-    borderRadius: raio.m,
+    backgroundColor: 'rgba(232,132,42,0.16)',
+    borderRadius: raio.redondo,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(232,132,42,0.3)',
+    borderColor: 'rgba(232,132,42,0.35)',
   },
   icone: { color: cores.textoSecundario, fontSize: 16 },
   icaneActivo: { color: cores.laranjaClaro },

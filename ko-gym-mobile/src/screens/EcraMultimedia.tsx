@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { carregarMultimedia, enderecoDaImagem, ItemMultimedia } from '../api';
+import CartaoDeDestaque from '../componentes/CartaoDeDestaque';
 import { cores, espaco, raio, superficie } from '../theme';
 
 const LARGURA = Dimensions.get('window').width;
@@ -92,32 +93,20 @@ export default function EcraMultimedia() {
           </View>
         ) : null}
 
-        <View style={estilos.grelha}>
-          {itens.map((item) => {
-            const foto = enderecoDaImagem(item.url);
-            return (
-              <Pressable
-                key={item.id}
-                style={({ pressed }) => [estilos.celula, pressed && estilos.premido]}
-                onPress={() => tocar(item)}
-              >
-                {item.kind === 'photo' && foto ? (
-                  <Image source={{ uri: foto }} style={estilos.foto} resizeMode="cover" />
-                ) : (
-                  <View style={[estilos.foto, estilos.video]}>
-                    <Text style={estilos.videoIcone}>▶</Text>
-                    <Text style={estilos.videoTexto}>Ver o vídeo</Text>
-                  </View>
-                )}
-                {item.caption ? (
-                  <Text style={estilos.legenda} numberOfLines={2}>
-                    {item.caption}
-                  </Text>
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* Largura inteira, uma por uma, com a legenda por cima: a grelha de
+            dois em dois mostrava o dobro das fotografias e metade de cada. */}
+        {itens.map((item) => (
+          <View key={item.id} style={estilos.item}>
+            <CartaoDeDestaque
+              imagem={item.kind === 'photo' ? enderecoDaImagem(item.url) : null}
+              titulo={item.caption || (item.kind === 'video_link' ? 'Ver o vídeo' : 'Ginásio KO')}
+              subtitulo={dataPt(item.taken_on)}
+              selo={item.kind === 'video_link' ? '▶' : null}
+              altura={300}
+              aoTocar={() => tocar(item)}
+            />
+          </View>
+        ))}
       </ScrollView>
 
       {/* A fotografia em grande */}
@@ -152,14 +141,7 @@ const estilos = StyleSheet.create({
   erro: { color: cores.vermelho, marginBottom: espaco.m },
   vazio: { ...superficie, borderRadius: raio.g, padding: espaco.g, alignItems: 'center' },
   vazioTexto: { color: cores.textoSecundario, textAlign: 'center' },
-  grelha: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.s },
-  celula: { width: LADO, marginBottom: espaco.s },
-  premido: { opacity: 0.8 },
-  foto: { width: LADO, height: LADO, borderRadius: raio.s, backgroundColor: cores.fundoCartao },
-  video: { alignItems: 'center', justifyContent: 'center', gap: espaco.s },
-  videoIcone: { color: cores.laranjaClaro, fontSize: 32 },
-  videoTexto: { color: cores.textoSecundario, fontSize: 13 },
-  legenda: { color: cores.textoSecundario, fontSize: 12, marginTop: espaco.xs },
+  item: { marginBottom: espaco.m },
   fundoModal: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.95)',

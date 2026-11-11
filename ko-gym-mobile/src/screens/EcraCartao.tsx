@@ -25,6 +25,8 @@ import {
   sair,
   Socio,
 } from '../api';
+import RoloDoInicio from '../componentes/RoloDoInicio';
+import type { Separador } from '../componentes/BarraDeSeparadores';
 import Versao from '../componentes/Versao';
 import Vidro from '../componentes/Vidro';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
@@ -36,6 +38,8 @@ const FOTO_DO_GINASIO = require('../../assets/ginasio.jpg');
 type Props = {
   socio: Socio;
   aoSair: () => void;
+  /** Saltar para outro separador, a partir do rolo lá de baixo. */
+  aoIrPara: (separador: Separador) => void;
 };
 
 const dataPt = (iso?: string | null) =>
@@ -53,7 +57,7 @@ const nomeCurto = (nome: string) => {
   return `${partes[0]} ${partes[partes.length - 1]}`;
 };
 
-export default function EcraCartao({ socio: inicial, aoSair }: Props) {
+export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) {
   const [socio, setSocio] = useState(inicial);
   const [modalidades, setModalidades] = useState<Modalidade[]>([]);
   const [aAtualizar, setAAtualizar] = useState(false);
@@ -337,6 +341,10 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       >
         <Text style={estilos.botaoQrTexto}>Mostrar o meu QR</Text>
       </Pressable>
+
+      {/* O que há de novo no ginásio. Vem por baixo do check-in, nunca por
+          cima: quem abre a aplicação à porta tem de ter o botão à mão. */}
+      <RoloDoInicio aoIrPara={aoIrPara} />
 
       {/* Empurra o terminar sessao para o fim, mesmo quando ha pouco conteudo */}
       <View style={estilos.empurrao} />

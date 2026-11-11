@@ -66,7 +66,11 @@ export default function App() {
 
         <View style={estilos.ecra}>
           {separador === 'inicio' && (
-            <EcraCartao socio={socio} aoSair={() => { setSocio(null); setSeparador('inicio'); }} />
+            <EcraCartao
+              socio={socio}
+              aoSair={() => { setSocio(null); setSeparador('inicio'); }}
+              aoIrPara={setSeparador}
+            />
           )}
           {separador === 'parceiros' && <EcraParceiros />}
           {separador === 'multimedia' && <EcraMultimedia />}

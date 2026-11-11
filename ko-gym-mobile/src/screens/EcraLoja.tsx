@@ -20,6 +20,7 @@ import {
   Reserva,
   Socio,
 } from '../api';
+import CartaoDeDestaque from '../componentes/CartaoDeDestaque';
 import GaleriaDoArtigo from '../componentes/GaleriaDoArtigo';
 import { cores, espaco, raio, superficie } from '../theme';
 
@@ -169,36 +170,27 @@ export default function EcraLoja({ socio }: Props) {
           const foto = enderecoDaImagem(a.photo_url);
           const detalhes = a.color || '';
           return (
-            <Pressable
-              key={a.id}
-              style={({ pressed }) => [estilos.cartao, pressed && estilos.premido]}
-              onPress={() => abrir(a)}
-            >
-              {foto ? (
-                <View>
-                  <Image source={{ uri: foto }} style={estilos.foto} resizeMode="cover" />
-                  {/* Diz que há mais para ver, senão ninguém toca no cartão */}
-                  {a.media?.length > 1 ? (
-                    <View style={estilos.contaMedia}>
-                      <Text style={estilos.contaMediaTexto}>
-                        {a.media.some((m) => m.kind === 'video') ? '▶ ' : ''}
-                        {a.media.length}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              ) : null}
-              <View style={estilos.info}>
-                <Text style={estilos.nome} numberOfLines={2}>
-                  {a.name}
-                </Text>
-                {detalhes ? <Text style={estilos.detalhes}>{detalhes}</Text> : null}
-                <View style={estilos.rodape}>
-                  <Text style={estilos.preco}>{a.price.toFixed(2)} €</Text>
-                  <Text style={estilos.reservar}>Reservar</Text>
-                </View>
+            <View key={a.id} style={estilos.item}>
+              {/* A fotografia ocupa o cartão todo e o nome assenta nela: é o
+                  artigo que se escolhe com os olhos, não o texto. O número de
+                  ficheiros vai no canto, senão ninguém sabe que há mais. */}
+              <CartaoDeDestaque
+                imagem={foto}
+                titulo={a.name}
+                subtitulo={detalhes || null}
+                selo={
+                  a.media && a.media.length > 1
+                    ? `${a.media.some((m) => m.kind === 'video') ? '▶ ' : ''}${a.media.length}`
+                    : null
+                }
+                altura={300}
+                aoTocar={() => abrir(a)}
+              />
+              <View style={estilos.rodape}>
+                <Text style={estilos.preco}>{a.price.toFixed(2)} €</Text>
+                <Text style={estilos.reservar}>Reservar</Text>
               </View>
-            </Pressable>
+            </View>
           );
         })}
       </ScrollView>
@@ -333,32 +325,14 @@ const estilos = StyleSheet.create({
   minhaEstado: { color: cores.textoSecundario, fontSize: 12 },
   vazio: { ...superficie, borderRadius: raio.g, padding: espaco.g, alignItems: 'center' },
   vazioTexto: { color: cores.textoSecundario, textAlign: 'center' },
-  cartao: {
-    ...superficie,
-    borderRadius: raio.g,
-    marginBottom: espaco.m,
-    overflow: 'hidden',
-  },
+  item: { marginBottom: espaco.m },
   premido: { opacity: 0.85 },
-  foto: { width: '100%', height: 200, backgroundColor: cores.fundoElevado },
-  contaMedia: {
-    position: 'absolute',
-    top: espaco.s,
-    right: espaco.s,
-    paddingHorizontal: espaco.s,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-  },
-  contaMediaTexto: { color: cores.texto, fontSize: 12, fontWeight: '600' },
-  info: { padding: espaco.m },
-  nome: { color: cores.texto, fontSize: 17, fontWeight: '700' },
-  detalhes: { color: cores.textoSecundario, fontSize: 13, marginTop: 2 },
   rodape: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: espaco.s,
+    paddingHorizontal: espaco.xs,
   },
   preco: { color: cores.dourado, fontSize: 18, fontWeight: '800' },
   reservar: { color: cores.laranjaClaro, fontWeight: '700' },
