@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { cores, espaco } from '../theme';
+import { cores, espaco, raio } from '../theme';
 
 export type Separador = 'inicio' | 'parceiros' | 'multimedia' | 'loja' | 'ginasio';
 
@@ -32,7 +33,16 @@ export default function BarraDeSeparadores({ activo, aoEscolher }: Props) {
   const margens = useSafeAreaInsets();
 
   return (
-    <View style={[estilos.barra, { paddingBottom: Math.max(margens.bottom, espaco.m) }]}>
+    <BlurView
+      intensity={Platform.OS === 'android' ? 32 : 50}
+      tint="dark"
+      experimentalBlurMethod="dimezisBlurView"
+      style={[estilos.barra, { paddingBottom: Math.max(margens.bottom, espaco.m) }]}
+    >
+      {/* O risco de luz no topo: é o que separa a barra do que passa por
+          baixo dela, agora que deixou de ser uma faixa opaca. */}
+      <View style={estilos.brilho} pointerEvents="none" />
+
       {SEPARADORES.map((s) => {
         const seleccionado = s.id === activo;
         return (
@@ -41,24 +51,48 @@ export default function BarraDeSeparadores({ activo, aoEscolher }: Props) {
             style={({ pressed }) => [estilos.item, pressed && { opacity: 0.6 }]}
             onPress={() => aoEscolher(s.id)}
           >
+            {/* A pastilha por trás do separador escolhido. Antes só mudava a
+                cor do texto, e num fundo que se mexe isso lia-se mal. */}
+            {seleccionado ? <View style={estilos.pastilha} pointerEvents="none" /> : null}
             <Text style={[estilos.icone, seleccionado && estilos.icaneActivo]}>{s.icone}</Text>
             <Text style={[estilos.texto, seleccionado && estilos.textoActivo]}>{s.texto}</Text>
           </Pressable>
         );
       })}
-    </View>
+    </BlurView>
   );
 }
 
 const estilos = StyleSheet.create({
   barra: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(26,26,26,0.92)',
-    borderTopWidth: 1,
-    borderTopColor: cores.borda,
+    backgroundColor: 'rgba(18,18,18,0.55)',
     paddingTop: espaco.s,
+    overflow: 'hidden',
   },
-  item: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: espaco.xs },
+  brilho: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: cores.vidroBordo,
+  },
+  item: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    paddingVertical: espaco.s,
+    marginHorizontal: 2,
+  },
+  pastilha: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(232,132,42,0.14)',
+    borderRadius: raio.m,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(232,132,42,0.3)',
+  },
   icone: { color: cores.textoSecundario, fontSize: 16 },
   icaneActivo: { color: cores.laranjaClaro },
   texto: { color: cores.textoSecundario, fontSize: 11 },

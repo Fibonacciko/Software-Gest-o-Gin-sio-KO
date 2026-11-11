@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import {
   carregarCartao,
@@ -25,8 +26,9 @@ import {
   Socio,
 } from '../api';
 import Versao from '../componentes/Versao';
+import Vidro from '../componentes/Vidro';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
-import { cores, espaco } from '../theme';
+import { cores, espaco, raio, sombra } from '../theme';
 
 const LOGOTIPO = require('../../assets/logo-ko.png');
 const FOTO_DO_GINASIO = require('../../assets/ginasio.jpg');
@@ -89,6 +91,9 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
     setErro(null);
     try {
       const r = await fazerCheckin(socio.id, activityId, 'mobile_nfc');
+      // Uma vibração curta no momento em que a presença entra: a confirmação
+      // sente-se antes de se ler, e o telemóvel está encostado à etiqueta.
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setResultado(r);
       atualizar();
     } catch (e: any) {
@@ -276,7 +281,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       {erro ? <Text style={estilos.erro}>{erro}</Text> : null}
 
       {/* Estado, quota e seguro — tudo numa linha, logo abaixo do check-in */}
-      <View style={estilos.cartaoEstado}>
+      <Vidro desfocado forte estilo={estilos.cartaoEstado}>
         <View style={estilos.colunaEstado}>
           <Text style={estilos.validadeEtiqueta}>Inscrição</Text>
           <Text style={[estilos.estadoValor, { color: corEstado }]}>{textoEstado}</Text>
@@ -291,26 +296,27 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           <Text style={estilos.validadeEtiqueta}>Seguro até</Text>
           <Text style={estilos.validadeValor}>{dataPt(socio.insurance_valid_until) ?? '—'}</Text>
         </View>
-      </View>
+      </Vidro>
 
       {/* Números */}
       <View style={estilos.numeros}>
-        <View style={estilos.numeroCaixa}>
+        <Vidro estilo={estilos.numeroCaixa}>
           <Text style={estilos.numeroGrande}>{socio.workout_count}</Text>
           <Text style={estilos.numeroEtiqueta}>treinos</Text>
-        </View>
-        <View style={estilos.numeroCaixa}>
+        </Vidro>
+        <Vidro estilo={estilos.numeroCaixa}>
           <Text style={estilos.numeroGrande}>{socio.streak_weeks}</Text>
           <Text style={estilos.numeroEtiqueta}>
             {socio.streak_weeks === 1 ? 'semana seguida' : 'semanas seguidas'}
           </Text>
-        </View>
+        </Vidro>
       </View>
 
       {socio.current_motivational_note ? (
-        <View style={estilos.frase}>
+        <Vidro estilo={estilos.frase}>
+          <View style={estilos.fraseRisca} />
           <Text style={estilos.fraseTexto}>{socio.current_motivational_note}</Text>
-        </View>
+        </Vidro>
       ) : null}
 
       {/* Modalidades */}
@@ -457,7 +463,14 @@ const estilos = StyleSheet.create({
   numeroSocio: { color: cores.textoSecundario, fontSize: 14, marginTop: 2 },
 
   retratoBotao: { width: 72, height: 72 },
-  retrato: { width: 72, height: 72, borderRadius: 36, backgroundColor: cores.fundoElevado },
+  retrato: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: cores.vidro,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: cores.vidroBordo,
+  },
   retratoVazio: { alignItems: 'center', justifyContent: 'center' },
   maisFoto: {
     position: 'absolute',
@@ -475,22 +488,29 @@ const estilos = StyleSheet.create({
   maisFotoTexto: { color: cores.texto, fontSize: 16, fontWeight: '800', lineHeight: 18 },
 
   molduraGinasio: {
-    borderRadius: 20,
+    borderRadius: raio.g,
     overflow: 'hidden',
     marginTop: espaco.m,
-    backgroundColor: cores.fundoCartao,
+    backgroundColor: cores.vidro,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: cores.vidroBordo,
   },
   fotoGinasio: { width: '100%', height: 200 },
 
   botaoCheckin: {
     backgroundColor: cores.laranja,
-    borderRadius: 16,
+    borderRadius: raio.g,
     paddingVertical: espaco.g,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: espaco.s,
     marginTop: espaco.m,
+    // O unico elemento com sombra no ecra. E o que se carrega todos os dias:
+    // se tudo tivesse relevo, nada o teria.
+    ...sombra.flutuante,
+    shadowColor: cores.laranja,
+    shadowOpacity: 0.5,
   },
   botaoFeito: { backgroundColor: cores.verde },
   botaoCheckinTexto: { color: cores.texto, fontSize: 18, fontWeight: '800', letterSpacing: 1 },
@@ -500,14 +520,16 @@ const estilos = StyleSheet.create({
   cartaoEstado: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(45,45,45,0.82)',
-    borderRadius: 16,
     paddingVertical: espaco.m,
     paddingHorizontal: espaco.s,
     marginTop: espaco.m,
   },
   colunaEstado: { flex: 1, alignItems: 'center' },
-  separadorVertical: { width: 1, alignSelf: 'stretch', backgroundColor: cores.borda },
+  separadorVertical: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+    backgroundColor: cores.vidroBordo,
+  },
   validadeEtiqueta: { color: cores.textoSecundario, fontSize: 11 },
   validadeValor: { color: cores.texto, fontSize: 15, fontWeight: '700', marginTop: 3 },
   estadoValor: { fontSize: 15, fontWeight: '800', marginTop: 3, letterSpacing: 0.5 },
@@ -515,8 +537,6 @@ const estilos = StyleSheet.create({
   numeros: { flexDirection: 'row', gap: espaco.m, marginTop: espaco.m },
   numeroCaixa: {
     flex: 1,
-    backgroundColor: 'rgba(45,45,45,0.82)',
-    borderRadius: 16,
     padding: espaco.m,
     alignItems: 'center',
   },
@@ -524,12 +544,18 @@ const estilos = StyleSheet.create({
   numeroEtiqueta: { color: cores.textoSecundario, fontSize: 12, marginTop: 2 },
 
   frase: {
-    backgroundColor: 'rgba(45,45,45,0.82)',
-    borderRadius: 16,
     padding: espaco.m,
+    paddingLeft: espaco.m + 3,
     marginTop: espaco.m,
-    borderLeftWidth: 3,
-    borderLeftColor: cores.dourado,
+  },
+  // A risca dourada por dentro, porque o Vidro ja tem o seu proprio bordo
+  fraseRisca: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: cores.dourado,
   },
   fraseTexto: { color: cores.texto, fontSize: 15, fontStyle: 'italic', lineHeight: 22 },
 
@@ -547,8 +573,10 @@ const estilos = StyleSheet.create({
   modalidadeTexto: { color: cores.texto, fontSize: 13 },
 
   botaoQr: {
-    backgroundColor: 'rgba(45,45,45,0.82)',
-    borderRadius: 16,
+    backgroundColor: cores.vidro,
+    borderRadius: raio.g,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: cores.vidroBordo,
     paddingVertical: espaco.m,
     alignItems: 'center',
     marginTop: espaco.m,
@@ -582,11 +610,14 @@ const estilos = StyleSheet.create({
     padding: espaco.m,
   },
   caixaModal: {
-    backgroundColor: cores.fundoCartao,
-    borderRadius: 20,
+    backgroundColor: 'rgba(38,38,38,0.96)',
+    borderRadius: raio.xg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: cores.vidroBordo,
     padding: espaco.g,
     width: '100%',
     alignItems: 'center',
+    ...sombra.flutuante,
   },
   tituloModal: { color: cores.texto, fontSize: 18, fontWeight: '700', marginBottom: espaco.m },
   opcao: {

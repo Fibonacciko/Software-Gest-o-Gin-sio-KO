@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { carregarParceiros, enderecoDaImagem, Parceiro } from '../api';
-import { cores, espaco } from '../theme';
+import { cores, espaco, raio, superficie } from '../theme';
 
 /**
  * Os protocolos de parceria do ginásio.
@@ -141,20 +141,20 @@ const estilos = StyleSheet.create({
   subtitulo: { color: cores.textoSecundario, fontSize: 13, marginTop: espaco.xs, marginBottom: espaco.m },
   erro: { color: cores.vermelho, marginBottom: espaco.m },
   vazio: {
-    backgroundColor: 'rgba(45,45,45,0.85)',
-    borderRadius: 16,
+    ...superficie,
+    borderRadius: raio.m,
     padding: espaco.g,
     alignItems: 'center',
   },
   vazioTexto: { color: cores.textoSecundario, textAlign: 'center' },
   cartao: {
-    backgroundColor: 'rgba(45,45,45,0.85)',
-    borderRadius: 20,
+    ...superficie,
+    borderRadius: raio.g,
     padding: espaco.m,
     marginBottom: espaco.m,
   },
   topo: { flexDirection: 'row', alignItems: 'center', gap: espaco.m },
-  logo: { width: 56, height: 56, borderRadius: 12, backgroundColor: cores.fundoElevado },
+  logo: { width: 56, height: 56, borderRadius: raio.s, backgroundColor: cores.fundoElevado },
   logoVazio: { alignItems: 'center', justifyContent: 'center' },
   logoLetra: { color: cores.laranjaClaro, fontSize: 24, fontWeight: '800' },
   cabecalho: { flex: 1 },

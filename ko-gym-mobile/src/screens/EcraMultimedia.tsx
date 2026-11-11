@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { carregarMultimedia, enderecoDaImagem, ItemMultimedia } from '../api';
-import { cores, espaco } from '../theme';
+import { cores, espaco, raio, superficie } from '../theme';
 
 const LARGURA = Dimensions.get('window').width;
 const LADO = (LARGURA - espaco.m * 2 - espaco.s) / 2;
@@ -150,12 +150,12 @@ const estilos = StyleSheet.create({
   titulo: { color: cores.texto, fontSize: 26, fontWeight: '800' },
   subtitulo: { color: cores.textoSecundario, fontSize: 13, marginTop: espaco.xs, marginBottom: espaco.m },
   erro: { color: cores.vermelho, marginBottom: espaco.m },
-  vazio: { backgroundColor: 'rgba(45,45,45,0.85)', borderRadius: 20, padding: espaco.g, alignItems: 'center' },
+  vazio: { ...superficie, borderRadius: raio.g, padding: espaco.g, alignItems: 'center' },
   vazioTexto: { color: cores.textoSecundario, textAlign: 'center' },
   grelha: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.s },
   celula: { width: LADO, marginBottom: espaco.s },
   premido: { opacity: 0.8 },
-  foto: { width: LADO, height: LADO, borderRadius: 12, backgroundColor: cores.fundoCartao },
+  foto: { width: LADO, height: LADO, borderRadius: raio.s, backgroundColor: cores.fundoCartao },
   video: { alignItems: 'center', justifyContent: 'center', gap: espaco.s },
   videoIcone: { color: cores.laranjaClaro, fontSize: 32 },
   videoTexto: { color: cores.textoSecundario, fontSize: 13 },

@@ -467,6 +467,33 @@ círculo deixa um bordo a atravessar o ecrã, que se via.
 decisão do dono. O laranja fica para o que é para carregar (o check-in, os
 números, o logótipo); num fundo tingido de laranja deixava de se destacar.
 
+**A profundidade vem da inclinação, não de um motor 3D.** As três camadas do
+fundo são maiores do que o ecrã e deslizam a velocidades diferentes conforme
+se inclina o telemóvel (`expo-sensors`, acelerómetro a 8 leituras por
+segundo, suavizadas com `spring` porque o sensor treme sempre um pouco). É a
+*diferença* entre as velocidades que o olho lê como 3D. Um motor 3D a sério
+daria o mesmo efeito gastando bateria e engasgando nos telemóveis fracos,
+numa aplicação cujo trabalho é um check-in de dois segundos.
+
+Nem todos os aparelhos têm acelerómetro — no navegador não há —, por isso
+pergunta-se primeiro (`isAvailableAsync`). Sem essa pergunta a aplicação
+rebentava a arrancar; com ela, o fundo fica quieto e o resto funciona.
+
+**As superfícies são de vidro.** Deixaram de ser cinzentos opacos
+(`rgba(45,45,45,…)`) e passaram a branco com pouca opacidade mais um **bordo
+claro em cima** — é o risco de luz que faz o efeito, não a transparência. Um
+cinzento fixo só funcionava em cima daquele fundo; o branco translúcido
+funciona em cima de qualquer um.
+
+**Desfocar é só para o que não rola** (`<Vidro desfocado>`): a barra de baixo,
+o cartão do estado, as janelas. Desfocar é trabalho para a placa gráfica a
+cada imagem, e numa lista a rolar com dez cartões à vista isso nota-se nos
+telemóveis fracos. Nos restantes chega `superficie`, do `theme.ts`, que a
+olho dá quase o mesmo e não custa nada.
+
+**Só o botão de check-in tem sombra.** É o que se carrega todos os dias; se
+tudo tivesse relevo, nada o teria.
+
 **Logótipos nunca se cortam; fotografias sim.** Um logótipo entra com
 `resizeMode="contain"` — cortar um logótipo estraga-o, e eles vêm de todos os
 feitios. Uma fotografia entra com `cover`, que enche o espaço.

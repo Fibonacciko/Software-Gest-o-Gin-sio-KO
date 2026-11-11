@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { entrar, Socio } from '../api';
-import { cores, espaco } from '../theme';
+import { cores, espaco, raio, superficie } from '../theme';
 
 type Props = {
   aoEntrar: (socio: Socio) => void;
@@ -131,10 +131,10 @@ const estilos = StyleSheet.create({
   campo: { gap: espaco.xs },
   etiqueta: { color: cores.textoSecundario, fontSize: 13, fontWeight: '600' },
   entrada: {
-    backgroundColor: 'rgba(45,45,45,0.82)',
+    ...superficie,
     borderWidth: 1,
     borderColor: cores.borda,
-    borderRadius: 12,
+    borderRadius: raio.s,
     paddingHorizontal: espaco.m,
     paddingVertical: 14,
     color: cores.texto,
@@ -143,7 +143,7 @@ const estilos = StyleSheet.create({
   erro: { color: cores.vermelho, fontSize: 14 },
   botao: {
     backgroundColor: cores.laranja,
-    borderRadius: 12,
+    borderRadius: raio.s,
     paddingVertical: 17,
     alignItems: 'center',
     marginTop: espaco.s,

@@ -21,7 +21,7 @@ import {
   Socio,
 } from '../api';
 import GaleriaDoArtigo from '../componentes/GaleriaDoArtigo';
-import { cores, espaco } from '../theme';
+import { cores, espaco, raio, superficie } from '../theme';
 
 type Props = { socio: Socio };
 
@@ -314,28 +314,28 @@ const estilos = StyleSheet.create({
   erro: { color: cores.vermelho, marginTop: espaco.s },
   aviso: {
     backgroundColor: cores.verde,
-    borderRadius: 12,
+    borderRadius: raio.s,
     padding: espaco.m,
     marginBottom: espaco.m,
   },
   avisoTexto: { color: cores.texto, fontWeight: '600', textAlign: 'center' },
   minhasReservas: {
-    backgroundColor: 'rgba(45,45,45,0.9)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(232,132,42,0.10)',
+    borderRadius: raio.g,
     padding: espaco.m,
     marginBottom: espaco.m,
-    borderWidth: 1,
-    borderColor: cores.laranja,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(232,132,42,0.45)',
   },
   minhasTitulo: { color: cores.laranjaClaro, fontWeight: '700', marginBottom: espaco.s },
   minhaLinha: { flexDirection: 'row', justifyContent: 'space-between', gap: espaco.s, paddingVertical: 4 },
   minhaTexto: { color: cores.texto, flex: 1, fontSize: 14 },
   minhaEstado: { color: cores.textoSecundario, fontSize: 12 },
-  vazio: { backgroundColor: 'rgba(45,45,45,0.85)', borderRadius: 20, padding: espaco.g, alignItems: 'center' },
+  vazio: { ...superficie, borderRadius: raio.g, padding: espaco.g, alignItems: 'center' },
   vazioTexto: { color: cores.textoSecundario, textAlign: 'center' },
   cartao: {
-    backgroundColor: 'rgba(45,45,45,0.85)',
-    borderRadius: 20,
+    ...superficie,
+    borderRadius: raio.g,
     marginBottom: espaco.m,
     overflow: 'hidden',
   },
@@ -381,7 +381,7 @@ const estilos = StyleSheet.create({
     minWidth: 54,
     paddingVertical: espaco.s,
     paddingHorizontal: espaco.m,
-    borderRadius: 12,
+    borderRadius: raio.s,
     borderWidth: 1,
     borderColor: cores.borda,
     backgroundColor: cores.fundoElevado,
@@ -401,7 +401,7 @@ const estilos = StyleSheet.create({
   contadorBotao: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: raio.s,
     backgroundColor: cores.fundoElevado,
     alignItems: 'center',
     justifyContent: 'center',
@@ -411,7 +411,7 @@ const estilos = StyleSheet.create({
   total: { color: cores.dourado, fontSize: 16, fontWeight: '700', marginTop: espaco.m },
   confirmar: {
     backgroundColor: cores.laranja,
-    borderRadius: 14,
+    borderRadius: raio.m,
     paddingVertical: espaco.m,
     alignItems: 'center',
     marginTop: espaco.g,

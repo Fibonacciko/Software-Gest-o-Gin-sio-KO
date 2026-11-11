@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { carregarFichaDoGinasio, enderecoDaImagem, FichaDoGinasio } from '../api';
-import { cores, espaco } from '../theme';
+import { cores, espaco, raio, superficie } from '../theme';
 
 const abrir = (endereco?: string | null) => {
   if (!endereco) return;
@@ -181,7 +181,7 @@ const estilos = StyleSheet.create({
   foto: {
     width: '100%',
     height: 180,
-    borderRadius: 20,
+    borderRadius: raio.g,
     backgroundColor: cores.fundoElevado,
     marginBottom: espaco.m,
   },
@@ -194,15 +194,15 @@ const estilos = StyleSheet.create({
     backgroundColor: 'rgba(245,166,35,0.12)',
     borderWidth: 1,
     borderColor: cores.dourado,
-    borderRadius: 20,
+    borderRadius: raio.g,
     padding: espaco.m,
     marginTop: espaco.g,
   },
   destaqueTitulo: { color: cores.texto, fontSize: 17, fontWeight: '800' },
   destaqueTexto: { color: cores.textoSecundario, fontSize: 13, marginTop: 4, marginBottom: espaco.m },
   cartao: {
-    backgroundColor: 'rgba(45,45,45,0.85)',
-    borderRadius: 20,
+    ...superficie,
+    borderRadius: raio.g,
     padding: espaco.m,
     marginTop: espaco.m,
   },
@@ -214,7 +214,7 @@ const estilos = StyleSheet.create({
   botao: {
     borderWidth: 1,
     borderColor: cores.borda,
-    borderRadius: 14,
+    borderRadius: raio.m,
     paddingVertical: espaco.m,
     alignItems: 'center',
     backgroundColor: 'rgba(58,58,58,0.6)',
