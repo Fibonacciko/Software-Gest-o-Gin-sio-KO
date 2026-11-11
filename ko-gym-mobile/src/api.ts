@@ -120,6 +120,24 @@ export type Avaliacao = {
   notes?: string | null;
 };
 
+export type TipoDePlano = 'training' | 'nutrition';
+
+/**
+ * Um plano de treino ou alimentar, como documento.
+ *
+ * Ou tem `file_url` (um PDF) ou `content` (texto escrito na gestao) — nunca
+ * nenhum dos dois, que o servidor nao aceita.
+ */
+export type Plano = {
+  id: string;
+  kind: TipoDePlano;
+  title: string;
+  file_url?: string | null;
+  content?: string | null;
+  notes?: string | null;
+  plan_date: string;
+};
+
 export type Modalidade = {
   id: string;
   name: string;
@@ -198,6 +216,19 @@ export function carregarCartao(memberId: string) {
 /** A evolucao do socio, da medicao mais antiga para a mais recente. */
 export function carregarAvaliacoes(memberId: string) {
   return pedir<Avaliacao[]>(`/mobile/assessments/${encodeURIComponent(memberId)}`);
+}
+
+/** Os planos do socio, do mais recente para tras. */
+export function carregarPlanos(memberId: string) {
+  return pedir<Plano[]>(`/mobile/plans/${encodeURIComponent(memberId)}`);
+}
+
+/** O socio pede um plano novo; o pedido aparece no Painel do ginasio. */
+export function pedirPlano(memberId: string, kind: TipoDePlano, note?: string) {
+  return pedir<{ id: string }>('/mobile/plan-requests', {
+    method: 'POST',
+    body: JSON.stringify({ member_id: memberId, kind, note: note ?? null }),
+  });
 }
 
 export function carregarModalidades() {

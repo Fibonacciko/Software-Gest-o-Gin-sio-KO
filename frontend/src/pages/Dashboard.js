@@ -65,6 +65,8 @@ const Dashboard = ({ language, translations }) => {
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [unrecognizedTag, setUnrecognizedTag] = useState('');
   const [activities, setActivities] = useState([]);
+  // Quem esta a espera de um plano novo, pedido pela aplicacao
+  const [pedidosDePlano, setPedidosDePlano] = useState([]);
   const [alerts, setAlerts] = useState({ birthdays_today: [], birthdays_upcoming: [], insurance_due_today: [], insurance_upcoming: [] });
 
   const t = {
@@ -144,6 +146,7 @@ const Dashboard = ({ language, translations }) => {
     fetchDashboardData();
     carregarExperimentaisHoje();
     carregarPresencasDoMes();
+    carregarPedidosDePlano();
   }, []);
 
   useEffect(() => {
@@ -211,6 +214,15 @@ const Dashboard = ({ language, translations }) => {
       toast.error('Erro ao carregar dados do painel');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const carregarPedidosDePlano = async () => {
+    try {
+      const r = await axios.get(`${API}/plan-requests`);
+      setPedidosDePlano(r.data);
+    } catch {
+      setPedidosDePlano([]);
     }
   };
 
@@ -682,7 +694,7 @@ const Dashboard = ({ language, translations }) => {
           aparece agora em cada check-in e em cada presença de hoje, e há
           um filtro próprio nos Membros. O que ficou é o que ainda não se
           vê noutro lado: aniversários e seguros a acabar em breve. */}
-      {(alerts.birthdays_today.length > 0 || alerts.birthdays_upcoming.length > 0 || alerts.insurance_upcoming.length > 0) && (
+      {(alerts.birthdays_today.length > 0 || alerts.birthdays_upcoming.length > 0 || alerts.insurance_upcoming.length > 0 || pedidosDePlano.length > 0) && (
         <div className="space-y-3">
           {alerts.birthdays_today.length > 0 && (
             <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #fff7ed, #ffedd5)', border: '1px solid #fdba74' }}>
@@ -698,6 +710,32 @@ const Dashboard = ({ language, translations }) => {
           {alerts.birthdays_upcoming.length > 0 && (
             <div className="rounded-lg p-3 text-sm" style={{ background: 'var(--gradient-card-bg)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}>
               🎈 Próximos aniversários: {alerts.birthdays_upcoming.map((b) => `${b.name} (${new Date(b.date).toLocaleDateString('pt-PT')})`).join(', ')}
+            </div>
+          )}
+          {/* Quem pediu um plano novo pela aplicação. Fica com os outros
+              avisos porque é aqui que se olha de manhã. */}
+          {pedidosDePlano.length > 0 && (
+            <div
+              className="rounded-lg p-4 flex items-start gap-3"
+              style={{ background: 'linear-gradient(135deg, #fff7ed, #ffedd5)', border: '1px solid #fb923c' }}
+              data-testid="pedidos-de-plano"
+            >
+              <span className="text-2xl">📋</span>
+              <div className="min-w-0">
+                <p className="font-semibold" style={{ color: '#c2410c' }}>
+                  {pedidosDePlano.length === 1
+                    ? 'Um sócio pediu um plano novo'
+                    : `${pedidosDePlano.length} sócios pediram um plano novo`}
+                </p>
+                <p className="text-sm" style={{ color: '#9a3412' }}>
+                  {pedidosDePlano
+                    .map((p) => `${p.member_name} (${p.kind === 'nutrition' ? 'alimentação' : 'treino'})`)
+                    .join(', ')}
+                </p>
+                <p className="text-xs mt-1" style={{ color: '#9a3412' }}>
+                  Carregue o plano na ficha do sócio — o pedido fecha-se sozinho.
+                </p>
+              </div>
             </div>
           )}
           {alerts.insurance_upcoming.length > 0 && (

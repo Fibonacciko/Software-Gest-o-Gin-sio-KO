@@ -238,9 +238,9 @@ por isso não é preciso mexer no nginx da máquina.
 
 **Não vão para a base de dados.** As cópias de segurança são despejos da base,
 e meia dúzia de fotografias punham um ficheiro de 15 MB a pesar centenas.
-Limites: **8 MB** por imagem (jpg, png, webp, gif) e **30 MB** por vídeo
-(mp4, mov, m4v, webm). `POST /api/uploads` devolve também o `kind`, que diz
-se o que entrou foi fotografia ou vídeo.
+Limites: **8 MB** por imagem (jpg, png, webp, gif), **30 MB** por vídeo
+(mp4, mov, m4v, webm) e **10 MB** por documento (pdf, para os planos).
+`POST /api/uploads` devolve também o `kind` — `photo`, `video` ou `document`.
 
 Em desenvolvimento a pasta é a de `UPLOADS_DIR` no `backend/.env`; nos testes é
 `tests/_uploads`. Ambas fora do Git.
@@ -279,6 +279,28 @@ ficheiro, importa-se; não valia a pena esperar por isso para começar.
   num sócio entre os 80 e os 84 quilos, começar no zero dava barras todas
   iguais.
 
+### Planos de treino e alimentares
+
+Um plano é **um documento**: um PDF do professor ou do nutricionista, ou texto
+escrito à mão na gestão. Carrega-se em **Membros → ver a ficha → Planos**, e o
+sócio lê-o na aplicação em **Os teus planos**.
+
+- Tem de ter **uma coisa ou a outra** — ficheiro ou texto. Um plano vazio não
+  é um plano: o sócio abria e não encontrava nada.
+- **Guardar um plano novo não apaga o anterior.** É o histórico que permite
+  dizer ao sócio o que mudou desde a última vez. A aplicação mostra o mais
+  recente de cada tipo.
+- O sócio **pede um plano novo** pelo botão, e o pedido aparece no **Painel**,
+  com os aniversários. Carregar duas vezes no botão não faz dois pedidos,
+  senão o Painel enchia-se de pedidos iguais.
+- **Guardar o plano fecha o pedido sozinho**, e só o do mesmo tipo: carregar
+  um plano de treino não risca um pedido de nutrição.
+- Apagar um plano só apaga o PDF **se mais nenhum plano o usar** — dar o mesmo
+  plano a dois sócios não pode deixar um deles sem nada.
+- Isto é o plano *como documento*. Uma biblioteca de exercícios com séries,
+  repetições e cargas é outro produto, e muito maior; foi decisão do dono
+  começar por aqui.
+
 ### Modalidades
 
 Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal e é a
@@ -316,7 +338,8 @@ da quota. Fichas antigas podem ter o campo gravado — é ignorado.
 | `tests/` | Scripts de teste antigos, contra a API |
 
 Coleções em MongoDB: `members`, `attendance`, `payments`, `expenses`, `sales`,
-`trial_classes`, `inventory`, `activities`, `assessments`, `users`, `audit_logs`,
+`trial_classes`, `inventory`, `activities`, `assessments`, `plans`,
+`plan_requests`, `users`, `audit_logs`,
 `automated_messages`, `motivational_notes`.
 
 ---
@@ -346,7 +369,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 217 testes e demoram 10 segundos.
+backend** — são 234 testes e demoram 10 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q

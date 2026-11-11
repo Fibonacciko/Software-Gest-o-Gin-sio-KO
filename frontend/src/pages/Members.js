@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
 import AvaliacoesDoSocio from '../components/AvaliacoesDoSocio';
+import PlanosDoSocio from '../components/PlanosDoSocio';
 import MultiActivitySelector from '../components/MultiActivitySelector';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -822,6 +823,14 @@ const Members = ({ language, translations }) => {
                   style={{ background: 'var(--gradient-card-bg)', border: '1px solid var(--border-light)' }}
                 >
                   <AvaliacoesDoSocio socio={selectedMember} />
+                </div>
+
+                {/* Os planos de treino e alimentares, como documento */}
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ background: 'var(--gradient-card-bg)', border: '1px solid var(--border-light)' }}
+                >
+                  <PlanosDoSocio socio={selectedMember} />
                 </div>
               </div>
             </div>

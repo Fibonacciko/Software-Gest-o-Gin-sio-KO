@@ -22,10 +22,12 @@ def test_guardar_uma_imagem_devolve_o_endereco(cliente, admin):
     assert r.json()["url"].endswith(".jpg")
 
 
-def test_so_aceita_imagens(cliente, admin):
+def test_o_pdf_de_um_plano_e_aceite(cliente, admin):
+    """O PDF entrou com os planos de treino e alimentares."""
     r = cliente.post("/api/uploads", headers=admin,
-                     files={"ficheiro": ("contas.pdf", io.BytesIO(b"nao e imagem"), "application/pdf")})
-    assert r.status_code == 400
+                     files={"ficheiro": ("plano.pdf", io.BytesIO(b"%PDF-1.4"), "application/pdf")})
+    assert r.status_code == 200
+    assert r.json()["kind"] == "document"
 
 
 def test_um_ficheiro_vazio_e_recusado(cliente, admin):
@@ -512,7 +514,10 @@ def test_carregar_uma_imagem_continua_a_dizer_que_e_imagem(cliente, admin):
     assert r.json()["kind"] == "photo"
 
 
-def test_o_que_nao_e_imagem_nem_video_continua_a_ser_recusado(cliente, admin):
-    r = cliente.post("/api/uploads", headers=admin,
-                     files={"ficheiro": ("contas.pdf", io.BytesIO(b"%PDF"), "application/pdf")})
-    assert r.status_code == 400
+def test_o_que_nao_e_imagem_video_nem_pdf_e_recusado(cliente, admin):
+    """Uma folha de calculo ou um executavel nao tem que fazer aqui."""
+    for nome, tipo in (("contas.xlsx", "application/vnd.ms-excel"),
+                       ("programa.exe", "application/octet-stream")):
+        r = cliente.post("/api/uploads", headers=admin,
+                         files={"ficheiro": (nome, io.BytesIO(b"x"), tipo)})
+        assert r.status_code == 400, nome

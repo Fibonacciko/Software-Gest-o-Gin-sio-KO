@@ -531,6 +531,56 @@ def calcular_imc(avaliacao: dict) -> dict:
     return avaliacao
 
 
+# ------------------------------------------------------------ Planos
+# O plano de treino e o plano alimentar, como documento. O professor ou o
+# nutricionista carrega um PDF ou escreve o texto; o socio le-o no telemovel.
+# Guarda-se o historico: substituir um plano nao apaga o anterior, que e o
+# que permite dizer ao socio o que mudou desde a ultima vez.
+
+class PlanKind(str, Enum):
+    TRAINING = "training"       # Plano de treino
+    NUTRITION = "nutrition"     # Plano alimentar
+
+
+class Plan(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_id: str
+    kind: PlanKind
+    title: str
+    file_url: Optional[str] = None    # O PDF, quando ha um
+    content: Optional[str] = None     # Ou o texto escrito a mao
+    notes: Optional[str] = None
+    plan_date: date = Field(default_factory=lambda: date.today())
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PlanCreate(BaseModel):
+    kind: PlanKind
+    title: str
+    file_url: Optional[str] = None
+    content: Optional[str] = None
+    notes: Optional[str] = None
+    plan_date: Optional[date] = None
+
+
+class PlanRequest(BaseModel):
+    """O socio pede um plano novo pela aplicacao; o ginasio prepara."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    member_id: str
+    member_name: Optional[str] = None
+    member_number: Optional[str] = None
+    kind: PlanKind
+    note: Optional[str] = None
+    done: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PlanRequestCreate(BaseModel):
+    member_id: str
+    kind: PlanKind
+    note: Optional[str] = None
+
+
 # ------------------------------------------------------------- O ginasio
 # Morada, contactos, horario e links. E um registo unico: ha so um ginasio.
 # Serve a aplicacao do socio, que o mostra no separador "O Ginasio".
@@ -4185,8 +4235,12 @@ EXTENSOES_DE_IMAGEM = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 # e uma montra, nao um canal de video, e as copias de seguranca sao da base de
 # dados, nao do disco.
 EXTENSOES_DE_VIDEO = {".mp4", ".mov", ".m4v", ".webm"}
-TAMANHO_MAXIMO = 8 * 1024 * 1024          # 8 MB: uma fotografia de telemovel cabe
-TAMANHO_MAXIMO_VIDEO = 30 * 1024 * 1024   # 30 MB: um video curto cabe
+# Planos de treino e alimentares, que vem em PDF do professor ou do
+# nutricionista. Um plano sao duas ou tres paginas; 10 MB e folga que chegue.
+EXTENSOES_DE_DOCUMENTO = {".pdf"}
+TAMANHO_MAXIMO = 8 * 1024 * 1024              # 8 MB: uma fotografia de telemovel cabe
+TAMANHO_MAXIMO_VIDEO = 30 * 1024 * 1024       # 30 MB: um video curto cabe
+TAMANHO_MAXIMO_DOCUMENTO = 10 * 1024 * 1024   # 10 MB: um plano em PDF cabe
 
 
 @api_router.post("/uploads")
@@ -4194,25 +4248,29 @@ async def guardar_imagem(
     ficheiro: UploadFile = File(...),
     current_user: User = Depends(require_admin_or_staff)
 ):
-    """Recebe uma imagem ou um video curto e devolve o endereco onde fica."""
+    """Recebe uma imagem, um video curto ou um PDF e devolve onde ele fica."""
     extensao = Path(ficheiro.filename or "").suffix.lower()
-    e_video = extensao in EXTENSOES_DE_VIDEO
-    if not e_video and extensao not in EXTENSOES_DE_IMAGEM:
+    if extensao in EXTENSOES_DE_VIDEO:
+        tipo, limite, nome_do_tipo = "video", TAMANHO_MAXIMO_VIDEO, "O video"
+    elif extensao in EXTENSOES_DE_DOCUMENTO:
+        tipo, limite, nome_do_tipo = "document", TAMANHO_MAXIMO_DOCUMENTO, "O documento"
+    elif extensao in EXTENSOES_DE_IMAGEM:
+        tipo, limite, nome_do_tipo = "photo", TAMANHO_MAXIMO, "A imagem"
+    else:
         raise HTTPException(
             status_code=400,
-            detail="So aceito imagens (jpg, png, webp, gif) ou videos (mp4, mov, webm)."
+            detail=("So aceito imagens (jpg, png, webp, gif), videos (mp4, mov, webm) "
+                    "ou documentos PDF.")
         )
 
     conteudo = await ficheiro.read()
     if not conteudo:
         raise HTTPException(status_code=400, detail="O ficheiro esta vazio.")
 
-    limite = TAMANHO_MAXIMO_VIDEO if e_video else TAMANHO_MAXIMO
     if len(conteudo) > limite:
-        que = "O video" if e_video else "A imagem"
         raise HTTPException(
             status_code=400,
-            detail=(f"{que} e demasiado grande ({len(conteudo) // (1024 * 1024)} MB). "
+            detail=(f"{nome_do_tipo} e demasiado grande ({len(conteudo) // (1024 * 1024)} MB). "
                     f"O limite sao {limite // (1024 * 1024)} MB.")
         )
 
@@ -4221,9 +4279,8 @@ async def guardar_imagem(
     (PASTA_UPLOADS / nome).write_bytes(conteudo)
 
     await log_audit(current_user, "create", "upload", entity_id=nome,
-                    details=f"Carregou {'o video' if e_video else 'a imagem'} {ficheiro.filename}")
-    return {"url": f"/api/uploads/{nome}", "bytes": len(conteudo),
-            "kind": "video" if e_video else "photo"}
+                    details=f"Carregou {ficheiro.filename}")
+    return {"url": f"/api/uploads/{nome}", "bytes": len(conteudo), "kind": tipo}
 
 
 @api_router.delete("/uploads/{nome}")
@@ -4644,6 +4701,161 @@ async def apagar_avaliacao(
     await log_audit(current_user, "delete", "assessment", entity_id=assessment_id,
                     details="Apagou uma avaliacao fisica")
     return {"message": "Avaliacao eliminada"}
+
+
+# ------------------------------------------------------------ Planos
+
+@api_router.get("/members/{member_id}/plans", response_model=List[Plan])
+async def planos_do_socio(
+    member_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Os planos de um socio, do mais recente para tras."""
+    planos = await db.plans.find({"member_id": member_id}).to_list(200)
+    planos = [parse_from_mongo(p) for p in planos]
+    planos.sort(key=lambda p: str(p.get("plan_date") or ""), reverse=True)
+    return [Plan(**p) for p in planos]
+
+
+@api_router.post("/members/{member_id}/plans", response_model=Plan)
+async def guardar_plano(
+    member_id: str,
+    dados: PlanCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Um plano novo nao apaga o anterior: guarda-se o historico."""
+    socio = await db.members.find_one({"id": member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+    if not (dados.file_url or (dados.content or "").strip()):
+        raise HTTPException(
+            status_code=400,
+            detail="O plano tem de ter um ficheiro ou texto escrito."
+        )
+
+    corpo = dados.dict()
+    corpo["plan_date"] = dados.plan_date or date.today()
+    plano = Plan(member_id=member_id, **corpo)
+
+    await db.plans.insert_one(prepare_for_mongo(plano.dict()))
+
+    # Quem pediu este plano ja nao esta a espera
+    await db.plan_requests.update_many(
+        {"member_id": member_id, "kind": plano.kind.value, "done": False},
+        {"$set": {"done": True}},
+    )
+
+    await log_audit(current_user, "create", "plan", entity_id=plano.id,
+                    details=f"Plano de {socio.get('name')}")
+    return plano
+
+
+@api_router.put("/plans/{plan_id}", response_model=Plan)
+async def corrigir_plano(
+    plan_id: str,
+    dados: PlanCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    antigo = await db.plans.find_one({"id": plan_id})
+    if not antigo:
+        raise HTTPException(status_code=404, detail="Plano nao encontrado")
+    if not (dados.file_url or (dados.content or "").strip()):
+        raise HTTPException(
+            status_code=400,
+            detail="O plano tem de ter um ficheiro ou texto escrito."
+        )
+
+    corpo = dados.dict()
+    corpo["plan_date"] = dados.plan_date or antigo.get("plan_date") or date.today()
+    await db.plans.update_one({"id": plan_id}, {"$set": prepare_for_mongo(corpo)})
+
+    novo = await db.plans.find_one({"id": plan_id})
+    await log_audit(current_user, "update", "plan", entity_id=plan_id,
+                    details="Corrigiu um plano")
+    return Plan(**parse_from_mongo(novo))
+
+
+@api_router.delete("/plans/{plan_id}")
+async def apagar_plano(
+    plan_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    plano = await db.plans.find_one({"id": plan_id})
+    if not plano:
+        raise HTTPException(status_code=404, detail="Plano nao encontrado")
+
+    # O ficheiro so se apaga se for nosso e se mais nenhum plano o usar
+    endereco = plano.get("file_url") or ""
+    if endereco.startswith("/api/uploads/"):
+        outros = await db.plans.count_documents(
+            {"file_url": endereco, "id": {"$ne": plan_id}}
+        )
+        if outros == 0:
+            caminho = PASTA_UPLOADS / endereco.rsplit("/", 1)[-1]
+            if caminho.exists():
+                caminho.unlink()
+
+    await db.plans.delete_one({"id": plan_id})
+    await log_audit(current_user, "delete", "plan", entity_id=plan_id,
+                    details="Apagou um plano")
+    return {"message": "Plano eliminado"}
+
+
+@api_router.get("/plan-requests", response_model=List[PlanRequest])
+async def pedidos_de_plano(
+    pendentes: bool = True,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Quem esta a espera de um plano novo. Aparece no Painel."""
+    filtro = {"done": False} if pendentes else {}
+    pedidos = await db.plan_requests.find(filtro).sort("created_at", -1).to_list(200)
+    return [PlanRequest(**parse_from_mongo(p)) for p in pedidos]
+
+
+@api_router.put("/plan-requests/{request_id}/done", response_model=PlanRequest)
+async def marcar_pedido_tratado(
+    request_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    r = await db.plan_requests.update_one({"id": request_id}, {"$set": {"done": True}})
+    if r.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Pedido nao encontrado")
+    pedido = await db.plan_requests.find_one({"id": request_id})
+    return PlanRequest(**parse_from_mongo(pedido))
+
+
+@api_router.get("/mobile/plans/{member_id}", response_model=List[Plan])
+async def planos_para_a_app(member_id: str):
+    """Os planos do socio, do mais recente para tras."""
+    planos = await db.plans.find({"member_id": member_id}).to_list(200)
+    planos = [parse_from_mongo(p) for p in planos]
+    planos.sort(key=lambda p: str(p.get("plan_date") or ""), reverse=True)
+    return [Plan(**p) for p in planos]
+
+
+@api_router.post("/mobile/plan-requests", response_model=PlanRequest)
+async def pedir_plano(dados: PlanRequestCreate):
+    """O socio pede um plano novo. Nao se repete um pedido ja feito."""
+    socio = await db.members.find_one({"id": dados.member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
+    # Carregar duas vezes no botao nao pode encher o Painel de pedidos iguais
+    ja = await db.plan_requests.find_one(
+        {"member_id": dados.member_id, "kind": dados.kind.value, "done": False}
+    )
+    if ja:
+        return PlanRequest(**parse_from_mongo(ja))
+
+    pedido = PlanRequest(
+        member_id=socio["id"],
+        member_name=socio.get("name"),
+        member_number=socio.get("member_number"),
+        kind=dados.kind,
+        note=dados.note,
+    )
+    await db.plan_requests.insert_one(prepare_for_mongo(pedido.dict()))
+    return pedido
 
 
 @api_router.get("/mobile/assessments/{member_id}", response_model=List[Assessment])

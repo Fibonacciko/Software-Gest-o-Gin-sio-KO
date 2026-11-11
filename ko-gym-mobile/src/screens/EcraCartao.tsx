@@ -25,6 +25,7 @@ import {
   sair,
   Socio,
 } from '../api';
+import MeusPlanos from '../componentes/MeusPlanos';
 import MinhasMetricas from '../componentes/MinhasMetricas';
 import RoloDoInicio from '../componentes/RoloDoInicio';
 import type { Separador } from '../componentes/BarraDeSeparadores';
@@ -320,6 +321,9 @@ export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) 
       {/* O que a balanca mediu. Vem a seguir aos treinos porque sao as duas
           leituras do mesmo esforco. Nao aparece a quem nunca foi medido. */}
       <MinhasMetricas socioId={socio.id} />
+
+      {/* Os planos de treino e alimentar, e o botao de pedir um novo */}
+      <MeusPlanos socioId={socio.id} />
 
       {socio.current_motivational_note ? (
         <Vidro estilo={estilos.frase}>
