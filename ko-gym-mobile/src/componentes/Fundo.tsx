@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cores } from '../theme';
 
 /**
@@ -23,6 +24,10 @@ import { cores } from '../theme';
  * e não trava nada, mesmo num telemóvel antigo.
  */
 export default function Fundo({ children }: { children: React.ReactNode }) {
+  // O espaço da barra de estado do telemóvel. Fica aqui, e não em cada ecrã,
+  // porque todos passam por este componente: assim nenhum fica esquecido com
+  // o título debaixo das horas.
+  const margens = useSafeAreaInsets();
   const camada1 = useRef(new Animated.Value(0)).current;
   const camada2 = useRef(new Animated.Value(1)).current;
   const camada3 = useRef(new Animated.Value(0.4)).current;
@@ -94,7 +99,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
         />
       </Animated.View>
 
-      <View style={estilos.conteudo}>{children}</View>
+      <View style={[estilos.conteudo, { paddingTop: margens.top }]}>{children}</View>
     </View>
   );
 }

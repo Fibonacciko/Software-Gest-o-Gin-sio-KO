@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ComicNeue_400Regular, ComicNeue_700Bold, useFonts } from '@expo-google-fonts/comic-neue';
 import { carregarCartao, sessaoGuardada, Socio } from './src/api';
 import BarraDeSeparadores, { Separador } from './src/componentes/BarraDeSeparadores';
@@ -38,38 +39,44 @@ export default function App() {
 
   if (aArrancar || (!fontesProntas && !erroDasFontes)) {
     return (
-      <View style={estilos.centro}>
-        <StatusBar style="light" />
-        <ActivityIndicator size="large" color={cores.laranjaClaro} />
-      </View>
+      <SafeAreaProvider>
+        <View style={estilos.centro}>
+          <StatusBar style="light" />
+          <ActivityIndicator size="large" color={cores.laranjaClaro} />
+        </View>
+      </SafeAreaProvider>
     );
   }
 
   if (!socio) {
     return (
-      <Fundo>
-        <StatusBar style="light" />
-        <EcraLogin aoEntrar={(s) => { setSocio(s); setSeparador('inicio'); }} />
-      </Fundo>
+      <SafeAreaProvider>
+        <Fundo>
+          <StatusBar style="light" />
+          <EcraLogin aoEntrar={(s) => { setSocio(s); setSeparador('inicio'); }} />
+        </Fundo>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <Fundo>
-      <StatusBar style="light" />
+    <SafeAreaProvider>
+      <Fundo>
+        <StatusBar style="light" />
 
-      <View style={estilos.ecra}>
-        {separador === 'inicio' && (
-          <EcraCartao socio={socio} aoSair={() => { setSocio(null); setSeparador('inicio'); }} />
-        )}
-        {separador === 'parceiros' && <EcraParceiros />}
-        {separador === 'multimedia' && <EcraMultimedia />}
-        {separador === 'loja' && <EcraLoja socio={socio} />}
-        {separador === 'ginasio' && <EcraGinasio />}
-      </View>
+        <View style={estilos.ecra}>
+          {separador === 'inicio' && (
+            <EcraCartao socio={socio} aoSair={() => { setSocio(null); setSeparador('inicio'); }} />
+          )}
+          {separador === 'parceiros' && <EcraParceiros />}
+          {separador === 'multimedia' && <EcraMultimedia />}
+          {separador === 'loja' && <EcraLoja socio={socio} />}
+          {separador === 'ginasio' && <EcraGinasio />}
+        </View>
 
-      <BarraDeSeparadores activo={separador} aoEscolher={setSeparador} />
-    </Fundo>
+        <BarraDeSeparadores activo={separador} aoEscolher={setSeparador} />
+      </Fundo>
+    </SafeAreaProvider>
   );
 }
 

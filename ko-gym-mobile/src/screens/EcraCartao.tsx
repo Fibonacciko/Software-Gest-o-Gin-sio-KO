@@ -441,9 +441,9 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
 const estilos = StyleSheet.create({
   raiz: { flex: 1 },
   // flexGrow para o "Terminar sessao" poder ser empurrado para o fundo
-  // O paddingTop e maior que o resto: no Android o ecra vai ate cima e a
-  // barra de estado passava por cima do nome.
-  conteudo: { padding: espaco.m, paddingTop: 40, paddingBottom: espaco.s, flexGrow: 1 },
+  // O espaço da barra de estado vem do `Fundo`, que o mede no telemóvel.
+  // Estava aqui um 40 fixo, que acertava num telemóvel e falhava nos outros.
+  conteudo: { padding: espaco.m, paddingBottom: espaco.s, flexGrow: 1 },
 
   cabecalho: { flexDirection: 'row', alignItems: 'center', gap: espaco.m },
   cabecalhoTexto: { flex: 1 },

@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cores, espaco } from '../theme';
 
 export type Separador = 'inicio' | 'parceiros' | 'multimedia' | 'loja' | 'ginasio';
@@ -24,8 +25,14 @@ const SEPARADORES: { id: Separador; icone: string; texto: string }[] = [
 ];
 
 export default function BarraDeSeparadores({ activo, aoEscolher }: Props) {
+  // A aplicação desenha-se de ponta a ponta do ecrã (`edgeToEdgeEnabled`), e
+  // por isso a barra de gestos do Android ficava por cima destes botões. O
+  // espaço que ela ocupa vem do próprio telemóvel e não se pode adivinhar:
+  // uns têm três botões, outros uma risca, outros nada.
+  const margens = useSafeAreaInsets();
+
   return (
-    <View style={estilos.barra}>
+    <View style={[estilos.barra, { paddingBottom: Math.max(margens.bottom, espaco.m) }]}>
       {SEPARADORES.map((s) => {
         const seleccionado = s.id === activo;
         return (
@@ -49,7 +56,6 @@ const estilos = StyleSheet.create({
     backgroundColor: 'rgba(26,26,26,0.92)',
     borderTopWidth: 1,
     borderTopColor: cores.borda,
-    paddingBottom: espaco.m,
     paddingTop: espaco.s,
   },
   item: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: espaco.xs },
