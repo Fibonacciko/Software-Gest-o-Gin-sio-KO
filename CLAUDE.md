@@ -609,6 +609,14 @@ instalada à mão em cada telemóvel.
 e com fundo branco — que é como se lê bem na receção. Um QR pequeno no meio da
 página era mau para ler e feio de ver.
 
+**O botão do QR fica logo por baixo do check-in**, e não no fundo da página.
+É a outra maneira de fazer a mesma coisa — e quem precisa dele (telemóvel sem
+NFC, etiqueta que não lê) precisa dele naquele momento, não depois de rolar
+por tudo o resto.
+
+**A frase vem agarrada aos números dos treinos**, logo a seguir: é deles que
+ela fala. Estava depois dos planos, longe do que lhe dava sentido.
+
 **O check-in só se faz com a etiqueta NFC.** Carregar no botão começa a leitura;
 a presença só é registada depois de o telemóvel tocar no autocolante. Num
 telemóvel sem NFC o botão abre o QR, para a receção o ler. Antes disto, um

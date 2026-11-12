@@ -286,6 +286,16 @@ export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) 
 
       {erro ? <Text style={estilos.erro}>{erro}</Text> : null}
 
+      {/* O QR vem logo por baixo do check-in: é a outra maneira de o fazer,
+          para a receção ler. Estava no fundo da página, a seguir a tudo o
+          resto, e quem precisava dele tinha de ir à procura. */}
+      <Pressable
+        style={({ pressed }) => [estilos.botaoQr, pressed && { opacity: 0.8 }]}
+        onPress={() => setQrAberto(true)}
+      >
+        <Text style={estilos.botaoQrTexto}>Mostrar o meu QR</Text>
+      </Pressable>
+
       {/* Estado, quota e seguro — tudo numa linha, logo abaixo do check-in */}
       <Vidro desfocado forte estilo={estilos.cartaoEstado}>
         <View style={estilos.colunaEstado}>
@@ -318,19 +328,20 @@ export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) 
         </Vidro>
       </View>
 
-      {/* O que a balanca mediu. Vem a seguir aos treinos porque sao as duas
-          leituras do mesmo esforco. Nao aparece a quem nunca foi medido. */}
-      <MinhasMetricas socioId={socio.id} />
-
-      {/* Os planos de treino e alimentar, e o botao de pedir um novo */}
-      <MeusPlanos socioId={socio.id} />
-
+      {/* A frase vem agarrada aos números: é deles que ela fala. */}
       {socio.current_motivational_note ? (
         <Vidro estilo={estilos.frase}>
           <View style={estilos.fraseRisca} />
           <Text style={estilos.fraseTexto}>{socio.current_motivational_note}</Text>
         </Vidro>
       ) : null}
+
+      {/* O que a balanca mediu. Vem a seguir aos treinos porque sao as duas
+          leituras do mesmo esforco. Nao aparece a quem nunca foi medido. */}
+      <MinhasMetricas socioId={socio.id} />
+
+      {/* Os planos de treino e alimentar, e o botao de pedir um novo */}
+      <MeusPlanos socioId={socio.id} />
 
       {/* Modalidades */}
       {minhasModalidades.length > 0 && (
@@ -343,13 +354,6 @@ export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) 
           ))}
         </View>
       )}
-
-      <Pressable
-        style={({ pressed }) => [estilos.botaoQr, pressed && { opacity: 0.8 }]}
-        onPress={() => setQrAberto(true)}
-      >
-        <Text style={estilos.botaoQrTexto}>Mostrar o meu QR</Text>
-      </Pressable>
 
       {/* O que há de novo no ginásio. Vem por baixo do check-in, nunca por
           cima: quem abre a aplicação à porta tem de ter o botão à mão. */}
