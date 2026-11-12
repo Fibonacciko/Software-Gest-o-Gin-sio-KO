@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import {
+  Animated,
   Image,
   ImageSourcePropType,
   NativeScrollEvent,
@@ -11,7 +12,11 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ContextoDaInclinacao } from './Fundo';
 import { cores, espaco, raio } from '../theme';
+
+/** Quanto o cartão anda ao contrário do fundo, de um extremo ao outro. */
+const PAIRA = 14;
 
 type Props = {
   imagem?: string | ImageSourcePropType | null;
@@ -73,6 +78,28 @@ export default function CartaoDeDestaque({
   const [largura, setLargura] = useState(0);
   const [pagina, setPagina] = useState(0);
 
+  // Paira como as superfícies de vidro: anda para o lado contrário ao do
+  // fundo, que é o que distingue uma coisa suspensa de uma coisa pousada.
+  const inclinacao = useContext(ContextoDaInclinacao);
+  const aPairar = inclinacao
+    ? {
+        transform: [
+          {
+            translateX: inclinacao.x.interpolate({
+              inputRange: [-1, 1],
+              outputRange: [-PAIRA, PAIRA],
+            }),
+          },
+          {
+            translateY: inclinacao.y.interpolate({
+              inputRange: [-1, 1],
+              outputRange: [-PAIRA, PAIRA],
+            }),
+          },
+        ],
+      }
+    : null;
+
   // Os pontinhos seguem o deslize enquanto o dedo anda (`onScroll`) e também
   // quando ele para (`onMomentumScrollEnd`): sozinho, o fim do movimento não
   // chega em todos os casos, e o pontinho ficava a dizer a página errada.
@@ -124,8 +151,8 @@ export default function CartaoDeDestaque({
   // artigo, sem um gesto roubar o outro.
   if (desliza) {
     return (
-      <View
-        style={[estilos.cartao, { height: altura }]}
+      <Animated.View
+        style={[estilos.cartao, estilos.sombra, { height: altura }, aPairar]}
         onLayout={(e) => setLargura(e.nativeEvent.layout.width)}
       >
         {largura > 0 ? (
@@ -155,13 +182,19 @@ export default function CartaoDeDestaque({
           </ScrollView>
         ) : null}
         {moldura}
-      </View>
+      </Animated.View>
     );
   }
 
   return (
+    <Animated.View style={aPairar}>
     <Pressable
-      style={({ pressed }) => [estilos.cartao, { height: altura }, pressed && estilos.premido]}
+      style={({ pressed }) => [
+        estilos.cartao,
+        estilos.sombra,
+        { height: altura },
+        pressed && estilos.premido,
+      ]}
       onPress={aoTocar}
       disabled={!aoTocar}
     >
@@ -172,6 +205,7 @@ export default function CartaoDeDestaque({
       )}
       {moldura}
     </Pressable>
+    </Animated.View>
   );
 }
 
@@ -185,6 +219,14 @@ const estilos = StyleSheet.create({
     borderColor: cores.vidroBordo,
   },
   premido: { opacity: 0.88 },
+  // Larga e fraca, como a do `Vidro`: é chão, não é relevo.
+  sombra: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    elevation: 6,
+  },
   imagem: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   semImagem: { backgroundColor: cores.fundoElevado },
   texto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: espaco.m },

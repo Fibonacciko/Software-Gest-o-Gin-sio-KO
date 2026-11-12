@@ -18,11 +18,11 @@ export const cores = {
   // As superficies deixaram de ser cinzentos opacos e passaram a deixar ver
   // o fundo por tras, desfocado. O branco com pouca opacidade funciona em
   // cima de qualquer fundo; um cinzento fixo so funcionava em cima daquele.
-  vidro: 'rgba(255,255,255,0.055)',
-  vidroForte: 'rgba(255,255,255,0.085)',
-  vidroBordo: 'rgba(255,255,255,0.11)',
+  vidro: 'rgba(255,255,255,0.075)',
+  vidroForte: 'rgba(255,255,255,0.11)',
+  vidroBordo: 'rgba(255,255,255,0.15)',
   // O risco de luz no topo do cartao, que e o que lhe da o ar de vidro
-  vidroBrilho: 'rgba(255,255,255,0.16)',
+  vidroBrilho: 'rgba(255,255,255,0.24)',
 };
 
 export const espaco = {
@@ -45,9 +45,12 @@ export const raio = {
 /**
  * Sombras.
  *
- * Num fundo escuro uma sombra preta nao se ve: o que da relevo e o bordo
- * claro em cima (ver `vidroBrilho`). A sombra fica para destacar o que
- * flutua mesmo, como a janela de reserva.
+ * Num fundo escuro uma sombra preta sozinha quase nao se ve. O que levanta
+ * o cartao do fundo sao tres coisas juntas: o **bordo claro em cima**
+ * (`vidroBrilho`), a **luz que cai no painel** (o gradiente de canto a canto,
+ * no `Vidro`) e so depois a sombra, larga e fraca, a dar-lhe chao. A quarta,
+ * e a que mais se sente na mao, e o cartao andar ao contrario do fundo
+ * quando se inclina o telemovel.
  */
 export const sombra = {
   flutuante: {

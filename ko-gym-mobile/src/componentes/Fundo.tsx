@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { createContext, useEffect, useMemo, useRef } from 'react';
 import { Animated, Dimensions, Easing, Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Accelerometer } from 'expo-sensors';
@@ -15,10 +15,23 @@ const { width: LARGURA, height: ALTURA } = Dimensions.get('window');
  *
  * Começaram em 10/22/36 e não se notava.
  */
-const PROFUNDIDADE = [20, 48, 85];
+const PROFUNDIDADE = [20, 48, 85, 125];
 
 /** Quanto a camada é maior do que o ecrã, para nunca se ver o bordo ao andar. */
 const FOLGA = Math.max(...PROFUNDIDADE) * 2 + 120;
+
+/**
+ * A inclinação do telemóvel, de -1 a 1 em cada eixo.
+ *
+ * Fica num contexto porque **os cartões também a usam**: eles andam para o
+ * lado contrário ao do fundo, e é essa diferença que os faz parecer
+ * suspensos por cima dele. Um objecto pousado move-se com o que está atrás;
+ * um objecto a pairar move-se contra. Ver o `Vidro`.
+ */
+export const ContextoDaInclinacao = createContext<{
+  x: Animated.Value;
+  y: Animated.Value;
+} | null>(null);
 
 /**
  * O fundo da aplicação.
@@ -66,10 +79,19 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
   const luzCima = useRef(new Animated.Value(0.5)).current;
   const luzBaixo = useRef(new Animated.Value(0.2)).current;
   const luzFundo = useRef(new Animated.Value(0.8)).current;
+  const poLonge = useRef(new Animated.Value(0.7)).current;
+  const poPerto = useRef(new Animated.Value(0.35)).current;
 
   // A inclinação, de -1 a 1 em cada eixo
   const inclinacaoX = useRef(new Animated.Value(0)).current;
   const inclinacaoY = useRef(new Animated.Value(0)).current;
+
+  // O mesmo par, pronto a entregar aos cartões. `useMemo` para o objecto não
+  // nascer outra vez a cada desenho, que obrigava a app inteira a redesenhar.
+  const inclinacao = useMemo(
+    () => ({ x: inclinacaoX, y: inclinacaoY }),
+    [inclinacaoX, inclinacaoY]
+  );
 
   useEffect(() => {
     const respirar = (valor: Animated.Value, segundos: number, minimo: number, maximo: number) =>
@@ -98,10 +120,14 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
       respirar(luzCima, 17, 0.45, 1),
       respirar(luzBaixo, 23, 0.3, 1),
       respirar(luzFundo, 29, 0.5, 1),
+      // O pó respira muito devagar e quase não se apaga: é para se sentir que
+      // está vivo, não para se dar por ele.
+      respirar(poLonge, 37, 0.6, 1),
+      respirar(poPerto, 43, 0.5, 1),
     ];
     animacoes.forEach((a) => a.start());
     return () => animacoes.forEach((a) => a.stop());
-  }, [camada1, camada2, luzCima, luzBaixo, luzFundo]);
+  }, [camada1, camada2, luzCima, luzBaixo, luzFundo, poLonge, poPerto]);
 
   useEffect(() => {
     let vivo = true;
@@ -259,6 +285,33 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
         />
       </Animated.View>
 
+      {/* O pó de luz, em duas camadas da mesma imagem. A de trás vê-se
+          inteira e anda pouco; a da frente está ampliada — os pontos saem
+          maiores — e anda mais do que tudo o resto. É a diferença entre as
+          duas que dá a sensação de haver espaço entre elas, e não um
+          papel de parede. */}
+      <Animated.View
+        style={[estilos.camada, camadaMovel(poLonge, PROFUNDIDADE[0])]}
+        pointerEvents="none"
+      >
+        <Image
+          source={require('../../assets/particulas.png')}
+          style={estilos.poLonge}
+          resizeMode="cover"
+        />
+      </Animated.View>
+
+      <Animated.View
+        style={[estilos.camada, camadaMovel(poPerto, PROFUNDIDADE[3])]}
+        pointerEvents="none"
+      >
+        <Image
+          source={require('../../assets/particulas.png')}
+          style={estilos.poPerto}
+          resizeMode="cover"
+        />
+      </Animated.View>
+
       {/* A vinheta escurece os cantos e fecha a imagem. Não se mexe: é o
           enquadramento do ecrã, não uma camada do fundo. */}
       <Image source={require('../../assets/vinheta.png')} style={estilos.ecra} resizeMode="stretch" />
@@ -271,7 +324,11 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
         resizeMode="stretch"
       />
 
-      <View style={[estilos.conteudo, { paddingTop: margens.top }]}>{children}</View>
+      {/* Os cartões recebem a inclinação daqui e andam ao contrário do fundo:
+          é isso que os faz parecer suspensos, e não colados. */}
+      <ContextoDaInclinacao.Provider value={inclinacao}>
+        <View style={[estilos.conteudo, { paddingTop: margens.top }]}>{children}</View>
+      </ContextoDaInclinacao.Provider>
     </View>
   );
 }
@@ -291,5 +348,16 @@ const estilos = StyleSheet.create({
   // a imagem acabava, a meio do ecrã.
   ecra: { position: 'absolute', left: 0, top: 0, width: LARGURA, height: ALTURA },
   grao: { opacity: 0.045 },
+  poLonge: { position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0.5 },
+  // Ampliado a mais de uma vez e meia: os mesmos pontos, maiores, leem-se
+  // como estando mais perto do olho.
+  poPerto: {
+    position: 'absolute',
+    left: '-28%',
+    top: '-28%',
+    width: '156%',
+    height: '156%',
+    opacity: 0.3,
+  },
   conteudo: { flex: 1 },
 });

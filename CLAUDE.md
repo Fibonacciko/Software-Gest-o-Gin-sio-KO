@@ -731,8 +731,34 @@ cada imagem, e numa lista a rolar com dez cartões à vista isso nota-se nos
 telemóveis fracos. Nos restantes chega `superficie`, do `theme.ts`, que a
 olho dá quase o mesmo e não custa nada.
 
-**Só o botão de check-in tem sombra.** É o que se carrega todos os dias; se
-tudo tivesse relevo, nada o teria.
+**Os cartões pairam, e isso são quatro coisas ao mesmo tempo** — nenhuma
+delas chega sozinha num fundo preto:
+
+1. **Andam ao contrário do fundo.** Ao inclinar o telemóvel, o cartão desliza
+   14 pixeis para o lado oposto ao das camadas de trás. É assim que o olho
+   distingue uma coisa pousada de uma coisa suspensa: a pousada acompanha o
+   que está atrás, a suspensa move-se contra. A inclinação vem do `Fundo` por
+   contexto (`ContextoDaInclinacao`); sem `Fundo` à volta, ou num aparelho sem
+   acelerómetro, o cartão fica quieto e nada se parte.
+2. **A luz que cai no painel**: um gradê de canto a canto dentro do `Vidro`,
+   mais claro em cima à esquerda. É o que lhe dá corpo — o risco de luz no
+   bordo, sozinho, dava-lhe o contorno mas não o volume.
+3. **O bordo claro em cima** (`vidroBrilho`), que já lá estava.
+4. **Uma sombra larga e fraca**, agora em todos os cartões e não só no botão
+   de check-in. É chão, não é relevo: curta e escura fazia o cartão parecer
+   recortado em papel. O botão de check-in continua a ser o único com **sombra
+   alaranjada**, que é o que o mantém à frente de tudo.
+
+**O pó de luz** (`particulas.png`) enche o fundo sem lhe dar assunto: pontos
+de **branco sujo** de tamanhos muito diferentes — todos iguais leem-se como um
+padrão, e um padrão chama a atenção a si próprio. Entra em **duas camadas da
+mesma imagem**: a de trás inteira e devagar, a da frente ampliada a 156% e a
+andar mais do que tudo o resto, que é o que faz parecer haver espaço entre
+elas. A imagem tem feitio de telemóvel (900x1900) e não quadrado, para os
+pontos não saírem ovais ao esticar.
+
+Não se usam imagens apanhadas na internet para isto, por mais que o efeito
+sirva: têm dono. As do fundo são todas geradas pelo `desenhos.py`.
 
 **Logótipos nunca se cortam; fotografias sim.** Um logótipo entra com
 `resizeMode="contain"` — cortar um logótipo estraga-o, e eles vêm de todos os
