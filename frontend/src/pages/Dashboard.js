@@ -29,11 +29,13 @@ import {
 import { toast } from 'sonner';
 import { seguroValido } from '../lib/estatisticas';
 import { diaLocal, diaSeguinte, hoje } from '../lib/datas';
+import { useAuth } from '../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Dashboard = ({ language, translations }) => {
+  const { isAdmin } = useAuth();
   const [stats, setStats] = useState({
     total_members: 0,
     active_members: 0,
@@ -626,19 +628,24 @@ const Dashboard = ({ language, translations }) => {
         </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isAdmin() ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-6`}>
         <StatCard
           title={t[language].totalMembers}
           value={stats.total_members}
           icon={Users}
           color="ko-primary"
         />
-        <StatCard
-          title={t[language].activeMembers}
-          value={stats.active_members}
-          icon={UserCheck}
-          color="ko-success"
-        />
+        {/* Quantos socios tem a quota em dia e um retrato do negocio: fica
+            para o dono. O colaborador ve o estado de cada um, na ficha e no
+            check-in, que e o que precisa ao balcao. */}
+        {isAdmin() && (
+          <StatCard
+            title={t[language].activeMembers}
+            value={stats.active_members}
+            icon={UserCheck}
+            color="ko-success"
+          />
+        )}
         <StatCard
           title={t[language].monthAttendance}
           value={presencasMes.total}

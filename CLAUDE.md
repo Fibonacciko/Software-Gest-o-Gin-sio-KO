@@ -391,9 +391,11 @@ compatibilidade e acompanha sempre a primeira da lista.
   **Relatórios são só do administrador** — mostram as contas todas. Consulta a
   lista de despesas (regista-as, por isso tem de as poder conferir), mas sem
   valores e sem o total.
-  **No Painel vê tudo**, incluindo as **presenças por modalidade** e as aulas
-  de hoje: é ele que está ao balcão a ver quem entra, e nada disso são contas
-  do ginásio. O que lhe fica de fora é sempre e só o dinheiro ao todo.
+  No **Painel** vê as **presenças por modalidade** e as **aulas de hoje**: é
+  ele que está ao balcão a ver quem entra. Não vê os **Membros Ativos** —
+  quantos sócios têm a quota em dia é um retrato do negócio, e esse é do dono.
+  O estado de cada sócio, um a um, vê-o na ficha e no check-in, que é o que
+  precisa para cobrar ao balcão.
 
 ### Sem pacotes
 
