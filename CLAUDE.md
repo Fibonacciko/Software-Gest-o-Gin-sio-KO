@@ -691,6 +691,25 @@ o preço certo a pagar.
 O canal é **`producao`** nos dois perfis de compilação, e o ramo das
 atualizações tem o mesmo nome.
 
+**Como voltar atrás.** Uma atualização pelo ar desfaz-se com outra: volta-se
+a publicar a que estava boa, e os telemóveis apanham-na na abertura seguinte.
+
+```bash
+cd ko-gym-mobile
+npx eas-cli@latest update:list --branch producao --limit 10   # os grupos
+npx eas-cli@latest update:republish --group <id do grupo bom>
+```
+
+Não se apaga a má — não há como —, **publica-se a boa outra vez** por cima.
+Por isso é que vale a pena guardar o id do grupo de cada versão dada como
+certa: ficam nas **etiquetas do Git** (`git tag -n99 producao-...`), ao lado do
+que essa versão tinha.
+
+Se a aplicação **nem chegar a abrir**, o `update:republish` não salva — ela
+fecha antes de ir buscar o que quer que seja. Aí reinstala-se o APK de
+https://ginasioko.site/app, que traz o código embutido e volta a apanhar
+atualizações a partir daí. Foi o que se fez quando o Skia a partiu.
+
 **Como confirmar que chegou:** no fundo do cartão do sócio há uma linha
 miudinha — `Versão 1.1.8 · a1b2c3`. O primeiro número é a versão instalada; as
 seis letras são a atualização que veio pelo ar, e mudam a cada publicação.
