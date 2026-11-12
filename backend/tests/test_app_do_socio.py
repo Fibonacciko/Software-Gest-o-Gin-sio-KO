@@ -109,6 +109,73 @@ def test_a_app_so_ve_os_parceiros_activos(cliente, admin, parceiro):
     assert nomes == ["Clínica do Bairro"]
 
 
+# ------------------------------------------------- a ordem em que aparecem
+# O rolo da página inicial da aplicação mostra **um** parceiro. Qual deles é
+# escolhe-se aqui; antes era o primeiro por ordem alfabética e a única maneira
+# de mudar era mudar-lhe o nome.
+
+@pytest.fixture
+def tres_parceiros(cliente, admin):
+    nomes = ["Clínica Alfa", "Ginásio Beta", "Restaurante Gama"]
+    return [
+        cliente.post("/api/partners", headers=admin,
+                     json={"name": n, "benefit": "vantagem"}).json()
+        for n in nomes
+    ]
+
+
+def test_sem_ninguem_mexer_a_ordem_e_a_de_criacao(cliente, admin, tres_parceiros):
+    nomes = [p["name"] for p in cliente.get("/api/partners", headers=admin).json()]
+    assert nomes == ["Clínica Alfa", "Ginásio Beta", "Restaurante Gama"]
+
+
+def test_arrastar_um_parceiro_para_o_inicio(cliente, admin, tres_parceiros):
+    ids = [tres_parceiros[2]["id"], tres_parceiros[0]["id"], tres_parceiros[1]["id"]]
+    r = cliente.post("/api/partners/ordem", headers=admin, json={"ids": ids})
+    assert r.status_code == 200
+    assert r.json()["ordenados"] == 3
+
+    nomes = [p["name"] for p in cliente.get("/api/partners", headers=admin).json()]
+    assert nomes == ["Restaurante Gama", "Clínica Alfa", "Ginásio Beta"]
+
+
+def test_a_app_ve_a_mesma_ordem_que_a_gestao(cliente, admin, tres_parceiros):
+    """Escolher o primeiro aqui tem de mudar o que o sócio vê no telemóvel."""
+    ids = [tres_parceiros[1]["id"], tres_parceiros[2]["id"], tres_parceiros[0]["id"]]
+    cliente.post("/api/partners/ordem", headers=admin, json={"ids": ids})
+    nomes = [p["name"] for p in cliente.get("/api/mobile/partners").json()]
+    assert nomes == ["Ginásio Beta", "Restaurante Gama", "Clínica Alfa"]
+
+
+def test_corrigir_um_parceiro_nao_lhe_mexe_no_lugar(cliente, admin, tres_parceiros):
+    """O PUT substitui a ficha toda. Sem cuidado, mudar o telefone do terceiro
+    punha-o em primeiro, e o sócio passava a ver outro parceiro na abertura."""
+    ids = [p["id"] for p in reversed(tres_parceiros)]
+    cliente.post("/api/partners/ordem", headers=admin, json={"ids": ids})
+
+    alvo = tres_parceiros[0]          # ficou em último
+    cliente.put(f"/api/partners/{alvo['id']}", headers=admin, json={
+        "name": alvo["name"], "benefit": "vantagem", "phone": "212345678",
+    })
+    nomes = [p["name"] for p in cliente.get("/api/partners", headers=admin).json()]
+    assert nomes == ["Restaurante Gama", "Ginásio Beta", "Clínica Alfa"]
+
+
+def test_um_parceiro_novo_vai_para_o_fim(cliente, admin, tres_parceiros):
+    """Entrar no meio mudava de lugar aos que já estavam."""
+    cliente.post("/api/partners", headers=admin,
+                 json={"name": "Agora Mesmo", "benefit": "vantagem"})
+    nomes = [p["name"] for p in cliente.get("/api/partners", headers=admin).json()]
+    assert nomes[-1] == "Agora Mesmo"
+    assert nomes[0] == "Clínica Alfa"
+
+
+def test_o_colaborador_nao_muda_a_ordem(cliente, colaborador, tres_parceiros):
+    ids = [p["id"] for p in tres_parceiros]
+    r = cliente.post("/api/partners/ordem", headers=colaborador, json={"ids": ids})
+    assert r.status_code == 403
+
+
 # ------------------------------------------------------------------ multimédia
 
 def test_publicar_uma_fotografia(cliente, admin):

@@ -186,6 +186,16 @@ Sócio** (só administrador) e no **Stock**:
 
 - **Parceiros** — protocolos de parceria. O que mais conta é a **vantagem**
   ("10% em consultas"); o resto é contexto. Só o administrador os cria.
+  **A ordem escolhe-se arrastando os cartões.** Conta porque a página inicial
+  da aplicação mostra **um** parceiro — o primeiro da lista —, e o cartão
+  desse traz o selo "Primeiro na aplicação". Antes a lista era alfabética e a
+  única maneira de pôr outro à frente era mudar-lhe o nome. A posição é o
+  campo `order`, que fica **fora do `PartnerCreate` de propósito**: o `PUT`
+  substitui a ficha toda, e sem isso corrigir um telefone mandava o parceiro
+  para o início. Um parceiro novo entra no **fim**, para não mudar de lugar
+  aos que já lá estavam. `POST /api/partners/ordem` recebe os ids todos pela
+  ordem que ficam — guardar a posição de um só obrigava a adivinhar o que
+  fazer aos que ele passou à frente. Só administrador, e com testes.
 - **Multimédia** — **fotografias alojadas aqui**, **vídeos por link** para as
   redes do ginásio. Um minuto de vídeo de telemóvel são 50 a 100 MB e as redes
   já têm o conteúdo e já têm público. O colaborador também pode publicar: é

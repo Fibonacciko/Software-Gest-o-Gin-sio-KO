@@ -21,7 +21,9 @@ import {
   MapPin,
   ShoppingBag,
   AlertCircle,
-  Video
+  Video,
+  GripVertical,
+  Smartphone
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -293,6 +295,48 @@ const AppDoSocio = ({ language }) => {
   };
 
   /* ------------------------------------------------------------ parceiros */
+
+  /**
+   * Arrastar um parceiro para outro lugar.
+   *
+   * A ordem conta porque a página inicial da aplicação mostra **um**
+   * parceiro: o primeiro desta lista. Antes era o primeiro por ordem
+   * alfabética, e a única maneira de pôr outro era mudar-lhe o nome.
+   *
+   * A lista nova aparece logo no ecrã e só depois se guarda. Se o servidor
+   * recusar, recarrega-se: mais vale ver a ordem verdadeira do que ficar com
+   * uma que só existe neste ecrã.
+   *
+   * **Quem está a ser arrastado viaja no próprio evento** (`dataTransfer`), e
+   * não em estado do React. O estado serve só para apagar o cartão de origem
+   * enquanto se arrasta: um estado acabado de marcar pode ainda não ter
+   * chegado quando se larga, e a ordem ficava por mudar sem dizer porquê.
+   */
+  const [parceiroArrastado, setParceiroArrastado] = useState(null);
+
+  const largarParceiro = async (evento, destinoId) => {
+    evento.preventDefault();
+    const origemId = evento.dataTransfer.getData('text/plain') || parceiroArrastado;
+    setParceiroArrastado(null);
+    if (!origemId || origemId === destinoId) return;
+
+    const lista = [...parceiros];
+    const de = lista.findIndex((x) => x.id === origemId);
+    const para = lista.findIndex((x) => x.id === destinoId);
+    if (de < 0 || para < 0) return;
+    const [movido] = lista.splice(de, 1);
+    lista.splice(para, 0, movido);
+    setParceiros(lista);
+
+    try {
+      await axios.post(`${API}/partners/ordem`, { ids: lista.map((x) => x.id) });
+      toast.success(`${lista[0].name} é o primeiro que o sócio vê.`);
+    } catch {
+      toast.error('Não consegui guardar a ordem.');
+      carregarTudo();
+    }
+  };
+
 
   const abrirParceiro = (p) => {
     setParceiroAEditar(p || null);
@@ -589,15 +633,51 @@ const AppDoSocio = ({ language }) => {
             {txt.semParceiros}
           </CardContent></Card>
         ) : (
+          <>
+          <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2">
+            Arraste os cartões para mudar a ordem. O <strong>primeiro</strong> é o
+            parceiro que o sócio vê na página inicial da aplicação.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {parceiros.map((p) => (
-              <Card key={p.id} className="card-shadow" data-testid={`parceiro-${p.id}`}>
+            {parceiros.map((p, posicao) => (
+              <Card
+                key={p.id}
+                className={`card-shadow cursor-grab active:cursor-grabbing transition-opacity ${
+                  parceiroArrastado === p.id ? 'opacity-40' : ''
+                }`}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', p.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                  setParceiroArrastado(p.id);
+                }}
+                onDragEnd={() => setParceiroArrastado(null)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => largarParceiro(e, p.id)}
+                data-testid={`parceiro-${p.id}`}
+              >
                 <CardContent className="p-5">
+                  {posicao === 0 && (
+                    <Badge
+                      className="mb-3 text-xs"
+                      style={{ background: 'var(--ko-primary-orange)', color: '#fff' }}
+                      data-testid="parceiro-primeiro"
+                    >
+                      <Smartphone size={12} className="mr-1" />
+                      Primeiro na aplicação
+                    </Badge>
+                  )}
                   <div className="flex items-start gap-3">
+                    <GripVertical
+                      size={18}
+                      className="text-gray-400 shrink-0 mt-4"
+                      aria-hidden="true"
+                    />
                     {p.logo_url ? (
                       <img
                         src={enderecoDaImagem(p.logo_url)}
                         alt={p.name}
+                        draggable={false}
                         className="w-14 h-14 rounded-lg object-cover shrink-0"
                       />
                     ) : (
@@ -607,7 +687,9 @@ const AppDoSocio = ({ language }) => {
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                      <p className="font-semibold truncate"
+                         style={{ color: 'var(--text-primary)' }}
+                         data-testid={`nome-parceiro-${p.id}`}>
                         {p.name}
                       </p>
                       <p className="text-sm" style={{ color: 'var(--ko-primary-orange)' }}>
@@ -644,6 +726,7 @@ const AppDoSocio = ({ language }) => {
               </Card>
             ))}
           </div>
+          </>
         )
       ) : aba === 'loja' ? (
         <>

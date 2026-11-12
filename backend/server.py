@@ -767,6 +767,10 @@ class Partner(BaseModel):
     phone: Optional[str] = None
     website: Optional[str] = None
     is_active: bool = True
+    # A posicao na lista. O primeiro e o que o socio ve na pagina inicial da
+    # aplicacao, que mostra um parceiro so. Nao esta no PartnerCreate de
+    # proposito: corrigir um parceiro nao lhe pode mexer no lugar.
+    order: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -780,6 +784,10 @@ class PartnerCreate(BaseModel):
     phone: Optional[str] = None
     website: Optional[str] = None
     is_active: bool = True
+
+
+class OrdemDosParceiros(BaseModel):
+    ids: List[str]
 
 
 # ---------------------------------------------------------------- Multimedia
@@ -4540,7 +4548,11 @@ async def ficha_do_ginasio_para_a_app():
 
 @api_router.post("/partners", response_model=Partner)
 async def criar_parceiro(dados: PartnerCreate, current_user: User = Depends(require_admin)):
-    parceiro = Partner(**dados.dict())
+    # Vai para o fim da lista. Entrar no meio mudava de lugar aos que ja
+    # estavam, e o que aparece na pagina inicial da app passava a ser outro.
+    ultimo = await db.partners.find_one(sort=[("order", -1)])
+    seguinte = ((ultimo.get("order") or 0) + 1) if ultimo else 0
+    parceiro = Partner(**dados.dict(), order=seguinte)
     await db.partners.insert_one(prepare_for_mongo(parceiro.dict()))
     await log_audit(current_user, "create", "partner", entity_id=parceiro.id,
                     details=f"Criou o parceiro {parceiro.name}")
@@ -4549,8 +4561,31 @@ async def criar_parceiro(dados: PartnerCreate, current_user: User = Depends(requ
 
 @api_router.get("/partners", response_model=List[Partner])
 async def listar_parceiros(current_user: User = Depends(require_admin_or_staff)):
-    parceiros = await db.partners.find().sort("name", 1).to_list(500)
+    parceiros = await db.partners.find().sort([("order", 1), ("name", 1)]).to_list(500)
     return [Partner(**parse_from_mongo(x)) for x in parceiros]
+
+
+@api_router.post("/partners/ordem")
+async def ordenar_parceiros(
+    dados: OrdemDosParceiros, current_user: User = Depends(require_admin)
+):
+    """A ordem com que os parceiros aparecem ao socio.
+
+    O **primeiro da lista e o que ele ve na pagina inicial**, que mostra um
+    parceiro so. Antes a lista era alfabetica e nao havia por onde escolher:
+    para por outro em primeiro era preciso mudar-lhe o nome.
+
+    Recebe os ids todos, pela ordem que ficam. Guardar a posicao de um so
+    parceiro obrigava a adivinhar o que fazer aos que ele passou a frente.
+    """
+    guardados = 0
+    for posicao, parceiro_id in enumerate(dados.ids):
+        r = await db.partners.update_one({"id": parceiro_id},
+                                         {"$set": {"order": posicao}})
+        guardados += r.matched_count
+    await log_audit(current_user, "update", "partner",
+                    details=f"Mudou a ordem dos parceiros ({guardados})")
+    return {"ordenados": guardados}
 
 
 @api_router.put("/partners/{partner_id}", response_model=Partner)
@@ -4560,7 +4595,11 @@ async def corrigir_parceiro(
     antigo = await db.partners.find_one({"id": partner_id})
     if not antigo:
         raise HTTPException(status_code=404, detail="Parceiro nao encontrado")
-    novo = Partner(**dados.dict(), id=partner_id, created_at=antigo.get("created_at"))
+    # O lugar na lista guarda-se como a data de criacao: o PUT substitui a
+    # ficha toda, e sem isto corrigir o telefone mandava o parceiro para o
+    # inicio -- e com ele mudava o que o socio ve na pagina inicial da app.
+    novo = Partner(**dados.dict(), id=partner_id, created_at=antigo.get("created_at"),
+                   order=antigo.get("order") or 0)
     await db.partners.replace_one({"id": partner_id}, prepare_for_mongo(novo.dict()))
     await log_audit(current_user, "update", "partner", entity_id=partner_id,
                     details=f"Corrigiu o parceiro {novo.name}")
@@ -4667,7 +4706,8 @@ async def apagar_reserva(reservation_id: str, current_user: User = Depends(requi
 
 @api_router.get("/mobile/partners", response_model=List[Partner])
 async def parceiros_para_a_app():
-    parceiros = await db.partners.find({"is_active": True}).sort("name", 1).to_list(500)
+    parceiros = (await db.partners.find({"is_active": True})
+                 .sort([("order", 1), ("name", 1)]).to_list(500))
     return [Partner(**parse_from_mongo(x)) for x in parceiros]
 
 
