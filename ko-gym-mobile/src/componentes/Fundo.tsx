@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Canvas,
   Fill,
   Group,
-  LinearGradient,
+  LinearGradient as SkiaLinearGradient,
   RadialGradient,
   Rect,
   Turbulence,
@@ -26,6 +27,9 @@ const { width: LARGURA, height: ALTURA } = Dimensions.get('window');
  */
 const PROFUNDIDADE = [20, 48, 85];
 
+/** Quanto cada camada roda, em graus, de um extremo ao outro. */
+const ROTACAO = [3, 5, 8];
+
 /** Quanto a camada é maior do que o ecrã, para nunca se ver o bordo ao andar. */
 const FOLGA = Math.max(...PROFUNDIDADE) * 2 + 120;
 
@@ -35,30 +39,31 @@ const ALTURA_CAMADA = ALTURA + FOLGA;
 /**
  * O fundo da aplicação.
  *
- * Camadas de ecrã inteiro que respiram devagar, deslizam e **inclinam-se**
- * conforme se inclina o telemóvel. O movimento é lento de propósito: um fundo
- * que salta à vista rouba a atenção ao que interessa, que é o check-in.
+ * **Uma tela do Skia, parada, e por cima camadas leves que se mexem.**
+ * A divisão não é por gosto: no Android cada tela do Skia é uma superfície
+ * de hardware à parte. Empilhar várias e ainda por cima rodá-las em 3D
+ * rebenta com a aplicação no arranque — foi exactamente o que aconteceu na
+ * versão 1.2.0, que instalava e fechava-se ao abrir. **Nunca pôr um `Canvas`
+ * do Skia dentro de uma `Animated.View` com `rotateX`/`rotateY`.**
  *
- * **O desenho é do Skia, o movimento é do motor nativo.** Cada um faz o que
- * sabe:
+ * Cada um faz então o que sabe:
  *
- * - o Skia pinta o que os gradientes lineares não conseguem — manchas
- *   redondas de luz **sem bordo nenhum**, uma vinheta a escurecer os cantos e
- *   **grão** por cima de tudo. Sem grão, um gradiente escuro parte-se em
- *   bandas, e o olho lê bandas como superfície chapada;
- * - o movimento continua em `Animated` com `useNativeDriver`, como antes:
- *   corre do lado nativo, não passa por JavaScript nenhum a cada imagem e não
- *   gasta bateria. Por isso **não** foi preciso o Reanimated, que obrigaria a
- *   ligar a arquitetura nova do React Native — e essa está desligada por
- *   causa do NFC, que é o essencial desta aplicação.
+ * - **o Skia pinta o que não se mexe** — e pinta o que os gradientes lineares
+ *   não conseguem: manchas redondas de luz **sem bordo** (um gradiente linear
+ *   dentro de um círculo deixa um bordo a atravessar o ecrã), uma **vinheta**
+ *   a escurecer os cantos e **grão** por cima de tudo. Sem grão, um gradiente
+ *   escuro parte-se em bandas, e o olho lê bandas como tinta chapada;
+ * - **as camadas que se mexem são `View`s normais** com gradiente linear, que
+ *   é barato, e movem-se em `Animated` com `useNativeDriver`: corre do lado
+ *   nativo, não passa por JavaScript a cada imagem e não gasta bateria. Por
+ *   isso **não** foi preciso o Reanimated, que obrigaria a ligar a
+ *   arquitetura nova do React Native — e essa está desligada por causa do
+ *   NFC, que é o essencial desta aplicação.
  *
  * **A profundidade vem de três coisas ao mesmo tempo:** as camadas andam a
- * velocidades diferentes (paralaxe), inclinam-se com perspetiva (deixam de
- * ser autocolantes a escorregar e passam a planos no espaço), e a luz do topo
- * anda mais do que todas — é a que parece estar mesmo à frente.
- *
- * Um motor 3D a sério daria mais, gastando bateria e engasgando nos telemóveis
- * fracos, numa aplicação cujo trabalho é um check-in de dois segundos.
+ * velocidades diferentes (paralaxe), **inclinam-se com perspetiva** (deixam
+ * de ser autocolantes a escorregar e passam a planos no espaço), e a de cima
+ * anda mais do que todas — é a que parece estar à frente.
  *
  * Os tons vão do preto ao cinzento, e não ao laranja da marca: por decisão do
  * dono. O laranja fica para o que é para carregar — o check-in, os números —
@@ -98,9 +103,9 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
       );
 
     const animacoes = [
-      respirar(camada1, 11, 0.45, 0.9),
+      respirar(camada1, 11, 0.4, 0.9),
       respirar(camada2, 15, 0.35, 1),
-      respirar(camada3, 19, 0.2, 0.75),
+      respirar(camada3, 19, 0.2, 0.8),
     ];
     animacoes.forEach((a) => a.start());
     return () => animacoes.forEach((a) => a.stop());
@@ -185,36 +190,39 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
 
   return (
     <View style={estilos.raiz}>
-      {/* O chão, que não se mexe: é sobre ele que as outras deslizam.
-          Leva a base, duas brumas redondas, a vinheta e o grão — tudo o que
-          é imóvel vai neste único Canvas, para não haver superfícies do Skia
-          a mais, que é o que custa caro nos telemóveis fracos. */}
+      {/* A ÚNICA tela do Skia, e está quieta: base, luzes redondas, vinheta
+          e grão. Tudo o que não se mexe cabe aqui dentro. */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <Canvas style={StyleSheet.absoluteFill}>
           <Rect x={0} y={0} width={LARGURA} height={ALTURA}>
-            <LinearGradient
+            <SkiaLinearGradient
               start={vec(LARGURA, 0)}
               end={vec(0, ALTURA)}
               colors={['#2B2B2B', cores.fundo, '#0B0B0B']}
             />
           </Rect>
 
-          {/* Duas manchas de luz. Redondas a sério: é isto que não havia
-              antes, porque um gradiente linear dentro de um círculo deixa um
-              bordo a atravessar o ecrã. */}
+          {/* Três manchas de luz, redondas a sério — é isto que não havia. */}
           <Rect x={0} y={0} width={LARGURA} height={ALTURA}>
             <RadialGradient
               c={vec(LARGURA * 0.82, ALTURA * 0.1)}
               r={LARGURA * 1.15}
-              colors={['rgba(200,200,200,0.17)', 'rgba(200,200,200,0.04)', 'rgba(200,200,200,0)']}
+              colors={['rgba(205,205,205,0.18)', 'rgba(205,205,205,0.04)', 'rgba(205,205,205,0)']}
               positions={[0, 0.45, 1]}
             />
           </Rect>
           <Rect x={0} y={0} width={LARGURA} height={ALTURA}>
             <RadialGradient
-              c={vec(LARGURA * 0.06, ALTURA * 0.78)}
+              c={vec(LARGURA * 0.06, ALTURA * 0.72)}
               r={LARGURA * 1.05}
               colors={['rgba(130,130,130,0.16)', 'rgba(130,130,130,0)']}
+            />
+          </Rect>
+          <Rect x={0} y={0} width={LARGURA} height={ALTURA}>
+            <RadialGradient
+              c={vec(LARGURA * 0.55, ALTURA * 0.4)}
+              r={LARGURA * 0.75}
+              colors={['rgba(255,255,255,0.05)', 'rgba(255,255,255,0)']}
             />
           </Rect>
 
@@ -224,7 +232,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
             <RadialGradient
               c={vec(LARGURA / 2, ALTURA * 0.42)}
               r={Math.max(LARGURA, ALTURA) * 0.8}
-              colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.18)', 'rgba(0,0,0,0.6)']}
+              colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.18)', 'rgba(0,0,0,0.62)']}
               positions={[0.35, 0.72, 1]}
             />
           </Rect>
@@ -239,56 +247,47 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
         </Canvas>
       </View>
 
-      {/* A bruma do fundo: anda pouco, é a que parece estar mais longe. */}
+      {/* As camadas que se mexem. São `View`s normais com gradiente linear:
+          baratas, e o motor nativo move-as sem tocar em JavaScript. */}
       <Animated.View
-        style={[estilos.camada, camadaMovel(camada1, PROFUNDIDADE[0], 3)]}
+        style={[estilos.camada, camadaMovel(camada1, PROFUNDIDADE[0], ROTACAO[0])]}
         pointerEvents="none"
       >
-        <Canvas style={StyleSheet.absoluteFill}>
-          <Rect x={0} y={0} width={LARGURA_CAMADA} height={ALTURA_CAMADA}>
-            <RadialGradient
-              c={vec(LARGURA_CAMADA * 0.2, ALTURA_CAMADA * 0.35)}
-              r={LARGURA_CAMADA * 0.85}
-              colors={['rgba(150,150,150,0.14)', 'rgba(150,150,150,0)']}
-            />
-          </Rect>
-        </Canvas>
+        <LinearGradient
+          colors={['rgba(170,170,170,0.16)', 'rgba(170,170,170,0.04)', 'rgba(170,170,170,0)']}
+          locations={[0, 0.45, 1]}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0.1, y: 0.8 }}
+          style={StyleSheet.absoluteFill}
+        />
       </Animated.View>
 
-      {/* A faixa do meio. Continua a ser um gradiente linear, que é barato:
-          é a que dá o corte em diagonal ao fundo. */}
       <Animated.View
-        style={[estilos.camada, camadaMovel(camada2, PROFUNDIDADE[1], 5)]}
+        style={[estilos.camada, camadaMovel(camada2, PROFUNDIDADE[1], ROTACAO[1])]}
         pointerEvents="none"
       >
-        <Canvas style={StyleSheet.absoluteFill}>
-          <Rect x={0} y={0} width={LARGURA_CAMADA} height={ALTURA_CAMADA}>
-            <LinearGradient
-              start={vec(0, ALTURA_CAMADA * 0.2)}
-              end={vec(LARGURA_CAMADA * 0.9, ALTURA_CAMADA)}
-              colors={['rgba(150,150,150,0)', 'rgba(150,150,150,0.05)', 'rgba(150,150,150,0.15)']}
-              positions={[0, 0.55, 1]}
-            />
-          </Rect>
-        </Canvas>
+        <LinearGradient
+          colors={['rgba(140,140,140,0)', 'rgba(140,140,140,0.06)', 'rgba(140,140,140,0.18)']}
+          locations={[0, 0.55, 1]}
+          start={{ x: 0, y: 0.2 }}
+          end={{ x: 0.9, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
       </Animated.View>
 
       {/* A luz de cima: anda mais do que todas e é a que parece estar à
-          frente. É ela que faz o telemóvel parecer ter luz em cima. */}
+          frente. É ela que faz o telemóvel parecer ter luz por cima. */}
       <Animated.View
-        style={[estilos.camada, camadaMovel(camada3, PROFUNDIDADE[2], 8)]}
+        style={[estilos.camada, camadaMovel(camada3, PROFUNDIDADE[2], ROTACAO[2])]}
         pointerEvents="none"
       >
-        <Canvas style={StyleSheet.absoluteFill}>
-          <Rect x={0} y={0} width={LARGURA_CAMADA} height={ALTURA_CAMADA}>
-            <RadialGradient
-              c={vec(LARGURA_CAMADA * 0.62, ALTURA_CAMADA * 0.12)}
-              r={LARGURA_CAMADA * 0.7}
-              colors={['rgba(255,255,255,0.11)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)']}
-              positions={[0, 0.5, 1]}
-            />
-          </Rect>
-        </Canvas>
+        <LinearGradient
+          colors={['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)']}
+          locations={[0, 0.4, 1]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.3, y: 0.85 }}
+          style={StyleSheet.absoluteFill}
+        />
       </Animated.View>
 
       <View style={[estilos.conteudo, { paddingTop: margens.top }]}>{children}</View>
