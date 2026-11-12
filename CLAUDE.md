@@ -395,9 +395,19 @@ sócio lê-o na aplicação em **Os teus planos**.
 
 ### Modalidades
 
-Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal e é a
-usada no check-in por NFC, que não permite escolher. `activity_id` existe para
-compatibilidade e acompanha sempre a primeira da lista.
+Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal;
+`activity_id` existe para compatibilidade e acompanha sempre a primeira da
+lista.
+
+**Com mais do que uma, pergunta-se sempre qual é — nos dois lados.** No
+balcão, a janela "Modalidade do check-in"; na aplicação, "O que vais
+treinar?", antes de o telemóvel ler a etiqueta. A etiqueta NFC em si não
+diz modalidade nenhuma: só confirma que a pessoa está mesmo no ginásio.
+Com uma só modalidade não se pergunta nada, que não havia escolha.
+
+Na aplicação, as modalidades do sócio aparecem **debaixo do número de
+sócio**, junto ao nome: é o que ele é no ginásio. Estavam no fim da
+página, a seguir aos planos, onde não diziam nada a ninguém.
 
 ### Perfis de acesso
 

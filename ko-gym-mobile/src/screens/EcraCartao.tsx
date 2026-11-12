@@ -227,6 +227,20 @@ export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) 
             {nomeCurto(socio.name)}
           </Text>
           <Text style={estilos.numeroSocio}>Sócio n.º {socio.member_number}</Text>
+
+          {/* A modalidade vem agarrada ao nome e ao número: é o que o sócio é
+              no ginásio, e fica junto do resto da identificação. Estava no fim
+              da página, a seguir aos planos, onde não dizia nada a ninguém. */}
+          {minhasModalidades.length > 0 ? (
+            <View style={estilos.modalidades}>
+              {minhasModalidades.map((m) => (
+                <View key={m.id} style={[estilos.modalidade, { borderColor: m.color }]}>
+                  <View style={[estilos.pontoCor, { backgroundColor: m.color }]} />
+                  <Text style={estilos.modalidadeTexto}>{m.name}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
 
         <Pressable
@@ -342,18 +356,6 @@ export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) 
 
       {/* Os planos de treino e alimentar, e o botao de pedir um novo */}
       <MeusPlanos socioId={socio.id} />
-
-      {/* Modalidades */}
-      {minhasModalidades.length > 0 && (
-        <View style={estilos.modalidades}>
-          {minhasModalidades.map((m) => (
-            <View key={m.id} style={[estilos.modalidade, { borderColor: m.color }]}>
-              <View style={[estilos.pontoCor, { backgroundColor: m.color }]} />
-              <Text style={estilos.modalidadeTexto}>{m.name}</Text>
-            </View>
-          ))}
-        </View>
-      )}
 
       {/* O que há de novo no ginásio. Vem por baixo do check-in, nunca por
           cima: quem abre a aplicação à porta tem de ter o botão à mão. */}
@@ -580,15 +582,17 @@ const estilos = StyleSheet.create({
   },
   fraseTexto: { color: cores.texto, fontSize: 15, fontStyle: 'italic', lineHeight: 22 },
 
-  modalidades: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.s, marginTop: espaco.m },
+  // Mais apertadas do que quando viviam sozinhas no fim da página: aqui são
+  // uma linha da identificação, debaixo do número, e não um bloco à parte.
+  modalidades: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.xs, marginTop: espaco.s },
   modalidade: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: espaco.xs,
     borderWidth: 1,
     borderRadius: 999,
-    paddingHorizontal: espaco.m,
-    paddingVertical: espaco.s,
+    paddingHorizontal: espaco.s,
+    paddingVertical: 3,
   },
   pontoCor: { width: 8, height: 8, borderRadius: 4 },
   modalidadeTexto: { color: cores.texto, fontSize: 13 },
