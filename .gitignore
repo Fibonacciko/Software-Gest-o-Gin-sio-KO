@@ -92,3 +92,10 @@ frontend/node_modules/.cache/default-development/0.pack
 *.bak*
 *.withnfc
 /patch_*.py
+
+# As copias de seguranca locais (GUARDAR-COPIA.bat). Ficam dentro do projeto
+# por preferencia do dono, mas nunca podem ir para o Git: sao dezenas de MB
+# por copia e a da base de dados leva os dados pessoais de todos os socios.
+# NUNCA correr "git clean -xfd" nesta pasta -- apaga tudo o que esta ignorado.
+/CÓDIGO/
+/CODIGO/

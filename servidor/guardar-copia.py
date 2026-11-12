@@ -12,7 +12,8 @@ morrer, morrem com ela. Isto traz tudo para cá:
   * as **fotografias e vídeos**, que vivem num volume do Docker e até aqui
     **não eram guardados em lado nenhum**.
 
-Cada cópia fica numa pasta com a data. Guardam-se as últimas `A_GUARDAR`.
+Cada cópia fica numa pasta com a data, dentro de `CÓDIGO`, na raiz do
+projeto. Guardam-se as últimas `A_GUARDAR`.
 
     cd servidor
     ../backend/venv/Scripts/python.exe guardar-copia.py           # simulação
@@ -36,7 +37,10 @@ RAIZ = Path(__file__).resolve().parent.parent
 SERVIDOR = "root@187.77.90.171"
 VOLUME = "ko-gym_uploads"
 
-DESTINO = Path(os.environ.get("KO_COPIAS") or (Path.home() / "KO-Gym-Copias"))
+# Dentro do projeto, por decisao do dono: tudo o que e do KO Gym fica num so
+# sitio. A pasta esta no .gitignore e tem de continuar la -- a copia da base
+# de dados leva os dados pessoais de todos os socios.
+DESTINO = Path(os.environ.get("KO_COPIAS") or (RAIZ / "CÓDIGO"))
 A_GUARDAR = 8
 
 # Ficheiros que estão fora do Git de propósito e que mais ninguém tem.

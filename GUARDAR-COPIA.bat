@@ -9,9 +9,9 @@ echo  ===========================================
 echo   COPIA DE SEGURANCA - Ginasio KO
 echo  ===========================================
 echo.
-echo  Vai para a pasta KO-Gym-Copias, no seu
-echo  utilizador. Primeiro mostra o que vai
-echo  fazer, sem escrever nada.
+echo  Vai para a pasta CODIGO, aqui ao lado.
+echo  Primeiro mostra o que vai fazer, sem
+echo  escrever nada.
 echo.
 
 backend\venv\Scripts\python.exe servidor\guardar-copia.py
