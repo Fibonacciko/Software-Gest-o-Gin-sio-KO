@@ -203,7 +203,7 @@ Sócio** (só administrador) e no **Stock**:
 - **Loja** — a montra, vista do lado de cá. É a **mesma lista do Stock**:
   um artigo criado aqui aparece lá e vice-versa, porque é um só registo em
   `inventory`. O que esta página acrescenta é dizer, artigo a artigo, se ele
-  chega mesmo ao telemóvel — **Na aplicação**, **Esgotado, mas à vista** ou
+  chega mesmo ao telemóvel — **Na aplicação**, **Sem stock** ou
   **Falta a fotografia**. Sem isso, um artigo criado ficava invisível ao
   sócio e ninguém percebia porquê.
 - O que tira um artigo da aplicação é **não ter fotografia**: o cartão ficava
@@ -250,16 +250,21 @@ nasceu para dar a volta aos **dois artigos** que o ecrã inicial mostrava, e
 esse rolo saiu da página inicial por decisão do dono. Uma montra que muda de
 ordem todos os dias é só uma montra onde não se encontra nada.
 
-**Um artigo esgotado continua na montra.** Por decisão do dono: uma loja
-mostra o que vende, e um capacete que esgotou esta semana não deixa de ser do
-catálogo. Vai **sem tamanhos nenhuns** (`sizes` vazio), e é por aí que a
-aplicação sabe que há para ver mas não há para reservar: o cartão diz
-"Esgotado" em vez de "Reservar", e a janela abre sem quantidade nem botão.
-Antes desaparecia, e o sócio não distinguia "esgotado" de "não existe".
+**O stock não esconde nada na montra.** Por decisão do dono: todos os
+artigos e **todos os tamanhos** aparecem, haja ou não haja, e todos se podem
+pedir. **Reservar é encomendar** — o sócio escolhe o tamanho dele e é ao
+balcão que o ginásio lhe diz se tem ou se tem de esperar. O
+`POST /api/mobile/reservations` também **deixou de olhar ao stock**: recusava
+com "só restam N unidades", e um artigo esgotado não se podia pedir.
 
-**Um tamanho esgotado continua a não entrar nos tamanhos**: reservar um
-tamanho que não existe deixava o balcão com uma reserva impossível de
-preparar.
+Houve uma versão pelo meio em que o artigo esgotado aparecia sem tamanhos e
+com "Esgotado" em vez de "Reservar". Saiu: dava um artigo à vista que não se
+podia pedir, e isso não é uma loja. A quantidade também deixou de ser
+limitada pelo stock — o tecto são **10 unidades** (`MAXIMO_POR_RESERVA`), só
+para ninguém pedir cinquenta por ter carregado no `+` distraído.
+
+Na gestão, a Loja continua a marcar **Sem stock** nesses artigos. É **âmbar e
+não vermelho**: é para quem está ao balcão saber, não é um artigo partido.
 
 **As fotografias deslizam no próprio cartão**, na Loja e no ecrã inicial, sem
 ser preciso abrir o artigo: um par de luvas vê-se pela frente e pelas costas

@@ -137,11 +137,11 @@ const AppDoSocio = ({ language }) => {
       fotoDoGinasio: 'Fotografia do ginásio',
       loja: 'Loja',
       novoArtigo: 'Novo Artigo',
-      lojaAjuda: 'A montra da aplicação: um artigo por cor, pela mesma ordem com que o sócio os vê. Os tamanhos ficam no Stock e são perguntados na altura de reservar. Um artigo sem stock continua à vista, marcado como esgotado — o que o tira da aplicação é não ter fotografia.',
+      lojaAjuda: 'A montra da aplicação: um artigo por cor, pela mesma ordem com que o sócio os vê. Os tamanhos ficam no Stock e são perguntados na altura de reservar. O stock não esconde nada — um artigo sem stock continua à vista e pode ser reservado, porque a reserva é uma encomenda e é ao balcão que se diz ao sócio se há. O que tira um artigo da aplicação é não ter fotografia.',
       semArtigos: 'Ainda não há artigos. Carregue em Novo Artigo para começar: t-shirts, hoodies, luvas, caneleiras, capacetes, ligaduras…',
       naApp: 'Na aplicação',
       faltaFoto: 'Falta a fotografia',
-      semStock: 'Esgotado, mas à vista',
+      semStock: 'Sem stock',
       tamanhos: 'Tamanhos',
       cor: 'Cor',
       preco: 'Preço',
@@ -501,9 +501,10 @@ const AppDoSocio = ({ language }) => {
    */
   const estadoDoArtigo = (g) => {
     // O que tira um artigo da aplicação é não ter fotografia. Sem stock ele
-    // continua na montra, marcado como esgotado: por decisão do dono, uma
-    // loja mostra o que vende, e o sócio tem de distinguir "esgotado" de
-    // "não existe".
+    // continua na montra e continua a poder ser reservado — a reserva é uma
+    // encomenda, e é ao balcão que se diz ao sócio se há. Por isso este aviso
+    // é âmbar e não vermelho: é para quem está ao balcão saber, não é um
+    // artigo partido.
     if (!g.capa) return { ok: false, texto: txt.faltaFoto, cor: '#dc2626' };
     const stock = g.linhas.reduce((t, a) => t + (Number(a.quantity) || 0), 0);
     if (stock <= 0) return { ok: true, texto: txt.semStock, cor: '#d97706' };

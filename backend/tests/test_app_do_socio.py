@@ -274,11 +274,11 @@ def test_a_montra_so_mostra_o_que_tem_foto(cliente, admin, artigo_com_foto):
 
 
 def test_um_artigo_sem_stock_continua_na_montra(cliente, admin):
-    """Uma loja mostra o que vende, mesmo o que esgotou esta semana.
+    """O stock nao decide nada na montra. Decisao do dono.
 
-    Decisao do dono. Vai sem tamanhos nenhuns, e e por ai que a aplicacao
-    sabe que ha para ver mas nao ha para reservar. Antes desaparecia, e o
-    socio nao distinguia "esgotado" de "nao existe".
+    Uma loja mostra o que vende, e um capacete que esgotou esta semana nao
+    deixa de ser do catalogo. Reservar e encomendar: o balcao diz ao socio se
+    tem ou se tem de esperar.
     """
     cliente.post("/api/inventory", headers=admin, json={
         "name": "Esgotado", "category": "clothing", "size": "M", "quantity": 0,
@@ -287,22 +287,37 @@ def test_um_artigo_sem_stock_continua_na_montra(cliente, admin):
 
     montra = cliente.get("/api/mobile/shop").json()
     assert [a["name"] for a in montra] == ["Esgotado"]
-    assert montra[0]["sizes"] == []
+    # E com o tamanho a vista, para se poder encomendar
+    assert [t["size"] for t in montra[0]["sizes"]] == ["M"]
 
 
-def test_um_tamanho_esgotado_nao_entra_na_lista_de_tamanhos(cliente, admin):
-    """Reservar um tamanho que nao existe deixava o balcao sem o preparar."""
-    cliente.post("/api/inventory", headers=admin, json={
-        "name": "Hoodie", "category": "clothing", "size": "S", "color": "Preto",
-        "quantity": 0, "price": 40.0, "photo_url": "/api/uploads/h.jpg",
-    })
-    cliente.post("/api/inventory", headers=admin, json={
-        "name": "Hoodie", "category": "clothing", "size": "M", "color": "Preto",
-        "quantity": 2, "price": 40.0, "photo_url": "/api/uploads/h.jpg",
-    })
+def test_os_tamanhos_esgotados_aparecem_na_mesma(cliente, admin):
+    """Esconde-los dava um artigo a vista que nao se podia pedir."""
+    for tamanho, stock in (("S", 0), ("M", 2), ("L", 0)):
+        cliente.post("/api/inventory", headers=admin, json={
+            "name": "Hoodie", "category": "clothing", "size": tamanho,
+            "color": "Preto", "quantity": stock, "price": 40.0,
+            "photo_url": "/api/uploads/h.jpg",
+        })
 
     artigo = cliente.get("/api/mobile/shop").json()[0]
-    assert [t["size"] for t in artigo["sizes"]] == ["M"]
+    assert [t["size"] for t in artigo["sizes"]] == ["S", "M", "L"]
+    assert [t["quantity"] for t in artigo["sizes"]] == [0, 2, 0]
+
+
+def test_reservar_um_artigo_sem_stock_e_aceite(cliente, admin, criar_socio):
+    """A reserva e uma encomenda: nao se recusa por nao haver no armazem."""
+    artigo = cliente.post("/api/inventory", headers=admin, json={
+        "name": "Hoodie", "category": "clothing", "size": "M", "color": "Verde",
+        "quantity": 0, "price": 40.0, "photo_url": "/api/uploads/h.jpg",
+    }).json()
+    socio = criar_socio(telefone="913700077")
+
+    r = cliente.post("/api/mobile/reservations", json={
+        "item_id": artigo["id"], "member_id": socio["id"], "quantity": 2,
+    })
+    assert r.status_code == 200, r.text
+    assert r.json()["quantity"] == 2
 
 
 def test_a_fotografia_fica_guardada_no_artigo(cliente, admin, artigo_com_foto):
@@ -343,12 +358,12 @@ def test_os_tamanhos_vao_dentro_do_artigo_para_a_app_perguntar(cliente, admin):
     assert all(t["item_id"] for t in artigo["sizes"])
 
 
-def test_um_tamanho_esgotado_nao_aparece_para_reserva(cliente, admin):
+def test_um_tamanho_esgotado_continua_a_poder_encomendar_se(cliente, admin):
     _capacete(cliente, admin, "S", "Preto", 0, "/api/uploads/cap.jpg")
     _capacete(cliente, admin, "M", "Preto", 4, "/api/uploads/cap.jpg")
 
     artigo = cliente.get("/api/mobile/shop").json()[0]
-    assert [t["size"] for t in artigo["sizes"]] == ["M"]
+    assert [t["size"] for t in artigo["sizes"]] == ["S", "M"]
 
 
 def test_basta_um_tamanho_ter_fotografia_para_o_artigo_aparecer(cliente, admin):
@@ -533,12 +548,18 @@ def test_a_reserva_nao_mexe_no_stock(cliente, admin, criar_socio, artigo_com_fot
     assert artigos[0]["quantity"] == 5
 
 
-def test_nao_se_reserva_mais_do_que_existe(cliente, criar_socio, artigo_com_foto):
+def test_reserva_se_mais_do_que_existe(cliente, criar_socio, artigo_com_foto):
+    """Era recusado com "so restam N unidades"; agora e uma encomenda.
+
+    Decisao do dono: o balcao diz ao socio se tem ou se tem de esperar, e e
+    la que isso se resolve. Recusar aqui so lhe tirava a vontade de pedir.
+    """
     socio = criar_socio(telefone="913000003")
     r = cliente.post("/api/mobile/reservations", json={
         "item_id": artigo_com_foto["id"], "member_id": socio["id"], "quantity": 99,
     })
-    assert r.status_code == 400
+    assert r.status_code == 200, r.text
+    assert r.json()["quantity"] == 99
 
 
 def test_nao_se_reserva_para_um_socio_que_nao_existe(cliente, artigo_com_foto):

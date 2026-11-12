@@ -4822,14 +4822,14 @@ async def montra_para_a_app():
 
     O Stock desdobra cada modelo por tamanho — nove linhas so para os
     capacetes. Na montra isso dava nove cartoes iguais, so com a letra
-    diferente. Aqui juntam-se por nome e cor, e os tamanhos **que ainda ha**
-    vao dentro, para a aplicacao os perguntar na altura de reservar.
+    diferente. Aqui juntam-se por nome e cor, e os tamanhos vao dentro, para
+    a aplicacao os perguntar na altura de reservar.
 
-    **Um artigo sem stock nenhum continua na montra**, por decisao do dono:
-    uma loja mostra o que vende, e um capacete que esgotou esta semana nao
-    deixa de ser do catalogo. Vai sem tamanhos nenhuns (`sizes` vazio), e e
-    por ai que a aplicacao sabe que ha para ver mas nao ha para reservar.
-    Antes desaparecia, e o socio nao distinguia "esgotado" de "nao existe".
+    **O stock nao decide nada aqui**, por decisao do dono: o artigo aparece e
+    todos os tamanhos aparecem, haja ou nao haja. Reservar e encomendar — o
+    socio escolhe o tamanho dele e o ginasio diz-lhe ao balcao se tem ou se
+    tem de esperar. Uma loja mostra o que vende, e um capacete que esgotou
+    esta semana nao deixa de ser do catalogo.
 
     Sem **fotografia** continua a nao entrar: o cartao ficava vazio.
 
@@ -4871,15 +4871,16 @@ async def montra_para_a_app():
                     kind=(m.get("kind") or "photo"), url=endereco
                 ))
 
-        # So os tamanhos que ha mesmo. O artigo aparece na montra de qualquer
-        # maneira, mas reservar um tamanho que nao existe deixava o balcao com
-        # uma reserva impossivel de preparar.
-        if int(a.get("quantity") or 0) > 0:
-            grupo["sizes"].append(ShopSize(
-                item_id=a["id"],
-                size=(a.get("size") or "").strip() or None,
-                quantity=int(a.get("quantity") or 0),
-            ))
+        # **Todos os tamanhos, haja stock ou nao.** Reservar e encomendar: o
+        # socio escolhe o tamanho dele e o ginasio diz-lhe ao balcao se tem
+        # ou se tem de esperar. Por decisao do dono. Esconder os tamanhos
+        # esgotados dava um artigo a vista que nao se podia pedir, e isso nao
+        # e uma loja, e uma montra de museu.
+        grupo["sizes"].append(ShopSize(
+            item_id=a["id"],
+            size=(a.get("size") or "").strip() or None,
+            quantity=int(a.get("quantity") or 0),
+        ))
 
     # ------------------------------------------------- a galeria manda aqui
     #
@@ -4921,17 +4922,20 @@ async def montra_para_a_app():
 
 @api_router.post("/mobile/reservations", response_model=Reservation)
 async def reservar_pela_app(dados: ReservationCreate):
-    """O socio reserva; o balcao prepara. Nao mexe no stock nem no dinheiro."""
+    """O socio reserva; o balcao prepara. Nao mexe no stock nem no dinheiro.
+
+    E uma **encomenda**, nao um levantamento: aceita-se mesmo sem stock, e e
+    ao balcao que se diz ao socio se tem ou se tem de esperar.
+    """
     if dados.quantity < 1:
         raise HTTPException(status_code=400, detail="A quantidade tem de ser pelo menos 1.")
 
     artigo = await db.inventory.find_one({"id": dados.item_id})
     if not artigo:
         raise HTTPException(status_code=404, detail="Artigo nao encontrado")
-    if artigo.get("quantity", 0) < dados.quantity:
-        raise HTTPException(
-            status_code=400, detail=f"So restam {artigo.get('quantity', 0)} unidades."
-        )
+    # **Nao se olha ao stock.** Uma reserva e uma encomenda: o balcao diz ao
+    # socio se tem ou se tem de esperar. Por decisao do dono. Antes recusava
+    # com "so restam N unidades", e um artigo esgotado nao se podia pedir.
 
     socio = await db.members.find_one({"id": dados.member_id})
     if not socio:

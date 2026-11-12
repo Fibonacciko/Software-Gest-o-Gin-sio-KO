@@ -35,10 +35,24 @@ const ESTADOS: Record<string, string> = {
 };
 
 /**
+ * Quantas unidades do mesmo artigo se podem pedir de uma vez.
+ *
+ * Não tem nada a ver com o stock — é só para ninguém pedir cinquenta por ter
+ * carregado no `+` distraído.
+ */
+const MAXIMO_POR_RESERVA = 10;
+
+/**
  * A montra do ginásio.
  *
  * Não se compra aqui: reserva-se, e paga-se ao balcão quando se levanta. O
  * ginásio recebe o pedido e deixa o artigo preparado.
+ *
+ * **O stock não esconde nada.** Todos os artigos e todos os tamanhos
+ * aparecem, haja ou não haja, e todos se podem pedir: reservar é encomendar,
+ * e é ao balcão que o ginásio diz ao sócio se tem ou se tem de esperar — por
+ * decisão do dono. Esconder o que está esgotado dava um artigo à vista que
+ * não se podia pedir.
  */
 export default function EcraLoja({ socio }: Props) {
   const [artigos, setArtigos] = useState<Artigo[] | null>(null);
@@ -197,11 +211,7 @@ export default function EcraLoja({ socio }: Props) {
               />
               <View style={estilos.rodape}>
                 <Text style={estilos.preco}>{a.price.toFixed(2)} €</Text>
-                {/* Um artigo sem tamanho nenhum é um artigo esgotado: fica na
-                    montra para se ver, mas não se reserva o que não há. */}
-                <Text style={a.sizes.length > 0 ? estilos.reservar : estilos.esgotado}>
-                  {a.sizes.length > 0 ? 'Reservar' : 'Esgotado'}
-                </Text>
+                <Text style={estilos.reservar}>Reservar</Text>
               </View>
             </View>
           );
@@ -248,7 +258,6 @@ export default function EcraLoja({ socio }: Props) {
                             style={[estilos.tamanho, activo && estilos.tamanhoEscolhido]}
                             onPress={() => {
                               setTamanho(t);
-                              setQuantidade((q) => Math.min(q, t.quantity));
                               setErro(null);
                             }}
                           >
@@ -262,20 +271,6 @@ export default function EcraLoja({ socio }: Props) {
                   </View>
                 ) : null}
 
-                {/* Esgotado: vê-se o artigo e as fotografias, mas não há
-                    quantidade nem botão. Reservar o que não existe deixava o
-                    balcão com uma reserva impossível de preparar. */}
-                {escolhido.sizes.length === 0 ? (
-                  <>
-                    <Text style={estilos.esgotadoJanela}>
-                      Esgotado de momento. Pergunta na receção quando chega.
-                    </Text>
-                    <Pressable style={estilos.cancelar} onPress={() => setEscolhido(null)}>
-                      <Text style={estilos.cancelarTexto}>Fechar</Text>
-                    </Pressable>
-                  </>
-                ) : (
-                  <>
                 <View style={estilos.quantidadeLinha}>
                   <Text style={estilos.quantidadeEtiqueta}>Quantidade</Text>
                   <View style={estilos.contador}>
@@ -288,7 +283,10 @@ export default function EcraLoja({ socio }: Props) {
                     <Text style={estilos.contadorValor}>{quantidade}</Text>
                     <Pressable
                       style={estilos.contadorBotao}
-                      onPress={() => setQuantidade((q) => Math.min(tamanho?.quantity ?? 1, q + 1))}
+                      // Nao se limita pelo stock: reservar e encomendar, e o
+                      // ginasio diz ao balcao se tem ou se tem de esperar. O
+                      // tecto e so para ninguem pedir cinquenta sem dar por isso.
+                      onPress={() => setQuantidade((q) => Math.min(MAXIMO_POR_RESERVA, q + 1))}
                     >
                       <Text style={estilos.contadorTexto}>+</Text>
                     </Pressable>
@@ -315,8 +313,6 @@ export default function EcraLoja({ socio }: Props) {
                 <Pressable style={estilos.cancelar} onPress={() => setEscolhido(null)}>
                   <Text style={estilos.cancelarTexto}>Cancelar</Text>
                 </Pressable>
-                  </>
-                )}
               </ScrollView>
             ) : null}
           </View>
@@ -365,13 +361,6 @@ const estilos = StyleSheet.create({
   },
   preco: { color: cores.dourado, fontSize: 18, fontWeight: '800' },
   reservar: { color: cores.laranjaClaro, fontWeight: '700' },
-  esgotado: { color: cores.textoSecundario, fontWeight: '700' },
-  esgotadoJanela: {
-    color: cores.textoSecundario,
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: espaco.m,
-  },
   fundoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
   janela: {
     backgroundColor: cores.fundoCartao,
