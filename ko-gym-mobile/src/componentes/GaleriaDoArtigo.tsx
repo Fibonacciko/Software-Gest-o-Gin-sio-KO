@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { enderecoDaImagem, MediaDoArtigo } from '../api';
+import { enderecoDaImagem, enderecoReduzido, MediaDoArtigo } from '../api';
 import { cores, espaco } from '../theme';
 
 const LARGURA = Dimensions.get('window').width - espaco.g * 2;
@@ -72,9 +72,10 @@ export default function GaleriaDoArtigo({ media }: { media: MediaDoArtigo[] }) {
           ) : (
             <Image
               key={m.url}
-              source={{ uri: enderecoDaImagem(m.url) ?? '' }}
+              source={{ uri: enderecoReduzido(m.url) ?? '' }}
               style={estilos.item}
               resizeMode="cover"
+              resizeMethod="resize"
             />
           )
         )}

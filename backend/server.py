@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Query, Depends, status, Request, UploadFile, File
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -4454,6 +4455,58 @@ TAMANHO_MAXIMO_VIDEO = 30 * 1024 * 1024       # 30 MB: um video curto cabe
 TAMANHO_MAXIMO_DOCUMENTO = 10 * 1024 * 1024   # 10 MB: um plano em PDF cabe
 
 
+# A pasta onde ficam as fotografias ja encolhidas. E so um atalho: pode ser
+# apagada a qualquer momento que elas voltam a ser feitas ao primeiro pedido.
+PASTA_MINIATURAS = PASTA_UPLOADS / ".miniaturas"
+LARGURA_MAXIMA_MINIATURA = 1600
+
+
+@api_router.get("/miniaturas/{nome}")
+async def miniatura_da_fotografia(nome: str, w: int = 720):
+    """A mesma fotografia, encolhida, para a aplicacao a poder mostrar.
+
+    As fotografias da loja sao de 1600x1600 — **2,6 milhoes de pixeis** — e o
+    cartao onde aparecem tem 360. Depois de aberta, cada uma ocupa megabytes
+    na memoria do telemovel, e com dezassete artigos o Android desistia de
+    desenhar algumas: ficava o cartao cinzento, sem erro nenhum. Encolhe-las
+    a saida resolve na origem, e de caminho poupa os dados de quem abre a
+    loja na rua.
+
+    **Fica guardada em disco depois da primeira vez.** O nome de um ficheiro
+    nunca muda de conteudo (sao nomes sorteados), por isso a copia nunca fica
+    velha. A pasta pode ser apagada sem medo.
+
+    Vive em `/api/miniaturas/...` e nao em `/api/uploads/...` de proposito:
+    aquele caminho e servido pelo `StaticFiles` e nao passa por aqui.
+
+    Fica **aberta**, como as fotografias que encolhe: e a aplicacao do socio
+    que as pede, e ela nao leva senha nenhuma.
+    """
+    seguro = Path(nome).name
+    original = PASTA_UPLOADS / seguro
+    if not original.is_file():
+        raise HTTPException(status_code=404, detail="Não há essa fotografia.")
+
+    largura = max(120, min(int(w or 720), LARGURA_MAXIMA_MINIATURA))
+    destino = PASTA_MINIATURAS / str(largura) / f"{seguro}.jpg"
+
+    if not destino.is_file():
+        try:
+            from PIL import Image
+
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            with Image.open(original) as img:
+                img = img.convert("RGB")
+                img.thumbnail((largura, largura))
+                img.save(destino, "JPEG", quality=82, optimize=True)
+        except Exception:
+            # Um ficheiro que o Pillow nao saiba abrir — um video, um PDF —
+            # devolve-se como esta. Mais vale pesado do que nada.
+            return FileResponse(original)
+
+    return FileResponse(destino, media_type="image/jpeg")
+
+
 @api_router.post("/uploads")
 async def guardar_imagem(
     ficheiro: UploadFile = File(...),
@@ -4720,11 +4773,11 @@ async def multimedia_para_a_app():
 def rotacao_do_dia(quantos: int) -> int:
     """Por onde comeca a montra hoje.
 
-    O ecra de entrada da aplicacao mostra os **dois primeiros** artigos da
-    loja. Por ordem alfabetica fixa eram sempre os mesmos dois a aparecer, e
-    os ultimos do alfabeto nunca se viam. A lista roda **um lugar por dia**:
-    cada artigo tem a sua vez a frente, e ao fim de uma volta ja todos
-    passaram pelo ecra de entrada.
+    Por ordem alfabetica fixa eram sempre os mesmos artigos a abrir a lista,
+    e os ultimos do alfabeto nunca se viam. A montra roda **um lugar por
+    dia** — uma **familia** por dia, nao um artigo: os tres capacetes ficam
+    sempre juntos. Ao fim de uma volta, todas as familias passaram pela
+    frente.
 
     **Roda uma vez por dia, nao a cada pedido.** O socio que abre a loja tres
     vezes seguidas ve sempre a mesma coisa, e ao balcao sabe-se o que esta a
@@ -4825,11 +4878,25 @@ async def montra_para_a_app():
         montra.append(g)
 
     montra.sort(key=lambda g: (g["name"].lower(), (g["color"] or "").lower()))
-    # A ordem alfabetica e so o arranjo de base: a lista roda um lugar por dia
-    # para que nao sejam sempre os mesmos dois a abrir o ecra de entrada.
-    inicio = rotacao_do_dia(len(montra))
-    montra = montra[inicio:] + montra[:inicio]
-    return [ShopItem(**g) for g in montra]
+
+    # ------------------------------------------- roda-se por familia, nao por cor
+    #
+    # Os tres capacetes ficam juntos, as tres t-shirts tambem. A rotacao do
+    # dia muda a **familia** que abre a lista, nunca parte uma ao meio.
+    #
+    # Antes rodava artigo a artigo, e o resultado via-se: o capacete amarelo
+    # ia parar ao fim da lista, longe do branco e do preto. Quem procura um
+    # capacete quer ver os tres lado a lado e escolher a cor.
+    familias: List[List[dict]] = []
+    for g in montra:
+        if familias and familias[-1][0]["name"].lower() == g["name"].lower():
+            familias[-1].append(g)
+        else:
+            familias.append([g])
+
+    inicio = rotacao_do_dia(len(familias))
+    familias = familias[inicio:] + familias[:inicio]
+    return [ShopItem(**g) for familia in familias for g in familia]
 
 
 @api_router.post("/mobile/reservations", response_model=Reservation)

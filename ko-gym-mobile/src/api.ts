@@ -364,6 +364,26 @@ export function enderecoDaImagem(url?: string | null): string | null {
   return `${API_BASE.replace(/\/api$/, '')}${url}`;
 }
 
+/**
+ * O mesmo endereco, mas pedindo a fotografia **ja encolhida**.
+ *
+ * As fotografias da loja sao de 1600x1600 — 2,6 milhoes de pixeis — e os
+ * cartoes onde aparecem tem 360. Depois de abertas ocupam megabytes na
+ * memoria, e com dezassete artigos o Android desistia de desenhar algumas:
+ * ficava o cartao cinzento, sem erro nenhum. De caminho, poupa os dados de
+ * quem abre a loja na rua.
+ *
+ * So faz sentido para ficheiros nossos (`/api/uploads/...`); um endereco de
+ * fora devolve-se como esta.
+ */
+export function enderecoReduzido(url?: string | null, largura = 720): string | null {
+  const inteiro = enderecoDaImagem(url);
+  if (!inteiro || !url || !url.startsWith('/api/uploads/')) return inteiro;
+  const nome = url.split('/').pop();
+  if (!nome) return inteiro;
+  return `${API_BASE.replace(/\/api$/, '')}/api/miniaturas/${nome}?w=${largura}`;
+}
+
 export function fazerCheckin(
   memberId: string,
   activityId: string | null,

@@ -15,6 +15,50 @@ def imagem_falsa(nome="foto.jpg"):
     return {"ficheiro": (nome, io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"0" * 200), "image/jpeg")}
 
 
+def test_a_miniatura_e_mais_pequena_do_que_o_original(cliente, admin):
+    """As fotografias da loja sao de 1600x1600 e o cartao tem 360.
+
+    Sem as encolher a saida, o Android desistia de desenhar algumas: ficava o
+    cartao cinzento, sem erro nenhum.
+    """
+    from PIL import Image
+
+    grande = io.BytesIO()
+    Image.new("RGB", (1600, 1600), (180, 40, 40)).save(grande, "JPEG")
+    grande.seek(0)
+    url = cliente.post("/api/uploads", headers=admin, files={
+        "ficheiro": ("grande.jpg", grande, "image/jpeg")
+    }).json()["url"]
+    nome = url.rsplit("/", 1)[-1]
+
+    r = cliente.get(f"/api/miniaturas/{nome}?w=720")
+    assert r.status_code == 200, r.text
+    with Image.open(io.BytesIO(r.content)) as img:
+        assert max(img.size) == 720
+
+    # Duas vezes seguidas dao o mesmo: a segunda vem do disco
+    assert cliente.get(f"/api/miniaturas/{nome}?w=720").content == r.content
+
+
+def test_a_miniatura_nao_precisa_de_senha(cliente, admin):
+    """Quem as pede e a aplicacao do socio, que nao leva senha nenhuma."""
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", (800, 600), (20, 120, 60)).save(buf, "JPEG")
+    buf.seek(0)
+    url = cliente.post("/api/uploads", headers=admin, files={
+        "ficheiro": ("x.jpg", buf, "image/jpeg")
+    }).json()["url"]
+
+    r = cliente.get(f"/api/miniaturas/{url.rsplit('/', 1)[-1]}")
+    assert r.status_code == 200
+
+
+def test_uma_miniatura_que_nao_existe_da_404(cliente):
+    assert cliente.get("/api/miniaturas/nao-existe.jpg").status_code == 404
+
+
 def test_guardar_uma_imagem_devolve_o_endereco(cliente, admin):
     r = cliente.post("/api/uploads", headers=admin, files=imagem_falsa())
     assert r.status_code == 200, r.text
@@ -317,7 +361,7 @@ def _artigo_da_montra(cliente, admin, nome):
 
 
 def test_a_montra_roda_um_lugar_por_dia(cliente, admin):
-    """O ecra de entrada mostra os dois primeiros: nao podem ser sempre os mesmos."""
+    """Nao podem ser sempre os mesmos a abrir a lista."""
     from server import rotacao_do_dia
 
     nomes = ["Artigo A", "Artigo B", "Artigo C", "Artigo D", "Artigo E"]
@@ -327,6 +371,39 @@ def test_a_montra_roda_um_lugar_por_dia(cliente, admin):
     inicio = rotacao_do_dia(len(nomes))
     esperado = nomes[inicio:] + nomes[:inicio]
     assert [a["name"] for a in cliente.get("/api/mobile/shop").json()] == esperado
+
+
+def test_a_rotacao_nunca_parte_uma_familia_ao_meio(cliente, admin):
+    """As tres cores do mesmo artigo ficam sempre lado a lado.
+
+    Rodava artigo a artigo, e o capacete amarelo ia parar ao fim da lista,
+    longe do branco e do preto. Quem procura um capacete quer ver os tres
+    juntos e escolher a cor.
+    """
+    for nome, cores in (
+        ("Capacete", ("Amarelo", "Branco", "Preto")),
+        ("T-Shirt", ("Branco", "Preto")),
+        ("Saco", ("Preto",)),
+    ):
+        for cor in cores:
+            cliente.post("/api/inventory", headers=admin, json={
+                "name": nome, "category": "clothing", "size": "M", "color": cor,
+                "quantity": 3, "price": 15.0, "photo_url": "/api/uploads/x.jpg",
+            })
+
+    montra = cliente.get("/api/mobile/shop").json()
+    assert len(montra) == 6
+
+    # Cada nome aparece num bloco seguido, sem nada pelo meio
+    for nome in ("Capacete", "T-Shirt", "Saco"):
+        posicoes = [i for i, a in enumerate(montra) if a["name"] == nome]
+        assert posicoes == list(range(posicoes[0], posicoes[0] + len(posicoes))), (
+            f"{nome} ficou partido: {[a['name'] for a in montra]}"
+        )
+
+    # E dentro da familia as cores continuam por ordem alfabetica
+    capacetes = [a["color"] for a in montra if a["name"] == "Capacete"]
+    assert capacetes == ["Amarelo", "Branco", "Preto"]
 
 
 def test_rodar_nao_perde_nem_repete_artigos(cliente, admin):

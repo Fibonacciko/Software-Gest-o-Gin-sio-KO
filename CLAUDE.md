@@ -230,11 +230,15 @@ ver: **um artigo por cor**, sem o número do stock à vista.
   daquela cor** (nome, preço, descrição, galeria). O tamanho e a quantidade de
   cada um só se mexem no Stock, e a janela avisa disso.
 
-**A montra roda um lugar por dia.** O ecrã inicial da aplicação mostra os
-**dois primeiros** artigos da loja; por ordem alfabética fixa eram sempre os
-mesmos dois a aparecer, e os últimos do alfabeto nunca se viam. A lista roda
-sozinha, e ao fim de uma volta já todos passaram pela frente
-(`rotacao_do_dia()`, no `server.py`, com testes).
+**A montra roda uma família por dia.** Por ordem alfabética fixa eram sempre
+os mesmos artigos a abrir a lista, e os últimos do alfabeto nunca se viam. A
+lista roda sozinha, e ao fim de uma volta todas as famílias passaram pela
+frente (`rotacao_do_dia()`, no `server.py`, com testes).
+
+**Roda por família, nunca por cor**: os três capacetes ficam lado a lado, e
+as t-shirts também. A rodar artigo a artigo, o capacete amarelo ia parar ao
+fim da lista, longe do branco e do preto — e quem procura um capacete quer
+ver os três juntos e escolher a cor.
 
 - Roda **uma vez por dia**, não a cada pedido: quem abre a loja três vezes
   seguidas vê sempre a mesma coisa, e ao balcão sabe-se o que está à frente
@@ -322,6 +326,21 @@ sempre que alguém se esquecesse do segundo.
 Ficam em **disco**, num volume do Docker (`uploads`), servidas pelo próprio
 servidor em `/api/uploads/...`. Passam pelo encaminhamento que o site já tem,
 por isso não é preciso mexer no nginx da máquina.
+
+**As fotografias são servidas encolhidas à aplicação**
+(`GET /api/miniaturas/<ficheiro>?w=720`). As da loja são de 1600x1600 — 2,6
+milhões de pixeis — e o cartão onde aparecem tem 360: depois de abertas
+ocupavam megabytes na memória, e com dezassete artigos o Android desistia de
+desenhar algumas, deixando o cartão cinzento **sem erro nenhum**. De caminho,
+poupa os dados de quem abre a loja na rua.
+
+A miniatura fica guardada em disco (`uploads/.miniaturas/<largura>/`) depois
+da primeira vez. Como os nomes dos ficheiros são sorteados, um nome nunca
+muda de conteúdo e a cópia nunca fica velha — a pasta pode ser apagada sem
+medo. Vive fora de `/api/uploads/...` de propósito: aquele caminho é servido
+pelo `StaticFiles` e não passa por código nenhum. Fica **aberta**, como as
+fotografias que encolhe: é a aplicação do sócio que as pede, e ela não leva
+senha.
 
 **Não vão para a base de dados.** As cópias de segurança são despejos da base,
 e meia dúzia de fotografias punham um ficheiro de 15 MB a pesar centenas.

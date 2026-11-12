@@ -16,6 +16,7 @@ import {
   carregarMontra,
   carregarReservas,
   enderecoDaImagem,
+  enderecoReduzido,
   reservarArtigo,
   Reserva,
   Socio,
@@ -167,7 +168,7 @@ export default function EcraLoja({ socio }: Props) {
         ) : null}
 
         {artigos.map((a) => {
-          const foto = enderecoDaImagem(a.photo_url);
+          const foto = enderecoReduzido(a.photo_url);
           const detalhes = a.color || '';
           // Só as fotografias deslizam no cartão. Um vídeo num cartão de uma
           // lista obrigava a um leitor por artigo, e dez leitores a rolar ao
@@ -175,7 +176,7 @@ export default function EcraLoja({ socio }: Props) {
           // artigo, que é onde se abre um de cada vez.
           const fotografias = (a.media || [])
             .filter((m) => m.kind === 'photo')
-            .map((m) => enderecoDaImagem(m.url));
+            .map((m) => enderecoReduzido(m.url));
           return (
             <View key={a.id} style={estilos.item}>
               {/* A fotografia ocupa o cartão todo e o nome assenta nela: é o
