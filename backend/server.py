@@ -531,6 +531,137 @@ def calcular_imc(avaliacao: dict) -> dict:
     return avaliacao
 
 
+# ------------------------------------------------------------- Aulas
+# O horario e uma grelha semanal fixa — "segunda as 19:00, Boxe, 20 lugares" —
+# e as excepcoes sao pontuais: um feriado, um professor doente, uma mudanca de
+# hora num dia so. Guardar cada aula de cada semana daria milhares de registos
+# iguais, e mudar uma hora obrigava a mexer em todos.
+
+class ClassSlot(BaseModel):
+    """Uma aula da grelha semanal."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    activity_id: str
+    weekday: int                      # 0 = segunda ... 6 = domingo (como o Python)
+    start_time: str                   # "19:00", em hora local
+    duration_min: int = 60
+    instructor: Optional[str] = None
+    capacity: int = 20
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ClassSlotCreate(BaseModel):
+    activity_id: str
+    weekday: int
+    start_time: str
+    duration_min: int = 60
+    instructor: Optional[str] = None
+    capacity: int = 20
+    is_active: bool = True
+
+
+class ClassException(BaseModel):
+    """Uma aula que num dia certo nao e como de costume."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    slot_id: str
+    class_date: date
+    cancelled: bool = False
+    start_time: Optional[str] = None   # Quando muda de hora so naquele dia
+    instructor: Optional[str] = None
+    note: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ClassExceptionCreate(BaseModel):
+    class_date: date
+    cancelled: bool = False
+    start_time: Optional[str] = None
+    instructor: Optional[str] = None
+    note: Optional[str] = None
+
+
+class BookingStatus(str, Enum):
+    BOOKED = "booked"        # Tem lugar
+    WAITING = "waiting"      # Em lista de espera
+    CANCELLED = "cancelled"  # Desistiu
+    ATTENDED = "attended"    # Veio mesmo (marcado pelo check-in)
+    # "missed" nao e um estado gravado: e calculado — ver `estado_da_inscricao`
+
+
+class ClassBooking(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    slot_id: str
+    class_date: date
+    member_id: str
+    member_name: Optional[str] = None
+    member_number: Optional[str] = None
+    status: BookingStatus = BookingStatus.BOOKED
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ClassBookingCreate(BaseModel):
+    member_id: str
+    slot_id: str
+    class_date: date
+
+
+class ClassOccurrence(BaseModel):
+    """Uma aula num dia certo: a grelha ja aplicada ao calendario."""
+    slot_id: str
+    class_date: date
+    activity_id: str
+    activity_name: Optional[str] = None
+    activity_color: Optional[str] = None
+    start_time: str
+    duration_min: int
+    instructor: Optional[str] = None
+    capacity: int
+    booked: int = 0                   # Quantos tem lugar
+    waiting: int = 0                  # Quantos esperam
+    cancelled: bool = False
+    note: Optional[str] = None
+    # Preenchidos quando se pergunta em nome de um socio
+    my_booking_id: Optional[str] = None
+    my_status: Optional[str] = None
+
+
+MINUTOS_PARA_DESMARCAR = 120   # Duas horas antes; depois disso o lugar e seu
+
+
+def dia_guardado(dia: date) -> str:
+    """A forma como uma data fica guardada nesta base de dados.
+
+    As datas sao gravadas com hora (`2026-11-16T00:00:00+00:00`, ver
+    `prepare_for_mongo`). Procurar por `"2026-11-16"` nao encontra nada, e o
+    erro e silencioso: a consulta devolve zero e tudo parece so estar vazio.
+    Todas as consultas por dia de aula passam por aqui.
+    """
+    return datetime.combine(dia, datetime.min.time()).replace(tzinfo=timezone.utc).isoformat()
+
+
+def momento_da_aula(dia: date, hora: str) -> datetime:
+    """A hora a que a aula comeca, como data e hora."""
+    try:
+        h, m = (int(x) for x in str(hora).split(":")[:2])
+    except (ValueError, AttributeError, TypeError):
+        h, m = 0, 0
+    return datetime.combine(dia, time(hour=h, minute=m))
+
+
+def estado_da_inscricao(inscricao: dict, fim_da_aula: datetime, agora: datetime) -> str:
+    """O estado que se mostra, que nem sempre e o que esta gravado.
+
+    **Faltou nao se grava.** Uma inscricao que ficou em "tem lugar" depois de
+    a aula acabar e uma falta, e isso sabe-se olhando para o relogio. Gravar a
+    falta obrigava a um trabalho nocturno a correr sobre todas as aulas, e uma
+    noite em que ele nao corresse deixava faltas por marcar para sempre.
+    """
+    gravado = inscricao.get("status")
+    if gravado == BookingStatus.BOOKED.value and agora > fim_da_aula:
+        return "missed"
+    return gravado
+
+
 # ------------------------------------------------------------ Planos
 # O plano de treino e o plano alimentar, como documento. O professor ou o
 # nutricionista carrega um PDF ou escreve o texto; o socio le-o no telemovel.
@@ -2213,6 +2344,55 @@ async def delete_member(
     return {"message": "Member deleted successfully"}
 
 # Attendance Routes
+async def marcar_presenca_na_aula(member_id: str, activity_id: str, dia: date) -> bool:
+    """Risca a inscricao do socio na aula daquela hora, se houver uma.
+
+    Procura-se a aula **mais proxima da hora do check-in**, e nao a primeira
+    do dia: quem tem Boxe as 19:00 e Jiu-Jitsu as 20:15 e entra as 20:10 vem
+    para a segunda. Aceita-se desde uma hora antes ate ao fim da aula — chegar
+    cedo e normal, e chegar depois de acabar nao e aquela aula.
+    """
+    inscricoes = await db.class_bookings.find({
+        "member_id": member_id,
+        "class_date": dia_guardado(dia),
+        "status": {"$in": [BookingStatus.BOOKED.value, BookingStatus.WAITING.value]},
+    }).to_list(50)
+    if not inscricoes:
+        return False
+
+    agora = datetime.now()
+    melhor, menor_distancia = None, None
+
+    for inscricao in inscricoes:
+        slot = await db.class_slots.find_one({"id": inscricao["slot_id"]})
+        if not slot or slot.get("activity_id") != activity_id:
+            continue
+
+        excepcao = await db.class_exceptions.find_one(
+            {"slot_id": slot["id"], "class_date": dia_guardado(dia)}
+        )
+        if excepcao and excepcao.get("cancelled"):
+            continue
+
+        hora = (excepcao or {}).get("start_time") or slot["start_time"]
+        comeco = momento_da_aula(dia, hora)
+        fim = comeco + timedelta(minutes=int(slot.get("duration_min") or 60))
+        if not (comeco - timedelta(hours=1) <= agora <= fim):
+            continue
+
+        distancia = abs((agora - comeco).total_seconds())
+        if menor_distancia is None or distancia < menor_distancia:
+            melhor, menor_distancia = inscricao, distancia
+
+    if not melhor:
+        return False
+
+    await db.class_bookings.update_one(
+        {"id": melhor["id"]}, {"$set": {"status": BookingStatus.ATTENDED.value}}
+    )
+    return True
+
+
 @api_router.post("/attendance", response_model=Attendance)
 async def create_attendance(
     attendance_data: AttendanceCreate,
@@ -2235,6 +2415,11 @@ async def create_attendance(
     attendance = Attendance(**attendance_data.dict())
     attendance_dict = prepare_for_mongo(attendance.dict())
     await db.attendance.insert_one(attendance_dict)
+
+    # Quem tinha a aula marcada deixa de constar como faltoso
+    await marcar_presenca_na_aula(
+        attendance.member_id, attendance.activity_id, attendance.check_in_date
+    )
     return attendance
 
 @api_router.put("/attendance/{attendance_id}", response_model=Attendance)
@@ -3483,6 +3668,9 @@ async def mobile_app_checkin(dados: MobileCheckin):
     await db.attendance.insert_one(prepare_for_mongo(attendance.dict()))
     BusinessCache.invalidate_member_cache()
 
+    # O check-in pela app tambem risca a inscricao da aula daquela hora
+    await marcar_presenca_na_aula(dados.member_id, activity_id, hoje)
+
     cartao = await build_mobile_member(member)
     marcos = [10, 25, 50, 100, 200, 365]
 
@@ -4701,6 +4889,336 @@ async def apagar_avaliacao(
     await log_audit(current_user, "delete", "assessment", entity_id=assessment_id,
                     details="Apagou uma avaliacao fisica")
     return {"message": "Avaliacao eliminada"}
+
+
+# ------------------------------------------------------------- Aulas
+
+async def _expandir_grelha(inicio: date, fim: date, member_id: Optional[str] = None):
+    """A grelha semanal aplicada ao calendario, dia a dia.
+
+    E aqui que a grelha fixa vira aulas com data: para cada dia do intervalo,
+    procuram-se as aulas daquele dia da semana, aplicam-se as excepcoes do
+    proprio dia e contam-se as inscricoes.
+    """
+    slots = await db.class_slots.find({"is_active": True}).to_list(500)
+    slots = [parse_from_mongo(x) for x in slots]
+    if not slots:
+        return []
+
+    modalidades = {a["id"]: a for a in await db.activities.find().to_list(100)}
+    ids = [x["id"] for x in slots]
+
+    excepcoes = await db.class_exceptions.find({"slot_id": {"$in": ids}}).to_list(2000)
+    por_excepcao = {}
+    for e in excepcoes:
+        e = parse_from_mongo(e)
+        por_excepcao[(e["slot_id"], str(e["class_date"])[:10])] = e
+
+    inscricoes = await db.class_bookings.find({
+        "slot_id": {"$in": ids},
+        "status": {"$in": [BookingStatus.BOOKED.value, BookingStatus.WAITING.value,
+                           BookingStatus.ATTENDED.value]},
+    }).to_list(5000)
+
+    contagem = {}
+    minhas = {}
+    for i in inscricoes:
+        i = parse_from_mongo(i)
+        chave = (i["slot_id"], str(i["class_date"])[:10])
+        conta = contagem.setdefault(chave, {"booked": 0, "waiting": 0})
+        if i["status"] == BookingStatus.WAITING.value:
+            conta["waiting"] += 1
+        else:
+            # Quem ja veio continua a ocupar o lugar daquela aula
+            conta["booked"] += 1
+        if member_id and i["member_id"] == member_id:
+            minhas[chave] = i
+
+    agora = datetime.now()
+    aulas = []
+    dia = inicio
+    while dia <= fim:
+        for slot in slots:
+            if slot.get("weekday") != dia.weekday():
+                continue
+            chave = (slot["id"], dia.isoformat())
+            excepcao = por_excepcao.get(chave)
+            minha = minhas.get(chave)
+            conta = contagem.get(chave, {"booked": 0, "waiting": 0})
+
+            meu_estado = None
+            if minha:
+                hora = (excepcao or {}).get("start_time") or slot["start_time"]
+                fim_da_aula = momento_da_aula(dia, hora) + timedelta(
+                    minutes=int(slot.get("duration_min") or 60)
+                )
+                meu_estado = estado_da_inscricao(minha, fim_da_aula, agora)
+
+            modalidade = modalidades.get(slot["activity_id"], {})
+            aulas.append(ClassOccurrence(
+                slot_id=slot["id"],
+                class_date=dia,
+                activity_id=slot["activity_id"],
+                activity_name=modalidade.get("name"),
+                activity_color=modalidade.get("color"),
+                start_time=(excepcao or {}).get("start_time") or slot["start_time"],
+                duration_min=int(slot.get("duration_min") or 60),
+                instructor=(excepcao or {}).get("instructor") or slot.get("instructor"),
+                capacity=int(slot.get("capacity") or 0),
+                booked=conta["booked"],
+                waiting=conta["waiting"],
+                cancelled=bool((excepcao or {}).get("cancelled")),
+                note=(excepcao or {}).get("note"),
+                my_booking_id=minha["id"] if minha else None,
+                my_status=meu_estado,
+            ))
+        dia += timedelta(days=1)
+
+    aulas.sort(key=lambda a: (a.class_date, a.start_time))
+    return aulas
+
+
+async def _promover_da_lista_de_espera(slot_id: str, dia: date):
+    """Um lugar que vagou vai para quem espera ha mais tempo."""
+    slot = await db.class_slots.find_one({"id": slot_id})
+    if not slot:
+        return
+    lotacao = int(slot.get("capacity") or 0)
+    if lotacao <= 0:
+        return
+
+    com_lugar = await db.class_bookings.count_documents({
+        "slot_id": slot_id, "class_date": dia_guardado(dia),
+        "status": {"$in": [BookingStatus.BOOKED.value, BookingStatus.ATTENDED.value]},
+    })
+    if com_lugar >= lotacao:
+        return
+
+    seguinte = await db.class_bookings.find_one(
+        {"slot_id": slot_id, "class_date": dia_guardado(dia),
+         "status": BookingStatus.WAITING.value},
+        sort=[("created_at", 1)],
+    )
+    if seguinte:
+        await db.class_bookings.update_one(
+            {"id": seguinte["id"]}, {"$set": {"status": BookingStatus.BOOKED.value}}
+        )
+
+
+@api_router.get("/class-slots", response_model=List[ClassSlot])
+async def grelha_de_aulas(current_user: User = Depends(require_admin_or_staff)):
+    slots = await db.class_slots.find().to_list(500)
+    slots = [parse_from_mongo(x) for x in slots]
+    slots.sort(key=lambda x: (x.get("weekday", 0), str(x.get("start_time") or "")))
+    return [ClassSlot(**x) for x in slots]
+
+
+@api_router.post("/class-slots", response_model=ClassSlot)
+async def criar_aula_da_grelha(
+    dados: ClassSlotCreate,
+    current_user: User = Depends(require_admin)
+):
+    if not 0 <= dados.weekday <= 6:
+        raise HTTPException(status_code=400, detail="O dia da semana vai de 0 a 6.")
+    if dados.capacity < 1:
+        raise HTTPException(status_code=400, detail="A aula tem de ter pelo menos um lugar.")
+    if not await db.activities.find_one({"id": dados.activity_id}):
+        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+
+    aula = ClassSlot(**dados.dict())
+    await db.class_slots.insert_one(prepare_for_mongo(aula.dict()))
+    await log_audit(current_user, "create", "class_slot", entity_id=aula.id,
+                    details="Criou uma aula na grelha")
+    return aula
+
+
+@api_router.put("/class-slots/{slot_id}", response_model=ClassSlot)
+async def corrigir_aula_da_grelha(
+    slot_id: str,
+    dados: ClassSlotCreate,
+    current_user: User = Depends(require_admin)
+):
+    if not await db.class_slots.find_one({"id": slot_id}):
+        raise HTTPException(status_code=404, detail="Aula nao encontrada")
+    if dados.capacity < 1:
+        raise HTTPException(status_code=400, detail="A aula tem de ter pelo menos um lugar.")
+
+    await db.class_slots.update_one({"id": slot_id}, {"$set": prepare_for_mongo(dados.dict())})
+    nova = await db.class_slots.find_one({"id": slot_id})
+    await log_audit(current_user, "update", "class_slot", entity_id=slot_id,
+                    details="Corrigiu uma aula da grelha")
+    return ClassSlot(**parse_from_mongo(nova))
+
+
+@api_router.delete("/class-slots/{slot_id}")
+async def apagar_aula_da_grelha(
+    slot_id: str,
+    current_user: User = Depends(require_admin)
+):
+    if not await db.class_slots.find_one({"id": slot_id}):
+        raise HTTPException(status_code=404, detail="Aula nao encontrada")
+
+    # As inscricoes e as excepcoes daquela aula deixam de fazer sentido
+    await db.class_bookings.delete_many({"slot_id": slot_id})
+    await db.class_exceptions.delete_many({"slot_id": slot_id})
+    await db.class_slots.delete_one({"id": slot_id})
+    await log_audit(current_user, "delete", "class_slot", entity_id=slot_id,
+                    details="Apagou uma aula da grelha")
+    return {"message": "Aula eliminada"}
+
+
+@api_router.get("/classes", response_model=List[ClassOccurrence])
+async def aulas_do_periodo(
+    start_date: date,
+    end_date: date,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    if (end_date - start_date).days > 62:
+        raise HTTPException(status_code=400, detail="O intervalo maximo sao dois meses.")
+    return await _expandir_grelha(start_date, end_date)
+
+
+@api_router.post("/class-slots/{slot_id}/exceptions", response_model=ClassException)
+async def excepcao_da_aula(
+    slot_id: str,
+    dados: ClassExceptionCreate,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Cancelar ou mudar uma aula num dia certo, sem mexer na grelha."""
+    if not await db.class_slots.find_one({"id": slot_id}):
+        raise HTTPException(status_code=404, detail="Aula nao encontrada")
+
+    excepcao = ClassException(slot_id=slot_id, **dados.dict())
+    await db.class_exceptions.update_one(
+        {"slot_id": slot_id, "class_date": dia_guardado(dados.class_date)},
+        {"$set": prepare_for_mongo(excepcao.dict())},
+        upsert=True,
+    )
+    await log_audit(current_user, "update", "class_exception", entity_id=slot_id,
+                    details=f"Excepcao a {dados.class_date}")
+    return excepcao
+
+
+@api_router.delete("/class-slots/{slot_id}/exceptions/{class_date}")
+async def tirar_excepcao(
+    slot_id: str,
+    class_date: date,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    await db.class_exceptions.delete_many(
+        {"slot_id": slot_id, "class_date": dia_guardado(class_date)}
+    )
+    return {"message": "Excepcao removida"}
+
+
+@api_router.get("/classes/{slot_id}/{class_date}/bookings", response_model=List[ClassBooking])
+async def inscritos_na_aula(
+    slot_id: str,
+    class_date: date,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Quem vem a esta aula, com os da lista de espera no fim."""
+    inscricoes = await db.class_bookings.find({
+        "slot_id": slot_id, "class_date": dia_guardado(class_date),
+        "status": {"$ne": BookingStatus.CANCELLED.value},
+    }).to_list(500)
+    inscricoes = [parse_from_mongo(i) for i in inscricoes]
+    ordem = {BookingStatus.ATTENDED.value: 0, BookingStatus.BOOKED.value: 1,
+             BookingStatus.WAITING.value: 2}
+    inscricoes.sort(key=lambda i: (ordem.get(i["status"], 3), str(i.get("created_at") or "")))
+    return [ClassBooking(**i) for i in inscricoes]
+
+
+# ----------------------------------------------------- As aulas, na aplicacao
+
+@api_router.get("/mobile/classes", response_model=List[ClassOccurrence])
+async def aulas_para_a_app(member_id: str, dias: int = 7):
+    """As aulas dos proximos dias, com o estado da inscricao do socio."""
+    hoje = date.today()
+    dias = max(1, min(dias, 30))
+    return await _expandir_grelha(hoje, hoje + timedelta(days=dias - 1), member_id=member_id)
+
+
+@api_router.post("/mobile/bookings", response_model=ClassBooking)
+async def marcar_aula(dados: ClassBookingCreate):
+    """O socio marca uma aula. Cheia, entra em lista de espera."""
+    socio = await db.members.find_one({"id": dados.member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
+    slot = await db.class_slots.find_one({"id": dados.slot_id, "is_active": True})
+    if not slot:
+        raise HTTPException(status_code=404, detail="Aula nao encontrada")
+    if slot.get("weekday") != dados.class_date.weekday():
+        raise HTTPException(status_code=400, detail="Essa aula nao e nesse dia da semana.")
+
+    excepcao = await db.class_exceptions.find_one(
+        {"slot_id": dados.slot_id, "class_date": dia_guardado(dados.class_date)}
+    )
+    if excepcao and excepcao.get("cancelled"):
+        raise HTTPException(status_code=400, detail="Essa aula esta cancelada.")
+
+    hora = (excepcao or {}).get("start_time") or slot["start_time"]
+    if momento_da_aula(dados.class_date, hora) < datetime.now():
+        raise HTTPException(status_code=400, detail="Essa aula ja comecou.")
+
+    # Marcar duas vezes nao faz duas inscricoes
+    ja = await db.class_bookings.find_one({
+        "slot_id": dados.slot_id, "class_date": dia_guardado(dados.class_date),
+        "member_id": dados.member_id,
+        "status": {"$ne": BookingStatus.CANCELLED.value},
+    })
+    if ja:
+        return ClassBooking(**parse_from_mongo(ja))
+
+    com_lugar = await db.class_bookings.count_documents({
+        "slot_id": dados.slot_id, "class_date": dia_guardado(dados.class_date),
+        "status": {"$in": [BookingStatus.BOOKED.value, BookingStatus.ATTENDED.value]},
+    })
+    cheia = com_lugar >= int(slot.get("capacity") or 0)
+
+    inscricao = ClassBooking(
+        slot_id=dados.slot_id,
+        class_date=dados.class_date,
+        member_id=socio["id"],
+        member_name=socio.get("name"),
+        member_number=socio.get("member_number"),
+        status=BookingStatus.WAITING if cheia else BookingStatus.BOOKED,
+    )
+    await db.class_bookings.insert_one(prepare_for_mongo(inscricao.dict()))
+    return inscricao
+
+
+@api_router.delete("/mobile/bookings/{booking_id}")
+async def desmarcar_aula(booking_id: str):
+    """O socio desiste. O lugar passa a quem espera ha mais tempo."""
+    inscricao = await db.class_bookings.find_one({"id": booking_id})
+    if not inscricao:
+        raise HTTPException(status_code=404, detail="Inscricao nao encontrada")
+
+    slot = await db.class_slots.find_one({"id": inscricao["slot_id"]})
+    dia = inscricao["class_date"]
+    if isinstance(dia, str):
+        dia = datetime.fromisoformat(dia).date()
+
+    if slot:
+        excepcao = await db.class_exceptions.find_one(
+            {"slot_id": slot["id"], "class_date": dia_guardado(dia)}
+        )
+        hora = (excepcao or {}).get("start_time") or slot["start_time"]
+        limite = momento_da_aula(dia, hora) - timedelta(minutes=MINUTOS_PARA_DESMARCAR)
+        if datetime.now() > limite:
+            raise HTTPException(
+                status_code=400,
+                detail=(f"So se desmarca ate {MINUTOS_PARA_DESMARCAR // 60} horas antes. "
+                        "Avisa o ginasio se nao puderes vir."),
+            )
+
+    await db.class_bookings.update_one(
+        {"id": booking_id}, {"$set": {"status": BookingStatus.CANCELLED.value}}
+    )
+    await _promover_da_lista_de_espera(inscricao["slot_id"], dia)
+    return {"message": "Inscricao cancelada"}
 
 
 # ------------------------------------------------------------ Planos

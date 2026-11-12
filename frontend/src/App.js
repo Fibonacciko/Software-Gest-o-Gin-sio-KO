@@ -9,6 +9,7 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Members from './pages/Members';
+import Aulas from './pages/Aulas';
 import Payments from './pages/Payments';
 import Reports from './pages/Reports';
 import Inventory from './pages/Inventory';
@@ -166,6 +167,11 @@ function App() {
                   <Route path="/members" element={
                     <ProtectedRoute>
                       <Members language={language} />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/aulas" element={
+                    <ProtectedRoute>
+                      <Aulas language={language} />
                     </ProtectedRoute>
                   } />
                   <Route path="/payments" element={

@@ -6,6 +6,7 @@ import { ComicNeue_400Regular, ComicNeue_700Bold, useFonts } from '@expo-google-
 import { carregarCartao, sessaoGuardada, Socio } from './src/api';
 import BarraDeSeparadores, { Separador } from './src/componentes/BarraDeSeparadores';
 import Fundo from './src/componentes/Fundo';
+import EcraAulas from './src/screens/EcraAulas';
 import EcraCartao from './src/screens/EcraCartao';
 import EcraGinasio from './src/screens/EcraGinasio';
 import EcraLogin from './src/screens/EcraLogin';
@@ -72,6 +73,7 @@ export default function App() {
               aoIrPara={setSeparador}
             />
           )}
+          {separador === 'aulas' && <EcraAulas socio={socio} />}
           {separador === 'parceiros' && <EcraParceiros />}
           {separador === 'multimedia' && <EcraMultimedia />}
           {separador === 'loja' && <EcraLoja socio={socio} />}

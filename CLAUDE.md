@@ -245,6 +245,45 @@ Limites: **8 MB** por imagem (jpg, png, webp, gif), **30 MB** por vídeo
 Em desenvolvimento a pasta é a de `UPLOADS_DIR` no `backend/.env`; nos testes é
 `tests/_uploads`. Ambas fora do Git.
 
+### Marcação de aulas
+
+O horário é uma **grelha semanal fixa** — "segunda às 19:00, Boxe, Prof.
+Ricardo, 20 lugares" — e as excepções são pontuais. Guardar cada aula de cada
+semana daria milhares de registos iguais, e mudar uma hora obrigava a mexer em
+todos.
+
+Vê-se em **Aulas**, na barra lateral: em cima o horário, em baixo os próximos
+catorze dias já com as inscrições.
+
+- Só o **administrador** mexe na grelha (é o horário do ginásio). O
+  **colaborador cancela uma aula pontual** — é ele que atende o telefone do
+  professor doente.
+- Uma **excepção** cancela ou muda a hora de um dia só, sem tocar na grelha.
+  Desligar a aula (`is_active`) tira-a do horário sem a apagar, para uma pausa
+  de verão.
+- As aulas têm **lotação**. Cheia, o sócio entra em **lista de espera** e sobe
+  sozinho quando alguém desiste — sobe quem espera há mais tempo.
+- **Qualquer sócio marca**, mesmo com a quota por regularizar: decisão do
+  dono, que resolve a quota ao balcão.
+- **Desmarca-se até 2 horas antes** (`MINUTOS_PARA_DESMARCAR`). Depois disso o
+  lugar é seu, apareça ou não — senão ninguém da lista de espera chegava a
+  tempo de aproveitar.
+- **O check-in risca a inscrição.** Procura-se a aula daquela modalidade mais
+  próxima da hora do check-in, desde uma hora antes até ao fim: quem tem Boxe
+  às 19:00 e Jiu-Jitsu às 20:15 e entra às 20:10 vem para a segunda.
+- **"Faltou" não se grava, calcula-se** (`estado_da_inscricao`): uma inscrição
+  que ficou em "tem lugar" depois de a aula acabar é uma falta. Gravá-la
+  obrigava a um trabalho nocturno, e uma noite em que ele não corresse deixava
+  faltas por marcar para sempre.
+- O dia da semana é **0 = segunda**, como o `weekday()` do Python, dos dois
+  lados.
+
+**As consultas por dia de aula passam todas por `dia_guardado()`.** As datas
+são gravadas com hora (`2026-11-16T00:00:00+00:00`); procurar por
+`"2026-11-16"` não encontra nada, e o erro é silencioso — a consulta devolve
+zero e tudo parece só estar vazio. Foi assim que a lotação e a lista de espera
+falharam na primeira versão.
+
 ### Avaliações físicas
 
 O que a balança de bioimpedância mede, lançado à mão pelo colaborador na ficha
@@ -339,7 +378,8 @@ da quota. Fichas antigas podem ter o campo gravado — é ignorado.
 
 Coleções em MongoDB: `members`, `attendance`, `payments`, `expenses`, `sales`,
 `trial_classes`, `inventory`, `activities`, `assessments`, `plans`,
-`plan_requests`, `users`, `audit_logs`,
+`plan_requests`, `class_slots`, `class_exceptions`, `class_bookings`,
+`users`, `audit_logs`,
 `automated_messages`, `motivational_notes`.
 
 ---
@@ -369,7 +409,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 234 testes e demoram 10 segundos.
+backend** — são 260 testes e demoram 12 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -494,16 +534,17 @@ e a ficha do ginásio aparecem na aplicação que já está instalada.
 
 ### O que a aplicação tem
 
-Cinco separadores numa barra em baixo, feita à mão: não há biblioteca de
+Seis separadores numa barra em baixo, feita à mão: não há biblioteca de
 navegação, que traria meia dúzia de dependências a uma aplicação que ainda é
 instalada à mão em cada telemóvel.
 
 | Separador | O que é |
 |---|---|
-| **Início** | Nome, estado da quota, botão de check-in, treinos, frase, validades |
-| **Parceiros** | Protocolos de parceria, com a vantagem em destaque |
-| **Multimédia** | Fotografias dos treinos e vídeos por link |
+| **Início** | Cartão, check-in, evolução, planos, e o rolo com o que há de novo |
+| **Aulas** | O horário dos próximos 14 dias, com marcação e lista de espera |
+| **Fotos** | Fotografias dos treinos e vídeos por link |
 | **Loja** | A montra e as reservas do sócio |
+| **Parceiros** | Protocolos de parceria, com a vantagem em destaque |
 | **Ginásio** | Morada, horário, contactos, mapa e avaliações |
 
 **O QR não está à vista.** Abre-se no botão "Mostrar o meu QR", em ecrã inteiro

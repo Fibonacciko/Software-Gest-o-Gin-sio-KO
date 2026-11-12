@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cores, espaco, raio, sombra } from '../theme';
 
-export type Separador = 'inicio' | 'parceiros' | 'multimedia' | 'loja' | 'ginasio';
+export type Separador = 'inicio' | 'aulas' | 'multimedia' | 'loja' | 'ginasio' | 'parceiros';
 
 type Props = {
   activo: Separador;
@@ -19,9 +19,10 @@ type Props = {
  */
 const SEPARADORES: { id: Separador; icone: string; texto: string }[] = [
   { id: 'inicio', icone: '●', texto: 'Início' },
-  { id: 'parceiros', icone: '◆', texto: 'Parceiros' },
-  { id: 'multimedia', icone: '■', texto: 'Multimédia' },
+  { id: 'aulas', icone: '◷', texto: 'Aulas' },
+  { id: 'multimedia', icone: '■', texto: 'Fotos' },
   { id: 'loja', icone: '▲', texto: 'Loja' },
+  { id: 'parceiros', icone: '◆', texto: 'Parceiros' },
   { id: 'ginasio', icone: '◉', texto: 'Ginásio' },
 ];
 
@@ -93,7 +94,8 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     gap: 3,
     paddingVertical: espaco.s,
-    marginHorizontal: 1,
+    marginHorizontal: 0,
+    paddingHorizontal: 1,
   },
   marca: {
     ...StyleSheet.absoluteFillObject,
@@ -104,6 +106,7 @@ const estilos = StyleSheet.create({
   },
   icone: { color: cores.textoSecundario, fontSize: 16 },
   icaneActivo: { color: cores.laranjaClaro },
-  texto: { color: cores.textoSecundario, fontSize: 11 },
+  // Seis separadores: a etiqueta encolhe para caber sem cortar
+  texto: { color: cores.textoSecundario, fontSize: 9.5 },
   textoActivo: { color: cores.laranjaClaro, fontWeight: '700' },
 });

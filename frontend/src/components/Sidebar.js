@@ -14,7 +14,8 @@ import {
   LogOut,
   Shield,
   User,
-  Smartphone
+  Smartphone,
+  CalendarDays
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
@@ -31,6 +32,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
   const menuItems = [
     { path: '/', icon: Home, label: translations.dashboard },
     { path: '/members', icon: Users, label: translations.members },
+    { path: '/aulas', icon: CalendarDays, label: 'Aulas' },
     { path: '/payments', icon: CreditCard, label: translations.payments },
     { path: '/inventory', icon: Package, label: translations.inventory },
     ...(isAdmin() ? [{ path: '/reports', icon: BarChart, label: translations.reports }] : []),

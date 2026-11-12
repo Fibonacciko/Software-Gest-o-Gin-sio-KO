@@ -138,6 +138,26 @@ export type Plano = {
   plan_date: string;
 };
 
+/** Uma aula num dia certo, com o que o socio tem marcado nela. */
+export type Aula = {
+  slot_id: string;
+  class_date: string;
+  activity_id: string;
+  activity_name?: string | null;
+  activity_color?: string | null;
+  start_time: string;
+  duration_min: number;
+  instructor?: string | null;
+  capacity: number;
+  booked: number;
+  waiting: number;
+  cancelled: boolean;
+  note?: string | null;
+  my_booking_id?: string | null;
+  /** booked | waiting | attended | missed | cancelled, ou nada se nao marcou. */
+  my_status?: string | null;
+};
+
 export type Modalidade = {
   id: string;
   name: string;
@@ -228,6 +248,26 @@ export function pedirPlano(memberId: string, kind: TipoDePlano, note?: string) {
   return pedir<{ id: string }>('/mobile/plan-requests', {
     method: 'POST',
     body: JSON.stringify({ member_id: memberId, kind, note: note ?? null }),
+  });
+}
+
+/** As aulas dos proximos dias, com o estado da inscricao do socio. */
+export function carregarAulas(memberId: string, dias = 14) {
+  return pedir<Aula[]>(
+    `/mobile/classes?member_id=${encodeURIComponent(memberId)}&dias=${dias}`
+  );
+}
+
+export function marcarAula(memberId: string, slotId: string, dia: string) {
+  return pedir<{ id: string; status: string }>('/mobile/bookings', {
+    method: 'POST',
+    body: JSON.stringify({ member_id: memberId, slot_id: slotId, class_date: dia }),
+  });
+}
+
+export function desmarcarAula(bookingId: string) {
+  return pedir<{ message: string }>(`/mobile/bookings/${encodeURIComponent(bookingId)}`, {
+    method: 'DELETE',
   });
 }
 
