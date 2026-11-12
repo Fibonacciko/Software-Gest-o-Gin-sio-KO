@@ -60,7 +60,15 @@ const CAMPOS_DO_GINASIO = [
   { campo: 'address', etiqueta: 'Morada' },
   { campo: 'phone', etiqueta: 'Telefone' },
   { campo: 'email', etiqueta: 'Email' },
-  { campo: 'hours', etiqueta: 'Horário', ajuda: 'Ex: Seg a Sex 7h-22h · Sáb 9h-13h' },
+  // Uma linha por conjunto de dias: a aplicação parte o texto nas mudanças
+  // de linha e mostra cada uma à parte, com a de hoje acesa. A barra separa
+  // os dois períodos do mesmo dia — o ginásio fecha para almoço.
+  {
+    campo: 'hours',
+    etiqueta: 'Horário',
+    multilinha: true,
+    ajuda: 'Uma linha por conjunto de dias. Ex: Segunda, quarta e sexta: 10h00 - 14h00 / 16h00 - 22h00'
+  },
   { campo: 'whatsapp', etiqueta: 'WhatsApp', ajuda: 'Só o número, com indicativo. Ex: 351912345678' },
   { campo: 'maps_url', etiqueta: 'Link do Google Maps', ajuda: 'No Maps: Partilhar → Copiar link' },
   { campo: 'review_url', etiqueta: 'Link para avaliações', ajuda: 'No perfil do negócio: Pedir avaliações → Copiar link' },
@@ -864,15 +872,25 @@ const AppDoSocio = ({ language }) => {
           <CardContent>
             <form onSubmit={guardarGinasio} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {CAMPOS_DO_GINASIO.map(({ campo, etiqueta, ajuda }) => (
-                  <div key={campo}>
+                {CAMPOS_DO_GINASIO.map(({ campo, etiqueta, ajuda, multilinha }) => (
+                  <div key={campo} className={multilinha ? 'md:col-span-2' : undefined}>
                     <Label htmlFor={`g-${campo}`}>{etiqueta}</Label>
-                    <Input
-                      id={`g-${campo}`}
-                      value={(ginasio && ginasio[campo]) || ''}
-                      onChange={(e) => setGinasio({ ...ginasio, [campo]: e.target.value })}
-                      data-testid={`ginasio-${campo}`}
-                    />
+                    {multilinha ? (
+                      <Textarea
+                        id={`g-${campo}`}
+                        rows={3}
+                        value={(ginasio && ginasio[campo]) || ''}
+                        onChange={(e) => setGinasio({ ...ginasio, [campo]: e.target.value })}
+                        data-testid={`ginasio-${campo}`}
+                      />
+                    ) : (
+                      <Input
+                        id={`g-${campo}`}
+                        value={(ginasio && ginasio[campo]) || ''}
+                        onChange={(e) => setGinasio({ ...ginasio, [campo]: e.target.value })}
+                        data-testid={`ginasio-${campo}`}
+                      />
+                    )}
                     {ajuda && (
                       <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{ajuda}</p>
                     )}

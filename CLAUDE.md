@@ -320,6 +320,32 @@ administrador a altera; o colaborador vê.
 O botão de **deixar uma avaliação** no Google é o primeiro do ecrã na aplicação:
 é o que mais ajuda o ginásio e é o que as pessoas se esquecem de fazer.
 
+**O separador O Ginásio mostra se está aberto agora.** É a única coisa viva
+numa página de informação parada, e é a pergunta que leva alguém a abri-la a
+meio da tarde. O horário continua a ser **um campo de texto** na ficha; quem o
+mostra é que o lê (`src/lib/horario.ts`, na aplicação).
+
+- Uma **linha por conjunto de dias** ("Segunda, quarta e sexta: 10h00 - 14h00
+  / 16h00 - 22h00"), e na gestão o campo é de **várias linhas** por isso
+  mesmo.
+- **Dois períodos por dia**, não um: o ginásio fecha para almoço. Ler só o
+  primeiro dizia que às quatro da tarde estava fechado. A barra `/` separa os
+  períodos; as mudanças de linha, as setas `»«`, o `|`, o `;` e o `*` separam
+  as linhas.
+- **Nunca se perde texto**: o que não se conseguir ler aparece como está,
+  numa linha sua. Mais vale um horário feio do que um horário que desapareceu
+  porque alguém o escreveu de outra maneira.
+- A linha de **hoje** fica acesa, com o selo HOJE.
+
+**O campo do Maps aceita uma morada, não só um link.** Está lá uma morada
+escrita (`R. Almada Negreiros, 1800-070 Lisboa`), e o botão chamava o
+`Linking.openURL` com aquilo, falhava em silêncio e não fazia nada. O que não
+for link vai agora como procura no Maps.
+
+**O "G" da Google** (`assets/google.png`) está ao lado do pedido de avaliação,
+para se perceber de relance onde é que ela vai parar. É o ficheiro que a
+própria Google publica para quem lhe aponta.
+
 ### Reservas
 
 O sócio reserva na aplicação, o balcão prepara. **Reservar não é vender**: o

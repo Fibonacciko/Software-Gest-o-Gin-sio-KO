@@ -11,11 +11,30 @@ import {
   View,
 } from 'react-native';
 import { carregarFichaDoGinasio, enderecoDaImagem, FichaDoGinasio } from '../api';
-import { cores, espaco, raio, superficie } from '../theme';
+import { estadoDeHoje, lerHorario, NOME_DO_DIA } from '../lib/horario';
+import Vidro from '../componentes/Vidro';
+import { cores, espaco, raio } from '../theme';
+
+const GOOGLE = require('../../assets/google.png');
 
 const abrir = (endereco?: string | null) => {
   if (!endereco) return;
   Linking.openURL(endereco).catch(() => {});
+};
+
+/**
+ * O endereco do mapa, venha ele como link ou como morada escrita.
+ *
+ * No campo "Google Maps" da ficha esta hoje uma morada — `R. Almada
+ * Negreiros, 1800-070 Lisboa` — e nao um link. O botao chamava o
+ * `Linking.openURL` com aquilo, falhava em silencio, e ficava um botao que
+ * nao fazia nada. Agora o que nao for link vai como procura no Maps.
+ */
+const enderecoDoMapa = (valor?: string | null) => {
+  if (!valor || !valor.trim()) return null;
+  const limpo = valor.trim();
+  if (/^(https?:|geo:|maps:)/i.test(limpo)) return limpo;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(limpo)}`;
 };
 
 /**
@@ -74,6 +93,10 @@ export default function EcraGinasio() {
   }
 
   const foto = enderecoDaImagem(ficha.photo_url);
+  const horario = lerHorario(ficha.hours);
+  const estado = estadoDeHoje(horario);
+  const diaDeHoje = new Date().getDay();
+  const mapa = enderecoDoMapa(ficha.maps_url) || enderecoDoMapa(ficha.address);
   // Um quadrado e um logotipo; algo bem mais largo e uma fotografia do ginasio
   const eLogotipo = proporcao !== null && proporcao < 1.3;
   const whatsapp = ficha.whatsapp
@@ -91,15 +114,19 @@ export default function EcraGinasio() {
   const Botao = ({
     texto,
     destaque,
+    cheio,
     aoTocar,
   }: {
     texto: string;
     destaque?: boolean;
+    /** Largura inteira. Os botões de acção são dois por linha; este não. */
+    cheio?: boolean;
     aoTocar: () => void;
   }) => (
     <Pressable
       style={({ pressed }) => [
         estilos.botao,
+        cheio && estilos.botaoCheio,
         destaque && estilos.botaoDestaque,
         pressed && { opacity: 0.75 },
       ]}
@@ -127,43 +154,95 @@ export default function EcraGinasio() {
         )
       ) : null}
 
+      {/* O nome ao centro, debaixo do logótipo: é a capa da página. */}
       <Text style={estilos.titulo}>{ficha.name || 'Ginásio KO'}</Text>
+
+      {/* A única coisa viva numa página de informação parada: está aberto? */}
+      {estado ? (
+        <View style={[estilos.selo, estado.aberto ? estilos.seloAberto : estilos.seloFechado]}>
+          <View style={[estilos.pinta, estado.aberto ? estilos.pintaAberta : estilos.pintaFechada]} />
+          <Text style={[estilos.seloTexto, estado.aberto && estilos.seloTextoAberto]}>
+            {estado.texto}
+          </Text>
+        </View>
+      ) : null}
+
       {ficha.about ? <Text style={estilos.sobre}>{ficha.about}</Text> : null}
 
       {/* Deixar uma avaliação: é o que mais ajuda o ginásio, por isso vem primeiro */}
       {ficha.review_url ? (
         <View style={estilos.destaque}>
-          <Text style={estilos.destaqueTitulo}>Gostas de treinar aqui?</Text>
-          <Text style={estilos.destaqueTexto}>
-            Uma avaliação no Google demora um minuto e ajuda-nos mesmo.
-          </Text>
-          <Botao texto="★  DEIXAR UMA AVALIAÇÃO" destaque aoTocar={() => abrir(ficha.review_url)} />
+          <View style={estilos.destaqueTopo}>
+            {/* O "G" oficial da Google. Está aqui para se perceber de relance
+                onde é que a avaliação vai parar — é o que a própria Google
+                pede a quem lhe aponta para as avaliações. */}
+            <Image source={GOOGLE} style={estilos.google} resizeMode="contain" />
+            <View style={estilos.destaqueTextos}>
+              <Text style={estilos.destaqueTitulo}>Gostas de treinar aqui?</Text>
+              <Text style={estilos.destaqueTexto}>
+                Uma avaliação no Google demora um minuto e ajuda-nos mesmo.
+              </Text>
+            </View>
+          </View>
+          <Botao texto="★  DEIXAR UMA AVALIAÇÃO" destaque cheio aoTocar={() => abrir(ficha.review_url)} />
         </View>
       ) : null}
 
-      <View style={estilos.cartao}>
+      {/* O horário, uma linha por conjunto de dias, com o de hoje aceso. Era
+          um parágrafo corrido onde não se encontrava nada. */}
+      {horario.length > 0 ? (
+        <Vidro estilo={estilos.cartao}>
+          <Text style={estilos.cartaoTitulo}>Horário</Text>
+          {horario.map((linha, i) => {
+            const eHoje = linha.numeros.includes(diaDeHoje);
+            return (
+              <View key={i} style={[estilos.diaLinha, eHoje && estilos.diaHoje]}>
+                <View style={estilos.diaNomes}>
+                  <Text style={[estilos.diaTexto, eHoje && estilos.diaTextoHoje]}>{linha.dias}</Text>
+                  {eHoje ? <Text style={estilos.hojeEtiqueta}>HOJE</Text> : null}
+                </View>
+                <View>
+                  {linha.periodos.length > 0 ? (
+                    linha.periodos.map((p) => (
+                      <Text
+                        key={p.texto}
+                        style={[estilos.diaHoras, eHoje && estilos.diaTextoHoje]}
+                      >
+                        {p.texto}
+                      </Text>
+                    ))
+                  ) : (
+                    <Text style={estilos.diaHoras}>—</Text>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </Vidro>
+      ) : null}
+
+      <Vidro estilo={estilos.cartao}>
         <Linha etiqueta="Morada" valor={ficha.address} />
-        <Linha etiqueta="Horário" valor={ficha.hours} />
         <Linha etiqueta="Telefone" valor={ficha.phone} />
         <Linha etiqueta="Email" valor={ficha.email} />
 
-        {!ficha.address && !ficha.hours && !ficha.phone && !ficha.email ? (
+        {!ficha.address && !ficha.phone && !ficha.email ? (
           <Text style={estilos.vazio}>
             Os contactos do ginásio aparecem aqui assim que forem preenchidos.
           </Text>
         ) : null}
-      </View>
+      </Vidro>
 
+      {/* Duas por linha: seis botões de largura inteira davam uma escada que
+          não acabava, e nenhum deles se destacava. */}
       <View style={estilos.accoes}>
-        {ficha.maps_url ? (
-          <Botao texto="Abrir no Google Maps" aoTocar={() => abrir(ficha.maps_url)} />
-        ) : null}
+        {mapa ? <Botao texto="Como chegar" aoTocar={() => abrir(mapa)} /> : null}
         {ficha.phone ? (
-          <Botao texto="Ligar ao ginásio" aoTocar={() => abrir(`tel:${ficha.phone}`)} />
+          <Botao texto="Ligar" aoTocar={() => abrir(`tel:${ficha.phone}`)} />
         ) : null}
         {whatsapp ? <Botao texto="WhatsApp" aoTocar={() => abrir(whatsapp)} /> : null}
         {ficha.email ? (
-          <Botao texto="Enviar email" aoTocar={() => abrir(`mailto:${ficha.email}`)} />
+          <Botao texto="Email" aoTocar={() => abrir(`mailto:${ficha.email}`)} />
         ) : null}
         {ficha.instagram ? (
           <Botao texto="Instagram" aoTocar={() => abrir(ficha.instagram)} />
@@ -188,8 +267,69 @@ const estilos = StyleSheet.create({
   // O logotipo nao enche a largura: fica ao centro, do tamanho que lhe assenta
   molduraLogotipo: { alignItems: 'center', marginBottom: espaco.m },
   logotipo: { width: 150, height: 150 },
-  titulo: { color: cores.texto, fontSize: 28, fontWeight: '800' },
-  sobre: { color: cores.textoSecundario, fontSize: 14, marginTop: espaco.s, lineHeight: 21 },
+  titulo: { color: cores.texto, fontSize: 28, fontWeight: '800', textAlign: 'center' },
+  sobre: {
+    color: cores.textoSecundario,
+    fontSize: 14,
+    marginTop: espaco.m,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+
+  // O selo de aberto/fechado, ao centro por baixo do nome
+  selo: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco.s,
+    marginTop: espaco.s,
+    paddingVertical: 6,
+    paddingHorizontal: espaco.m,
+    borderRadius: raio.redondo,
+    borderWidth: 1,
+  },
+  seloAberto: { backgroundColor: 'rgba(34,197,94,0.14)', borderColor: 'rgba(34,197,94,0.5)' },
+  seloFechado: { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: cores.vidroBordo },
+  pinta: { width: 8, height: 8, borderRadius: 4 },
+  pintaAberta: { backgroundColor: '#22c55e' },
+  pintaFechada: { backgroundColor: cores.textoSecundario },
+  seloTexto: { color: cores.textoSecundario, fontSize: 13, fontWeight: '700' },
+  seloTextoAberto: { color: '#4ade80' },
+
+  // O horário, dia a dia
+  cartaoTitulo: {
+    color: cores.textoSecundario,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: espaco.s,
+  },
+  diaLinha: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: espaco.m,
+    paddingVertical: espaco.s,
+    paddingHorizontal: espaco.s,
+    borderRadius: raio.m,
+  },
+  diaHoje: { backgroundColor: 'rgba(245,166,35,0.10)' },
+  diaNomes: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: espaco.s, flexWrap: 'wrap' },
+  diaTexto: { color: cores.texto, fontSize: 15 },
+  diaTextoHoje: { color: cores.dourado, fontWeight: '700' },
+  hojeEtiqueta: {
+    color: '#1A1A1A',
+    backgroundColor: cores.dourado,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: raio.redondo,
+    overflow: 'hidden',
+  },
+  diaHoras: { color: cores.textoSecundario, fontSize: 15, textAlign: 'right' },
   destaque: {
     backgroundColor: 'rgba(245,166,35,0.12)',
     borderWidth: 1,
@@ -198,20 +338,26 @@ const estilos = StyleSheet.create({
     padding: espaco.m,
     marginTop: espaco.g,
   },
+  destaqueTopo: { flexDirection: 'row', alignItems: 'center', gap: espaco.m, marginBottom: espaco.m },
+  destaqueTextos: { flex: 1 },
+  google: { width: 28, height: 28 },
   destaqueTitulo: { color: cores.texto, fontSize: 17, fontWeight: '800' },
-  destaqueTexto: { color: cores.textoSecundario, fontSize: 13, marginTop: 4, marginBottom: espaco.m },
-  cartao: {
-    ...superficie,
-    borderRadius: raio.g,
-    padding: espaco.m,
-    marginTop: espaco.m,
-  },
+  destaqueTexto: { color: cores.textoSecundario, fontSize: 13, marginTop: 4 },
+  cartao: { padding: espaco.m, marginTop: espaco.m },
   linha: { paddingVertical: espaco.s },
   linhaEtiqueta: { color: cores.textoSecundario, fontSize: 12 },
   linhaValor: { color: cores.texto, fontSize: 16, marginTop: 2 },
   vazio: { color: cores.textoSecundario, fontSize: 14, textAlign: 'center', paddingVertical: espaco.m },
-  accoes: { gap: espaco.s, marginTop: espaco.m },
+  accoes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: espaco.s,
+    marginTop: espaco.m,
+  },
   botao: {
+    // Dois por linha: metade da largura, menos a metade do espaço entre eles
+    flexGrow: 1,
+    flexBasis: '47%',
     borderWidth: 1,
     borderColor: cores.borda,
     borderRadius: raio.m,
@@ -219,6 +365,7 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(58,58,58,0.6)',
   },
+  botaoCheio: { flexGrow: 0, flexBasis: 'auto', alignSelf: 'stretch' },
   botaoDestaque: { backgroundColor: cores.dourado, borderColor: cores.dourado },
   botaoTexto: { color: cores.texto, fontSize: 15, fontWeight: '600' },
   botaoTextoDestaque: { color: '#1A1A1A', fontWeight: '800', letterSpacing: 0.5 },
