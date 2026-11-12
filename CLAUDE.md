@@ -712,8 +712,8 @@ deslizava-se para a direita e ia-se parar ao separador da esquerda.
 |---|---|
 | **Início** | Cartão, check-in, treinos, evolução e planos |
 | **Aulas** | O horário dos próximos 14 dias, com marcação e lista de espera |
-| **Fotos** | Fotografias dos treinos e vídeos por link |
 | **Loja** | A montra e as reservas do sócio |
+| **Fotos** | Fotografias dos treinos e vídeos por link |
 | **Parceiros** | Protocolos de parceria, com a vantagem em destaque |
 | **Ginásio** | Morada, horário, contactos, mapa e avaliações |
 

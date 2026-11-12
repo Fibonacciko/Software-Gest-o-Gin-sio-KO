@@ -24,8 +24,8 @@ type Props = {
 const SEPARADORES: { id: Separador; icone: string; texto: string }[] = [
   { id: 'inicio', icone: '●', texto: 'Início' },
   { id: 'aulas', icone: '◷', texto: 'Aulas' },
-  { id: 'multimedia', icone: '■', texto: 'Fotos' },
   { id: 'loja', icone: '▲', texto: 'Loja' },
+  { id: 'multimedia', icone: '■', texto: 'Fotos' },
   { id: 'parceiros', icone: '◆', texto: 'Parceiros' },
   { id: 'ginasio', icone: '◉', texto: 'Ginásio' },
 ];
