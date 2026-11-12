@@ -262,11 +262,15 @@ e um vídeo de dez segundos diz de um par de luvas o que três fotografias não
 dizem. A galeria é o campo `media` (`[{kind: "photo"|"video", url}]`).
 
 - A **`photo_url` continua a ser a principal** e é a que aparece na lista da
-  montra e no Stock. É sempre uma das fotografias da galeria. Ficou à parte,
-  e não como "a primeira da lista", porque o Stock, as vendas e as 47 fichas
-  que já existiam só conhecem esse campo.
-- Uma ficha **sem galeria** (as que já lá estavam) devolve a principal como
-  galeria de um só item. Não foi preciso migrar nada.
+  montra e no Stock. Ficou à parte, e não como "a primeira da lista", porque o
+  Stock, as vendas e as 47 fichas que já existiam só conhecem esse campo.
+- **O servidor põe-na sempre à frente da galeria**, e tira-a de onde estivesse
+  para não aparecer duas vezes. Não se confia em que a ficha esteja arrumada:
+  em produção havia **nove artigos em dezassete** cuja principal nem sequer
+  estava na galeria — foram carregadas em alturas diferentes. Com o cartão a
+  deslizar isso dava uma imagem ao sócio e outra a quem estava ao balcão.
+- Uma ficha **sem galeria** (as que já lá estavam) fica com a principal como
+  galeria de um só item, pela mesma regra. Não foi preciso migrar nada.
 - A galeria é **do produto, não do tamanho**: junta-se a dos tamanhos todos
   daquela cor, sem repetir o mesmo ficheiro.
 - Os **vídeos ficam alojados aqui**, ao contrário dos da Multimédia, que são

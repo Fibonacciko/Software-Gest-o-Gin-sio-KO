@@ -600,6 +600,49 @@ def test_sem_galeria_vale_a_fotografia_principal(cliente, admin):
     assert artigo["media"] == [{"kind": "photo", "url": "/api/uploads/antiga.jpg"}]
 
 
+def test_a_principal_e_sempre_a_primeira_da_galeria(cliente, admin):
+    """O cartao desliza, e tem de abrir na mesma foto que o Stock mostra.
+
+    Em producao havia nove artigos em dezassete cuja principal nem estava na
+    galeria: foram carregadas em alturas diferentes.
+    """
+    cliente.post("/api/inventory", headers=admin, json={
+        "name": "Hoodie", "category": "clothing", "color": "Bordeaux",
+        "quantity": 4, "price": 40.0,
+        "photo_url": "/api/uploads/principal.jpg",
+        "media": [
+            {"kind": "photo", "url": "/api/uploads/costas.jpg"},
+            {"kind": "photo", "url": "/api/uploads/detalhe.jpg"},
+        ],
+    })
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    assert [m["url"] for m in artigo["media"]] == [
+        "/api/uploads/principal.jpg",
+        "/api/uploads/costas.jpg",
+        "/api/uploads/detalhe.jpg",
+    ]
+
+
+def test_a_principal_nao_se_repete_na_galeria(cliente, admin):
+    """Ja la estando, sobe para a frente em vez de aparecer duas vezes."""
+    cliente.post("/api/inventory", headers=admin, json={
+        "name": "Capacete", "category": "equipment", "color": "Branco",
+        "quantity": 4, "price": 40.0,
+        "photo_url": "/api/uploads/b.jpg",
+        "media": [
+            {"kind": "photo", "url": "/api/uploads/a.jpg"},
+            {"kind": "photo", "url": "/api/uploads/b.jpg"},
+        ],
+    })
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    assert [m["url"] for m in artigo["media"]] == [
+        "/api/uploads/b.jpg",
+        "/api/uploads/a.jpg",
+    ]
+
+
 def test_a_galeria_e_do_produto_e_junta_se_entre_tamanhos(cliente, admin):
     """A galeria e do produto, nao do tamanho; e o mesmo ficheiro nao se repete."""
     for tamanho, media in (
