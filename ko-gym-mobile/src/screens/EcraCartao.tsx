@@ -27,8 +27,6 @@ import {
 } from '../api';
 import MeusPlanos from '../componentes/MeusPlanos';
 import MinhasMetricas from '../componentes/MinhasMetricas';
-import RoloDoInicio from '../componentes/RoloDoInicio';
-import type { Separador } from '../componentes/BarraDeSeparadores';
 import Versao from '../componentes/Versao';
 import Vidro from '../componentes/Vidro';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
@@ -41,7 +39,6 @@ type Props = {
   socio: Socio;
   aoSair: () => void;
   /** Saltar para outro separador, a partir do rolo lá de baixo. */
-  aoIrPara: (separador: Separador) => void;
 };
 
 const dataPt = (iso?: string | null) =>
@@ -59,7 +56,7 @@ const nomeCurto = (nome: string) => {
   return `${partes[0]} ${partes[partes.length - 1]}`;
 };
 
-export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) {
+export default function EcraCartao({ socio: inicial, aoSair }: Props) {
   const [socio, setSocio] = useState(inicial);
   const [modalidades, setModalidades] = useState<Modalidade[]>([]);
   const [aAtualizar, setAAtualizar] = useState(false);
@@ -357,9 +354,12 @@ export default function EcraCartao({ socio: inicial, aoSair, aoIrPara }: Props) 
       {/* Os planos de treino e alimentar, e o botao de pedir um novo */}
       <MeusPlanos socioId={socio.id} />
 
-      {/* O que há de novo no ginásio. Vem por baixo do check-in, nunca por
-          cima: quem abre a aplicação à porta tem de ter o botão à mão. */}
-      <RoloDoInicio aoIrPara={aoIrPara} />
+      {/* O Início acaba aqui, nos planos. As fotografias do ginásio, a
+          montra e os parceiros estiveram neste lugar e saíram por decisão do
+          dono, depois de se passar a mudar de ecrã deslizando o dedo: com os
+          seis ecrãs à distância de um gesto, repeti-los no fim da página
+          inicial era dizer a mesma coisa duas vezes. O Início é do sócio —
+          o check-in, os treinos, a evolução e os planos. */}
 
       {/* Empurra o terminar sessao para o fim, mesmo quando ha pouco conteudo */}
       <View style={estilos.empurrao} />

@@ -81,7 +81,6 @@ export default function App() {
             setSeparador('inicio');
             setVistos(['inicio']);
           }}
-          aoIrPara={setSeparador}
         />
       );
     }

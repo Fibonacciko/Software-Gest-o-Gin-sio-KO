@@ -662,19 +662,22 @@ deslizava-se para a direita e ia-se parar ao separador da esquerda.
 
 | Separador | O que é |
 |---|---|
-| **Início** | Cartão, check-in, evolução, planos, e as fotografias do ginásio |
+| **Início** | Cartão, check-in, treinos, evolução e planos |
 | **Aulas** | O horário dos próximos 14 dias, com marcação e lista de espera |
 | **Fotos** | Fotografias dos treinos e vídeos por link |
 | **Loja** | A montra e as reservas do sócio |
 | **Parceiros** | Protocolos de parceria, com a vantagem em destaque |
 | **Ginásio** | Morada, horário, contactos, mapa e avaliações |
 
-**O Início acaba no que é do sócio.** Por baixo do cartão ficam a evolução,
-os planos e as **fotografias do ginásio** (`RoloDoInicio`) — e mais nada. A
-montra e os protocolos dos parceiros estavam lá também, e saíram por decisão
-do dono depois de se passar a mudar de ecrã deslizando o dedo: com os seis
-ecrãs à distância de um gesto, repeti-los no fim da página inicial era dizer a
-mesma coisa duas vezes e dar-lhe um fim que não acabava.
+**O Início acaba nos planos, e é todo do sócio**: o cartão, o check-in, o QR,
+a quota e o seguro, os treinos, a evolução e os planos. Mais nada.
+
+As **fotografias do ginásio**, a **montra** e os **protocolos dos parceiros**
+estiveram no fim desta página, num rolo (`RoloDoInicio`, apagado). Saíram por
+decisão do dono depois de se passar a mudar de ecrã deslizando o dedo: com os
+seis ecrãs à distância de um gesto, repeti-los aqui era dizer a mesma coisa
+duas vezes e dar à página inicial um fim que não acabava. Saíram com eles três
+pedidos ao servidor que o ecrã inicial fazia sempre.
 
 **O QR não está à vista.** Abre-se no botão "Mostrar o meu QR", em ecrã inteiro
 e com fundo branco — que é como se lê bem na receção. Um QR pequeno no meio da
