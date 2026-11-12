@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ContextoDaInclinacao } from './Fundo';
+import { ContextoDaTira } from './Tira';
 import { cores, espaco, raio } from '../theme';
 
 /** Quanto o cartão anda ao contrário do fundo, de um extremo ao outro. */
@@ -104,6 +105,14 @@ export default function CartaoDeDestaque({
   // quando ele para (`onMomentumScrollEnd`): sozinho, o fim do movimento não
   // chega em todos os casos, e o pontinho ficava a dizer a página errada.
   // Só se grava quando muda mesmo, para não redesenhar a cada imagem.
+  // Enquanto o dedo está aqui, a tira dos seis ecrãs fica quieta. Em Android
+  // ela interceptava o arrasto horizontal e a fotografia quase nunca mexia.
+  // Solta-se em todas as saídas possíveis: uma esquecida deixava a aplicação
+  // sem deslize nenhum até se fechar.
+  const tira = useContext(ContextoDaTira);
+  const prender = () => tira?.bloquear(true);
+  const soltar = () => tira?.bloquear(false);
+
   const aoDeslizar = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (largura <= 0) return;
     const qual = Math.round(e.nativeEvent.contentOffset.x / largura);
@@ -161,8 +170,15 @@ export default function CartaoDeDestaque({
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onScroll={aoDeslizar}
-            onMomentumScrollEnd={aoDeslizar}
+            onMomentumScrollEnd={(e) => {
+              aoDeslizar(e);
+              soltar();
+            }}
             scrollEventThrottle={32}
+            onTouchStart={prender}
+            onTouchEnd={soltar}
+            onTouchCancel={soltar}
+            onScrollEndDrag={soltar}
             style={StyleSheet.absoluteFill}
           >
             {paginas.map((url, i) => (

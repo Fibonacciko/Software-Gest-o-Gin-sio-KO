@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -17,6 +17,7 @@ import BarraDeSeparadores, {
   Separador,
 } from './src/componentes/BarraDeSeparadores';
 import Fundo from './src/componentes/Fundo';
+import { ContextoDaTira } from './src/componentes/Tira';
 import EcraAulas from './src/screens/EcraAulas';
 import EcraCartao from './src/screens/EcraCartao';
 import EcraGinasio from './src/screens/EcraGinasio';
@@ -47,6 +48,12 @@ export default function App() {
   // Quando é o dedo a mandar, a tira já está onde tem de estar: mandá-la
   // para lá outra vez fazia-a saltar debaixo do dedo de quem a arrasta.
   const veioDoDedo = useRef(false);
+
+  // A galeria de fotografias de um artigo desliga a tira enquanto tem o dedo
+  // em cima. Em Android quem está por fora intercepta o arrasto horizontal
+  // assim que o detecta, e a fotografia quase nunca chegava a mexer-se.
+  const [tiraPresa, setTiraPresa] = useState(false);
+  const tiraDeFora = useMemo(() => ({ bloquear: setTiraPresa }), []);
 
   useEffect(() => {
     setVistos((v) => (v.includes(separador) ? v : [...v, separador]));
@@ -140,6 +147,10 @@ export default function App() {
           ref={tira}
           horizontal
           pagingEnabled
+          // Desligada enquanto o dedo está em cima de uma galeria de
+          // fotografias: senão era ela a levar o gesto, e a fotografia não
+          // mexia. Ver `ContextoDaTira`.
+          scrollEnabled={!tiraPresa}
           showsHorizontalScrollIndicator={false}
           onScroll={aoDeslizar}
           onMomentumScrollEnd={aoDeslizar}
@@ -153,7 +164,9 @@ export default function App() {
         >
           {ORDEM_DOS_SEPARADORES.map((id) => (
             <View key={id} style={{ width: largura }}>
-              {vistos.includes(id) ? ecraDe(id) : null}
+              <ContextoDaTira.Provider value={tiraDeFora}>
+                {vistos.includes(id) ? ecraDe(id) : null}
+              </ContextoDaTira.Provider>
             </View>
           ))}
         </ScrollView>

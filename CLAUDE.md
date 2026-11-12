@@ -657,8 +657,15 @@ deslizava-se para a direita e ia-se parar ao separador da esquerda.
 - Quando é o dedo a mandar, **a tira não volta a ser mandada para lá**
   (`veioDoDedo`): senão saltava debaixo do dedo de quem a arrasta.
 - Na Loja, deslizar **em cima da fotografia** de um artigo muda a fotografia,
-  não o separador: quem está por dentro fica com o gesto. Para mudar de ecrã,
-  desliza-se fora dos cartões.
+  não o separador. Para mudar de ecrã, desliza-se fora dos cartões.
+- **Isso não acontece sozinho.** Em Android, quem está por fora intercepta o
+  arrasto horizontal assim que o detecta: a galeria ficava com o dedo meio
+  segundo e depois era a tira que lhe levava o gesto — mexia-se o ecrã em vez
+  da fotografia, quase sempre. Não há maneira de pedir ao pai que deixe
+  passar; o que há é **desligar-lhe o deslize enquanto o dedo está em cima**
+  (`ContextoDaTira`, com `scrollEnabled`). O bloqueio liga no toque e desliga
+  em **todas** as saídas possíveis — uma saída esquecida deixava a aplicação
+  sem deslize nenhum até se fechar.
 
 | Separador | O que é |
 |---|---|
