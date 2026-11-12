@@ -662,12 +662,19 @@ deslizava-se para a direita e ia-se parar ao separador da esquerda.
 
 | Separador | O que é |
 |---|---|
-| **Início** | Cartão, check-in, evolução, planos, e o rolo com o que há de novo |
+| **Início** | Cartão, check-in, evolução, planos, e as fotografias do ginásio |
 | **Aulas** | O horário dos próximos 14 dias, com marcação e lista de espera |
 | **Fotos** | Fotografias dos treinos e vídeos por link |
 | **Loja** | A montra e as reservas do sócio |
 | **Parceiros** | Protocolos de parceria, com a vantagem em destaque |
 | **Ginásio** | Morada, horário, contactos, mapa e avaliações |
+
+**O Início acaba no que é do sócio.** Por baixo do cartão ficam a evolução,
+os planos e as **fotografias do ginásio** (`RoloDoInicio`) — e mais nada. A
+montra e os protocolos dos parceiros estavam lá também, e saíram por decisão
+do dono depois de se passar a mudar de ecrã deslizando o dedo: com os seis
+ecrãs à distância de um gesto, repeti-los no fim da página inicial era dizer a
+mesma coisa duas vezes e dar-lhe um fim que não acabava.
 
 **O QR não está à vista.** Abre-se no botão "Mostrar o meu QR", em ecrã inteiro
 e com fundo branco — que é como se lê bem na receção. Um QR pequeno no meio da
