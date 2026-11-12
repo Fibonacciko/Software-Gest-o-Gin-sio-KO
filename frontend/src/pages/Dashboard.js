@@ -27,7 +27,6 @@ import {
   Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '../contexts/AuthContext';
 import { seguroValido } from '../lib/estatisticas';
 import { diaLocal, diaSeguinte, hoje } from '../lib/datas';
 
@@ -35,7 +34,6 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Dashboard = ({ language, translations }) => {
-  const { isAdmin } = useAuth();
   const [stats, setStats] = useState({
     total_members: 0,
     active_members: 0,
@@ -628,7 +626,7 @@ const Dashboard = ({ language, translations }) => {
         </div>
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${isAdmin() ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-6`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         <StatCard
           title={t[language].totalMembers}
           value={stats.total_members}
@@ -653,7 +651,8 @@ const Dashboard = ({ language, translations }) => {
           icon={Calendar}
           color="ko-golden"
         />
-        {isAdmin() && (
+        {/* As presencas por modalidade tambem sao do colaborador: e ele que
+            esta ao balcao a ver quem entra. Nao sao contas do ginasio. */}
         <Card
           className="transition-all duration-200 hover:transform hover:-translate-y-1"
           style={{
@@ -686,7 +685,6 @@ const Dashboard = ({ language, translations }) => {
             )}
           </CardContent>
         </Card>
-      )}
       </div>
 
       {/* O aviso de seguro expirado saiu do Painel: o estado do seguro
