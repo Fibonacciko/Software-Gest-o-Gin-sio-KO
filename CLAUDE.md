@@ -634,6 +634,15 @@ a atravessar o ecrã —, uma **vinheta** a escurecer os cantos e **grão** por
 cima de tudo. Sem grão, um gradiente escuro parte-se em bandas visíveis, e o
 olho lê bandas como tinta chapada.
 
+**Uma só tela do Skia, e parada.** A primeira versão tinha quatro telas
+sobrepostas, três delas dentro de uma `Animated.View` com `rotateX`/`rotateY`.
+A aplicação instalava e **fechava ao abrir**: em Android, com a arquitetura
+antiga, a superfície nativa do Skia não sobrevive a transformações em 3D, e o
+estouro é nativo — não há erro de JavaScript nenhum para ver. O desenho ficou
+numa tela quieta; as rotações ficaram nas camadas de gradiente, que são vistas
+normais. **Nunca pôr um `Canvas` do Skia dentro de uma `Animated.View` com
+rotações.**
+
 O movimento continua em `Animated` com `useNativeDriver`: corre do lado
 nativo, não passa por JavaScript a cada imagem e não gasta bateria. **Por isso
 não foi preciso o Reanimated** — que obrigaria a ligar a arquitetura nova do
