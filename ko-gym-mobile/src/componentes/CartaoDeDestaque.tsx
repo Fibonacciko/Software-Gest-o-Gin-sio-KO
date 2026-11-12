@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ContextoDaInclinacao } from './Fundo';
+import { ContextoDaTira } from './Tira';
 import { cores, espaco, raio } from '../theme';
 
 /** Quanto o cartão anda ao contrário do fundo, de um extremo ao outro. */
@@ -104,6 +105,13 @@ export default function CartaoDeDestaque({
   // quando ele para (`onMomentumScrollEnd`): sozinho, o fim do movimento não
   // chega em todos os casos, e o pontinho ficava a dizer a página errada.
   // Só se grava quando muda mesmo, para não redesenhar a cada imagem.
+  // Enquanto o dedo está nesta galeria, a tira dos seis ecrãs fica quieta —
+  // senão era ela a levar o gesto e a fotografia não mexia. Solta-se em todas
+  // as saídas: uma esquecida deixava a aplicação sem deslize até se fechar.
+  const tira = useContext(ContextoDaTira);
+  const prender = () => tira?.bloquear(true);
+  const soltar = () => tira?.bloquear(false);
+
   const aoDeslizar = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (largura <= 0) return;
     const qual = Math.round(e.nativeEvent.contentOffset.x / largura);
@@ -161,8 +169,15 @@ export default function CartaoDeDestaque({
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onScroll={aoDeslizar}
-            onMomentumScrollEnd={aoDeslizar}
+            onMomentumScrollEnd={(e) => {
+              aoDeslizar(e);
+              soltar();
+            }}
             scrollEventThrottle={32}
+            onTouchStart={prender}
+            onTouchEnd={soltar}
+            onTouchCancel={soltar}
+            onScrollEndDrag={soltar}
             style={StyleSheet.absoluteFill}
           >
             {paginas.map((url, i) => (
@@ -172,11 +187,26 @@ export default function CartaoDeDestaque({
                 disabled={!aoTocar}
                 style={({ pressed }) => [{ width: largura, height: altura }, pressed && estilos.premido]}
               >
-                <Image
-                  source={{ uri: url }}
-                  style={{ width: largura, height: altura }}
-                  resizeMode="cover"
-                />
+                {/* **Só se carrega a fotografia ao lado, não a galeria toda.**
+                    Com dezassete artigos na Loja, ter todas as fotografias de
+                    todos os cartões ao mesmo tempo eram quase quarenta
+                    imagens grandes abertas na memória — e o Android começa
+                    simplesmente a não desenhar algumas, sem dizer nada. O
+                    lugar da página fica lá, vazio, para o deslize não se
+                    desencontrar. */}
+                {Math.abs(i - pagina) <= 1 ? (
+                  <Image
+                    source={{ uri: url }}
+                    style={{ width: largura, height: altura }}
+                    resizeMode="cover"
+                    // Em Android, manda encolher a imagem **antes** de a
+                    // abrir: uma fotografia de 1200 pixeis num cartão de 360
+                    // ocupava nove vezes a memória que precisa.
+                    resizeMethod="resize"
+                  />
+                ) : (
+                  <View style={{ width: largura, height: altura }} />
+                )}
               </Pressable>
             ))}
           </ScrollView>
@@ -199,7 +229,7 @@ export default function CartaoDeDestaque({
       disabled={!aoTocar}
     >
       {unica ? (
-        <Image source={unica} style={estilos.imagem} resizeMode="cover" />
+        <Image source={unica} style={estilos.imagem} resizeMode="cover" resizeMethod="resize" />
       ) : (
         <View style={[estilos.imagem, estilos.semImagem]} />
       )}

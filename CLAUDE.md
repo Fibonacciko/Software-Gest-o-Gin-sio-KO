@@ -247,6 +247,16 @@ sozinha, e ao fim de uma volta já todos passaram pela frente
   não de uma segunda cópia da conta no ecrã: duas cópias da mesma regra acabam
   diferentes.
 
+**No cartão carrega-se uma fotografia de cada vez, não a galeria toda.** Só
+a página que se vê e a do lado; o lugar das outras fica lá, vazio, para o
+deslize não se desencontrar. Com dezassete artigos na Loja, ter todas as
+fotografias de todos os cartões abertas ao mesmo tempo eram quase quarenta
+imagens grandes na memória, e o Android começa simplesmente a **não desenhar
+algumas**, sem dizer nada — fica o cartão cinzento. Pela mesma razão as
+imagens levam `resizeMethod="resize"`: em Android manda encolher o ficheiro
+antes de o abrir, e uma fotografia de 1200 pixeis num cartão de 360 ocupava
+nove vezes a memória que precisa.
+
 **As fotografias deslizam no próprio cartão**, na Loja e no ecrã inicial, sem
 ser preciso abrir o artigo: um par de luvas vê-se pela frente e pelas costas
 sem sair da lista (`CartaoDeDestaque`, com os pontinhos em baixo — sem eles
@@ -656,17 +666,19 @@ deslizava-se para a direita e ia-se parar ao separador da esquerda.
   atrás.
 - Quando é o dedo a mandar, **a tira não volta a ser mandada para lá**
   (`veioDoDedo`): senão saltava debaixo do dedo de quem a arrasta.
-- **Na Loja não se desliza entre ecrãs** (`scrollEnabled={separador !== 'loja'}`).
-  Em Android, quem está por fora fica com o arrasto horizontal assim que o
-  detecta, e a galeria de fotografias de cada artigo nunca chegava a mexer-se:
-  mexia-se o ecrã em vez da fotografia. Ali o gesto é todo dos artigos, e
-  muda-se de ecrã pela barra de baixo.
-- **Não se tenta desligar a tira só enquanto o dedo está em cima de uma
-  galeria.** Tentou-se, por contexto e com `onTouchStart`, e foi pior: cada
-  toque obrigava a aplicação inteira a redesenhar-se, as fotografias
-  continuaram a não rodar e, ao abrir um artigo, a janela passou a aparecer
-  sem imagem nenhuma. A regra que ficou muda **uma vez por ecrã**, nunca a
-  cada toque.
+- Na Loja, deslizar **em cima da fotografia** de um artigo muda a fotografia;
+  fora dos cartões, muda de ecrã.
+- **Isso não acontece sozinho.** Em Android, quem está por fora fica com o
+  arrasto horizontal assim que o detecta: a galeria ficava com o dedo meio
+  segundo e depois era a tira que lhe levava o gesto. A tira trava enquanto o
+  dedo está numa galeria (`ContextoDaTira`), e solta-se em **todas** as saídas
+  — uma esquecida deixava a aplicação sem deslize até se fechar.
+- **O travar não passa por estado nenhum**: é `setNativeProps` na tira. A
+  primeira tentativa guardava-o num `useState` do `App`, e cada toque obrigava
+  a aplicação inteira a redesenhar-se **a meio do gesto**: as fotografias
+  continuaram sem rodar e, ao abrir um artigo, a janela aparecia sem imagem
+  nenhuma. `setNativeProps` não existe na versão web — a chamada vai protegida,
+  e lá não faz falta.
 
 | Separador | O que é |
 |---|---|
