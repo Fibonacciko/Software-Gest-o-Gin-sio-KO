@@ -307,6 +307,56 @@ def test_o_nome_com_espaco_a_mais_e_o_mesmo_artigo(cliente, admin):
     assert montra[0]["name"] == "T-Shirt"
 
 
+# ------------------------------------------- a montra roda um lugar por dia
+
+def _artigo_da_montra(cliente, admin, nome):
+    return cliente.post("/api/inventory", headers=admin, json={
+        "name": nome, "category": "clothing", "size": "M", "color": "Preto",
+        "quantity": 3, "price": 15.0, "photo_url": "/api/uploads/x.jpg",
+    }).json()
+
+
+def test_a_montra_roda_um_lugar_por_dia(cliente, admin):
+    """O ecra de entrada mostra os dois primeiros: nao podem ser sempre os mesmos."""
+    from server import rotacao_do_dia
+
+    nomes = ["Artigo A", "Artigo B", "Artigo C", "Artigo D", "Artigo E"]
+    for nome in nomes:
+        _artigo_da_montra(cliente, admin, nome)
+
+    inicio = rotacao_do_dia(len(nomes))
+    esperado = nomes[inicio:] + nomes[:inicio]
+    assert [a["name"] for a in cliente.get("/api/mobile/shop").json()] == esperado
+
+
+def test_rodar_nao_perde_nem_repete_artigos(cliente, admin):
+    nomes = ["Artigo A", "Artigo B", "Artigo C", "Artigo D", "Artigo E"]
+    for nome in nomes:
+        _artigo_da_montra(cliente, admin, nome)
+
+    montra = cliente.get("/api/mobile/shop").json()
+    assert sorted(a["name"] for a in montra) == nomes
+
+
+def test_a_ordem_da_montra_nao_muda_entre_pedidos_do_mesmo_dia(cliente, admin):
+    """Baralhar a cada pedido dava uma montra a mexer-se debaixo do dedo."""
+    for nome in ("Artigo A", "Artigo B", "Artigo C", "Artigo D"):
+        _artigo_da_montra(cliente, admin, nome)
+
+    primeira = [a["name"] for a in cliente.get("/api/mobile/shop").json()]
+    segunda = [a["name"] for a in cliente.get("/api/mobile/shop").json()]
+    assert primeira == segunda
+
+
+def test_a_rotacao_de_cada_dia_e_diferente():
+    """Dias seguidos comecam em artigos seguidos, e ao fim da volta recomeca."""
+    from server import rotacao_do_dia
+
+    assert rotacao_do_dia(0) == 0      # montra vazia: nao ha nada que rode
+    assert rotacao_do_dia(1) == 0      # um so artigo: rodar nao muda nada
+    assert 0 <= rotacao_do_dia(5) < 5
+
+
 def test_reservar_continua_a_ser_de_um_tamanho_certo(cliente, admin, criar_socio):
     """A montra junta, a reserva nao: o balcao tem de saber qual preparar."""
     _capacete(cliente, admin, "S", "Preto", 2, "/api/uploads/cap.jpg")

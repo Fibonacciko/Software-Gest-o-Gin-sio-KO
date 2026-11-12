@@ -169,6 +169,13 @@ export default function EcraLoja({ socio }: Props) {
         {artigos.map((a) => {
           const foto = enderecoDaImagem(a.photo_url);
           const detalhes = a.color || '';
+          // Só as fotografias deslizam no cartão. Um vídeo num cartão de uma
+          // lista obrigava a um leitor por artigo, e dez leitores a rolar ao
+          // mesmo tempo engasgam os telemóveis fracos — fica para dentro do
+          // artigo, que é onde se abre um de cada vez.
+          const fotografias = (a.media || [])
+            .filter((m) => m.kind === 'photo')
+            .map((m) => enderecoDaImagem(m.url));
           return (
             <View key={a.id} style={estilos.item}>
               {/* A fotografia ocupa o cartão todo e o nome assenta nela: é o
@@ -176,6 +183,7 @@ export default function EcraLoja({ socio }: Props) {
                   ficheiros vai no canto, senão ninguém sabe que há mais. */}
               <CartaoDeDestaque
                 imagem={foto}
+                imagens={fotografias}
                 titulo={a.name}
                 subtitulo={detalhes || null}
                 selo={

@@ -230,6 +230,31 @@ ver: **um artigo por cor**, sem o número do stock à vista.
   daquela cor** (nome, preço, descrição, galeria). O tamanho e a quantidade de
   cada um só se mexem no Stock, e a janela avisa disso.
 
+**A montra roda um lugar por dia.** O ecrã inicial da aplicação mostra os
+**dois primeiros** artigos da loja; por ordem alfabética fixa eram sempre os
+mesmos dois a aparecer, e os últimos do alfabeto nunca se viam. A lista roda
+sozinha, e ao fim de uma volta já todos passaram pela frente
+(`rotacao_do_dia()`, no `server.py`, com testes).
+
+- Roda **uma vez por dia**, não a cada pedido: quem abre a loja três vezes
+  seguidas vê sempre a mesma coisa, e ao balcão sabe-se o que está à frente
+  hoje. Baralhar a cada pedido dava uma montra a mexer-se debaixo do dedo de
+  quem estava a escolher.
+- **Não se guarda nada**: a conta é o número do dia a dividir pelo tamanho da
+  lista, por isso o mesmo dia dá sempre a mesma ordem.
+- Na gestão, a **Loja mostra a ordem de hoje** e marca os dois primeiros com
+  "Hoje no ecrã inicial". A ordem vem do servidor (`GET /api/mobile/shop`), e
+  não de uma segunda cópia da conta no ecrã: duas cópias da mesma regra acabam
+  diferentes.
+
+**As fotografias deslizam no próprio cartão**, na Loja e no ecrã inicial, sem
+ser preciso abrir o artigo: um par de luvas vê-se pela frente e pelas costas
+sem sair da lista (`CartaoDeDestaque`, com os pontinhos em baixo — sem eles
+ninguém descobre que há mais do que uma fotografia). **Só as fotografias**: um
+vídeo no cartão obrigava a um leitor por artigo, e dez leitores a rolar ao
+mesmo tempo engasgam os telemóveis fracos — o vídeo fica para dentro do
+artigo, que se abre um de cada vez.
+
 **Cada artigo tem uma galeria: várias fotografias e vídeos curtos.**
 
 Um artigo mostra-se por mais do que um lado — a frente, as costas, um detalhe —

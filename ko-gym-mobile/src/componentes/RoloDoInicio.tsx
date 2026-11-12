@@ -82,6 +82,12 @@ export default function RoloDoInicio({ aoIrPara }: Props) {
             <View key={a.id} style={estilos.item}>
               <CartaoDeDestaque
                 imagem={enderecoDaImagem(a.photo_url)}
+                // As fotografias deslizam aqui como na Loja: quem está na
+                // página inicial vê o artigo por mais do que um lado sem ter
+                // de ir a lado nenhum.
+                imagens={(a.media || [])
+                  .filter((m) => m.kind === 'photo')
+                  .map((m) => enderecoDaImagem(m.url))}
                 titulo={a.name}
                 subtitulo={a.color}
                 selo={`${a.price.toFixed(2)} €`}

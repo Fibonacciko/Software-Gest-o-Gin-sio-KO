@@ -81,6 +81,10 @@ const AppDoSocio = ({ language }) => {
   const [mediaAberta, setMediaAberta] = useState(false);
   const [mediaForm, setMediaForm] = useState(MEDIA_VAZIA);
   const [artigos, setArtigos] = useState([]);
+  // A montra tal como a aplicação a mostra hoje: serve para ordenar esta
+  // página pela mesma ordem e para dizer quais são os dois que abrem o ecrã
+  // inicial do sócio.
+  const [montraDeHoje, setMontraDeHoje] = useState([]);
   const [artigoAberto, setArtigoAberto] = useState(false);
   const [artigoForm, setArtigoForm] = useState(ARTIGO_VAZIO);
   const [artigoAEditar, setArtigoAEditar] = useState(null);
@@ -133,7 +137,7 @@ const AppDoSocio = ({ language }) => {
       fotoDoGinasio: 'Fotografia do ginásio',
       loja: 'Loja',
       novoArtigo: 'Novo Artigo',
-      lojaAjuda: 'A montra da aplicação: um artigo por cor. Os tamanhos ficam no Stock e são perguntados ao sócio na altura de reservar. Um artigo só aparece se tiver fotografia e stock.',
+      lojaAjuda: 'A montra da aplicação: um artigo por cor. Os tamanhos ficam no Stock e são perguntados ao sócio na altura de reservar. Um artigo só aparece se tiver fotografia e stock. A ordem roda sozinha, um lugar por dia, e os dois primeiros são os que aparecem no ecrã inicial do sócio — assim todos têm a sua vez à frente, sem ninguém ter de mexer em nada.',
       semArtigos: 'Ainda não há artigos. Carregue em Novo Artigo para começar: t-shirts, hoodies, luvas, caneleiras, capacetes, ligaduras…',
       naApp: 'Na aplicação',
       faltaFoto: 'Falta a fotografia',
@@ -200,16 +204,21 @@ const AppDoSocio = ({ language }) => {
   const carregarTudo = async () => {
     try {
       setACarregar(true);
-      const [p, m, g, a] = await Promise.all([
+      // A montra vem do servidor já pela ordem de hoje. Pedimo-la em vez de
+      // repetir aqui a conta da rotação: a ordem que o sócio vê tem de ser a
+      // mesma que se vê aqui, e duas cópias da mesma regra acabam diferentes.
+      const [p, m, g, a, montra] = await Promise.all([
         axios.get(`${API}/partners`).catch(() => ({ data: [] })),
         axios.get(`${API}/media`).catch(() => ({ data: [] })),
         axios.get(`${API}/gym-info`).catch(() => ({ data: {} })),
-        axios.get(`${API}/inventory`).catch(() => ({ data: [] }))
+        axios.get(`${API}/inventory`).catch(() => ({ data: [] })),
+        axios.get(`${API}/mobile/shop`).catch(() => ({ data: [] }))
       ]);
       setParceiros(p.data);
       setMedia(m.data);
       setGinasio(g.data || {});
       setArtigos(a.data);
+      setMontraDeHoje(montra.data || []);
     } finally {
       setACarregar(false);
     }
@@ -460,7 +469,17 @@ const AppDoSocio = ({ language }) => {
       g.linhas.push(a);
       grupos.set(chave, g);
     });
+    // Pela ordem de hoje da aplicação, e não por alfabeto: é essa que
+    // responde a "o que é que o sócio vê primeiro?". O que não chega à
+    // montra — sem fotografia ou sem stock — fica no fim, por nome.
+    const posicao = (g) => {
+      const i = montraDeHoje.findIndex((a) =>
+        (a.name || '').trim().toLowerCase() === g.name.toLowerCase() &&
+        (a.color || '').trim().toLowerCase() === (g.color || '').toLowerCase());
+      return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+    };
     return [...grupos.values()].sort((x, y) =>
+      posicao(x) - posicao(y) ||
       `${x.name} ${x.color}`.localeCompare(`${y.name} ${y.color}`, 'pt'));
   };
 
@@ -737,9 +756,13 @@ const AppDoSocio = ({ language }) => {
             </CardContent></Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {gruposDeArtigos().map((g) => {
+              {gruposDeArtigos().map((g, posicao) => {
                 const estado = estadoDoArtigo(g);
                 const tamanhos = g.linhas.map((a) => a.size).filter(Boolean);
+                // Os dois primeiros da montra são os que aparecem no ecrã
+                // inicial da aplicação. Sem isto escrito, a rotação diária
+                // era uma coisa que acontecia sem ninguém dar por ela.
+                const noEcraInicial = estado.ok && posicao < 2 && posicao < montraDeHoje.length;
                 return (
                   <Card key={g.chave} className="card-shadow overflow-hidden" data-testid={`artigo-${g.chave}`}>
                     {g.photo_url ? (
@@ -768,6 +791,16 @@ const AppDoSocio = ({ language }) => {
                       </div>
                     )}
                     <CardContent className="p-4">
+                      {noEcraInicial && (
+                        <Badge
+                          className="mb-2 text-xs"
+                          style={{ background: 'var(--ko-primary-orange)', color: '#fff' }}
+                          data-testid={`artigo-no-inicio-${g.chave}`}
+                        >
+                          <Smartphone size={12} className="mr-1" />
+                          Hoje no ecrã inicial
+                        </Badge>
+                      )}
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>

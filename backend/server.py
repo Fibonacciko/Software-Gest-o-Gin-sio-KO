@@ -4717,6 +4717,28 @@ async def multimedia_para_a_app():
     return [MediaItem(**parse_from_mongo(m)) for m in itens]
 
 
+def rotacao_do_dia(quantos: int) -> int:
+    """Por onde comeca a montra hoje.
+
+    O ecra de entrada da aplicacao mostra os **dois primeiros** artigos da
+    loja. Por ordem alfabetica fixa eram sempre os mesmos dois a aparecer, e
+    os ultimos do alfabeto nunca se viam. A lista roda **um lugar por dia**:
+    cada artigo tem a sua vez a frente, e ao fim de uma volta ja todos
+    passaram pelo ecra de entrada.
+
+    **Roda uma vez por dia, nao a cada pedido.** O socio que abre a loja tres
+    vezes seguidas ve sempre a mesma coisa, e ao balcao sabe-se o que esta a
+    frente hoje. Baralhar a cada pedido dava uma montra a mexer-se debaixo do
+    dedo de quem estava a escolher.
+
+    Nao se guarda nada: a conta e o numero do dia a dividir pelo tamanho da
+    lista, por isso o mesmo dia da sempre a mesma ordem.
+    """
+    if quantos <= 1:
+        return 0
+    return datetime.now(timezone.utc).date().toordinal() % quantos
+
+
 @api_router.get("/mobile/shop", response_model=List[ShopItem])
 async def montra_para_a_app():
     """A montra: um artigo por nome e cor, so o que tem stock e fotografia.
@@ -4780,6 +4802,10 @@ async def montra_para_a_app():
         if not g["media"]:
             g["media"] = [MediaDoArtigo(kind="photo", url=g["photo_url"])]
     montra.sort(key=lambda g: (g["name"].lower(), (g["color"] or "").lower()))
+    # A ordem alfabetica e so o arranjo de base: a lista roda um lugar por dia
+    # para que nao sejam sempre os mesmos dois a abrir o ecra de entrada.
+    inicio = rotacao_do_dia(len(montra))
+    montra = montra[inicio:] + montra[:inicio]
     return [ShopItem(**g) for g in montra]
 
 
