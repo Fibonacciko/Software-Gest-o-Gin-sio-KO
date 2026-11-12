@@ -78,6 +78,16 @@ const lerPeriodos = (texto: string) => {
   return { periodos, primeiro };
 };
 
+// Onde comeca um grupo novo: um numero (o fim de uma hora), e logo a seguir
+// o nome de um dia. Os nomes vao com e sem acento porque ha quem escreva dos
+// dois modos.
+const NOVO_GRUPO = new RegExp(
+  // O `h` entra no fim de propósito: "22h Sábado" acaba na letra, não no
+  // algarismo, e sem isso o sábado não se separava.
+  String.raw`(\d\s*[hH]?)\s*[.,;:]?\s+(?=(?:segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo|dias? [úu]teis|fins? de semana|todos os dias)\b)`,
+  'gi'
+);
+
 /** Que dias da semana é que esta linha nomeia. */
 const lerDias = (texto: string) => {
   const limpo = semAcentos(texto);
@@ -101,6 +111,12 @@ export function lerHorario(texto?: string | null): LinhaDoHorario[] {
   if (!texto || !texto.trim()) return [];
 
   return texto
+    // Um nome de dia logo a seguir a uma hora comeca um grupo novo. Sem isto,
+    // "...16h00 - 22h00 Terça e quinta: 10h00..." era tudo uma linha so: os
+    // dias dos dois grupos juntos e quatro periodos seguidos, e a aplicacao
+    // dizia que a terca o ginasio fechava as 22h. Acontece sempre que alguem
+    // escreve o horario num campo de uma linha.
+    .replace(NOVO_GRUPO, '$1\n')
     .replace(/[»«|;*]+/g, '\n')
     .split(/\n+/)
     .map((x) => x.trim().replace(/^[-–—•·,\s]+|[-–—•·,\s]+$/g, ''))
@@ -165,3 +181,26 @@ export function estadoDeHoje(
   }
   return { aberto: false, texto: 'Fechado' };
 }
+
+/*
+ * Casos provados à mão (a aplicação não tem ainda onde correr testes; estes
+ * correram-se a compilar este ficheiro e a chamá-lo com cada texto):
+ *
+ *   "Segunda, quarta e sexta: 10h00 - 14h00 / 16h00 - 22h00 Terça e quinta:
+ *    10h00 - 14h00 / 16h00 - 20h00"          <- como está hoje na ficha
+ *      -> Segunda, quarta e sexta [1,3,5]  10h às 14h + 16h às 22h
+ *         Terça e quinta         [2,4]     10h às 14h + 16h às 20h
+ *
+ *   o mesmo em duas linhas                   -> igual
+ *   "» Segunda, Quarta e Sexta 10h-22h «»…"  -> dois grupos, um período cada
+ *   "Segunda a sexta: 10h-14h / 16h-22h Sábado: 10h30-12h30"
+ *      -> Segunda a sexta [1..5] dois períodos; Sábado [6] um
+ *   "Aberto quando o professor puder"        -> uma linha, sem horas
+ *
+ * E o estado, sobre o horário de hoje:
+ *   segunda 11h -> Aberto agora · fecha às 14h
+ *   terça 15h   -> Fechado · abre às 16h        (a pausa do almoço)
+ *   terça 21h   -> Fechado · abre amanhã às 10h
+ *   quinta 19h  -> Aberto agora · fecha às 20h
+ *   sábado 11h  -> Fechado · abre segunda às 10h
+ */
