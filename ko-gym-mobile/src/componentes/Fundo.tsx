@@ -1,6 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Canvas,
+  Fill,
+  Group,
+  LinearGradient,
+  RadialGradient,
+  Rect,
+  Turbulence,
+  vec,
+} from '@shopify/react-native-skia';
 import { Accelerometer } from 'expo-sensors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cores } from '../theme';
@@ -10,37 +19,50 @@ const { width: LARGURA, height: ALTURA } = Dimensions.get('window');
 /**
  * Quanto cada camada anda, em pixeis, de um extremo da inclinação ao outro.
  *
- * São números diferentes de propósito: é a diferença entre eles que o olho
- * lê como profundidade. A camada que anda mais parece estar à frente.
+ * São números muito diferentes de propósito: é a **diferença** entre eles que
+ * o olho lê como profundidade. Começaram em 10/22/36 e não se notava — 26
+ * pixeis de diferença entre a camada da frente e a do fundo, num ecrã de 400,
+ * é movimento a menos para o cérebro ler distância.
  */
-const PROFUNDIDADE = [10, 22, 36];
+const PROFUNDIDADE = [20, 48, 85];
 
 /** Quanto a camada é maior do que o ecrã, para nunca se ver o bordo ao andar. */
-const FOLGA = Math.max(...PROFUNDIDADE) * 2 + 40;
+const FOLGA = Math.max(...PROFUNDIDADE) * 2 + 120;
+
+const LARGURA_CAMADA = LARGURA + FOLGA;
+const ALTURA_CAMADA = ALTURA + FOLGA;
 
 /**
  * O fundo da aplicação.
  *
- * Três camadas de cinzento que atravessam o ecrã em ângulos diferentes e
- * respiram devagar, umas sobre as outras. O movimento é lento de propósito:
- * um fundo que salta à vista rouba a atenção ao que interessa, que é o botão
- * de check-in.
+ * Camadas de ecrã inteiro que respiram devagar, deslizam e **inclinam-se**
+ * conforme se inclina o telemóvel. O movimento é lento de propósito: um fundo
+ * que salta à vista rouba a atenção ao que interessa, que é o check-in.
  *
- * **A profundidade vem da inclinação.** As camadas andam a velocidades
- * diferentes conforme se inclina o telemóvel, e é isso que o olho lê como
- * 3D. Um motor 3D a sério daria o mesmo efeito gastando a bateria e
- * engasgando nos telemóveis mais fracos, numa aplicação cujo trabalho é um
- * check-in de dois segundos.
+ * **O desenho é do Skia, o movimento é do motor nativo.** Cada um faz o que
+ * sabe:
  *
- * São camadas de **ecrã inteiro**, e não manchas redondas: uma mancha redonda
- * com um gradiente linear deixa um bordo a atravessar o ecrã, que se via.
+ * - o Skia pinta o que os gradientes lineares não conseguem — manchas
+ *   redondas de luz **sem bordo nenhum**, uma vinheta a escurecer os cantos e
+ *   **grão** por cima de tudo. Sem grão, um gradiente escuro parte-se em
+ *   bandas, e o olho lê bandas como superfície chapada;
+ * - o movimento continua em `Animated` com `useNativeDriver`, como antes:
+ *   corre do lado nativo, não passa por JavaScript nenhum a cada imagem e não
+ *   gasta bateria. Por isso **não** foi preciso o Reanimated, que obrigaria a
+ *   ligar a arquitetura nova do React Native — e essa está desligada por
+ *   causa do NFC, que é o essencial desta aplicação.
+ *
+ * **A profundidade vem de três coisas ao mesmo tempo:** as camadas andam a
+ * velocidades diferentes (paralaxe), inclinam-se com perspetiva (deixam de
+ * ser autocolantes a escorregar e passam a planos no espaço), e a luz do topo
+ * anda mais do que todas — é a que parece estar mesmo à frente.
+ *
+ * Um motor 3D a sério daria mais, gastando bateria e engasgando nos telemóveis
+ * fracos, numa aplicação cujo trabalho é um check-in de dois segundos.
  *
  * Os tons vão do preto ao cinzento, e não ao laranja da marca: por decisão do
  * dono. O laranja fica para o que é para carregar — o check-in, os números —
  * e num fundo tingido deixava de se destacar.
- *
- * Anima só opacidade e deslocação, com `useNativeDriver`, por isso corre do
- * lado nativo e não trava nada.
  */
 export default function Fundo({ children }: { children: React.ReactNode }) {
   // O espaço da barra de estado do telemóvel. Fica aqui, e não em cada ecrã,
@@ -48,7 +70,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
   // o título debaixo das horas.
   const margens = useSafeAreaInsets();
 
-  const camada1 = useRef(new Animated.Value(0)).current;
+  const camada1 = useRef(new Animated.Value(0.55)).current;
   const camada2 = useRef(new Animated.Value(1)).current;
   const camada3 = useRef(new Animated.Value(0.4)).current;
 
@@ -76,9 +98,9 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
       );
 
     const animacoes = [
-      respirar(camada1, 11, 0.25, 1),
-      respirar(camada2, 15, 0.3, 1),
-      respirar(camada3, 19, 0.15, 0.8),
+      respirar(camada1, 11, 0.45, 0.9),
+      respirar(camada2, 15, 0.35, 1),
+      respirar(camada3, 19, 0.2, 0.75),
     ];
     animacoes.forEach((a) => a.start());
     return () => animacoes.forEach((a) => a.stop());
@@ -124,10 +146,28 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
     };
   }, [inclinacaoX, inclinacaoY]);
 
-  /** O estilo de uma camada: respira na opacidade e desliza com a inclinação. */
-  const camadaMovel = (opacidade: Animated.Value, distancia: number) => ({
+  /**
+   * O estilo de uma camada: respira na opacidade, desliza e inclina-se.
+   *
+   * A ordem conta: `perspective` tem de vir primeiro, senão as rotações
+   * ficam planas e volta tudo a parecer autocolantes.
+   */
+  const camadaMovel = (opacidade: Animated.Value, distancia: number, graus: number) => ({
     opacity: opacidade,
     transform: [
+      { perspective: 900 },
+      {
+        rotateX: inclinacaoY.interpolate({
+          inputRange: [-1, 1],
+          outputRange: [`${graus}deg`, `${-graus}deg`],
+        }),
+      },
+      {
+        rotateY: inclinacaoX.interpolate({
+          inputRange: [-1, 1],
+          outputRange: [`${-graus}deg`, `${graus}deg`],
+        }),
+      },
       {
         translateX: inclinacaoX.interpolate({
           inputRange: [-1, 1],
@@ -145,51 +185,110 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
 
   return (
     <View style={estilos.raiz}>
-      {/* Base escura, do canto superior direito para o inferior esquerdo.
-          Esta não se mexe: é o chão sobre o qual as outras deslizam. */}
-      <LinearGradient
-        colors={['#2E2E2E', cores.fundo, '#0E0E0E']}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+      {/* O chão, que não se mexe: é sobre ele que as outras deslizam.
+          Leva a base, duas brumas redondas, a vinheta e o grão — tudo o que
+          é imóvel vai neste único Canvas, para não haver superfícies do Skia
+          a mais, que é o que custa caro nos telemóveis fracos. */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Rect x={0} y={0} width={LARGURA} height={ALTURA}>
+            <LinearGradient
+              start={vec(LARGURA, 0)}
+              end={vec(0, ALTURA)}
+              colors={['#2B2B2B', cores.fundo, '#0B0B0B']}
+            />
+          </Rect>
 
+          {/* Duas manchas de luz. Redondas a sério: é isto que não havia
+              antes, porque um gradiente linear dentro de um círculo deixa um
+              bordo a atravessar o ecrã. */}
+          <Rect x={0} y={0} width={LARGURA} height={ALTURA}>
+            <RadialGradient
+              c={vec(LARGURA * 0.82, ALTURA * 0.1)}
+              r={LARGURA * 1.15}
+              colors={['rgba(200,200,200,0.17)', 'rgba(200,200,200,0.04)', 'rgba(200,200,200,0)']}
+              positions={[0, 0.45, 1]}
+            />
+          </Rect>
+          <Rect x={0} y={0} width={LARGURA} height={ALTURA}>
+            <RadialGradient
+              c={vec(LARGURA * 0.06, ALTURA * 0.78)}
+              r={LARGURA * 1.05}
+              colors={['rgba(130,130,130,0.16)', 'rgba(130,130,130,0)']}
+            />
+          </Rect>
+
+          {/* A vinheta. Escurecer os cantos traz o meio para a frente — é a
+              pista de profundidade mais barata que há. */}
+          <Rect x={0} y={0} width={LARGURA} height={ALTURA}>
+            <RadialGradient
+              c={vec(LARGURA / 2, ALTURA * 0.42)}
+              r={Math.max(LARGURA, ALTURA) * 0.8}
+              colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.18)', 'rgba(0,0,0,0.6)']}
+              positions={[0.35, 0.72, 1]}
+            />
+          </Rect>
+
+          {/* O grão, por cima de tudo. Sem ele os gradientes escuros partem-se
+              em bandas visíveis, e o olho lê bandas como tinta chapada. */}
+          <Group blendMode="softLight" opacity={0.3}>
+            <Fill>
+              <Turbulence freqX={0.75} freqY={0.75} octaves={2} seed={11} />
+            </Fill>
+          </Group>
+        </Canvas>
+      </View>
+
+      {/* A bruma do fundo: anda pouco, é a que parece estar mais longe. */}
       <Animated.View
-        style={[estilos.camada, camadaMovel(camada1, PROFUNDIDADE[0])]}
+        style={[estilos.camada, camadaMovel(camada1, PROFUNDIDADE[0], 3)]}
         pointerEvents="none"
       >
-        <LinearGradient
-          colors={['rgba(170,170,170,0.22)', 'rgba(170,170,170,0.05)', 'rgba(170,170,170,0)']}
-          locations={[0, 0.45, 1]}
-          start={{ x: 1, y: 0 }}
-          end={{ x: 0.1, y: 0.8 }}
-          style={StyleSheet.absoluteFill}
-        />
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Rect x={0} y={0} width={LARGURA_CAMADA} height={ALTURA_CAMADA}>
+            <RadialGradient
+              c={vec(LARGURA_CAMADA * 0.2, ALTURA_CAMADA * 0.35)}
+              r={LARGURA_CAMADA * 0.85}
+              colors={['rgba(150,150,150,0.14)', 'rgba(150,150,150,0)']}
+            />
+          </Rect>
+        </Canvas>
       </Animated.View>
 
+      {/* A faixa do meio. Continua a ser um gradiente linear, que é barato:
+          é a que dá o corte em diagonal ao fundo. */}
       <Animated.View
-        style={[estilos.camada, camadaMovel(camada2, PROFUNDIDADE[1])]}
+        style={[estilos.camada, camadaMovel(camada2, PROFUNDIDADE[1], 5)]}
         pointerEvents="none"
       >
-        <LinearGradient
-          colors={['rgba(140,140,140,0)', 'rgba(140,140,140,0.06)', 'rgba(140,140,140,0.16)']}
-          locations={[0, 0.55, 1]}
-          start={{ x: 0, y: 0.2 }}
-          end={{ x: 0.9, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Rect x={0} y={0} width={LARGURA_CAMADA} height={ALTURA_CAMADA}>
+            <LinearGradient
+              start={vec(0, ALTURA_CAMADA * 0.2)}
+              end={vec(LARGURA_CAMADA * 0.9, ALTURA_CAMADA)}
+              colors={['rgba(150,150,150,0)', 'rgba(150,150,150,0.05)', 'rgba(150,150,150,0.15)']}
+              positions={[0, 0.55, 1]}
+            />
+          </Rect>
+        </Canvas>
       </Animated.View>
 
+      {/* A luz de cima: anda mais do que todas e é a que parece estar à
+          frente. É ela que faz o telemóvel parecer ter luz em cima. */}
       <Animated.View
-        style={[estilos.camada, camadaMovel(camada3, PROFUNDIDADE[2])]}
+        style={[estilos.camada, camadaMovel(camada3, PROFUNDIDADE[2], 8)]}
         pointerEvents="none"
       >
-        <LinearGradient
-          colors={['rgba(100,100,100,0.20)', 'rgba(100,100,100,0)']}
-          start={{ x: 0.2, y: 1 }}
-          end={{ x: 0.8, y: 0 }}
-          style={StyleSheet.absoluteFill}
-        />
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Rect x={0} y={0} width={LARGURA_CAMADA} height={ALTURA_CAMADA}>
+            <RadialGradient
+              c={vec(LARGURA_CAMADA * 0.62, ALTURA_CAMADA * 0.12)}
+              r={LARGURA_CAMADA * 0.7}
+              colors={['rgba(255,255,255,0.11)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)']}
+              positions={[0, 0.5, 1]}
+            />
+          </Rect>
+        </Canvas>
       </Animated.View>
 
       <View style={[estilos.conteudo, { paddingTop: margens.top }]}>{children}</View>
@@ -199,13 +298,15 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
 
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: cores.fundo, overflow: 'hidden' },
-  // Maior do que o ecrã: ao deslizar nunca se chega a ver onde a camada acaba
+  // Maior do que o ecrã: ao deslizar e ao inclinar nunca se chega a ver onde
+  // a camada acaba. A folga cresceu com a inclinação — um plano que roda
+  // mostra o canto de trás se for do tamanho do ecrã.
   camada: {
     position: 'absolute',
     left: -FOLGA / 2,
     top: -FOLGA / 2,
-    width: LARGURA + FOLGA,
-    height: ALTURA + FOLGA,
+    width: LARGURA_CAMADA,
+    height: ALTURA_CAMADA,
   },
   conteudo: { flex: 1 },
 });

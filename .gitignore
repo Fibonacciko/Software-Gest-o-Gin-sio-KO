@@ -99,3 +99,10 @@ frontend/node_modules/.cache/default-development/0.pack
 # NUNCA correr "git clean -xfd" nesta pasta -- apaga tudo o que esta ignorado.
 /CÓDIGO/
 /CODIGO/
+
+# O CanvasKit do Skia, so para ver a aplicacao no navegador durante o
+# desenvolvimento. Sao 8 MB de WebAssembly por pasta, e geram-se com
+#   cd ko-gym-mobile && npx setup-skia-web
+# Nao entram no APK nem fazem falta a ninguem que clone o projeto.
+ko-gym-mobile/web/
+ko-gym-mobile/public/

@@ -624,8 +624,29 @@ telemóvel sem NFC registava a presença só por se carregar no botão — de ca
 carro, de qualquer lado — e isso estragava as contas de presenças.
 
 **O fundo** (`src/componentes/Fundo.tsx`) são camadas de ecrã inteiro que
-respiram devagar. Não são manchas redondas: um gradiente linear dentro de um
-círculo deixa um bordo a atravessar o ecrã, que se via.
+respiram devagar, deslizam e se inclinam.
+
+**O desenho é do Skia, o movimento é do motor nativo.** Cada um faz o que
+sabe. O Skia (`@shopify/react-native-skia`) pinta o que os gradientes
+lineares não conseguiam: **manchas redondas de luz sem bordo** — antes não
+havia nenhuma, porque um gradiente linear dentro de um círculo deixa um bordo
+a atravessar o ecrã —, uma **vinheta** a escurecer os cantos e **grão** por
+cima de tudo. Sem grão, um gradiente escuro parte-se em bandas visíveis, e o
+olho lê bandas como tinta chapada.
+
+O movimento continua em `Animated` com `useNativeDriver`: corre do lado
+nativo, não passa por JavaScript a cada imagem e não gasta bateria. **Por isso
+não foi preciso o Reanimated** — que obrigaria a ligar a arquitetura nova do
+React Native, e essa está desligada por causa do NFC. No Skia 2.x o Reanimated
+é dependência *opcional*, e o `build.gradle` dele ainda traz
+`src/paper/java` para a arquitetura antiga: foi isso que se confirmou antes de
+instalar seja o que for.
+
+**A profundidade vem de três coisas ao mesmo tempo**: as camadas andam a
+velocidades diferentes (20, 48 e 85 pixeis — começaram em 10/22/36 e não se
+notava), **inclinam-se com perspetiva** (deixam de ser autocolantes a
+escorregar e passam a planos no espaço) e a luz de cima anda mais do que
+todas, que é a que parece estar à frente.
 
 **Os tons do fundo vão do preto ao cinzento, não ao laranja da marca** — por
 decisão do dono. O laranja fica para o que é para carregar (o check-in, os
