@@ -1,4 +1,5 @@
 import {
+  dentroDoPeriodo,
   diaLocal,
   diaSeguinte,
   primeiroDiaDoMes,
@@ -60,5 +61,45 @@ describe('os limites do mês', () => {
   test('o último dia de fevereiro, bissexto e não', () => {
     expect(ultimoDiaDoMes(new Date(2026, 1, 10))).toBe('2026-02-28');
     expect(ultimoDiaDoMes(new Date(2028, 1, 10))).toBe('2028-02-29');
+  });
+});
+
+describe('um dia basta: o fim do período é opcional', () => {
+  test('sem o "até", conta só o próprio dia', () => {
+    expect(dentroDoPeriodo('2026-11-07', '2026-11-07', '')).toBe(true);
+    expect(dentroDoPeriodo('2026-11-08', '2026-11-07', '')).toBe(false);
+    expect(dentroDoPeriodo('2026-11-06', '2026-11-07', '')).toBe(false);
+  });
+
+  test('o "até" por preencher é o mesmo que não o haver', () => {
+    for (const vazio of ['', null, undefined]) {
+      expect(dentroDoPeriodo('2026-11-07', '2026-11-07', vazio)).toBe(true);
+      expect(dentroDoPeriodo('2026-11-09', '2026-11-07', vazio)).toBe(false);
+    }
+  });
+
+  test('com o "até", é o intervalo todo, pontas incluídas', () => {
+    expect(dentroDoPeriodo('2026-11-01', '2026-11-01', '2026-11-30')).toBe(true);
+    expect(dentroDoPeriodo('2026-11-30', '2026-11-01', '2026-11-30')).toBe(true);
+    expect(dentroDoPeriodo('2026-11-15', '2026-11-01', '2026-11-30')).toBe(true);
+    expect(dentroDoPeriodo('2026-12-01', '2026-11-01', '2026-11-30')).toBe(false);
+  });
+
+  test('a data vem com hora e isso não atrapalha', () => {
+    expect(dentroDoPeriodo('2026-11-07T00:00:00+00:00', '2026-11-07', '')).toBe(true);
+    expect(dentroDoPeriodo('2026-11-07T23:30:00+00:00', '2026-11-07', '')).toBe(true);
+  });
+
+  test('o sábado não passa a sexta no horário de verão', () => {
+    // `new Date('2026-07-01')` em Lisboa é 30 de junho às 23:00. Por isso se
+    // compara o texto: o primeiro de julho tem de cair em julho.
+    expect(dentroDoPeriodo('2026-07-01', '2026-07-01', '2026-07-31')).toBe(true);
+    expect(dentroDoPeriodo('2026-07-01', '2026-06-01', '2026-06-30')).toBe(false);
+  });
+
+  test('sem dia escolhido, nada cai dentro', () => {
+    expect(dentroDoPeriodo('2026-11-07', '', '')).toBe(false);
+    expect(dentroDoPeriodo('', '2026-11-07', '')).toBe(false);
+    expect(dentroDoPeriodo(null, '2026-11-07', '')).toBe(false);
   });
 });

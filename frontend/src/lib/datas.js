@@ -38,3 +38,21 @@ export const primeiroDiaDoMes = (d = new Date()) =>
 /** O último dia do mês de uma data. */
 export const ultimoDiaDoMes = (d = new Date()) =>
   diaLocal(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+
+/**
+ * Um dia cai dentro do período escolhido?
+ *
+ * O `ate` vazio quer dizer **um só dia**: é assim que o filtro dos cartões
+ * das Finanças deixa perguntar "quanto entrou no sábado passado?" sem obrigar
+ * a preencher duas datas iguais. Obrigar a isso levava a escolher o dia 5 e
+ * a ficar com o intervalo "5 até hoje" sem perceber porquê.
+ *
+ * As datas comparam-se pelo **texto**, nunca por `new Date(texto)`: em
+ * Portugal isso recua um dia e o sábado passava a sexta.
+ */
+export const dentroDoPeriodo = (data, de, ate) => {
+  if (!de) return false;
+  const dia = String(data || '').slice(0, 10);
+  if (!dia) return false;
+  return dia >= de && dia <= (ate || de);
+};

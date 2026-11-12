@@ -29,7 +29,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { corresponde, filtrarEOrdenar } from '../lib/pesquisa';
 import { CATEGORIAS_DE_DESPESA, nomeDaCategoria } from '../lib/categorias';
 import { INICIO_DAS_CONTAS, dataDasContas } from '../lib/estatisticas';
-import { diaLocal, hoje, primeiroDiaDoMes, ultimoDiaDoMes } from '../lib/datas';
+import { dentroDoPeriodo, diaLocal, hoje, primeiroDiaDoMes, ultimoDiaDoMes } from '../lib/datas';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -61,10 +61,7 @@ const Payments = ({ language, translations }) => {
    * de dizer sempre a mesma coisa. Só o cartão do dia é que anda, para se
    * poder perguntar "quanto é que entrou no sábado passado?".
    */
-  const [diaDosCartoes, setDiaDosCartoes] = useState(() => {
-    const d = hoje();
-    return { de: d, ate: d };
-  });
+  const [diaDosCartoes, setDiaDosCartoes] = useState(() => ({ de: hoje(), ate: '' }));
 
   const [despesasAbertas, setDespesasAbertas] = useState(false);
   const [expenseDateFilter, setExpenseDateFilter] = useState('thisYear');
@@ -693,10 +690,11 @@ const Payments = ({ language, translations }) => {
       const [a, m, d] = String(iso).split('-');
       return `${d}/${m}/${a}`;
     };
-    if (diaDosCartoes.de === diaDosCartoes.ate) {
-      return diaDosCartoes.de === hoje() ? 'hoje' : pt(diaDosCartoes.de);
+    const { de, ate } = diaDosCartoes;
+    if (!ate || ate === de) {
+      return de === hoje() ? 'hoje' : pt(de);
     }
-    return `${pt(diaDosCartoes.de)} a ${pt(diaDosCartoes.ate)}`;
+    return `${pt(de)} a ${pt(ate)}`;
   };
 
   const getPaymentStats = () => {
@@ -722,10 +720,9 @@ const Payments = ({ language, translations }) => {
 
     const noPeriodo = (valorData, desde) => {
       if (desde === 'dia') {
-        // A data compara-se pelo texto, nunca por `new Date(texto)`: em
-        // Portugal isso recua um dia e o sábado passava a sexta.
-        const d = String(valorData).slice(0, 10);
-        return d >= diaDosCartoes.de && d <= diaDosCartoes.ate;
+        // O `ate` vazio quer dizer um só dia. A comparação é pelo texto da
+        // data, e vive em lib/datas.js com os seus testes.
+        return dentroDoPeriodo(valorData, diaDosCartoes.de, diaDosCartoes.ate);
       }
       return new Date(valorData) >= desde;
     };
@@ -1116,14 +1113,21 @@ const Payments = ({ language, translations }) => {
             <Input
               type="date"
               value={diaDosCartoes.de}
-              max={diaDosCartoes.ate}
-              onChange={(e) => setDiaDosCartoes((x) => ({ ...x, de: e.target.value }))}
+              onChange={(e) => {
+                // Escolher um dia mostra esse dia. Se havia um intervalo que
+                // comecava mais tarde, deixa de fazer sentido e cai.
+                const novo = e.target.value || hoje();
+                setDiaDosCartoes((x) => ({
+                  de: novo,
+                  ate: x.ate && x.ate >= novo ? x.ate : ''
+                }));
+              }}
               className="w-40"
               data-testid="cartoes-de"
             />
           </div>
           <div>
-            <Label className="text-xs">até (deixe igual para um só dia)</Label>
+            <Label className="text-xs">até (só para um intervalo)</Label>
             <Input
               type="date"
               value={diaDosCartoes.ate}
@@ -1136,16 +1140,14 @@ const Payments = ({ language, translations }) => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              const d = hoje();
-              setDiaDosCartoes({ de: d, ate: d });
-            }}
+            onClick={() => setDiaDosCartoes({ de: hoje(), ate: '' })}
             data-testid="cartoes-hoje"
           >
             Hoje
           </Button>
           <p className="text-xs text-gray-500 dark:text-gray-400 flex-1 min-w-[12rem]">
-            Muda só os três cartões do dia. O ano e o mês ficam como estão.
+            Escolha um dia — o "até" só se preenche para ver um intervalo.
+            Muda só os três cartões do dia; o ano e o mês ficam como estão.
           </p>
         </div>
 

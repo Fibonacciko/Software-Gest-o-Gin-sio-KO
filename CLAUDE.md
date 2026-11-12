@@ -125,15 +125,23 @@ resultado líquido, cada uma pelo ano, pelo mês e pelo dia.
 
 **Os cartões do ano e do mês nunca se mexem** — são as contas do ginásio e têm
 de dizer sempre a mesma coisa a quem as abre. **Os três cartões do dia seguem
-a data escolhida** no selector que está por cima deles: um dia certo, ou um
-intervalo quando se mexe nas duas datas ("quanto é que entrou no sábado
-passado?", "quanto é que gastei em outubro?"). Por omissão é hoje, e o botão
-**Hoje** traz de volta. A data que está a ser mostrada aparece por baixo do
-número de cada um dos três, para não haver dúvida de que aquilo não é hoje.
+a data escolhida** no selector que está por cima deles ("quanto é que entrou
+no sábado passado?", "quanto é que gastei em outubro?"). Por omissão é hoje, e
+o botão **Hoje** traz de volta. A data que está a ser mostrada aparece por
+baixo do número de cada um dos três, para não haver dúvida de que aquilo não é
+hoje.
+
+**Basta uma data.** O segundo campo — o "até" — nasce vazio e só se preenche
+para ver um intervalo; vazio quer dizer *um só dia*. Antes eram duas datas
+obrigatórias, e escolher o dia 5 deixava o "até" em hoje: pedia-se um sábado e
+vinha o intervalo "5 até hoje", sem nada a dizer porquê. Escolher um dia
+anterior ao fim do intervalo também deita fora o "até", que já não fazia
+sentido.
 
 A comparação é feita pelo **texto da data** (`'2026-10-18' >= '2026-10-01'`),
 nunca por `new Date(texto)`: em Portugal isso recua um dia e o sábado passava
-a sexta.
+a sexta. A regra vive em `dentroDoPeriodo()`, em
+`frontend/src/lib/datas.js`, com testes — inclusive o do "até" vazio.
 
 O colaborador não vê nada disto — não vê as contas do ginásio, por isso também
 não tem o selector.
