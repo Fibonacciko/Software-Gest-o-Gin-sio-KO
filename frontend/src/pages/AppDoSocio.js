@@ -469,6 +469,15 @@ const AppDoSocio = ({ language }) => {
       g.linhas.push(a);
       grupos.set(chave, g);
     });
+    // A capa é a primeira fotografia da galeria — a mesma com que o cartão
+    // abre na aplicação. Fica à parte do `photo_url`, que é a fotografia do
+    // Stock e vai para a janela de edição: se fossem o mesmo campo, abrir e
+    // guardar um artigo trocava-lhe a fotografia do Stock sem ninguém pedir.
+    grupos.forEach((g) => {
+      const primeira = (g.media || []).find((m) => m.kind !== 'video');
+      g.capa = primeira?.url || g.photo_url || null;
+    });
+
     // Pela ordem de hoje da aplicação, e não por alfabeto: é essa que
     // responde a "o que é que o sócio vê primeiro?". O que não chega à
     // montra — sem fotografia ou sem stock — fica no fim, por nome.
@@ -491,7 +500,7 @@ const AppDoSocio = ({ language }) => {
    * ninguém percebia porquê.
    */
   const estadoDoArtigo = (g) => {
-    if (!g.photo_url) return { ok: false, texto: txt.faltaFoto, cor: '#dc2626' };
+    if (!g.capa) return { ok: false, texto: txt.faltaFoto, cor: '#dc2626' };
     const stock = g.linhas.reduce((t, a) => t + (Number(a.quantity) || 0), 0);
     if (stock <= 0) return { ok: false, texto: txt.semStock, cor: '#dc2626' };
     return { ok: true, texto: txt.naApp, cor: '#16a34a' };
@@ -765,10 +774,10 @@ const AppDoSocio = ({ language }) => {
                 const noEcraInicial = estado.ok && posicao < 2 && posicao < montraDeHoje.length;
                 return (
                   <Card key={g.chave} className="card-shadow overflow-hidden" data-testid={`artigo-${g.chave}`}>
-                    {g.photo_url ? (
+                    {g.capa ? (
                       <div className="relative">
                         <img
-                          src={enderecoDaImagem(g.photo_url)}
+                          src={enderecoDaImagem(g.capa)}
                           alt={g.name}
                           className="w-full h-40 object-cover"
                         />

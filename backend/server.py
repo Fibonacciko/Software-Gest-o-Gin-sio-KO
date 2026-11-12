@@ -4792,23 +4792,38 @@ async def montra_para_a_app():
             quantity=int(a.get("quantity") or 0),
         ))
 
-    # So entra na montra o que tem fotografia; sem ela o cartao fica vazio
-    montra = [g for g in grupos.values() if g["photo_url"]]
-    for g in montra:
+    # ------------------------------------------------- a galeria manda aqui
+    #
+    # **A montra e a galeria.** A primeira fotografia que se carregou na
+    # janela da Loja e a que lidera o cartao, e as outras deslizam a seguir,
+    # pela ordem em que la estao.
+    #
+    # A `photo_url` guardada e **a fotografia do Stock**: existe para a equipa
+    # reconhecer o artigo de relance ao balcao, e basta-lhe uma. Nao e ela que
+    # manda no que o socio ve -- por decisao do dono. Em producao havia nove
+    # artigos em dezassete em que as duas eram ficheiros diferentes, porque
+    # foram carregadas em alturas diferentes; a galeria e a que foi escolhida
+    # para a montra, e e essa que vale.
+    #
+    # Um artigo sem galeria nenhuma (as fichas antigas) fica com a do Stock
+    # como galeria de um so item, para continuar a aparecer. E um que so
+    # tenha videos na galeria recebe-a a frente, que a lista precisa de uma
+    # imagem parada.
+    montra = []
+    for g in grupos.values():
+        primeira = next((m for m in g["media"] if m.kind == "photo"), None)
+        if primeira:
+            g["photo_url"] = primeira.url
+        elif g["photo_url"]:
+            g["media"].insert(0, MediaDoArtigo(kind="photo", url=g["photo_url"]))
+        else:
+            # Sem fotografia nenhuma o cartao ficava vazio: nao entra
+            continue
         # Os tamanhos por ordem de vestuario, e nao alfabetica: S antes de M
         g["sizes"].sort(key=lambda t: ordem_do_tamanho(t.size))
         g.pop("vistos", None)
-        # A principal e **sempre a primeira da galeria**. E a que o Stock e a
-        # gestao mostram, e e com ela que o cartao tem de abrir na aplicacao;
-        # com o cartao a deslizar, se a galeria comecasse noutra fotografia o
-        # socio via uma imagem e quem esta ao balcao via outra. Em producao
-        # havia nove artigos em dezassete cuja principal nem sequer estava na
-        # galeria -- foram carregadas em alturas diferentes.
-        #
-        # Isto cobre tambem as fichas antigas, que nao tem galeria nenhuma: a
-        # principal passa a ser a galeria toda.
-        g["media"] = [m for m in g["media"] if m.url != g["photo_url"]]
-        g["media"].insert(0, MediaDoArtigo(kind="photo", url=g["photo_url"]))
+        montra.append(g)
+
     montra.sort(key=lambda g: (g["name"].lower(), (g["color"] or "").lower()))
     # A ordem alfabetica e so o arranjo de base: a lista roda um lugar por dia
     # para que nao sejam sempre os mesmos dois a abrir o ecra de entrada.

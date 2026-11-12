@@ -600,46 +600,46 @@ def test_sem_galeria_vale_a_fotografia_principal(cliente, admin):
     assert artigo["media"] == [{"kind": "photo", "url": "/api/uploads/antiga.jpg"}]
 
 
-def test_a_principal_e_sempre_a_primeira_da_galeria(cliente, admin):
-    """O cartao desliza, e tem de abrir na mesma foto que o Stock mostra.
+def test_a_galeria_manda_na_montra_e_nao_a_fotografia_do_stock(cliente, admin):
+    """A fotografia do Stock e para a equipa reconhecer o artigo ao balcao.
 
-    Em producao havia nove artigos em dezassete cuja principal nem estava na
-    galeria: foram carregadas em alturas diferentes.
+    O que o socio ve e a galeria, pela ordem em que foi carregada na janela
+    da Loja. Em producao havia nove artigos em dezassete em que as duas eram
+    ficheiros diferentes: foram carregadas em alturas diferentes.
     """
     cliente.post("/api/inventory", headers=admin, json={
         "name": "Hoodie", "category": "clothing", "color": "Bordeaux",
         "quantity": 4, "price": 40.0,
-        "photo_url": "/api/uploads/principal.jpg",
+        "photo_url": "/api/uploads/stock.jpg",
         "media": [
+            {"kind": "photo", "url": "/api/uploads/frente.jpg"},
             {"kind": "photo", "url": "/api/uploads/costas.jpg"},
-            {"kind": "photo", "url": "/api/uploads/detalhe.jpg"},
         ],
     })
 
     artigo = cliente.get("/api/mobile/shop").json()[0]
     assert [m["url"] for m in artigo["media"]] == [
-        "/api/uploads/principal.jpg",
+        "/api/uploads/frente.jpg",
         "/api/uploads/costas.jpg",
-        "/api/uploads/detalhe.jpg",
     ]
+    # E a lista da montra abre na mesma fotografia em que o cartao desliza
+    assert artigo["photo_url"] == "/api/uploads/frente.jpg"
 
 
-def test_a_principal_nao_se_repete_na_galeria(cliente, admin):
-    """Ja la estando, sobe para a frente em vez de aparecer duas vezes."""
+def test_so_com_video_na_galeria_a_do_stock_entra_a_frente(cliente, admin):
+    """A lista precisa de uma imagem parada para o cartao nao ficar vazio."""
     cliente.post("/api/inventory", headers=admin, json={
-        "name": "Capacete", "category": "equipment", "color": "Branco",
-        "quantity": 4, "price": 40.0,
-        "photo_url": "/api/uploads/b.jpg",
-        "media": [
-            {"kind": "photo", "url": "/api/uploads/a.jpg"},
-            {"kind": "photo", "url": "/api/uploads/b.jpg"},
-        ],
+        "name": "Luvas", "category": "equipment", "color": "Preto",
+        "quantity": 4, "price": 65.0,
+        "photo_url": "/api/uploads/stock.jpg",
+        "media": [{"kind": "video", "url": "/api/uploads/luvas.mp4"}],
     })
 
     artigo = cliente.get("/api/mobile/shop").json()[0]
+    assert artigo["photo_url"] == "/api/uploads/stock.jpg"
     assert [m["url"] for m in artigo["media"]] == [
-        "/api/uploads/b.jpg",
-        "/api/uploads/a.jpg",
+        "/api/uploads/stock.jpg",
+        "/api/uploads/luvas.mp4",
     ]
 
 

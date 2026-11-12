@@ -261,16 +261,23 @@ Um artigo mostra-se por mais do que um lado — a frente, as costas, um detalhe 
 e um vídeo de dez segundos diz de um par de luvas o que três fotografias não
 dizem. A galeria é o campo `media` (`[{kind: "photo"|"video", url}]`).
 
-- A **`photo_url` continua a ser a principal** e é a que aparece na lista da
-  montra e no Stock. Ficou à parte, e não como "a primeira da lista", porque o
-  Stock, as vendas e as 47 fichas que já existiam só conhecem esse campo.
-- **O servidor põe-na sempre à frente da galeria**, e tira-a de onde estivesse
-  para não aparecer duas vezes. Não se confia em que a ficha esteja arrumada:
-  em produção havia **nove artigos em dezassete** cuja principal nem sequer
-  estava na galeria — foram carregadas em alturas diferentes. Com o cartão a
-  deslizar isso dava uma imagem ao sócio e outra a quem estava ao balcão.
-- Uma ficha **sem galeria** (as que já lá estavam) fica com a principal como
-  galeria de um só item, pela mesma regra. Não foi preciso migrar nada.
+- **A galeria manda na montra**, e a `photo_url` guardada é a **fotografia do
+  Stock**: existe para a equipa reconhecer o artigo de relance ao balcão, e
+  basta-lhe uma — por decisão do dono, não é ela que manda no que o sócio vê.
+  Em produção havia **nove artigos em dezassete** em que as duas eram ficheiros
+  diferentes, porque foram carregadas em alturas diferentes. A galeria é a que
+  foi escolhida para a montra, e é essa que vale.
+- **A primeira fotografia da galeria lidera o cartão**, e é também a que o
+  `GET /api/mobile/shop` devolve como `photo_url`: assim a lista e o cartão a
+  deslizar abrem na mesma imagem. Para trocar a que lidera, troca-se a ordem
+  na janela da Loja.
+- Na gestão, a Loja mostra essa mesma **capa** (a primeira da galeria), mas a
+  janela de edição continua a guardar a fotografia do Stock no seu campo: se
+  fossem o mesmo, abrir e guardar um artigo trocava-lhe a do Stock sem
+  ninguém pedir.
+- Uma ficha **sem galeria** (as que já lá estavam) fica com a do Stock como
+  galeria de um só item. Uma galeria **só com vídeos** recebe-a à frente: a
+  lista precisa de uma imagem parada. Não foi preciso migrar nada.
 - A galeria é **do produto, não do tamanho**: junta-se a dos tamanhos todos
   daquela cor, sem repetir o mesmo ficheiro.
 - Os **vídeos ficam alojados aqui**, ao contrário dos da Multimédia, que são
