@@ -8,6 +8,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
+import AulasDeHoje from '../components/AulasDeHoje';
 import { 
   Users, 
   UserCheck, 
@@ -694,7 +695,10 @@ const Dashboard = ({ language, translations }) => {
           aparece agora em cada check-in e em cada presença de hoje, e há
           um filtro próprio nos Membros. O que ficou é o que ainda não se
           vê noutro lado: aniversários e seguros a acabar em breve. */}
-      {(alerts.birthdays_today.length > 0 || alerts.birthdays_upcoming.length > 0 || alerts.insurance_upcoming.length > 0 || pedidosDePlano.length > 0) && (
+      {/* O seguro saiu daqui por inteiro: vê-se em cada check-in, em cada
+          presença de hoje, e os Membros têm o filtro "Seguro por regularizar".
+          Ficam os avisos que não se veem noutro lado. */}
+      {(alerts.birthdays_today.length > 0 || alerts.birthdays_upcoming.length > 0 || pedidosDePlano.length > 0) && (
         <div className="space-y-3">
           {alerts.birthdays_today.length > 0 && (
             <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #fff7ed, #ffedd5)', border: '1px solid #fdba74' }}>
@@ -738,13 +742,11 @@ const Dashboard = ({ language, translations }) => {
               </div>
             </div>
           )}
-          {alerts.insurance_upcoming.length > 0 && (
-            <div className="rounded-lg p-3 text-sm" style={{ background: 'var(--gradient-card-bg)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}>
-              📋 Seguros a renovar em breve: {alerts.insurance_upcoming.map((i) => `${i.name} (${new Date(i.date).toLocaleDateString('pt-PT')})`).join(', ')}
-            </div>
-          )}
         </div>
       )}
+
+      {/* O que o dia tem, e quanta gente esperar em cada aula */}
+      <AulasDeHoje />
 
       {/* Quick Check-in Section */}
       <Card 

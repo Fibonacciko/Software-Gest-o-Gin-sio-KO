@@ -53,6 +53,19 @@ const Payments = ({ language, translations }) => {
   const [trials, setTrials] = useState([]);
   const [despesasFiltradas, setDespesasFiltradas] = useState([]);
   const [despesaAEditar, setDespesaAEditar] = useState(null);
+  /**
+   * O dia (ou o intervalo) dos cartões diários.
+   *
+   * Os cartões anual e mensal não se mexem: são as contas do ginásio e têm
+   * de dizer sempre a mesma coisa. Só o cartão do dia é que anda, para se
+   * poder perguntar "quanto é que entrou no sábado passado?".
+   */
+  const [diaDosCartoes, setDiaDosCartoes] = useState(() => {
+    const d = new Date();
+    const hoje = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return { de: hoje, ate: hoje };
+  });
+
   const [despesasAbertas, setDespesasAbertas] = useState(false);
   const [expenseDateFilter, setExpenseDateFilter] = useState('thisYear');
   const [expenseCategoryFilter, setExpenseCategoryFilter] = useState('all');
@@ -159,6 +172,7 @@ const Payments = ({ language, translations }) => {
       expenseDay: 'Despesa (diária)',
       netYear: 'Resultado líquido (anual)',
       netMonth: 'Resultado líquido (mensal)',
+      netDay: 'Resultado líquido (diário)',
       today: 'hoje',
       expenses: 'Despesa',
       sinceAlways: 'desde sempre',
@@ -269,6 +283,7 @@ const Payments = ({ language, translations }) => {
       expenseDay: 'Expenses (day)',
       netYear: 'Net result (year)',
       netMonth: 'Net result (month)',
+      netDay: 'Net result (day)',
       today: 'today',
       expenses: 'Expenses',
       sinceAlways: 'all time',
@@ -675,6 +690,20 @@ const Payments = ({ language, translations }) => {
     }
   };
 
+  /** O que os cartões do dia dizem por baixo do número. */
+  const rotuloDoDia = () => {
+    const pt = (iso) => {
+      const [a, m, d] = String(iso).split('-');
+      return `${d}/${m}/${a}`;
+    };
+    if (diaDosCartoes.de === diaDosCartoes.ate) {
+      const d = new Date();
+      const hoje = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return diaDosCartoes.de === hoje ? 'hoje' : pt(diaDosCartoes.de);
+    }
+    return `${pt(diaDosCartoes.de)} a ${pt(diaDosCartoes.ate)}`;
+  };
+
   const getPaymentStats = () => {
     const pagos = payments.filter((p) => p.status === 'paid');
     const seguroFixo = parseFloat(INSURANCE_AMOUNT);
@@ -697,13 +726,13 @@ const Payments = ({ language, translations }) => {
     const inicioDoMes = maisTarde(new Date(hoje.getFullYear(), hoje.getMonth(), 1), corte);
 
     const noPeriodo = (valorData, desde) => {
-      const d = new Date(valorData);
-      if (desde === 'hoje') {
-        return d.getFullYear() === hoje.getFullYear()
-          && d.getMonth() === hoje.getMonth()
-          && d.getDate() === hoje.getDate();
+      if (desde === 'dia') {
+        // A data compara-se pelo texto, nunca por `new Date(texto)`: em
+        // Portugal isso recua um dia e o sábado passava a sexta.
+        const d = String(valorData).slice(0, 10);
+        return d >= diaDosCartoes.de && d <= diaDosCartoes.ate;
       }
-      return d >= desde;
+      return new Date(valorData) >= desde;
     };
 
     const somar = (lista, campoData, campoValor, desde) =>
@@ -729,11 +758,11 @@ const Payments = ({ language, translations }) => {
 
     const faturacaoAnual = faturacao(inicioDoAno);
     const faturacaoMensal = faturacao(inicioDoMes);
-    const faturacaoDiaria = faturacao('hoje');
+    const faturacaoDiaria = faturacao('dia');
 
     const despesaAnual = despesa(inicioDoAno);
     const despesaMensal = despesa(inicioDoMes);
-    const despesaDiaria = despesa('hoje');
+    const despesaDiaria = despesa('dia');
 
     return {
       ano: hoje.getFullYear(),
@@ -746,6 +775,7 @@ const Payments = ({ language, translations }) => {
       // RESULTADO LÍQUIDO = faturação menos despesa, no mesmo período
       liquidoAnual: faturacaoAnual - despesaAnual,
       liquidoMensal: faturacaoMensal - despesaMensal,
+      liquidoDiario: faturacaoDiaria - despesaDiaria,
       // Detalhe, para quem quiser perceber de onde vem a faturação
       quotasAnual: pagos
         .filter((p) => noPeriodo(dataDasContas(p), inicioDoAno))
@@ -1078,16 +1108,64 @@ const Payments = ({ language, translations }) => {
 
       {/* Faturação, despesa e resultado líquido */}
       {isAdmin() ? (
+        <>
+        {/* O dia dos cartões diários. Os anuais e mensais não se mexem: são
+            as contas do ginásio e têm de dizer sempre a mesma coisa. */}
+        <div
+          className="flex flex-wrap items-end gap-3 p-4 rounded-lg"
+          style={{ background: 'var(--gradient-card-bg)', border: '1px solid var(--border-light)' }}
+          data-testid="periodo-dos-cartoes"
+        >
+          <div>
+            <Label className="text-xs">Dia</Label>
+            <Input
+              type="date"
+              value={diaDosCartoes.de}
+              max={diaDosCartoes.ate}
+              onChange={(e) => setDiaDosCartoes((x) => ({ ...x, de: e.target.value }))}
+              className="w-40"
+              data-testid="cartoes-de"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">até (deixe igual para um só dia)</Label>
+            <Input
+              type="date"
+              value={diaDosCartoes.ate}
+              min={diaDosCartoes.de}
+              onChange={(e) => setDiaDosCartoes((x) => ({ ...x, ate: e.target.value }))}
+              className="w-40"
+              data-testid="cartoes-ate"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const d = new Date();
+              const hoje = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              setDiaDosCartoes({ de: hoje, ate: hoje });
+            }}
+            data-testid="cartoes-hoje"
+          >
+            Hoje
+          </Button>
+          <p className="text-xs text-gray-500 dark:text-gray-400 flex-1 min-w-[12rem]">
+            Muda só os três cartões do dia. O ano e o mês ficam como estão.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             { titulo: t[language].billingYear, valor: stats.faturacaoAnual, nota: String(stats.ano), cor: 'bg-green-600', icone: DollarSign },
             { titulo: t[language].billingMonth, valor: stats.faturacaoMensal, nota: nomeDoMes(), cor: 'bg-green-500', icone: TrendingUp },
-            { titulo: t[language].billingDay, valor: stats.faturacaoDiaria, nota: t[language].today, cor: 'bg-emerald-500', icone: Calendar },
+            { titulo: t[language].billingDay, valor: stats.faturacaoDiaria, nota: rotuloDoDia(), cor: 'bg-emerald-500', icone: Calendar },
             { titulo: t[language].expenseYear, valor: stats.despesaAnual, nota: String(stats.ano), cor: 'bg-red-600', icone: TrendingDown },
             { titulo: t[language].expenseMonth, valor: stats.despesaMensal, nota: nomeDoMes(), cor: 'bg-red-500', icone: TrendingDown },
-            { titulo: t[language].expenseDay, valor: stats.despesaDiaria, nota: t[language].today, cor: 'bg-orange-500', icone: CreditCard },
+            { titulo: t[language].expenseDay, valor: stats.despesaDiaria, nota: rotuloDoDia(), cor: 'bg-orange-500', icone: CreditCard },
             { titulo: t[language].netYear, valor: stats.liquidoAnual, nota: String(stats.ano), liquido: true, icone: DollarSign },
-            { titulo: t[language].netMonth, valor: stats.liquidoMensal, nota: nomeDoMes(), liquido: true, icone: DollarSign }
+            { titulo: t[language].netMonth, valor: stats.liquidoMensal, nota: nomeDoMes(), liquido: true, icone: DollarSign },
+            { titulo: t[language].netDay, valor: stats.liquidoDiario, nota: rotuloDoDia(), liquido: true, icone: DollarSign }
           ].map((c) => {
             const Icone = c.icone;
             const negativo = c.liquido && c.valor < 0;
@@ -1143,6 +1221,7 @@ const Payments = ({ language, translations }) => {
             </CardContent>
           </Card>
         </div>
+        </>
       ) : (
         /* O colaborador não vê contas do ginásio: só os botões de registar */
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

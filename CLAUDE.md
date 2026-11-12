@@ -27,11 +27,14 @@ da validade**. Sem pagamento registado, fica Inativo.
 
 - **Anual, 20 €.** Renova por 365 dias a partir da data de pagamento.
 - A **validade da inscrição** (`expiry_date`) acompanha sempre o seguro.
-- O painel avisa **30 dias antes** ("Seguros a renovar em breve"), pela validade
-  real da ficha. O aviso grande de **seguro já expirado saiu do painel**: o
-  estado do seguro aparece agora em cada check-in e em cada presença de hoje,
-  e os Membros têm o filtro "Seguro por regularizar". Estava a dizer três
-  vezes a mesma coisa.
+- **O seguro saiu do Painel por inteiro.** Saíram os dois avisos: o do seguro
+  já expirado e o dos que renovavam dentro de 30 dias ("Seguros a renovar em
+  breve"). O estado do seguro vê-se agora em cada check-in, em cada presença
+  de hoje, e os Membros têm o filtro "Seguro por regularizar" — três sítios
+  onde ele aparece ao lado do nome de quem está ali à frente. Um aviso no topo
+  do Painel dizia a mesma coisa uma quarta vez, e a toda a hora, a quem não
+  podia fazer nada naquele momento. No Painel ficaram os avisos que não se
+  veem em mais lado nenhum: os aniversários e os pedidos de plano.
 - No **Painel**, a quota e o seguro aparecem sempre juntos: na ficha que abre
   depois do check-in (uma linha cada, com o selo no fim, alinhado com as
   modalidades) e em cada cartão das **Presenças de Hoje** ("Quota ativa",
@@ -111,9 +114,29 @@ de pixeis de distância. Pela mesma razão, essa lista tem altura limitada.
 Os filtros são aplicados pelo servidor (`GET /api/expenses` aceita
 `start_date`, `end_date` e `category`), não no ecrã.
 
-**Os cartões de Despesa não seguem este filtro**: somam sempre o ano, o mês e o
-dia inteiros. São duas leituras diferentes de propósito — filtrar a consulta não
-pode mexer nas contas do ginásio.
+**Os cartões de Despesa não seguem este filtro**: a consulta das despesas e os
+cartões das contas são duas leituras diferentes de propósito — filtrar a
+consulta não pode mexer nas contas do ginásio.
+
+### O dia dos cartões das Finanças
+
+Os nove cartões do topo das Finanças são três linhas: faturação, despesa e
+resultado líquido, cada uma pelo ano, pelo mês e pelo dia.
+
+**Os cartões do ano e do mês nunca se mexem** — são as contas do ginásio e têm
+de dizer sempre a mesma coisa a quem as abre. **Os três cartões do dia seguem
+a data escolhida** no selector que está por cima deles: um dia certo, ou um
+intervalo quando se mexe nas duas datas ("quanto é que entrou no sábado
+passado?", "quanto é que gastei em outubro?"). Por omissão é hoje, e o botão
+**Hoje** traz de volta. A data que está a ser mostrada aparece por baixo do
+número de cada um dos três, para não haver dúvida de que aquilo não é hoje.
+
+A comparação é feita pelo **texto da data** (`'2026-10-18' >= '2026-10-01'`),
+nunca por `new Date(texto)`: em Portugal isso recua um dia e o sábado passava
+a sexta.
+
+O colaborador não vê nada disto — não vê as contas do ginásio, por isso também
+não tem o selector.
 
 ### Presenças e aulas experimentais
 
@@ -254,6 +277,14 @@ todos.
 
 Vê-se em **Aulas**, na barra lateral: em cima o horário, em baixo os próximos
 catorze dias já com as inscrições.
+
+**As aulas de hoje também estão no Painel** (`AulasDeHoje.jsx`), com quantos
+se inscreveram em cada uma, e cada aula abre a lista de nomes — Veio, Inscrito,
+Em espera. Está lá porque é a primeira coisa que quem abre o balcão de manhã
+precisa de saber: o que o dia tem e quanta gente esperar. **O colaborador vê
+este cartão** — é ele que está ao balcão. A página Aulas continua a ser onde
+se mexe no horário. Sem aulas na grelha o cartão não aparece: um cartão vazio
+só ocupa espaço.
 
 - Só o **administrador** mexe na grelha (é o horário do ginásio). O
   **colaborador cancela uma aula pontual** — é ele que atende o telefone do
