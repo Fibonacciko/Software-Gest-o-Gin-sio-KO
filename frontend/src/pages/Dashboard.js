@@ -642,16 +642,16 @@ const Dashboard = ({ language, translations }) => {
           color="ko-success"
         />
         <StatCard
-          title={t[language].todayAttendance}
-          value={todayAttendance.length}
-          icon={Calendar}
-          color="ko-golden"
-        />
-        <StatCard
           title={t[language].monthAttendance}
           value={presencasMes.total}
           icon={Activity}
           color="ko-primary"
+        />
+        <StatCard
+          title={t[language].todayAttendance}
+          value={todayAttendance.length}
+          icon={Calendar}
+          color="ko-golden"
         />
         {isAdmin() && (
         <Card
