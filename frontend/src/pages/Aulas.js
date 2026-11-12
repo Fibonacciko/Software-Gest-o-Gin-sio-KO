@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { CalendarDays, Plus, Edit, Trash2, Users, Ban, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { diaLocal } from '../lib/datas';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -26,10 +27,6 @@ const VAZIA = {
   capacity: '20',
   is_active: true
 };
-
-/** A data de hoje nos componentes locais: `toISOString()` recua um dia cá. */
-const diaLocal = (d) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 const dataPt = (iso) =>
   new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-PT', {

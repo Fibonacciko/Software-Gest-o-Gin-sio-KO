@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from './ui/button';
+import { diaLocal } from '../lib/datas';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -75,10 +76,7 @@ const MemberAttendanceCalendar = ({ memberId, language = 'pt' }) => {
     return activity ? activity.name : 'Unknown';
   };
 
-  // toISOString converte para UTC e, em Portugal, atira o dia para tras:
-  // os dias apareciam marcados um dia a frente do que realmente aconteceu
-  const dataLocal = (d) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const dataLocal = diaLocal;
 
   const getAttendanceForDate = (date) => {
     const dateStr = dataLocal(date);

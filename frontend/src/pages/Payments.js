@@ -29,6 +29,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { corresponde, filtrarEOrdenar } from '../lib/pesquisa';
 import { CATEGORIAS_DE_DESPESA, nomeDaCategoria } from '../lib/categorias';
 import { INICIO_DAS_CONTAS, dataDasContas } from '../lib/estatisticas';
+import { diaLocal, hoje, primeiroDiaDoMes, ultimoDiaDoMes } from '../lib/datas';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -61,9 +62,8 @@ const Payments = ({ language, translations }) => {
    * poder perguntar "quanto é que entrou no sábado passado?".
    */
   const [diaDosCartoes, setDiaDosCartoes] = useState(() => {
-    const d = new Date();
-    const hoje = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return { de: hoje, ate: hoje };
+    const d = hoje();
+    return { de: d, ate: d };
   });
 
   const [despesasAbertas, setDespesasAbertas] = useState(false);
@@ -79,7 +79,7 @@ const Payments = ({ language, translations }) => {
     category: ''
   });
 
-  const todayISO = () => new Date().toISOString().split('T')[0];
+  const todayISO = hoje;
 
   const nomeDoMes = (quando = new Date()) => {
     const texto = quando.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
@@ -467,16 +467,13 @@ const Payments = ({ language, translations }) => {
       // Date filters
       const now = new Date();
       if (dateFilter === 'thisMonth') {
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        params.append('start_date', startOfMonth.toISOString().split('T')[0]);
+        params.append('start_date', primeiroDiaDoMes(now));
       } else if (dateFilter === 'lastMonth') {
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-        params.append('start_date', startOfLastMonth.toISOString().split('T')[0]);
-        params.append('end_date', endOfLastMonth.toISOString().split('T')[0]);
+        const mesPassado = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        params.append('start_date', primeiroDiaDoMes(mesPassado));
+        params.append('end_date', ultimoDiaDoMes(mesPassado));
       } else if (dateFilter === 'thisYear') {
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-        params.append('start_date', startOfYear.toISOString().split('T')[0]);
+        params.append('start_date', diaLocal(new Date(now.getFullYear(), 0, 1)));
       }
       
       // Dois pedidos, e não um por cada pagamento: com mil pagamentos, o
@@ -697,9 +694,7 @@ const Payments = ({ language, translations }) => {
       return `${d}/${m}/${a}`;
     };
     if (diaDosCartoes.de === diaDosCartoes.ate) {
-      const d = new Date();
-      const hoje = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      return diaDosCartoes.de === hoje ? 'hoje' : pt(diaDosCartoes.de);
+      return diaDosCartoes.de === hoje() ? 'hoje' : pt(diaDosCartoes.de);
     }
     return `${pt(diaDosCartoes.de)} a ${pt(diaDosCartoes.ate)}`;
   };
@@ -806,7 +801,7 @@ const Payments = ({ language, translations }) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pagamentos_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `pagamentos_${hoje()}.csv`;
     a.click();
   };
 
@@ -1142,9 +1137,8 @@ const Payments = ({ language, translations }) => {
             type="button"
             variant="outline"
             onClick={() => {
-              const d = new Date();
-              const hoje = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-              setDiaDosCartoes({ de: hoje, ate: hoje });
+              const d = hoje();
+              setDiaDosCartoes({ de: d, ate: d });
             }}
             data-testid="cartoes-hoje"
           >

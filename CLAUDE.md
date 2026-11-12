@@ -444,7 +444,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 263 testes e demoram 12 segundos.
+backend** — são 270 testes e demoram 13 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -452,8 +452,8 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios e a pesquisa têm testes próprios, no site (121 testes,
-3 segundos):
+As contas dos Relatórios e a pesquisa têm testes próprios, no site (133 testes,
+4 segundos):
 
 ```bash
 cd frontend && yarn test --watchAll=false
@@ -660,14 +660,30 @@ arranque de novo — não confie no `--reload`.
 
 **Datas e fusos horários.** As datas são guardadas com hora
 (`2026-09-25T00:00:00+00:00`). Em Portugal, `toISOString()` sobre uma data local
-**recua um dia**. Use sempre os componentes locais:
+**recua um dia**.
 
-```js
-`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-```
+**Todas as datas do site passam por `frontend/src/lib/datas.js`** —
+`diaLocal()`, `hoje()`, `diaSeguinte()`, `primeiroDiaDoMes()`,
+`ultimoDiaDoMes()`, com testes. Nunca escreva a conversão à mão, e nunca use
+`toISOString()` para tirar o dia de uma data.
+
+A fórmula certa estava copiada à mão em oito sítios e a errada noutros oito.
+O pior era o filtro de datas da lista de pagamentos: `new Date(ano, mês, 1)`
+é 1 de julho à meia-noite em Lisboa, que em UTC é **30 de junho às 23:00**, e
+por isso "este mês" começava no último dia do mês anterior — todos os dias,
+durante o horário de verão inteiro, e sem dar erro nenhum.
 
 Nas consultas ao servidor, o limite superior de um intervalo tem de ser o **dia
 seguinte** (`$lt`), senão exclui o próprio dia.
+
+**Os emoji rebentam a consola do Windows.** O `cmd` é cp1252: escrever `🚀`
+ou `→` num `print()` ou no registo levanta `UnicodeEncodeError`. Isto já
+matou o arranque do backend inteiro (a primeira linha do `startup_db` tinha
+um foguete) e já parou o carregador do horário a meio, com metade das aulas
+criadas. Em Linux passa, por isso só se vê na máquina do dono. Nas mensagens
+não ponha nada acima do codepoint 255; quando o texto vem de fora (os nomes
+das modalidades em produção têm emoji), reconfigure o `stdout` para utf-8 com
+`errors="replace"`.
 
 **As notas da semana só contam dias úteis.** O ginásio fecha ao fim de semana,
 e dizer que o domingo é o "dia mais calmo" não informa ninguém. As notas do
@@ -698,11 +714,40 @@ dos ecrãs e com testes. As datas **nunca** passam por `new Date(texto)`: lê-se
 ano/mês/dia do próprio texto e comparam-se como números (`20261005`). Foi assim
 que se resolveu o último dia do período ficar de fora no horário de verão.
 
-**Cache do painel.** Os números do painel ficam em cache 5 minutos. Ao alterar
-dados que os afetem, chame `BusinessCache.invalidate_member_cache()`.
+**Cache do painel.** Os números do painel ficam em cache 5 minutos (Redis em
+produção, memória em desenvolvimento). Ao alterar dados que os afetem, chame
+`BusinessCache.invalidate_member_cache()`. Já lá está em: criar, corrigir e
+apagar um sócio; registar, corrigir e apagar uma presença; os pagamentos (pelo
+`recalcular_validades`); e a fotografia do sócio. **Há testes** —
+`test_arranque.py` faz um check-in e confere o contador logo a seguir.
+
+**O arranque: dois `@app.on_event("startup")`, não um.** O `criar_indices` e o
+`startup_db` têm cada um o seu. Se precisar de outro arranque, **dê-lhe o seu
+próprio decorador** — não meta a função nova por baixo de um que já existe.
+
+Foi assim que o `startup_db` esteve semanas sem correr: uma função nova entrou
+*entre* o decorador e ela e ficou com ele. Não houve erro nenhum, só uma coisa
+que deixou de acontecer em silêncio — numa base de dados já cheia não se nota,
+mas numa vazia ninguém conseguiria entrar, porque o administrador nunca chegava
+a ser criado.
 
 **`PUT /api/members/{id}` substitui a ficha toda.** Quem chamar tem de reenviar
 todos os campos, ou perde-os.
+
+**Não há por onde suspender um sócio.** O `MemberCreate` (que é o corpo do
+`PUT /api/members/{id}`) não tem campo `status`, e não existe rota nenhuma que
+o mude. A regra "uma suspensão manual manda sempre" é respeitada em todo o
+lado — nos filtros, no painel, no check-in, na aplicação — mas o campo só lá
+está nas fichas antigas, vindas do sistema anterior. Nos Membros, "Suspenso"
+é uma opção do filtro, não uma ação. Falta decidir com o dono onde entraria o
+botão e quem o pode carregar.
+
+**Apagar um sócio deixa o rasto dele para trás.** As presenças, as inscrições
+em aulas, as avaliações, os planos e os pagamentos continuam na base de dados
+sem dono. As presenças órfãs continuam a contar nas estatísticas. Não se mexeu
+nisto de propósito: apagar os pagamentos mudaria as contas do ginásio, e isso
+é decisão do dono. O nome de quem se inscreveu numa aula fica **gravado na
+própria inscrição**, por isso uma inscrição órfã mostra o nome e não rebenta.
 
 **Acentos no terminal.** Procurar texto com acentos em ficheiros compilados
 falha por causa da codificação. Verifique pelo navegador, não por `grep`.

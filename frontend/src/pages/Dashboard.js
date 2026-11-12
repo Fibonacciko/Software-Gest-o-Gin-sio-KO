@@ -29,6 +29,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { seguroValido } from '../lib/estatisticas';
+import { diaLocal, diaSeguinte, hoje } from '../lib/datas';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -183,13 +184,11 @@ const Dashboard = ({ language, translations }) => {
       setActivities(activitiesResponse.data);
       
       // Fetch today's attendance
-      const today = new Date().toISOString().split('T')[0];
-      // Use tomorrow as the upper bound because check_in_date is stored as a full
-      // ISO datetime (YYYY-MM-DDT00:00:00+00:00); comparing with end_date=today as a
-      // plain date string would exclude every record via string comparison.
-      const tomorrowDate = new Date();
-      tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-      const tomorrow = tomorrowDate.toISOString().split('T')[0];
+      // O limite de cima tem de ser o dia seguinte: o check_in_date e
+      // gravado com hora (2026-11-12T00:00:00+00:00) e um end_date igual
+      // ao proprio dia excluia tudo na comparacao de texto.
+      const today = hoje();
+      const tomorrow = diaSeguinte();
       // Um pedido para as presenças e outro para os sócios, em vez de um
       // pedido por cada presença
       const [attendanceResponse, membrosResponse] = await Promise.all([
@@ -230,8 +229,7 @@ const Dashboard = ({ language, translations }) => {
   const carregarPresencasDoMes = async () => {
     try {
       const hoje = new Date();
-      const iso = (d) =>
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const iso = diaLocal;
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       // Primeiro dia do mes seguinte: evita datas invalidas como 31 de setembro
       const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
@@ -246,7 +244,7 @@ const Dashboard = ({ language, translations }) => {
   const carregarExperimentaisHoje = async () => {
     try {
       const hoje = new Date();
-      const iso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+      const iso = diaLocal(hoje);
       const response = await axios.get(`${API}/trials?start_date=${iso}&end_date=${iso}`);
       setExperimentaisHoje(response.data.length);
     } catch (error) {

@@ -5,14 +5,9 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { CalendarDays, Users } from 'lucide-react';
+import { hoje } from '../lib/datas';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
-/** A data de hoje nos componentes locais: `toISOString()` recua um dia cá. */
-const hojeLocal = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
 
 const ESTADOS = {
   attended: { texto: 'Veio', cor: '#16a34a' },
@@ -35,7 +30,7 @@ const AulasDeHoje = () => {
 
   const carregar = useCallback(async () => {
     try {
-      const dia = hojeLocal();
+      const dia = hoje();
       const r = await axios.get(`${API}/classes`, {
         params: { start_date: dia, end_date: dia }
       });

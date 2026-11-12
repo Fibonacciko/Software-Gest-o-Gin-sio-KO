@@ -1125,13 +1125,16 @@ async def update_existing_members_with_numbers():
         print(f"Updated member {member['name']} with number {next_number}")
 
 async def create_default_motivational_notes():
-    """Create default sarcastic motivational notes if they don't exist"""
-    existing_notes = await db.motivational_notes.count_documents({})
-    if existing_notes > 0:
-        # Update existing notes to new sarcastic version
-        await db.motivational_notes.delete_many({})  # Clear old notes
-        print("Cleared old motivational notes for sarcastic update")
-    
+    """As notas de origem, so numa base de dados que ainda nao as tenha.
+
+    Isto apagava-as todas e repunha as de origem **a cada arranque**. Enquanto
+    ninguem as mudasse nao se via diferenca; a primeira nota escrita a mao
+    desaparecia no arranque seguinte, sem aviso e sem forma de a recuperar.
+    Semear e semear: se ja la esta alguma coisa, nao se mexe.
+    """
+    if await db.motivational_notes.count_documents({}) > 0:
+        return
+
     sarcastic_notes = [
         {
             "workout_count_min": 1, "workout_count_max": 5, "level_name": "iniciantes",
@@ -1160,7 +1163,7 @@ async def create_default_motivational_notes():
         note_dict = prepare_for_mongo(note.dict())
         await db.motivational_notes.insert_one(note_dict)
     
-    print("Sarcastic motivational notes created successfully! 🔥")
+    print("Notas motivacionais de origem criadas")
 
 async def create_default_activities():
     try:
@@ -2336,6 +2339,7 @@ async def update_member(
         raise HTTPException(status_code=404, detail="Member not found")
     
     updated_member = await db.members.find_one({"id": member_id})
+    BusinessCache.invalidate_member_cache()
     await log_audit(current_user, "update", "member", entity_id=member_id, details=f"Atualizou membro {member_id}")
     return Member(**normalize_member_read(parse_from_mongo(updated_member)))
 
@@ -2347,6 +2351,7 @@ async def delete_member(
     result = await db.members.delete_one({"id": member_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Member not found")
+    BusinessCache.invalidate_member_cache()
     await log_audit(current_user, "delete", "member", entity_id=member_id, details=f"Eliminou membro {member_id}")
     return {"message": "Member deleted successfully"}
 
@@ -2422,6 +2427,9 @@ async def create_attendance(
     attendance = Attendance(**attendance_data.dict())
     attendance_dict = prepare_for_mongo(attendance.dict())
     await db.attendance.insert_one(attendance_dict)
+    # Sem isto, "Presencas Hoje" no Painel so mexia 5 minutos depois do
+    # check-in. Corrigir e apagar uma presenca ja o faziam; registar, nao.
+    BusinessCache.invalidate_member_cache()
 
     # Quem tinha a aula marcada deixa de constar como faltoso
     await marcar_presenca_na_aula(
@@ -5457,13 +5465,27 @@ async def criar_indices():
 
     gym_logger.info("Indices verificados", total=criados)
 
+@app.on_event("startup")
 async def startup_db():
+    """O que tem de estar feito antes de a aplicacao servir o primeiro pedido.
+
+    Este decorador ja aqui esteve e foi-lhe roubado: quando se acrescentou o
+    criar_indices(), a funcao nova entrou **entre** o @app.on_event("startup")
+    e esta, ficando com ele. Daqui para a frente esta funcao nunca mais correu,
+    e ninguem deu por isso - nao ha erro nenhum, so uma coisa que deixa de
+    acontecer em silencio. O que ficou por fazer foi criar o administrador, as
+    modalidades e as mensagens de origem numa base de dados vazia; numa base ja
+    cheia nao se nota, e por isso passou semanas despercebido.
+
+    Se precisar de acrescentar outro arranque, de-lhe o seu proprio decorador.
+    O FastAPI aceita varios e corre-os por ordem.
+    """
     global analytics_engine
-    
-    gym_logger.info("🚀 Starting KO Gym Management API - Premium Edition")
+
+    gym_logger.info("A arrancar a API do KO Gym")
     
     initialize_firebase()
-    await criar_indices()
+    # Os indices tem o seu proprio @app.on_event("startup"); nao se chamam aqui
     await create_admin_user()
     await create_default_activities()
     await update_existing_members_with_numbers()
@@ -5471,15 +5493,14 @@ async def startup_db():
     await create_default_automated_messages()
     
     # Inicializar Analytics Engine
-    global analytics_engine
     analytics_engine = AnalyticsEngine(db)
-    gym_logger.info("✅ Analytics Engine initialized")
+    gym_logger.info("Analytics Engine initialized")
     
     # Verificar status dos sistemas premium
     cache_stats = gym_cache.get_stats()
-    gym_logger.info("💾 Cache system status", **cache_stats)
+    gym_logger.info("Cache system status", **cache_stats)
     
-    gym_logger.info("🎯 KO Gym API Premium started successfully")
+    gym_logger.info("KO Gym API started successfully")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
