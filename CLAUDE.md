@@ -626,36 +626,36 @@ carro, de qualquer lado — e isso estragava as contas de presenças.
 **O fundo** (`src/componentes/Fundo.tsx`) são camadas de ecrã inteiro que
 respiram devagar, deslizam e se inclinam.
 
-**O desenho é do Skia, o movimento é do motor nativo.** Cada um faz o que
-sabe. O Skia (`@shopify/react-native-skia`) pinta o que os gradientes
-lineares não conseguiam: **manchas redondas de luz sem bordo** — antes não
-havia nenhuma, porque um gradiente linear dentro de um círculo deixa um bordo
-a atravessar o ecrã —, uma **vinheta** a escurecer os cantos e **grão** por
-cima de tudo. Sem grão, um gradiente escuro parte-se em bandas visíveis, e o
-olho lê bandas como tinta chapada.
+**As manchas de luz, a vinheta e o grão são imagens** — `luz.png`,
+`vinheta.png` e `grao.png`, em `ko-gym-mobile/assets/`, geradas com o
+`ko-gym-mobile/assets/desenhos.py`. São 68 KB as três. Uma **mancha redonda de luz sem
+bordo** não se faz com um gradiente linear: dentro de um círculo ele deixa
+sempre um bordo a atravessar o ecrã, e por isso o fundo nunca teve nenhuma. A
+**vinheta** escurece os cantos e o **grão** vai por cima de tudo — sem ele um
+gradiente escuro parte-se em bandas visíveis, e o olho lê bandas como tinta
+chapada.
 
-**Uma só tela do Skia, e parada.** A primeira versão tinha quatro telas
-sobrepostas, três delas dentro de uma `Animated.View` com `rotateX`/`rotateY`.
-A aplicação instalava e **fechava ao abrir**: em Android, com a arquitetura
-antiga, a superfície nativa do Skia não sobrevive a transformações em 3D, e o
-estouro é nativo — não há erro de JavaScript nenhum para ver. O desenho ficou
-numa tela quieta; as rotações ficaram nas camadas de gradiente, que são vistas
-normais. **Nunca pôr um `Canvas` do Skia dentro de uma `Animated.View` com
-rotações.**
+As duas imagens de ecrã inteiro levam **largura e altura explícitas**, e não
+`StyleSheet.absoluteFill`: uma `<Image>` sem medidas fica do tamanho natural do
+ficheiro — 512 pixeis — e via-se a emenda a meio do ecrã.
 
-O movimento continua em `Animated` com `useNativeDriver`: corre do lado
-nativo, não passa por JavaScript a cada imagem e não gasta bateria. **Por isso
-não foi preciso o Reanimated** — que obrigaria a ligar a arquitetura nova do
-React Native, e essa está desligada por causa do NFC. No Skia 2.x o Reanimated
-é dependência *opcional*, e o `build.gradle` dele ainda traz
-`src/paper/java` para a arquitetura antiga: foi isso que se confirmou antes de
-instalar seja o que for.
+**O fundo não se desenha com o Skia.** Tentou-se
+(`@shopify/react-native-skia`) e a aplicação **instalava e fechava ao abrir**,
+com quatro telas sobrepostas e também com uma só, parada. Em Android, com a
+arquitetura antiga do React Native — que está desligada por causa do NFC —, a
+parte nativa do Skia não arranca. O estouro é **nativo**: não deixa erro de
+JavaScript nenhum para ver, e o mesmo código corre bem no navegador, o que
+manda procurar no sítio errado. Duas versões se perderam assim. Não voltar a
+tentar sem a arquitetura nova ligada.
 
-**A profundidade vem de três coisas ao mesmo tempo**: as camadas andam a
-velocidades diferentes (20, 48 e 85 pixeis — começaram em 10/22/36 e não se
-notava), **inclinam-se com perspetiva** (deixam de ser autocolantes a
-escorregar e passam a planos no espaço) e a luz de cima anda mais do que
-todas, que é a que parece estar à frente.
+O movimento é `Animated` com `useNativeDriver`: corre do lado nativo, não passa
+por JavaScript a cada imagem e não gasta bateria. Anima-se **só opacidade e
+deslocação** (`translate`).
+
+**A profundidade vem das velocidades diferentes**: as camadas andam 20, 48 e 85
+pixeis de um extremo da inclinação ao outro (começaram em 10/22/36 e não se
+notava), e a luz de cima anda mais do que todas, que é a que parece estar à
+frente.
 
 **Os tons do fundo vão do preto ao cinzento, não ao laranja da marca** — por
 decisão do dono. O laranja fica para o que é para carregar (o check-in, os
