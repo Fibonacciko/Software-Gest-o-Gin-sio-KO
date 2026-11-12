@@ -13,9 +13,13 @@ type Props = {
 /**
  * A barra de baixo.
  *
- * Feita à mão de propósito: são quatro ecrãs sem navegação por dentro, e uma
+ * Feita à mão de propósito: são seis ecrãs sem navegação por dentro, e uma
  * biblioteca de navegação traria meia dúzia de dependências para a aplicação
  * que depois tem de ser instalada à mão em cada telemóvel.
+ *
+ * A barra é a **segunda** maneira de mudar de ecrã: a primeira é deslizar o
+ * dedo para o lado (ver a tira no `App.tsx`). Ela acende o separador novo
+ * assim que a página passa de meio, e não só quando ela assenta.
  */
 const SEPARADORES: { id: Separador; icone: string; texto: string }[] = [
   { id: 'inicio', icone: '●', texto: 'Início' },
@@ -25,6 +29,14 @@ const SEPARADORES: { id: Separador; icone: string; texto: string }[] = [
   { id: 'parceiros', icone: '◆', texto: 'Parceiros' },
   { id: 'ginasio', icone: '◉', texto: 'Ginásio' },
 ];
+
+/**
+ * A ordem por que os separadores aparecem, da esquerda para a direita.
+ *
+ * É a mesma da barra e a mesma do deslizar: se fossem duas listas, um dia
+ * deslizava-se para a direita e ia-se parar ao separador da esquerda.
+ */
+export const ORDEM_DOS_SEPARADORES: Separador[] = SEPARADORES.map((s) => s.id);
 
 export default function BarraDeSeparadores({ activo, aoEscolher }: Props) {
   // A aplicação desenha-se de ponta a ponta do ecrã (`edgeToEdgeEnabled`), e

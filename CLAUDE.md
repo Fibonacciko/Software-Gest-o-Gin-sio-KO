@@ -642,6 +642,24 @@ Seis separadores numa barra em baixo, feita à mão: não há biblioteca de
 navegação, que traria meia dúzia de dependências a uma aplicação que ainda é
 instalada à mão em cada telemóvel.
 
+**Muda-se de ecrã deslizando o dedo para o lado**, e a barra é a segunda
+maneira de lá chegar. Os seis ecrãs vivem lado a lado numa tira que desliza
+(uma `ScrollView` com páginas, no `App.tsx`), pela mesma ordem da barra — que
+vem de `ORDEM_DOS_SEPARADORES`, uma lista só, porque com duas um dia
+deslizava-se para a direita e ia-se parar ao separador da esquerda.
+
+- **Só se monta o que já foi visto.** Montar os seis ao arrancar punha seis
+  ecrãs a pedir dados ao servidor ao mesmo tempo, para ver um. O lugar de cada
+  um está sempre lá, vazio, para as contas do deslize baterem certo.
+- A barra **acende o separador novo quando a página passa de meio**, e não só
+  quando ela assenta — esperar pelo fim dava uma barra sempre meio passo
+  atrás.
+- Quando é o dedo a mandar, **a tira não volta a ser mandada para lá**
+  (`veioDoDedo`): senão saltava debaixo do dedo de quem a arrasta.
+- Na Loja, deslizar **em cima da fotografia** de um artigo muda a fotografia,
+  não o separador: quem está por dentro fica com o gesto. Para mudar de ecrã,
+  desliza-se fora dos cartões.
+
 | Separador | O que é |
 |---|---|
 | **Início** | Cartão, check-in, evolução, planos, e o rolo com o que há de novo |
