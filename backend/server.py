@@ -4787,7 +4787,11 @@ ORDEM_DA_MONTRA: List[tuple] = [
     ("T-Shirt",               ["Preto", "Branco"]),
     ("Hoodie",                ["Verde", "Preto", "Bordeaux"]),
     ("Calcoes Boxe",          ["Branco", "Amarelo"]),
-    ("Calcoes Kick",          ["Preto", "Amarelo"]),
+    # Os de kickboxing tem dois nomes na base de dados — "Calcoes Kick" e
+    # "Calcoes Kickboxing" — e sao a mesma familia. Ficam lado a lado ate o
+    # Stock ser arrumado; depois disso a primeira linha pode sair daqui.
+    ("Calcoes Kick",          ["Preto", "Amarelo", "Branco"]),
+    ("Calcoes Kickboxing",    ["Preto", "Amarelo", "Branco"]),
     ("Luvas de Boxe",         ["Branco", "Preto", "Amarelo"]),
     ("Capacetes Boxe",        ["Branco", "Preto", "Amarelo"]),
     ("Caneleiras KickBoxing", ["Preto", "Amarelo", "Branco"]),

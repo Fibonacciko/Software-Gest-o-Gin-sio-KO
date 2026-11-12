@@ -238,6 +238,10 @@ não é a mesma em todas.
 
 - Os nomes comparam-se **sem acentos nem maiúsculas**: na base de dados há
   `Calcoes` e `Calções`, e para o sócio são o mesmo artigo.
+- Os calções de kickboxing têm **dois nomes na base de dados** — `Calções
+  Kick` e `Calções Kickboxing` — e são a mesma família. Estão os dois na
+  lista, lado a lado, até o Stock ser arrumado; depois disso a linha antiga
+  pode sair.
 - Uma família ou uma cor que não esteja na lista vai para o **fim**, por
   ordem alfabética. Um artigo novo aparece sempre, e arruma-se depois — em
   vez de rebentar ou de se meter pelo meio.
