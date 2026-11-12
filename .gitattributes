@@ -1,0 +1,3 @@
+# Os guioes do servidor correm em Linux: um  no fim da linha e um erro
+# de "command not found" que ninguem percebe. Ficam sempre com LF.
+*.sh text eol=lf
