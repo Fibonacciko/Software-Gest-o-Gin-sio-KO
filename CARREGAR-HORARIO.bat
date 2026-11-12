@@ -9,25 +9,15 @@ echo  ===========================================
 echo   HORARIO DAS AULAS - Ginasio KO
 echo  ===========================================
 echo.
-echo  Primeiro mostra-se o que vai ser feito,
-echo  sem escrever nada.
+echo  Entra com o seu utilizador de ginasioko.site,
+echo  mostra as aulas que vai criar, e so depois
+echo  pergunta se pode escrever.
+echo.
+echo  A senha aparece como asteriscos. Escreva e
+echo  carregue Enter.
 echo.
 
 backend\venv\Scripts\python.exe servidor\carregar-horario.py
-if errorlevel 1 goto fim
 
-echo.
-set /p RESPOSTA="Carregar mesmo? (s/n) "
-if /i not "%RESPOSTA%"=="s" goto cancelado
-
-echo.
-backend\venv\Scripts\python.exe servidor\carregar-horario.py --a-serio
-goto fim
-
-:cancelado
-echo.
-echo  Cancelado. Nada foi escrito.
-
-:fim
 echo.
 pause

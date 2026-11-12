@@ -17,6 +17,21 @@ import sys
 
 import requests
 
+try:
+    import msvcrt  # so existe no Windows
+except ImportError:
+    msvcrt = None
+
+# O nome das modalidades em producao tem emoji ("🥊 Boxe"), e nos imprimimo-lo.
+# Num terminal cp1252 isso rebenta a meio da escrita, com metade das aulas ja
+# criadas e a outra metade nao - o pior sitio possivel para parar. Com isto, o
+# que o terminal nao souber mostrar sai como "?" e o trabalho segue.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, OSError):
+    pass
+
 API = "https://ginasioko.site/api"
 
 LUGARES = 28
@@ -46,20 +61,55 @@ HORARIO = [
 DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
 
 
+def pedir_senha(pergunta: str) -> str:
+    """A senha, com um asterisco por cada letra.
+
+    O getpass() normal nao mostra absolutamente nada - nem asteriscos, nem o
+    cursor a andar. Quem esta a olhar para o ecra conclui que o teclado nao
+    funciona e fecha a janela, e foi exactamente isso que aconteceu da
+    primeira vez. Um asterisco por tecla resolve.
+    """
+    if msvcrt is None:
+        return getpass.getpass(pergunta)
+
+    print(pergunta, end="", flush=True)
+    letras = []
+    while True:
+        t = msvcrt.getwch()
+        if t in ("\r", "\n"):
+            print()
+            return "".join(letras)
+        if t == "\x03":  # Ctrl+C
+            print()
+            raise KeyboardInterrupt
+        if t == "\b":
+            if letras:
+                letras.pop()
+                print("\b \b", end="", flush=True)
+        elif t in ("\x00", "\xe0"):  # setas e teclas de funcao: dois codigos
+            msvcrt.getwch()
+        else:
+            letras.append(t)
+            print("*", end="", flush=True)
+
+
 def hora_do_fim(hora: str, minutos: int) -> str:
     fim = int(hora[:2]) * 60 + int(hora[3:]) + minutos
     return f"{fim // 60:02d}:{fim % 60:02d}"
 
 
 def main() -> None:
+    # Com --a-serio nao pergunta nada: escreve. Sem ele, mostra primeiro o que
+    # vai fazer e so depois pergunta - tudo numa so corrida, para nao ter de
+    # pedir a senha duas vezes.
     a_serio = "--a-serio" in sys.argv
 
     print("Horário do Ginásio KO\n")
-    if not a_serio:
-        print("SIMULACAO - nada vai ser escrito.\n")
 
     utilizador = input("O seu utilizador em ginasioko.site: ").strip()
-    senha = getpass.getpass("A sua senha (não aparece no ecrã): ")
+    senha = pedir_senha("A sua senha (aparece um * por cada letra): ")
+    if not senha:
+        raise SystemExit("\nNao escreveu senha nenhuma. Nada foi escrito.")
 
     entrada = requests.post(
         f"{API}/auth/login", json={"username": utilizador, "password": senha}, timeout=30
@@ -85,14 +135,20 @@ def main() -> None:
         )
 
     print(f"\n{len(HORARIO)} aulas, {LUGARES} lugares cada:\n")
+    aulas = []
     for dia, hora, minutos, nome_modalidade, turma, professor in HORARIO:
         id_modalidade, nome_certo = modalidade(nome_modalidade)
         rotulo = nome_certo + (f" - {turma}" if turma else "")
         print(f"  {DIAS[dia]:8} {hora}-{hora_do_fim(hora, minutos)}  {rotulo:22} {professor}")
+        aulas.append((dia, hora, minutos, id_modalidade, turma, professor))
 
-        if not a_serio:
-            continue
+    if not a_serio:
+        print()
+        if input("Carregar estas aulas em ginasioko.site? (s/n) ").strip().lower() != "s":
+            raise SystemExit("\nCancelado. Nada foi escrito.")
+        print()
 
+    for dia, hora, minutos, id_modalidade, turma, professor in aulas:
         resposta = requests.post(
             f"{API}/class-slots",
             headers=cabecalho,
@@ -111,12 +167,9 @@ def main() -> None:
         if resposta.status_code != 200:
             raise SystemExit(f"\nFalhou nesta aula: {resposta.text}")
 
-    if a_serio:
-        total = len(requests.get(f"{API}/class-slots", headers=cabecalho, timeout=30).json())
-        print(f"\nFeito. {total} aulas na grelha.")
-        print("Veja em ginasioko.site, na pagina Aulas.")
-    else:
-        print("\nNada foi escrito. Para carregar mesmo, corra outra vez com --a-serio.")
+    total = len(requests.get(f"{API}/class-slots", headers=cabecalho, timeout=30).json())
+    print(f"\nFeito. {total} aulas na grelha.")
+    print("Veja em ginasioko.site, na pagina Aulas.")
 
 
 if __name__ == "__main__":
