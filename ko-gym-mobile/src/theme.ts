@@ -5,14 +5,25 @@ export const cores = {
   laranja: '#B8651B',
   laranjaClaro: '#E8842A',
   dourado: '#F5A623',
-  fundo: '#1A1A1A',
-  fundoCartao: '#2D2D2D',
-  fundoElevado: '#3A3A3A',
+  // Os escuros sao **verde-azulados**, nao cinzentos. Vieram da fotografia da
+  // porta do ginasio: #0c1417 no escuro, #3a6c61 na parede iluminada, #aee0bb
+  // no halo da luz. Por decisao do dono, que quis essa tonalidade em toda a
+  // aplicacao.
+  //
+  // De caminho, resolveu-se uma coisa: o laranja da marca destaca-se muito
+  // mais em cima de verde-azulado do que em cima de cinzento, porque sao
+  // cores opostas. O cinzento competia com ele.
+  fundo: '#0E1B1E',
+  fundoCartao: '#1B2E31',
+  fundoElevado: '#28413F',
   texto: '#FFFFFF',
-  textoSecundario: '#B8B8B8',
+  textoSecundario: '#A8BBB8',
   verde: '#16A34A',
   vermelho: '#DC2626',
-  borda: '#4A4A4A',
+  borda: '#3E5A57',
+
+  /** O halo da luz da fotografia. E a cor das manchas de luz do fundo. */
+  luz: '#AEE0BB',
 
   // --- Vidro
   // As superficies deixaram de ser cinzentos opacos e passaram a deixar ver

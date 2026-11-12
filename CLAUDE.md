@@ -824,9 +824,21 @@ pixeis de um extremo da inclinação ao outro (começaram em 10/22/36 e não se
 notava), e a luz de cima anda mais do que todas, que é a que parece estar à
 frente.
 
-**Os tons do fundo vão do preto ao cinzento, não ao laranja da marca** — por
-decisão do dono. O laranja fica para o que é para carregar (o check-in, os
-números, o logótipo); num fundo tingido de laranja deixava de se destacar.
+**Os escuros da aplicação são verde-azulados, não cinzentos** — por decisão
+do dono, e vieram da fotografia da porta do ginásio: `#0c1417` no escuro,
+`#3a6c61` na parede iluminada, `#aee0bb` no halo da luz. São as três cores que
+mandam no fundo todo (`cores.fundo`, o gradê do `Fundo.tsx`, e a `cores.luz`
+com que as manchas são tingidas).
+
+De caminho resolveu-se uma coisa: **o laranja da marca destaca-se muito mais
+em cima de verde-azulado**, porque são cores opostas. O cinzento competia com
+ele. O laranja continua a ser só para o que é para carregar — o check-in, os
+números, o logótipo — e nunca para o fundo.
+
+**O ecrã de arranque ainda é cinzento.** O `splash.backgroundColor` e o fundo
+do ícone, no `app.json`, continuam em `#1A1A1A`: são do **lado nativo** e só
+mudam com um APK novo. Até lá há um salto curto do cinzento para o
+verde-azulado na abertura — pequeno, porque os dois são muito escuros.
 
 **A profundidade vem da inclinação, não de um motor 3D.** As três camadas do
 fundo são maiores do que o ecrã e deslizam a velocidades diferentes conforme

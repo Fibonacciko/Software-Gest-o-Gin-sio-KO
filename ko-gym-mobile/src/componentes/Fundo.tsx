@@ -193,7 +193,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
       {/* Base escura, do canto superior direito para o inferior esquerdo.
           Esta não se mexe: é o chão sobre o qual as outras deslizam. */}
       <LinearGradient
-        colors={['#2E2E2E', cores.fundo, '#0E0E0E']}
+        colors={['#1D383A', cores.fundo, '#05100F']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -207,6 +207,9 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
       >
         <Image
           source={require('../../assets/luz.png')}
+          // A mancha e branca no ficheiro; aqui ganha a cor do halo da
+          // fotografia da porta, que e de onde vem a tonalidade toda.
+          tintColor={cores.luz}
           style={{
             position: 'absolute',
             width: LARGURA * 2.1,
@@ -224,7 +227,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
         pointerEvents="none"
       >
         <LinearGradient
-          colors={['rgba(170,170,170,0.22)', 'rgba(170,170,170,0.05)', 'rgba(170,170,170,0)']}
+          colors={['rgba(150,205,190,0.20)', 'rgba(150,205,190,0.05)', 'rgba(150,205,190,0)']}
           locations={[0, 0.45, 1]}
           start={{ x: 1, y: 0 }}
           end={{ x: 0.1, y: 0.8 }}
@@ -237,7 +240,7 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
         pointerEvents="none"
       >
         <LinearGradient
-          colors={['rgba(140,140,140,0)', 'rgba(140,140,140,0.06)', 'rgba(140,140,140,0.16)']}
+          colors={['rgba(120,180,165,0)', 'rgba(120,180,165,0.06)', 'rgba(120,180,165,0.15)']}
           locations={[0, 0.55, 1]}
           start={{ x: 0, y: 0.2 }}
           end={{ x: 0.9, y: 1 }}
@@ -252,6 +255,9 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
       >
         <Image
           source={require('../../assets/luz.png')}
+          // A mancha e branca no ficheiro; aqui ganha a cor do halo da
+          // fotografia da porta, que e de onde vem a tonalidade toda.
+          tintColor={cores.luz}
           style={{
             position: 'absolute',
             width: LARGURA * 1.4,
@@ -273,6 +279,9 @@ export default function Fundo({ children }: { children: React.ReactNode }) {
       >
         <Image
           source={require('../../assets/luz.png')}
+          // A mancha e branca no ficheiro; aqui ganha a cor do halo da
+          // fotografia da porta, que e de onde vem a tonalidade toda.
+          tintColor={cores.luz}
           style={{
             position: 'absolute',
             width: LARGURA * 1.25,
