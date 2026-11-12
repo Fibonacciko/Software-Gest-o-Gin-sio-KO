@@ -137,11 +137,11 @@ const AppDoSocio = ({ language }) => {
       fotoDoGinasio: 'Fotografia do ginásio',
       loja: 'Loja',
       novoArtigo: 'Novo Artigo',
-      lojaAjuda: 'A montra da aplicação: um artigo por cor. Os tamanhos ficam no Stock e são perguntados ao sócio na altura de reservar. Um artigo só aparece se tiver fotografia e stock. A ordem roda sozinha, um lugar por dia, e os dois primeiros são os que aparecem no ecrã inicial do sócio — assim todos têm a sua vez à frente, sem ninguém ter de mexer em nada.',
+      lojaAjuda: 'A montra da aplicação: um artigo por cor, pela mesma ordem com que o sócio os vê. Os tamanhos ficam no Stock e são perguntados na altura de reservar. Um artigo sem stock continua à vista, marcado como esgotado — o que o tira da aplicação é não ter fotografia.',
       semArtigos: 'Ainda não há artigos. Carregue em Novo Artigo para começar: t-shirts, hoodies, luvas, caneleiras, capacetes, ligaduras…',
       naApp: 'Na aplicação',
       faltaFoto: 'Falta a fotografia',
-      semStock: 'Sem stock',
+      semStock: 'Esgotado, mas à vista',
       tamanhos: 'Tamanhos',
       cor: 'Cor',
       preco: 'Preço',
@@ -500,9 +500,13 @@ const AppDoSocio = ({ language }) => {
    * ninguém percebia porquê.
    */
   const estadoDoArtigo = (g) => {
+    // O que tira um artigo da aplicação é não ter fotografia. Sem stock ele
+    // continua na montra, marcado como esgotado: por decisão do dono, uma
+    // loja mostra o que vende, e o sócio tem de distinguir "esgotado" de
+    // "não existe".
     if (!g.capa) return { ok: false, texto: txt.faltaFoto, cor: '#dc2626' };
     const stock = g.linhas.reduce((t, a) => t + (Number(a.quantity) || 0), 0);
-    if (stock <= 0) return { ok: false, texto: txt.semStock, cor: '#dc2626' };
+    if (stock <= 0) return { ok: true, texto: txt.semStock, cor: '#d97706' };
     return { ok: true, texto: txt.naApp, cor: '#16a34a' };
   };
 
@@ -765,13 +769,9 @@ const AppDoSocio = ({ language }) => {
             </CardContent></Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {gruposDeArtigos().map((g, posicao) => {
+              {gruposDeArtigos().map((g) => {
                 const estado = estadoDoArtigo(g);
                 const tamanhos = g.linhas.map((a) => a.size).filter(Boolean);
-                // Os dois primeiros da montra são os que aparecem no ecrã
-                // inicial da aplicação. Sem isto escrito, a rotação diária
-                // era uma coisa que acontecia sem ninguém dar por ela.
-                const noEcraInicial = estado.ok && posicao < 2 && posicao < montraDeHoje.length;
                 return (
                   <Card key={g.chave} className="card-shadow overflow-hidden" data-testid={`artigo-${g.chave}`}>
                     {g.capa ? (
@@ -800,16 +800,6 @@ const AppDoSocio = ({ language }) => {
                       </div>
                     )}
                     <CardContent className="p-4">
-                      {noEcraInicial && (
-                        <Badge
-                          className="mb-2 text-xs"
-                          style={{ background: 'var(--ko-primary-orange)', color: '#fff' }}
-                          data-testid={`artigo-no-inicio-${g.chave}`}
-                        >
-                          <Smartphone size={12} className="mr-1" />
-                          Hoje no ecrã inicial
-                        </Badge>
-                      )}
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>

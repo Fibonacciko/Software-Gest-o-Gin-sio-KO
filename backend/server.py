@@ -4770,41 +4770,73 @@ async def multimedia_para_a_app():
     return [MediaItem(**parse_from_mongo(m)) for m in itens]
 
 
-def rotacao_do_dia(quantos: int) -> int:
-    """Por onde comeca a montra hoje.
+# A ordem por que a montra se apresenta ao socio, escolhida pelo dono.
+#
+# E uma ordem de loja, nao de alfabeto: primeiro o que mais sai e e mais
+# barato (as t-shirts), e no fim o equipamento de quem ja treina a serio. A
+# cor de cada familia tem a sua ordem propria, tambem dele.
+#
+# Houve aqui uma rotacao diaria, que mudava a familia a abrir a lista. Saiu:
+# nasceu para dar a volta aos **dois artigos** que o ecra inicial mostrava, e
+# esse rolo saiu da pagina inicial por decisao do dono. Uma montra a mudar de
+# ordem todos os dias e so uma montra onde nao se encontra nada.
+#
+# Uma familia ou uma cor que nao esteja aqui vai para o fim, por ordem
+# alfabetica: um artigo novo aparece sempre, e arruma-se depois.
+ORDEM_DA_MONTRA: List[tuple] = [
+    ("T-Shirt",               ["Preto", "Branco"]),
+    ("Hoodie",                ["Verde", "Preto", "Bordeaux"]),
+    ("Calcoes Boxe",          ["Branco", "Amarelo"]),
+    ("Calcoes Kick",          ["Preto", "Amarelo"]),
+    ("Luvas de Boxe",         ["Branco", "Preto", "Amarelo"]),
+    ("Capacetes Boxe",        ["Branco", "Preto", "Amarelo"]),
+    ("Caneleiras KickBoxing", ["Preto", "Amarelo", "Branco"]),
+]
 
-    Por ordem alfabetica fixa eram sempre os mesmos artigos a abrir a lista,
-    e os ultimos do alfabeto nunca se viam. A montra roda **um lugar por
-    dia** — uma **familia** por dia, nao um artigo: os tres capacetes ficam
-    sempre juntos. Ao fim de uma volta, todas as familias passaram pela
-    frente.
+# Comparadas sem acentos nem maiusculas: na base de dados ha "Calcoes" e
+# "Calções", e para o socio sao o mesmo artigo.
+_ORDEM_DAS_FAMILIAS = {normalizar_texto(n): i for i, (n, _) in enumerate(ORDEM_DA_MONTRA)}
+_ORDEM_DAS_CORES = {
+    normalizar_texto(n): {normalizar_texto(c): i for i, c in enumerate(cores)}
+    for n, cores in ORDEM_DA_MONTRA
+}
 
-    **Roda uma vez por dia, nao a cada pedido.** O socio que abre a loja tres
-    vezes seguidas ve sempre a mesma coisa, e ao balcao sabe-se o que esta a
-    frente hoje. Baralhar a cada pedido dava uma montra a mexer-se debaixo do
-    dedo de quem estava a escolher.
 
-    Nao se guarda nada: a conta e o numero do dia a dividir pelo tamanho da
-    lista, por isso o mesmo dia da sempre a mesma ordem.
+def lugar_na_montra(nome: str, cor: Optional[str]) -> tuple:
+    """Onde este artigo se senta na montra.
+
+    O que nao esta na lista do dono vai para o fim, por ordem alfabetica, em
+    vez de rebentar ou de se meter pelo meio: um artigo novo aparece sempre,
+    e arruma-se depois.
     """
-    if quantos <= 1:
-        return 0
-    return datetime.now(timezone.utc).date().toordinal() % quantos
+    familia = normalizar_texto(nome)
+    cor_limpa = normalizar_texto(cor or "")
+    posicao = _ORDEM_DAS_FAMILIAS.get(familia, len(ORDEM_DA_MONTRA))
+    dentro = _ORDEM_DAS_CORES.get(familia, {}).get(cor_limpa, 99)
+    return (posicao, familia, dentro, cor_limpa)
 
 
 @api_router.get("/mobile/shop", response_model=List[ShopItem])
 async def montra_para_a_app():
-    """A montra: um artigo por nome e cor, so o que tem stock e fotografia.
+    """A montra: um artigo por nome e cor, tudo o que tenha fotografia.
 
     O Stock desdobra cada modelo por tamanho — nove linhas so para os
     capacetes. Na montra isso dava nove cartoes iguais, so com a letra
-    diferente. Aqui juntam-se por nome e cor, e os tamanhos que ainda ha vao
-    dentro, para a aplicacao os perguntar na altura de reservar.
+    diferente. Aqui juntam-se por nome e cor, e os tamanhos **que ainda ha**
+    vao dentro, para a aplicacao os perguntar na altura de reservar.
+
+    **Um artigo sem stock nenhum continua na montra**, por decisao do dono:
+    uma loja mostra o que vende, e um capacete que esgotou esta semana nao
+    deixa de ser do catalogo. Vai sem tamanhos nenhuns (`sizes` vazio), e e
+    por ai que a aplicacao sabe que ha para ver mas nao ha para reservar.
+    Antes desaparecia, e o socio nao distinguia "esgotado" de "nao existe".
+
+    Sem **fotografia** continua a nao entrar: o cartao ficava vazio.
 
     O nome e comparado sem espacos nas pontas: ha "T-Shirt" e "T-Shirt " na
     base de dados, e para o socio sao o mesmo artigo.
     """
-    artigos = await db.inventory.find({"quantity": {"$gt": 0}}).to_list(1000)
+    artigos = await db.inventory.find().to_list(1000)
 
     grupos: Dict[tuple, dict] = {}
     for a in artigos:
@@ -4839,11 +4871,15 @@ async def montra_para_a_app():
                     kind=(m.get("kind") or "photo"), url=endereco
                 ))
 
-        grupo["sizes"].append(ShopSize(
-            item_id=a["id"],
-            size=(a.get("size") or "").strip() or None,
-            quantity=int(a.get("quantity") or 0),
-        ))
+        # So os tamanhos que ha mesmo. O artigo aparece na montra de qualquer
+        # maneira, mas reservar um tamanho que nao existe deixava o balcao com
+        # uma reserva impossivel de preparar.
+        if int(a.get("quantity") or 0) > 0:
+            grupo["sizes"].append(ShopSize(
+                item_id=a["id"],
+                size=(a.get("size") or "").strip() or None,
+                quantity=int(a.get("quantity") or 0),
+            ))
 
     # ------------------------------------------------- a galeria manda aqui
     #
@@ -4877,26 +4913,10 @@ async def montra_para_a_app():
         g.pop("vistos", None)
         montra.append(g)
 
-    montra.sort(key=lambda g: (g["name"].lower(), (g["color"] or "").lower()))
-
-    # ------------------------------------------- roda-se por familia, nao por cor
-    #
-    # Os tres capacetes ficam juntos, as tres t-shirts tambem. A rotacao do
-    # dia muda a **familia** que abre a lista, nunca parte uma ao meio.
-    #
-    # Antes rodava artigo a artigo, e o resultado via-se: o capacete amarelo
-    # ia parar ao fim da lista, longe do branco e do preto. Quem procura um
-    # capacete quer ver os tres lado a lado e escolher a cor.
-    familias: List[List[dict]] = []
-    for g in montra:
-        if familias and familias[-1][0]["name"].lower() == g["name"].lower():
-            familias[-1].append(g)
-        else:
-            familias.append([g])
-
-    inicio = rotacao_do_dia(len(familias))
-    familias = familias[inicio:] + familias[:inicio]
-    return [ShopItem(**g) for familia in familias for g in familia]
+    # A ordem e a do dono (`ORDEM_DA_MONTRA`): as familias pela ordem que ele
+    # escolheu e, dentro de cada uma, as cores pela ordem dele tambem.
+    montra.sort(key=lambda g: lugar_na_montra(g["name"], g["color"]))
+    return [ShopItem(**g) for g in montra]
 
 
 @api_router.post("/mobile/reservations", response_model=Reservation)

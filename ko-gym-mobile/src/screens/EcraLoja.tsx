@@ -197,7 +197,11 @@ export default function EcraLoja({ socio }: Props) {
               />
               <View style={estilos.rodape}>
                 <Text style={estilos.preco}>{a.price.toFixed(2)} €</Text>
-                <Text style={estilos.reservar}>Reservar</Text>
+                {/* Um artigo sem tamanho nenhum é um artigo esgotado: fica na
+                    montra para se ver, mas não se reserva o que não há. */}
+                <Text style={a.sizes.length > 0 ? estilos.reservar : estilos.esgotado}>
+                  {a.sizes.length > 0 ? 'Reservar' : 'Esgotado'}
+                </Text>
               </View>
             </View>
           );
@@ -258,6 +262,20 @@ export default function EcraLoja({ socio }: Props) {
                   </View>
                 ) : null}
 
+                {/* Esgotado: vê-se o artigo e as fotografias, mas não há
+                    quantidade nem botão. Reservar o que não existe deixava o
+                    balcão com uma reserva impossível de preparar. */}
+                {escolhido.sizes.length === 0 ? (
+                  <>
+                    <Text style={estilos.esgotadoJanela}>
+                      Esgotado de momento. Pergunta na receção quando chega.
+                    </Text>
+                    <Pressable style={estilos.cancelar} onPress={() => setEscolhido(null)}>
+                      <Text style={estilos.cancelarTexto}>Fechar</Text>
+                    </Pressable>
+                  </>
+                ) : (
+                  <>
                 <View style={estilos.quantidadeLinha}>
                   <Text style={estilos.quantidadeEtiqueta}>Quantidade</Text>
                   <View style={estilos.contador}>
@@ -297,6 +315,8 @@ export default function EcraLoja({ socio }: Props) {
                 <Pressable style={estilos.cancelar} onPress={() => setEscolhido(null)}>
                   <Text style={estilos.cancelarTexto}>Cancelar</Text>
                 </Pressable>
+                  </>
+                )}
               </ScrollView>
             ) : null}
           </View>
@@ -345,6 +365,13 @@ const estilos = StyleSheet.create({
   },
   preco: { color: cores.dourado, fontSize: 18, fontWeight: '800' },
   reservar: { color: cores.laranjaClaro, fontWeight: '700' },
+  esgotado: { color: cores.textoSecundario, fontWeight: '700' },
+  esgotadoJanela: {
+    color: cores.textoSecundario,
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: espaco.m,
+  },
   fundoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
   janela: {
     backgroundColor: cores.fundoCartao,

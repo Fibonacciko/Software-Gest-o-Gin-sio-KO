@@ -203,11 +203,11 @@ Sócio** (só administrador) e no **Stock**:
 - **Loja** — a montra, vista do lado de cá. É a **mesma lista do Stock**:
   um artigo criado aqui aparece lá e vice-versa, porque é um só registo em
   `inventory`. O que esta página acrescenta é dizer, artigo a artigo, se ele
-  chega mesmo ao telemóvel — **Na aplicação**, **Falta a fotografia** ou
-  **Sem stock**. Sem isso, um artigo criado ficava invisível ao sócio e
-  ninguém percebia porquê.
-- Um artigo só aparece na aplicação se tiver **fotografia e stock**
-  (`GET /api/mobile/shop`).
+  chega mesmo ao telemóvel — **Na aplicação**, **Esgotado, mas à vista** ou
+  **Falta a fotografia**. Sem isso, um artigo criado ficava invisível ao
+  sócio e ninguém percebia porquê.
+- O que tira um artigo da aplicação é **não ter fotografia**: o cartão ficava
+  vazio (`GET /api/mobile/shop`).
 
 **A montra é um artigo por cor. Os tamanhos são do Stock.**
 
@@ -230,36 +230,36 @@ ver: **um artigo por cor**, sem o número do stock à vista.
   daquela cor** (nome, preço, descrição, galeria). O tamanho e a quantidade de
   cada um só se mexem no Stock, e a janela avisa disso.
 
-**A montra roda uma família por dia.** Por ordem alfabética fixa eram sempre
-os mesmos artigos a abrir a lista, e os últimos do alfabeto nunca se viam. A
-lista roda sozinha, e ao fim de uma volta todas as famílias passaram pela
-frente (`rotacao_do_dia()`, no `server.py`, com testes).
+**A ordem da montra é a que o dono escolheu** (`ORDEM_DA_MONTRA`, no
+`server.py`, com testes). Não é alfabética: é uma ordem de loja — primeiro o
+que mais sai e é mais barato, as t-shirts; no fim o equipamento de quem já
+treina a sério. Dentro de cada família, as cores têm a ordem dele também, e
+não é a mesma em todas.
 
-**Roda por família, nunca por cor**: os três capacetes ficam lado a lado, e
-as t-shirts também. A rodar artigo a artigo, o capacete amarelo ia parar ao
-fim da lista, longe do branco e do preto — e quem procura um capacete quer
-ver os três juntos e escolher a cor.
+- Os nomes comparam-se **sem acentos nem maiúsculas**: na base de dados há
+  `Calcoes` e `Calções`, e para o sócio são o mesmo artigo.
+- Uma família ou uma cor que não esteja na lista vai para o **fim**, por
+  ordem alfabética. Um artigo novo aparece sempre, e arruma-se depois — em
+  vez de rebentar ou de se meter pelo meio.
+- Para mudar a ordem, mexe-se nessa lista. Não há por onde a mudar na
+  gestão: foi decisão de a deixar no código até o dono precisar de a mexer
+  com frequência.
 
-- Roda **uma vez por dia**, não a cada pedido: quem abre a loja três vezes
-  seguidas vê sempre a mesma coisa, e ao balcão sabe-se o que está à frente
-  hoje. Baralhar a cada pedido dava uma montra a mexer-se debaixo do dedo de
-  quem estava a escolher.
-- **Não se guarda nada**: a conta é o número do dia a dividir pelo tamanho da
-  lista, por isso o mesmo dia dá sempre a mesma ordem.
-- Na gestão, a **Loja mostra a ordem de hoje** e marca os dois primeiros com
-  "Hoje no ecrã inicial". A ordem vem do servidor (`GET /api/mobile/shop`), e
-  não de uma segunda cópia da conta no ecrã: duas cópias da mesma regra acabam
-  diferentes.
+**Houve aqui uma rotação diária** que mudava a família a abrir a lista. Saiu:
+nasceu para dar a volta aos **dois artigos** que o ecrã inicial mostrava, e
+esse rolo saiu da página inicial por decisão do dono. Uma montra que muda de
+ordem todos os dias é só uma montra onde não se encontra nada.
 
-**No cartão carrega-se uma fotografia de cada vez, não a galeria toda.** Só
-a página que se vê e a do lado; o lugar das outras fica lá, vazio, para o
-deslize não se desencontrar. Com dezassete artigos na Loja, ter todas as
-fotografias de todos os cartões abertas ao mesmo tempo eram quase quarenta
-imagens grandes na memória, e o Android começa simplesmente a **não desenhar
-algumas**, sem dizer nada — fica o cartão cinzento. Pela mesma razão as
-imagens levam `resizeMethod="resize"`: em Android manda encolher o ficheiro
-antes de o abrir, e uma fotografia de 1200 pixeis num cartão de 360 ocupava
-nove vezes a memória que precisa.
+**Um artigo esgotado continua na montra.** Por decisão do dono: uma loja
+mostra o que vende, e um capacete que esgotou esta semana não deixa de ser do
+catálogo. Vai **sem tamanhos nenhuns** (`sizes` vazio), e é por aí que a
+aplicação sabe que há para ver mas não há para reservar: o cartão diz
+"Esgotado" em vez de "Reservar", e a janela abre sem quantidade nem botão.
+Antes desaparecia, e o sócio não distinguia "esgotado" de "não existe".
+
+**Um tamanho esgotado continua a não entrar nos tamanhos**: reservar um
+tamanho que não existe deixava o balcão com uma reserva impossível de
+preparar.
 
 **As fotografias deslizam no próprio cartão**, na Loja e no ecrã inicial, sem
 ser preciso abrir o artigo: um par de luvas vê-se pela frente e pelas costas

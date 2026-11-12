@@ -273,12 +273,36 @@ def test_a_montra_so_mostra_o_que_tem_foto(cliente, admin, artigo_com_foto):
     assert nomes == ["Luvas de Boxe"]
 
 
-def test_a_montra_so_mostra_o_que_tem_stock(cliente, admin):
+def test_um_artigo_sem_stock_continua_na_montra(cliente, admin):
+    """Uma loja mostra o que vende, mesmo o que esgotou esta semana.
+
+    Decisao do dono. Vai sem tamanhos nenhuns, e e por ai que a aplicacao
+    sabe que ha para ver mas nao ha para reservar. Antes desaparecia, e o
+    socio nao distinguia "esgotado" de "nao existe".
+    """
     cliente.post("/api/inventory", headers=admin, json={
-        "name": "Esgotado", "category": "clothing", "quantity": 0, "price": 10.0,
-        "photo_url": "/api/uploads/x.jpg",
+        "name": "Esgotado", "category": "clothing", "size": "M", "quantity": 0,
+        "price": 10.0, "photo_url": "/api/uploads/x.jpg",
     })
-    assert cliente.get("/api/mobile/shop").json() == []
+
+    montra = cliente.get("/api/mobile/shop").json()
+    assert [a["name"] for a in montra] == ["Esgotado"]
+    assert montra[0]["sizes"] == []
+
+
+def test_um_tamanho_esgotado_nao_entra_na_lista_de_tamanhos(cliente, admin):
+    """Reservar um tamanho que nao existe deixava o balcao sem o preparar."""
+    cliente.post("/api/inventory", headers=admin, json={
+        "name": "Hoodie", "category": "clothing", "size": "S", "color": "Preto",
+        "quantity": 0, "price": 40.0, "photo_url": "/api/uploads/h.jpg",
+    })
+    cliente.post("/api/inventory", headers=admin, json={
+        "name": "Hoodie", "category": "clothing", "size": "M", "color": "Preto",
+        "quantity": 2, "price": 40.0, "photo_url": "/api/uploads/h.jpg",
+    })
+
+    artigo = cliente.get("/api/mobile/shop").json()[0]
+    assert [t["size"] for t in artigo["sizes"]] == ["M"]
 
 
 def test_a_fotografia_fica_guardada_no_artigo(cliente, admin, artigo_com_foto):
@@ -360,25 +384,68 @@ def _artigo_da_montra(cliente, admin, nome):
     }).json()
 
 
-def test_a_montra_roda_um_lugar_por_dia(cliente, admin):
-    """Nao podem ser sempre os mesmos a abrir a lista."""
-    from server import rotacao_do_dia
+def test_a_ordem_da_montra_e_a_que_o_dono_escolheu(cliente, admin):
+    """Nao e alfabetica: e uma ordem de loja, escolhida por ele.
 
-    nomes = ["Artigo A", "Artigo B", "Artigo C", "Artigo D", "Artigo E"]
-    for nome in nomes:
-        _artigo_da_montra(cliente, admin, nome)
+    Primeiro o que mais sai e e mais barato, no fim o equipamento de quem ja
+    treina a serio. Dentro de cada familia, as cores tambem por ordem dele.
+    """
+    for nome, cor in (
+        ("Capacetes Boxe", "Amarelo"),
+        ("T-Shirt", "Branco"),
+        ("Hoodie", "Bordeaux"),
+        ("Capacetes Boxe", "Branco"),
+        ("T-Shirt", "Preto"),
+        ("Hoodie", "Verde"),
+    ):
+        cliente.post("/api/inventory", headers=admin, json={
+            "name": nome, "category": "clothing", "size": "M", "color": cor,
+            "quantity": 2, "price": 20.0, "photo_url": "/api/uploads/x.jpg",
+        })
 
-    inicio = rotacao_do_dia(len(nomes))
-    esperado = nomes[inicio:] + nomes[:inicio]
-    assert [a["name"] for a in cliente.get("/api/mobile/shop").json()] == esperado
+    montra = cliente.get("/api/mobile/shop").json()
+    assert [(a["name"], a["color"]) for a in montra] == [
+        ("T-Shirt", "Preto"),
+        ("T-Shirt", "Branco"),
+        ("Hoodie", "Verde"),
+        ("Hoodie", "Bordeaux"),
+        ("Capacetes Boxe", "Branco"),
+        ("Capacetes Boxe", "Amarelo"),
+    ]
 
 
-def test_a_rotacao_nunca_parte_uma_familia_ao_meio(cliente, admin):
+def test_a_ordem_nao_se_perde_com_acentos_nem_maiusculas(cliente, admin):
+    """Na base de dados ha "Calcoes" e "Calções", e sao o mesmo artigo."""
+    for nome, cor in (("Luvas de Boxe", "Preto"), ("CALÇÕES BOXE", "Branco")):
+        cliente.post("/api/inventory", headers=admin, json={
+            "name": nome, "category": "equipment", "size": "M", "color": cor,
+            "quantity": 2, "price": 20.0, "photo_url": "/api/uploads/x.jpg",
+        })
+
+    montra = cliente.get("/api/mobile/shop").json()
+    # Os calcoes vem antes das luvas, como na lista do dono
+    assert [a["name"] for a in montra] == ["CALÇÕES BOXE", "Luvas de Boxe"]
+
+
+def test_um_artigo_novo_vai_para_o_fim_e_nao_rebenta(cliente, admin):
+    """O que nao esta na lista do dono aparece a mesma, e arruma-se depois."""
+    for nome in ("Corda de Saltar", "T-Shirt"):
+        cliente.post("/api/inventory", headers=admin, json={
+            "name": nome, "category": "equipment", "size": "M", "color": "Preto",
+            "quantity": 2, "price": 20.0, "photo_url": "/api/uploads/x.jpg",
+        })
+
+    assert [a["name"] for a in cliente.get("/api/mobile/shop").json()] == [
+        "T-Shirt", "Corda de Saltar",
+    ]
+
+
+def test_as_cores_do_mesmo_artigo_ficam_lado_a_lado(cliente, admin):
     """As tres cores do mesmo artigo ficam sempre lado a lado.
 
-    Rodava artigo a artigo, e o capacete amarelo ia parar ao fim da lista,
-    longe do branco e do preto. Quem procura um capacete quer ver os tres
-    juntos e escolher a cor.
+    Houve uma rotacao diaria que rodava artigo a artigo, e o capacete
+    amarelo ia parar ao fim da lista, longe do branco e do preto. Quem
+    procura um capacete quer ver os tres juntos e escolher a cor.
     """
     for nome, cores in (
         ("Capacete", ("Amarelo", "Branco", "Preto")),
@@ -406,7 +473,7 @@ def test_a_rotacao_nunca_parte_uma_familia_ao_meio(cliente, admin):
     assert capacetes == ["Amarelo", "Branco", "Preto"]
 
 
-def test_rodar_nao_perde_nem_repete_artigos(cliente, admin):
+def test_a_montra_nao_perde_nem_repete_artigos(cliente, admin):
     nomes = ["Artigo A", "Artigo B", "Artigo C", "Artigo D", "Artigo E"]
     for nome in nomes:
         _artigo_da_montra(cliente, admin, nome)
@@ -415,23 +482,14 @@ def test_rodar_nao_perde_nem_repete_artigos(cliente, admin):
     assert sorted(a["name"] for a in montra) == nomes
 
 
-def test_a_ordem_da_montra_nao_muda_entre_pedidos_do_mesmo_dia(cliente, admin):
-    """Baralhar a cada pedido dava uma montra a mexer-se debaixo do dedo."""
+def test_a_ordem_da_montra_nao_muda_entre_pedidos(cliente, admin):
+    """A montra e sempre a mesma: nao se mexe debaixo do dedo de quem escolhe."""
     for nome in ("Artigo A", "Artigo B", "Artigo C", "Artigo D"):
         _artigo_da_montra(cliente, admin, nome)
 
     primeira = [a["name"] for a in cliente.get("/api/mobile/shop").json()]
     segunda = [a["name"] for a in cliente.get("/api/mobile/shop").json()]
     assert primeira == segunda
-
-
-def test_a_rotacao_de_cada_dia_e_diferente():
-    """Dias seguidos comecam em artigos seguidos, e ao fim da volta recomeca."""
-    from server import rotacao_do_dia
-
-    assert rotacao_do_dia(0) == 0      # montra vazia: nao ha nada que rode
-    assert rotacao_do_dia(1) == 0      # um so artigo: rodar nao muda nada
-    assert 0 <= rotacao_do_dia(5) < 5
 
 
 def test_reservar_continua_a_ser_de_um_tamanho_certo(cliente, admin, criar_socio):
