@@ -151,6 +151,7 @@ export default function EcraAulas({ socio }: Props) {
                   <View style={estilos.info}>
                     <Text style={[estilos.nome, { color: a.activity_color || cores.texto }]}>
                       {a.activity_name}
+                      {a.label ? ` · ${a.label}` : ''}
                     </Text>
                     <Text style={estilos.detalhe}>
                       {a.instructor ? `${a.instructor} · ` : ''}

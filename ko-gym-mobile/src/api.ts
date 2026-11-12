@@ -145,6 +145,8 @@ export type Aula = {
   activity_id: string;
   activity_name?: string | null;
   activity_color?: string | null;
+  /** O nivel ou a turma: "Kids", "Nivel I/II". Vazio quando nao ha. */
+  label?: string | null;
   start_time: string;
   duration_min: number;
   instructor?: string | null;

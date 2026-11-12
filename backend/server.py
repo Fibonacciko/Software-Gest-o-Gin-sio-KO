@@ -541,6 +541,11 @@ class ClassSlot(BaseModel):
     """Uma aula da grelha semanal."""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     activity_id: str
+    # O nivel ou a turma: "Nivel I/II", "Iniciados", "Kids". Fica a parte da
+    # modalidade de proposito — o Boxe de iniciados e o Boxe de nivel III sao
+    # a mesma modalidade para as presencas e para as contas, e turmas
+    # diferentes para quem se inscreve.
+    label: Optional[str] = None
     weekday: int                      # 0 = segunda ... 6 = domingo (como o Python)
     start_time: str                   # "19:00", em hora local
     duration_min: int = 60
@@ -552,6 +557,7 @@ class ClassSlot(BaseModel):
 
 class ClassSlotCreate(BaseModel):
     activity_id: str
+    label: Optional[str] = None
     weekday: int
     start_time: str
     duration_min: int = 60
@@ -612,6 +618,7 @@ class ClassOccurrence(BaseModel):
     activity_id: str
     activity_name: Optional[str] = None
     activity_color: Optional[str] = None
+    label: Optional[str] = None
     start_time: str
     duration_min: int
     instructor: Optional[str] = None
@@ -4961,6 +4968,7 @@ async def _expandir_grelha(inicio: date, fim: date, member_id: Optional[str] = N
                 activity_id=slot["activity_id"],
                 activity_name=modalidade.get("name"),
                 activity_color=modalidade.get("color"),
+                label=slot.get("label"),
                 start_time=(excepcao or {}).get("start_time") or slot["start_time"],
                 duration_min=int(slot.get("duration_min") or 60),
                 instructor=(excepcao or {}).get("instructor") or slot.get("instructor"),

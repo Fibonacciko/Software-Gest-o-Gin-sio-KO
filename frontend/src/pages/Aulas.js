@@ -18,6 +18,7 @@ const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domi
 
 const VAZIA = {
   activity_id: '',
+  label: '',
   weekday: '0',
   start_time: '19:00',
   duration_min: '60',
@@ -96,6 +97,7 @@ const Aulas = () => {
       aula
         ? {
             activity_id: aula.activity_id,
+            label: aula.label || '',
             weekday: String(aula.weekday),
             start_time: aula.start_time,
             duration_min: String(aula.duration_min),
@@ -112,6 +114,7 @@ const Aulas = () => {
     e.preventDefault();
     const corpo = {
       activity_id: form.activity_id,
+      label: form.label.trim() || null,
       weekday: parseInt(form.weekday, 10),
       start_time: form.start_time,
       duration_min: parseInt(form.duration_min, 10) || 60,
@@ -271,6 +274,7 @@ const Aulas = () => {
                               <p className="font-semibold text-sm truncate"
                                  style={{ color: corDaModalidade(a.activity_id) }}>
                                 {nomeDaModalidade(a.activity_id)}
+                                {a.label ? ` · ${a.label}` : ''}
                               </p>
                               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                                 {a.start_time} · {a.duration_min} min · {a.capacity} lugares
@@ -344,6 +348,7 @@ const Aulas = () => {
                         <div className="min-w-0">
                           <p className="font-semibold text-sm" style={{ color: o.activity_color }}>
                             {o.start_time} · {o.activity_name}
+                            {o.label ? ` · ${o.label}` : ''}
                             {o.cancelled && (
                               <span className="ml-2 text-xs text-red-500">CANCELADA</span>
                             )}
@@ -408,6 +413,16 @@ const Aulas = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="col-span-2">
+                <Label>Nível ou turma</Label>
+                <Input
+                  value={form.label}
+                  onChange={(e) => setForm({ ...form, label: e.target.value })}
+                  placeholder="Ex: Kids, Iniciados, Nível I/II — deixe vazio se não houver"
+                  data-testid="aula-nivel"
+                />
               </div>
 
               <div>
@@ -477,7 +492,7 @@ const Aulas = () => {
           <DialogHeader>
             <DialogTitle>
               {inscritosAbertos
-                ? `${inscritosAbertos.activity_name} · ${dataPt(inscritosAbertos.class_date)} · ${inscritosAbertos.start_time}`
+                ? `${inscritosAbertos.activity_name}${inscritosAbertos.label ? ` · ${inscritosAbertos.label}` : ''} · ${dataPt(inscritosAbertos.class_date)} · ${inscritosAbertos.start_time}`
                 : ''}
             </DialogTitle>
           </DialogHeader>

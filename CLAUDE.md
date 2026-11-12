@@ -277,6 +277,10 @@ catorze dias já com as inscrições.
   faltas por marcar para sempre.
 - O dia da semana é **0 = segunda**, como o `weekday()` do Python, dos dois
   lados.
+- A aula tem um **nível ou turma** (`label`) à parte da modalidade: "Kids",
+  "Iniciados", "Nível I/II". O Boxe de iniciados e o Boxe de nível III são a
+  mesma modalidade para as presenças e para as contas, e turmas diferentes
+  para quem se inscreve. Fica vazio quando não há níveis.
 
 **As consultas por dia de aula passam todas por `dia_guardado()`.** As datas
 são gravadas com hora (`2026-11-16T00:00:00+00:00`); procurar por
@@ -409,7 +413,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 260 testes e demoram 12 segundos.
+backend** — são 263 testes e demoram 12 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q

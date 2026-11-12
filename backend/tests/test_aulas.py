@@ -378,3 +378,36 @@ def test_apagar_a_aula_da_grelha_leva_as_inscricoes(cliente, admin, modalidades,
 
     cliente.delete(f"/api/class-slots/{slot['id']}", headers=admin)
     assert bd.class_bookings.count_documents({"slot_id": slot["id"]}) == 0
+
+
+# ------------------------------------------------- o nivel ou a turma
+
+def test_a_aula_pode_ter_nivel(cliente, admin, modalidades):
+    """"Boxe Nivel I/II" e "Boxe Iniciados" sao a mesma modalidade."""
+    r = criar_grelha(cliente, admin, modalidades, label="Nível I/II")
+    assert r.status_code == 200
+    assert r.json()["label"] == "Nível I/II"
+
+
+def test_o_nivel_chega_ao_calendario(cliente, admin, modalidades):
+    criar_grelha(cliente, admin, modalidades, weekday=0, label="Iniciados")
+    segunda = proxima(0)
+    aula = cliente.get("/api/classes", headers=admin, params={
+        "start_date": segunda.isoformat(), "end_date": segunda.isoformat(),
+    }).json()[0]
+    assert aula["label"] == "Iniciados"
+    assert aula["activity_name"] == modalidades[0]["name"]
+
+
+def test_duas_turmas_da_mesma_modalidade_a_horas_diferentes(cliente, admin, modalidades):
+    """O horario real tem Boxe tres vezes no mesmo dia, em niveis diferentes."""
+    for hora, nivel in (("11:00", "Nível I/II/III"), ("19:30", "Nível I/II"),
+                        ("20:45", "Nível II/III")):
+        criar_grelha(cliente, admin, modalidades, weekday=0, start_time=hora, label=nivel)
+
+    segunda = proxima(0)
+    aulas = cliente.get("/api/classes", headers=admin, params={
+        "start_date": segunda.isoformat(), "end_date": segunda.isoformat(),
+    }).json()
+    assert [a["label"] for a in aulas] == ["Nível I/II/III", "Nível I/II", "Nível II/III"]
+    assert len({a["activity_id"] for a in aulas}) == 1, "e tudo a mesma modalidade"
