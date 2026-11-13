@@ -933,6 +933,12 @@ diferentes da mesma fotografia:
   isso o nome tem um tecto (`NOME_NAO_SOBE_ACIMA_DE`), que o impede de ir
   bater no logotipo.
 
+  **O botão ENTRAR não tem laranja**, por decisão do dono: é vidro, como os
+  dois campos por cima dele, e só a palavra fica cor de laranja. O ecrã fica
+  mais calmo e a fotografia ganha — o laranja era o que mais puxava o olho
+  num ecrã que é para ser a porta do ginásio. A cor da palavra é o que sobra
+  a dizer onde se carrega, e por isso fica.
+
   **No Android o formulário desce uns 8 pixeis** (`DESCIDA_NO_ANDROID`). As
   linhas de texto com acentos — "Ginásio", "sócio", "Número" — ficam mais
   altas do que no navegador, e as três que estão por cima da caixa empurram-na

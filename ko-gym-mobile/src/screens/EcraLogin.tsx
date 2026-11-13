@@ -130,6 +130,11 @@ export default function EcraLogin({ aoEntrar }: Props) {
 
 const { width: LARGURA, height: ALTURA } = Dimensions.get('window');
 
+// Mais opaco do que o vidro habitual: por cima de uma fotografia, o
+// translúcido de sempre deixava a parede a aparecer pelo meio do texto.
+// É o mesmo nos campos e no botão — são a mesma coluna de caixas.
+const VIDRO_DA_PORTA = 'rgba(8,20,22,0.55)';
+
 const estilos = StyleSheet.create({
   raiz: { flex: 1 },
   // Medidas explícitas, e não `absoluteFill`: uma `Image` sem largura e altura
@@ -173,9 +178,7 @@ const estilos = StyleSheet.create({
   etiqueta: { color: cores.textoSecundario, fontSize: 13, fontWeight: '600' },
   entrada: {
     ...superficie,
-    // Mais opaco do que o vidro habitual: por cima de uma fotografia, o
-    // translúcido de sempre deixava a parede a aparecer pelo meio do texto.
-    backgroundColor: 'rgba(8,20,22,0.55)',
+    backgroundColor: VIDRO_DA_PORTA,
     borderWidth: 1,
     borderColor: cores.borda,
     borderRadius: raio.s,
@@ -186,14 +189,19 @@ const estilos = StyleSheet.create({
   },
   erro: { color: cores.vermelho, fontSize: 14 },
   botao: {
-    backgroundColor: cores.laranja,
+    // Sem o laranja, por decisão do dono: o ecrã fica mais calmo e a
+    // fotografia ganha. A palavra em laranja é o que sobra a dizer que é
+    // aqui que se carrega.
+    backgroundColor: VIDRO_DA_PORTA,
+    borderWidth: 1,
+    borderColor: cores.borda,
     borderRadius: raio.s,
     paddingVertical: 17,
     alignItems: 'center',
     marginTop: espaco.s,
   },
   botaoPressionado: { opacity: 0.8 },
-  botaoTexto: { color: cores.texto, fontWeight: '800', fontSize: 16, letterSpacing: 1 },
+  botaoTexto: { color: cores.laranjaClaro, fontWeight: '800', fontSize: 16, letterSpacing: 1 },
   ajuda: {
     color: cores.textoSecundario,
     fontSize: 13,
