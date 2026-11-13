@@ -556,8 +556,8 @@ const estilos = StyleSheet.create({
   // Desce até quase ao nome: a distância que lhes fica entre letras é a
   // mesma que separa o número das modalidades. São as três a mesma coisa —
   // quem ele é no ginásio — e lêem-se como um bloco só.
-  capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 3 },
-  numeroPorBaixo: { marginTop: espaco.s },
+  capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 1 },
+  numeroPorBaixo: { marginTop: 6 },
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {

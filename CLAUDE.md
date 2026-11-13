@@ -918,7 +918,7 @@ diferentes da mesma fotografia:
   pela caixa de texto**: a caixa tem espaço vazio por cima das maiúsculas, e
   a acertar por ela as letras mal tocavam a fotografia. Pela mesma razão, os
   três espaços entre a **modalidade, o número e o nome** medem-se também
-  pelas letras — 11 pixeis cada um, que é o que os faz ler como um bloco só:
+  pelas letras — 9 pixeis cada um, que é o que os faz ler como um bloco só:
   quem ele é no ginásio. E o check-in encosta ao nome sem margem sua, que a
   folga deixada pela capa já chega. O corte da imagem deixa **ar por cima do "DIA UM"**: a
   começar mais abaixo, ele roçava o bordo. Estavam num bloco à parte, por cima de
