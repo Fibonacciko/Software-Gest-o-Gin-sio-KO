@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -11,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { entrar, Socio } from '../api';
 import { cores, espaco, raio, superficie } from '../theme';
 
@@ -52,6 +54,23 @@ export default function EcraLogin({ aoEntrar }: Props) {
       style={estilos.raiz}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* A porta do ginásio, de pé, atrás de tudo. É o ecrã certo para ela:
+          é o único de pé como a fotografia, e entrar na aplicação é mesmo
+          entrar pela porta. */}
+      <Image
+        source={require('../../assets/porta.jpg')}
+        style={estilos.porta}
+        resizeMode="cover"
+      />
+      {/* Sem isto não se lia nada por cima dela. O escurecimento é mais forte
+          em baixo, onde estão os campos e o botão, e deixa respirar em cima,
+          onde está a luz do candeeiro. */}
+      <LinearGradient
+        colors={['rgba(8,20,22,0.55)', 'rgba(8,20,22,0.80)', 'rgba(8,20,22,0.96)']}
+        locations={[0, 0.45, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+
       <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
         <Image
           source={require('../../assets/logo-ko.png')}
@@ -108,8 +127,14 @@ export default function EcraLogin({ aoEntrar }: Props) {
   );
 }
 
+const { width: LARGURA, height: ALTURA } = Dimensions.get('window');
+
 const estilos = StyleSheet.create({
   raiz: { flex: 1 },
+  // Medidas explícitas, e não `absoluteFill`: uma `Image` sem largura e altura
+  // fica do tamanho natural do ficheiro e vê-se só o canto dele. Já tinha
+  // acontecido com as imagens do `Fundo`.
+  porta: { position: 'absolute', left: 0, top: 0, width: LARGURA, height: ALTURA },
   conteudo: { padding: espaco.g, paddingTop: 80, gap: espaco.m },
   // O logotipo ja traz o circulo e o fundo: nao leva caixa nenhuma por baixo
   logo: {
@@ -132,6 +157,9 @@ const estilos = StyleSheet.create({
   etiqueta: { color: cores.textoSecundario, fontSize: 13, fontWeight: '600' },
   entrada: {
     ...superficie,
+    // Mais opaco do que o vidro habitual: por cima de uma fotografia, o
+    // translúcido de sempre deixava a parede a aparecer pelo meio do texto.
+    backgroundColor: 'rgba(8,20,22,0.55)',
     borderWidth: 1,
     borderColor: cores.borda,
     borderRadius: raio.s,

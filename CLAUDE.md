@@ -835,6 +835,21 @@ em cima de verde-azulado**, porque são cores opostas. O cinzento competia com
 ele. O laranja continua a ser só para o que é para carregar — o check-in, os
 números, o logótipo — e nunca para o fundo.
 
+**A porta do ginásio aparece em dois sítios**, cortada de maneiras
+diferentes da mesma fotografia:
+
+- `assets/porta.jpg` — a porta inteira, **cortada no feitio do telemóvel**
+  (9:19,5), por trás do ecrã de entrada. É o único ecrã de pé como a
+  fotografia, e entrar na aplicação é mesmo entrar pela porta. Leva um
+  escurecimento por cima, mais forte em baixo, onde estão os campos.
+- `assets/ginasio.jpg` — a **faixa do meio**, larga, no cartão do sócio. Tem
+  o "DIA UM" da parede, o miúdo, as cordas e o chão.
+
+Os cortes são feitos **no ficheiro**, não com `resizeMode`: assim sabe-se o
+que fica dentro do quadro. E as duas `Image` levam **largura e altura
+explícitas** — sem elas ficam do tamanho natural do ficheiro e vê-se só o
+canto, que foi o que aconteceu à primeira.
+
 **O ecrã de arranque ainda é cinzento.** O `splash.backgroundColor` e o fundo
 do ícone, no `app.json`, continuam em `#1A1A1A`: são do **lado nativo** e só
 mudam com um APK novo. Até lá há um salto curto do cinzento para o
