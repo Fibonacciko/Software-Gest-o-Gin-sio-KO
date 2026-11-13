@@ -916,9 +916,11 @@ diferentes da mesma fotografia:
 
   O quanto ele desce é o `NOME_A_ESPREITAR`, e mede-se **pelas letras e não
   pela caixa de texto**: a caixa tem espaço vazio por cima das maiúsculas, e
-  a acertar por ela as letras mal tocavam a fotografia. O mesmo número manda
-  na folga que a capa deixa por baixo, para o espaço que sobra até ao
-  check-in ser o mesmo que separa o número da modalidade. O corte da imagem deixa **ar por cima do "DIA UM"**: a
+  a acertar por ela as letras mal tocavam a fotografia. Pela mesma razão, os
+  três espaços entre a **modalidade, o número e o nome** medem-se também
+  pelas letras — 11 pixeis cada um, que é o que os faz ler como um bloco só:
+  quem ele é no ginásio. E o check-in encosta ao nome sem margem sua, que a
+  folga deixada pela capa já chega. O corte da imagem deixa **ar por cima do "DIA UM"**: a
   começar mais abaixo, ele roçava o bordo. Estavam num bloco à parte, por cima de
   uma fotografia pequena com margens; assim a fotografia é a primeira coisa
   que se vê. Leva um escurecimento em cima, por causa da barra de estado, e

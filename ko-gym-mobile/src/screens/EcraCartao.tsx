@@ -223,7 +223,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           estavam num bloco à parte por cima de uma fotografia pequena;
           assim a fotografia é a primeira coisa que se vê, e a identificação
           assenta nela. */}
-      <View style={[estilos.capa, { height: 330 + margens.top, marginTop: -(margens.top + espaco.m) }]}>
+      <View style={[estilos.capa, { height: 312 + margens.top, marginTop: -(margens.top + espaco.m) }]}>
         <Image source={FOTO_DO_GINASIO} style={estilos.capaFoto} resizeMode="cover" />
 
         {/* Escurece em cima, por causa da barra de estado, e em baixo, para
@@ -553,14 +553,11 @@ const estilos = StyleSheet.create({
     backgroundColor: cores.fundo,
   },
   capaFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
-  // Sobe o suficiente para o nome caber por baixo, sem lhe tocar
-  capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 36 },
-  // Encostado às modalidades: são a mesma coisa — quem ele é no ginásio.
-  //
-  // A margem sozinha não chegava: a caixa de uma linha de texto traz folga
-  // por cima das letras, e era ela que os mantinha afastados. Com a altura
-  // da linha presa ao tamanho da letra, o que se vê é o que se escreve aqui.
-  numeroPorBaixo: { marginTop: -2, lineHeight: 16 },
+  // Desce até quase ao nome: a distância que lhes fica entre letras é a
+  // mesma que separa o número das modalidades. São as três a mesma coisa —
+  // quem ele é no ginásio — e lêem-se como um bloco só.
+  capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 3 },
+  numeroPorBaixo: { marginTop: espaco.s },
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {
@@ -571,7 +568,8 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: espaco.s,
-    marginTop: espaco.m,
+    // Encostado ao nome: o espaço que a capa deixa por baixo já chega
+    marginTop: 0,
     // O unico elemento com sombra no ecra. E o que se carrega todos os dias:
     // se tudo tivesse relevo, nada o teria.
     ...sombra.flutuante,
