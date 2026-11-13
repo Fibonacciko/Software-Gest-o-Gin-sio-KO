@@ -641,7 +641,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (60 testes, 4 segundos):
+A **aplicação do sócio** também tem os seus (70 testes, 5 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest
@@ -919,6 +919,27 @@ diferentes da mesma fotografia:
   que cresce é a fotografia — numa fotografia maior elas caem mais abaixo.
   As contas estão em `src/lib/porta.ts`, com testes em sete feitios de ecrã
   — é a única maneira de confirmar um telemóvel que não se tem à mão.
+
+  **O nome do ginásio sobe até ficar debaixo do candeeiro**, pela mesma
+  conta e no mesmo sítio (`subidaDoNome`). O candeeiro e o "DIA UM" estão na
+  mesma fotografia, a uma distância fixa um do outro: quem acerta um acerta
+  o outro. É a **luz do candeeiro** (0,26 a 0,28 do ficheiro), e não o
+  clarão que ele deixa na parede mais abaixo (0,32 a 0,34) — decisão do
+  dono. Medido no ecrã já com o escurecimento por cima: a faixa do candeeiro
+  dá 87 de luz, o clarão 76, e a viga entre os dois 21.
+
+  Sobe com `top`, que **desvia o que se desenha sem mexer no que se mede**:
+  o subtítulo, os campos e o "DIA UM" ficam onde estavam. Num ecrã muito
+  alto a fotografia cresce para o cobrir e o candeeiro sobe com ela, por
+  isso o nome tem um tecto (`NOME_NAO_SOBE_ACIMA_DE`): à beira da luz é
+  melhor do que colado ao logotipo.
+
+  **No Android o formulário desce uns 8 pixeis** (`DESCIDA_NO_ANDROID`). As
+  linhas de texto com acentos — "Ginásio", "sócio", "Número" — ficam mais
+  altas do que no navegador, e as três que estão por cima da caixa empurram-na
+  para baixo. Aparece de duas maneiras, que são a mesma: o "DIA UM" parece
+  subido dentro da caixa, e o nome cai para fora da luz. Não há como medir
+  isto sem o telemóvel na mão, por isso é um número só, com nome próprio.
 - `assets/ginasio.jpg` — a **capa do cartão do sócio**: a toda a largura e
   **até ao topo do ecrã**, por baixo da barra de estado. Em cima da soleira
   ficam as **modalidades** e, por baixo delas, o **número de sócio** — que é
