@@ -36,6 +36,15 @@ import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
 import { cores, espaco, raio, sombra } from '../theme';
 
+/**
+ * Quanto o nome do sócio desce para fora da fotografia, em pixeis.
+ *
+ * Medido pelas **letras** e não pela caixa de texto: a caixa tem espaço
+ * vazio por cima das maiúsculas, e a acertar por ela as letras mal tocavam
+ * a fotografia. Com 13, fica cerca de metade das letras em cima dela.
+ */
+const NOME_A_ESPREITAR = 13;
+
 const LOGOTIPO = require('../../assets/logo-ko.png');
 const FOTO_DO_GINASIO = require('../../assets/ginasio.jpg');
 
@@ -245,6 +254,19 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           </Text>
         </View>
 
+        {/* O nome fica **a cavalo no bordo de baixo da fotografia**: um pouco
+            menos de metade em cima dela, o resto no espaço até ao check-in.
+            Por decisão do dono. Assim não ocupa linha nenhuma e os cartões
+            não descem — era isso que acontecia com ele numa linha só sua. */}
+        <Text
+          style={estilos.nome}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+        >
+          {nomeCurto(socio.name)}
+        </Text>
+
         {/* O retrato do sócio, que também é o botão de o trocar, fica no
             canto da capa — dentro da barra de estado, nunca por baixo dela. */}
         <Pressable
@@ -273,18 +295,6 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           ) : null}
         </Pressable>
       </View>
-
-      {/* O nome fica entre a fotografia e o check-in, por baixo da
-          modalidade. Esteve por cima da fotografia, no canto; em terreno
-          limpo lê-se melhor, e é dele que a página passa a começar. */}
-      <Text
-        style={estilos.nome}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.7}
-      >
-        {nomeCurto(socio.name)}
-      </Text>
 
       {/* O que se faz todos os dias */}
       <Pressable
@@ -494,9 +504,13 @@ const estilos = StyleSheet.create({
   conteudo: { padding: espaco.m, paddingBottom: espaco.s, flexGrow: 1 },
 
   nome: {
+    position: 'absolute',
+    left: espaco.m,
+    right: espaco.m,
+    // Negativo: desce para fora da fotografia
+    bottom: -NOME_A_ESPREITAR,
     color: cores.texto,
-    marginBottom: espaco.m,
-    fontSize: 27,
+    fontSize: 22,
     // A fonte que o dono pediu, parecida com a Comic Sans MS. Carregada no
     // App.tsx; se ainda nao estiver pronta, o sistema escolhe a sua.
     fontFamily: 'ComicNeue_700Bold',
@@ -532,12 +546,15 @@ const estilos = StyleSheet.create({
   // para chegar ao bordo. A altura leva a barra de estado por dentro.
   capa: {
     marginHorizontal: -espaco.m,
-    marginBottom: espaco.m,
-    overflow: 'hidden',
+    // Mais folga em baixo do que as outras: é nela que o nome pousa a metade
+    // que lhe fica de fora. O que sobra depois dele é o mesmo espaço que
+    // separa o número da modalidade.
+    marginBottom: NOME_A_ESPREITAR + espaco.s,
     backgroundColor: cores.fundo,
   },
   capaFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
-  capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 0 },
+  // Sobe o suficiente para o nome caber por baixo, sem lhe tocar
+  capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 36 },
   numeroPorBaixo: { marginTop: espaco.s },
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
