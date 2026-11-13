@@ -29,6 +29,8 @@ import MeusPlanos from '../componentes/MeusPlanos';
 import MinhasMetricas from '../componentes/MinhasMetricas';
 import Versao from '../componentes/Versao';
 import Vidro from '../componentes/Vidro';
+import { dataPt } from '../lib/datas';
+import { nomeCurto } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
 import { cores, espaco, raio, sombra } from '../theme';
 
@@ -39,21 +41,6 @@ type Props = {
   socio: Socio;
   aoSair: () => void;
   /** Saltar para outro separador, a partir do rolo lá de baixo. */
-};
-
-const dataPt = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('pt-PT') : null;
-
-/**
- * Nome próprio e apelido.
- *
- * O dono quis só estes dois: "José Manuel dos Santos Oliveira" num telemóvel
- * dá uma linha cortada a meio, e o sócio já sabe como se chama.
- */
-const nomeCurto = (nome: string) => {
-  const partes = nome.trim().split(/\s+/).filter(Boolean);
-  if (partes.length <= 1) return partes[0] ?? '';
-  return `${partes[0]} ${partes[partes.length - 1]}`;
 };
 
 export default function EcraCartao({ socio: inicial, aoSair }: Props) {

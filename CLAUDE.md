@@ -596,6 +596,24 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
+A **aplicação do sócio** também tem os seus (34 testes, 4 segundos):
+
+```bash
+cd ko-gym-mobile && npx jest
+```
+
+Protegem a lógica que vive só na aplicação: o **horário** lido do texto da
+ficha (`lerHorario`, `estadoDeHoje`), a **data à portuguesa**, o **nome no
+cartão** e os **endereços das imagens**, miniaturas incluídas. São testes de
+funções, não de ecrãs: o que se vê continua a confirmar-se no navegador.
+
+**Não há atalho `yarn test` aqui, e é de propósito.** Qualquer mexida nos
+`scripts` do `package.json` **muda a impressão digital** da aplicação — medido:
+`613482ae…` passava a `e26407e0…` — e a partir daí as atualizações pelo ar
+deixavam de chegar a quem a tem instalada. As bibliotecas de teste em
+`devDependencies` e a configuração `jest` no mesmo ficheiro **não mexem** na
+impressão digital; só os `scripts`. O atalho entra quando houver um APK novo.
+
 Ao acrescentar uma regra de negócio, acrescente o teste que a protege. Se
 alterar uma regra e um teste falhar, **confirme qual dos dois está certo** antes
 de mexer no teste.

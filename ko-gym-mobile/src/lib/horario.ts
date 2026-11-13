@@ -181,26 +181,3 @@ export function estadoDeHoje(
   }
   return { aberto: false, texto: 'Fechado' };
 }
-
-/*
- * Casos provados à mão (a aplicação não tem ainda onde correr testes; estes
- * correram-se a compilar este ficheiro e a chamá-lo com cada texto):
- *
- *   "Segunda, quarta e sexta: 10h00 - 14h00 / 16h00 - 22h00 Terça e quinta:
- *    10h00 - 14h00 / 16h00 - 20h00"          <- como está hoje na ficha
- *      -> Segunda, quarta e sexta [1,3,5]  10h às 14h + 16h às 22h
- *         Terça e quinta         [2,4]     10h às 14h + 16h às 20h
- *
- *   o mesmo em duas linhas                   -> igual
- *   "» Segunda, Quarta e Sexta 10h-22h «»…"  -> dois grupos, um período cada
- *   "Segunda a sexta: 10h-14h / 16h-22h Sábado: 10h30-12h30"
- *      -> Segunda a sexta [1..5] dois períodos; Sábado [6] um
- *   "Aberto quando o professor puder"        -> uma linha, sem horas
- *
- * E o estado, sobre o horário de hoje:
- *   segunda 11h -> Aberto agora · fecha às 14h
- *   terça 15h   -> Fechado · abre às 16h        (a pausa do almoço)
- *   terça 21h   -> Fechado · abre amanhã às 10h
- *   quinta 19h  -> Aberto agora · fecha às 20h
- *   sábado 11h  -> Fechado · abre segunda às 10h
- */

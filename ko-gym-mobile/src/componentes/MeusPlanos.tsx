@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { carregarPlanos, enderecoDaImagem, pedirPlano, Plano, TipoDePlano } from '../api';
+import { dataPt } from '../lib/datas';
 import Vidro from './Vidro';
 import { cores, espaco, raio, sombra } from '../theme';
 
@@ -8,9 +9,6 @@ const TIPOS: { tipo: TipoDePlano; etiqueta: string; icone: string }[] = [
   { tipo: 'training', etiqueta: 'Plano de treino', icone: '🏋️' },
   { tipo: 'nutrition', etiqueta: 'Plano alimentar', icone: '🥗' },
 ];
-
-const dataPt = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('pt-PT') : '';
 
 /**
  * Os planos do sócio: o de treino e o alimentar.
@@ -71,7 +69,7 @@ export default function MeusPlanos({ socioId }: { socioId: string }) {
                   {icone}  {etiqueta}
                 </Text>
                 <Text style={estilos.linhaSub}>
-                  {plano ? `${plano.title} · ${dataPt(plano.plan_date)}` : 'Ainda não tens'}
+                  {plano ? [plano.title, dataPt(plano.plan_date)].filter(Boolean).join(' · ') : 'Ainda não tens'}
                 </Text>
               </View>
 

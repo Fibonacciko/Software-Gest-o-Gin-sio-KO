@@ -14,13 +14,11 @@ import {
 } from 'react-native';
 import { carregarMultimedia, enderecoDaImagem, ItemMultimedia } from '../api';
 import CartaoDeDestaque from '../componentes/CartaoDeDestaque';
+import { dataPt } from '../lib/datas';
 import { cores, espaco, raio, superficie } from '../theme';
 
 const LARGURA = Dimensions.get('window').width;
 const LADO = (LARGURA - espaco.m * 2 - espaco.s) / 2;
-
-const dataPt = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('pt-PT') : null;
 
 /**
  * Fotografias dos treinos.
