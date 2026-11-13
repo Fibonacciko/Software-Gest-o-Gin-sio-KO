@@ -504,8 +504,17 @@ aparecem iguais. Por decisão do dono saem (`semEmoji()`, em
 a **cor**, que cada uma já tem e que é a mesma em todo o lado.
 
 Só se tira o que está **à frente** do nome: um emoji no meio de um nome
-escrito à mão é escolha de quem o escreveu. E saem **só da aplicação** — na
-gestão os nomes ficam como estão, que é onde se escrevem.
+escrito à mão é escolha de quem o escreveu.
+
+**Na base de dados eles continuam lá**, e a gestão mostra-os. Para os tirar
+na origem há o `servidor/limpar-emojis.py`, que se corre à mão, pede a senha,
+mostra o que vai mudar e só escreve depois de se confirmar.
+
+**Não há página nenhuma na gestão que edite modalidades.** A API tem as rotas
+(`POST`, `PUT` e `DELETE /api/activities`), mas nenhum ecrã lhes chama — os
+nomes de hoje foram postos à mão, por fora. Por isso aquilo é um script e não
+um botão. É uma falta a decidir com o dono: as modalidades são o que
+distingue os sócios e não se mexem em lado nenhum.
 
 
 Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal;
