@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { entrar, Socio } from '../api';
-import { alturaDaPorta, subidaDoNome, topoDaPorta } from '../lib/porta';
+import { alturaDaPorta, desvioDoNome, topoDaPorta } from '../lib/porta';
 import { cores, espaco, raio, superficie } from '../theme';
 
 type Props = {
@@ -158,10 +158,11 @@ const estilos = StyleSheet.create({
     fontSize: 30,
     fontWeight: '800',
     textAlign: 'center',
-    // Sobe até ficar debaixo do candeeiro da fotografia. É um desvio do que
-    // se desenha, não do que se mede: o subtítulo e os campos ficam onde
-    // estão, e com eles o "DIA UM" dentro da caixa. (`src/lib/porta.ts`)
-    top: subidaDoNome(LARGURA, ALTURA),
+    // Desce até ficar mesmo por baixo do candeeiro da fotografia, a apanhar
+    // a luz que ele deita. É um desvio do que se desenha, não do que se
+    // mede: o subtítulo e os campos ficam onde estão, e com eles o "DIA UM"
+    // dentro da caixa. (`src/lib/porta.ts`)
+    top: desvioDoNome(LARGURA, ALTURA),
   },
   subtitulo: {
     color: cores.textoSecundario,

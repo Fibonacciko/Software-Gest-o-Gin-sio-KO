@@ -17,8 +17,9 @@ import { Platform } from 'react-native';
  * altas de mais, o que se faz é desenhar a fotografia ainda maior — numa
  * fotografia maior, as letras caem mais abaixo.
  *
- * O mesmo cálculo serve o **nome do ginásio**, que sobe o que for preciso
- * para ficar debaixo do candeeiro. Candeeiro e letras estão na mesma
+ * O mesmo cálculo serve o **nome do ginásio**, que se desvia o que for
+ * preciso para ficar mesmo por baixo do candeeiro — a apanhar a luz que ele
+ * deita, como quem está debaixo dele. Candeeiro e letras estão na mesma
  * fotografia, a uma distância fixa um do outro: quem acerta um acerta o
  * outro.
  */
@@ -58,6 +59,10 @@ export const MEIA_CAIXA = 26;
  *  para telemóvel. Medido no ecrã: 383 menos 249. */
 export const NOME_ACIMA_DA_CAIXA = 134;
 
+/** A letra do nome, e por aí o topo da caixa de texto dele. */
+export const LETRA_DO_NOME = 30;
+export const TOPO_DO_NOME = NOME_ACIMA_DA_CAIXA + LETRA_DO_NOME / 2;
+
 /** A altura a que a fotografia é desenhada. Nunca menos do que o ecrã. */
 export const alturaDaPorta = (largura: number, altura: number) =>
   Math.max(
@@ -79,19 +84,21 @@ export const topoDaPorta = (largura: number, altura: number) =>
 export const candeeiroNoEcra = (largura: number, altura: number) =>
   topoDaPorta(largura, altura) + MEIO_DO_CANDEEIRO * alturaDaPorta(largura, altura);
 
-/** Até onde o nome pode subir: o logotipo acaba aos 212, e as maiúsculas do
- *  nome são 11 pixeis acima do meio dele. Num ecrã muito alto a fotografia
- *  cresce para o cobrir e o candeeiro sobe com ela — mais do que isto, o
- *  nome ia-lhe bater. Aí fica à beira da luz em vez de ficar no meio dela,
- *  que é melhor do que ficar colado ao logotipo. */
-export const NOME_NAO_SOBE_ACIMA_DE = 229;
+/** Até onde o nome pode subir: o logotipo acaba aos 212. Num ecrã muito alto
+ *  a fotografia cresce para o cobrir e o candeeiro sobe com ela — sem tecto,
+ *  o nome ia-lhe bater. */
+export const NOME_NAO_SOBE_ACIMA_DE = 218;
 
 /**
- * O que o nome do ginásio tem de subir para ficar debaixo do candeeiro.
- * Negativo, que é o que `top` quer. Mexe no nome e mais nada: a caixa, e com
- * ela a fotografia, ficam onde estão.
+ * O que o nome do ginásio se desvia para ficar mesmo por baixo do candeeiro:
+ * a caixa de texto dele começa onde a luz acaba. Normalmente desce.
+ *
+ * Mexe no nome e mais nada: o subtítulo, os campos e, com eles, o "DIA UM"
+ * dentro da caixa ficam onde estão.
  */
-export const subidaDoNome = (largura: number, altura: number) => {
-  const onde = Math.max(NOME_NAO_SOBE_ACIMA_DE, candeeiroNoEcra(largura, altura));
-  return Math.round(onde - (MEIO_DA_CAIXA - NOME_ACIMA_DA_CAIXA));
+export const desvioDoNome = (largura: number, altura: number) => {
+  const fimDaLuz =
+    topoDaPorta(largura, altura) + CANDEEIRO.base * alturaDaPorta(largura, altura);
+  const onde = Math.max(NOME_NAO_SOBE_ACIMA_DE, fimDaLuz);
+  return Math.round(onde - (MEIO_DA_CAIXA - TOPO_DO_NOME));
 };

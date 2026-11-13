@@ -3,12 +3,14 @@ import {
   CANDEEIRO,
   MEIO_DA_CAIXA,
   MEIA_CAIXA,
-  NOME_ACIMA_DA_CAIXA,
+  TOPO_DO_NOME,
+  LETRA_DO_NOME,
+  NOME_NAO_SOBE_ACIMA_DE,
   RACIO,
   alturaDaPorta,
   topoDaPorta,
   candeeiroNoEcra,
-  subidaDoNome,
+  desvioDoNome,
 } from './porta';
 
 // A caixa do numero de socio: o meio e medido, a altura sao 52 pixeis
@@ -53,30 +55,27 @@ describe('a porta no ecra de entrada', () => {
   });
 });
 
-describe('o nome do ginasio debaixo do candeeiro', () => {
-  // O nome tem 30 pixeis de letra; as maiusculas ocupam cerca de 0,72 disso
-  const METADE_DAS_LETRAS = (30 * 0.72) / 2;
-  const meioDoNome = (largura: number, altura: number) =>
-    MEIO_DA_CAIXA - NOME_ACIMA_DA_CAIXA + subidaDoNome(largura, altura);
+describe('o nome do ginasio por baixo do candeeiro', () => {
+  const nomeNoEcra = (largura: number, altura: number) => {
+    const topo = MEIO_DA_CAIXA - TOPO_DO_NOME + desvioDoNome(largura, altura);
+    return { topo, base: topo + LETRA_DO_NOME };
+  };
 
-  it.each(ECRAS)('em %ix%i o nome fica debaixo do foco de luz', (largura, altura) => {
+  it.each(ECRAS)('em %ix%i o nome comeca onde a luz acaba', (largura, altura) => {
     const luz = naFotografia(CANDEEIRO, largura, altura);
-    const meio = meioDoNome(largura, altura);
-    expect(meio).toBeGreaterThanOrEqual(luz.topo);
-    expect(meio).toBeLessThanOrEqual(luz.base);
+    const nome = nomeNoEcra(largura, altura);
+    // por baixo da luz, nao por cima dela nem dentro dela
+    expect(nome.topo).toBeGreaterThanOrEqual(Math.min(luz.base, NOME_NAO_SOBE_ACIMA_DE));
+    // e encostado: um pixel de arredondamento e tudo o que se admite
+    expect(nome.topo).toBeLessThanOrEqual(Math.max(luz.base, NOME_NAO_SOBE_ACIMA_DE) + 1);
   });
 
-  it('sobe o nome, nunca o desce: a luz esta por cima dele', () => {
-    for (const [largura, altura] of ECRAS) {
-      expect(subidaDoNome(largura, altura)).toBeLessThan(0);
-    }
-  });
-
-  it('o nome nao sobe ao ponto de bater no logotipo, que acaba aos 212', () => {
-    for (const [largura, altura] of ECRAS) {
-      const topo = meioDoNome(largura, altura) - METADE_DAS_LETRAS;
-      expect(topo).toBeGreaterThan(212);
-    }
+  it.each(ECRAS)('em %ix%i o nome nao bate no logotipo nem no subtitulo', (largura, altura) => {
+    const nome = nomeNoEcra(largura, altura);
+    // o logotipo acaba aos 212
+    expect(nome.topo).toBeGreaterThan(212);
+    // e o subtitulo comeca 95 pixeis acima do meio da caixa
+    expect(nome.base).toBeLessThan(MEIO_DA_CAIXA - 95);
   });
 
   it('o candeeiro fica sempre acima da caixa', () => {
