@@ -506,9 +506,17 @@ a **cor**, que cada uma já tem e que é a mesma em todo o lado.
 Só se tira o que está **à frente** do nome: um emoji no meio de um nome
 escrito à mão é escolha de quem o escreveu.
 
-**Na base de dados eles continuam lá**, e a gestão mostra-os. Para os tirar
-na origem há o `servidor/limpar-emojis.py`, que se corre à mão, pede a senha,
-mostra o que vai mudar e só escreve depois de se confirmar.
+**Na base de dados eles ficam, e a gestão mostra-os** — decisão do dono,
+tomada depois de ver a alternativa: ao balcão os emoji ajudam a correr os
+olhos pela lista, e quem lá trabalha já os conhece. É **só ao sócio** que
+não aparecem. Por isso a limpeza é de quem mostra e nunca do que está
+guardado: o `semEmoji()` fica como a maneira de o fazer, e não há script
+nenhum que lhes mexa na origem.
+
+Chegou a haver uma lista de emoji alternativos, mais sérios, para escolher.
+O dono viu-a e preferiu **não ter emoji nenhum na aplicação** — o que os
+tornava infantis não era serem emoji, era serem pessoas e pedaços de pessoas:
+uma perna, um bíceps, uma bailarina.
 
 **Não há página nenhuma na gestão que edite modalidades.** A API tem as rotas
 (`POST`, `PUT` e `DELETE /api/activities`), mas nenhum ecrã lhes chama — os
