@@ -555,7 +555,8 @@ const estilos = StyleSheet.create({
   capaFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   // Sobe o suficiente para o nome caber por baixo, sem lhe tocar
   capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 36 },
-  numeroPorBaixo: { marginTop: espaco.s },
+  // Encostado às modalidades: são a mesma coisa — quem ele é no ginásio
+  numeroPorBaixo: { marginTop: 2 },
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {
