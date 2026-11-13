@@ -11,6 +11,8 @@ import {
   Text,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -44,6 +46,9 @@ type Props = {
 };
 
 export default function EcraCartao({ socio: inicial, aoSair }: Props) {
+  // O espaço da barra de estado. A capa sobe por cima dele, e por isso
+  // precisa de saber quanto é.
+  const margens = useSafeAreaInsets();
   const [socio, setSocio] = useState(inicial);
   const [modalidades, setModalidades] = useState<Modalidade[]>([]);
   const [aAtualizar, setAAtualizar] = useState(false);
@@ -204,16 +209,31 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         <RefreshControl refreshing={aAtualizar} onRefresh={atualizar} tintColor={cores.laranjaClaro} />
       }
     >
-      {/* Quem é, e o retrato que também é botão */}
-      <View style={estilos.cabecalho}>
-        <View style={estilos.cabecalhoTexto}>
+      {/* A capa: a porta do ginásio a toda a largura e até ao topo do ecrã,
+          com o nome por cima dela. O nome, o número e as modalidades
+          estavam num bloco à parte por cima de uma fotografia pequena;
+          assim a fotografia é a primeira coisa que se vê, e a identificação
+          assenta nela. */}
+      <View style={[estilos.capa, { height: 300 + margens.top, marginTop: -(margens.top + espaco.m) }]}>
+        <Image source={FOTO_DO_GINASIO} style={estilos.capaFoto} resizeMode="cover" />
+
+        {/* Escurece em cima, por causa da barra de estado, e em baixo, para
+            o nome se ler em cima do chão iluminado. */}
+        <LinearGradient
+          colors={['rgba(14,27,30,0.70)', 'rgba(14,27,30,0.10)', 'rgba(14,27,30,0.92)']}
+          locations={[0, 0.35, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+
+        <View style={[estilos.capaTexto, { paddingBottom: espaco.m }]}>
           <Text style={estilos.nome} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             {nomeCurto(socio.name)}
           </Text>
           <Text style={estilos.numeroSocio}>Sócio n.º {socio.member_number}</Text>
 
           {/* A modalidade vem agarrada ao nome e ao número: é o que o sócio é
-              no ginásio, e fica junto do resto da identificação. Estava no fim
+              no ginásio, e fica junto do resto da identificação. Esteve no fim
               da página, a seguir aos planos, onde não dizia nada a ninguém. */}
           {minhasModalidades.length > 0 ? (
             <View style={estilos.modalidades}>
@@ -227,8 +247,15 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           ) : null}
         </View>
 
+        {/* O retrato do sócio, que também é o botão de o trocar, fica no
+            canto da capa — dentro da barra de estado, nunca por baixo dela. */}
         <Pressable
-          style={({ pressed }) => [estilos.retratoBotao, pressed && { opacity: 0.8 }]}
+          style={({ pressed }) => [
+            estilos.retratoBotao,
+            estilos.retratoNaCapa,
+            { top: margens.top + espaco.s },
+            pressed && { opacity: 0.8 },
+          ]}
           onPress={() => (retrato ? setFotoAberta(true) : escolherFotografia())}
           disabled={aEnviarFoto}
         >
@@ -247,11 +274,6 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
             </View>
           ) : null}
         </Pressable>
-      </View>
-
-      {/* O ginásio, onde antes havia espaço vazio */}
-      <View style={estilos.molduraGinasio}>
-        <Image source={FOTO_DO_GINASIO} style={estilos.fotoGinasio} resizeMode="cover" />
       </View>
 
       {/* O que se faz todos os dias */}
@@ -461,8 +483,6 @@ const estilos = StyleSheet.create({
   // Estava aqui um 40 fixo, que acertava num telemóvel e falhava nos outros.
   conteudo: { padding: espaco.m, paddingBottom: espaco.s, flexGrow: 1 },
 
-  cabecalho: { flexDirection: 'row', alignItems: 'center', gap: espaco.m },
-  cabecalhoTexto: { flex: 1 },
   nome: {
     color: cores.texto,
     fontSize: 27,
@@ -497,15 +517,17 @@ const estilos = StyleSheet.create({
   },
   maisFotoTexto: { color: cores.texto, fontSize: 16, fontWeight: '800', lineHeight: 18 },
 
-  molduraGinasio: {
-    borderRadius: raio.g,
+  // A capa sai para fora das margens do ecrã — para os lados e para cima —
+  // para chegar ao bordo. A altura leva a barra de estado por dentro.
+  capa: {
+    marginHorizontal: -espaco.m,
+    marginBottom: espaco.m,
     overflow: 'hidden',
-    marginTop: espaco.m,
-    backgroundColor: cores.vidro,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: cores.vidroBordo,
+    backgroundColor: cores.fundo,
   },
-  fotoGinasio: { width: '100%', height: 200 },
+  capaFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 0 },
+  retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {
     backgroundColor: cores.laranja,

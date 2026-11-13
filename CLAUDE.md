@@ -860,8 +860,13 @@ diferentes da mesma fotografia:
   (9:19,5), por trás do ecrã de entrada. É o único ecrã de pé como a
   fotografia, e entrar na aplicação é mesmo entrar pela porta. Leva um
   escurecimento por cima, mais forte em baixo, onde estão os campos.
-- `assets/ginasio.jpg` — a **faixa do meio**, larga, no cartão do sócio. Tem
-  o "DIA UM" da parede, o miúdo, as cordas e o chão.
+- `assets/ginasio.jpg` — a **capa do cartão do sócio**: a toda a largura e
+  **até ao topo do ecrã**, por baixo da barra de estado. O nome, o número e as
+  modalidades assentam em cima dela, e o retrato do sócio — que também é o
+  botão de o trocar — fica no canto. Estavam num bloco à parte, por cima de
+  uma fotografia pequena com margens; assim a fotografia é a primeira coisa
+  que se vê. Leva um escurecimento em cima, por causa da barra de estado, e
+  em baixo, para o nome se ler em cima do chão iluminado.
 
 Os cortes são feitos **no ficheiro**, não com `resizeMode`: assim sabe-se o
 que fica dentro do quadro. E as duas `Image` levam **largura e altura

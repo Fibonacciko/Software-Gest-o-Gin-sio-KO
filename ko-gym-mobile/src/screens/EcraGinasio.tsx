@@ -180,7 +180,7 @@ export default function EcraGinasio() {
             <View style={estilos.destaqueTextos}>
               <Text style={estilos.destaqueTitulo}>Gostas de treinar aqui?</Text>
               <Text style={estilos.destaqueTexto}>
-                Uma avaliação no Google demora um minuto e ajuda-nos mesmo.
+                Uma avaliação no Google demora um minuto e ajuda-nos bastante.
               </Text>
             </View>
           </View>
