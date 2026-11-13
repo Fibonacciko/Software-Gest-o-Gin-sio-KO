@@ -850,10 +850,17 @@ que fica dentro do quadro. E as duas `Image` levam **largura e altura
 explícitas** — sem elas ficam do tamanho natural do ficheiro e vê-se só o
 canto, que foi o que aconteceu à primeira.
 
-**O ecrã de arranque ainda é cinzento.** O `splash.backgroundColor` e o fundo
-do ícone, no `app.json`, continuam em `#1A1A1A`: são do **lado nativo** e só
-mudam com um APK novo. Até lá há um salto curto do cinzento para o
-verde-azulado na abertura — pequeno, porque os dois são muito escuros.
+**O ecrã de arranque ainda é cinzento, e fica assim de propósito.** O
+`splash.backgroundColor` e o fundo do ícone, no `app.json`, continuam em
+`#1A1A1A`. Mudá-los **muda a impressão digital** — medido: de
+`613482ae…` para `3fde3f56…` — e a partir daí as atualizações pelo ar
+deixam de chegar a quem tem a aplicação instalada, até instalar um APK novo
+de 99 MB.
+
+Trocar isso por **um segundo de cinzento na abertura** não compensa. A
+alteração fica para a próxima vez que houver uma razão verdadeira para gerar
+um APK — uma biblioteca nova, uma permissão, uma subida de SDK — e nessa vai
+de boleia, sem custar nada a ninguém.
 
 **A profundidade vem da inclinação, não de um motor 3D.** As três camadas do
 fundo são maiores do que o ecrã e deslizam a velocidades diferentes conforme

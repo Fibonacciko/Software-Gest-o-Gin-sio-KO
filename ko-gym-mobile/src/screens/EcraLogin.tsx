@@ -66,8 +66,8 @@ export default function EcraLogin({ aoEntrar }: Props) {
           em baixo, onde estão os campos e o botão, e deixa respirar em cima,
           onde está a luz do candeeiro. */}
       <LinearGradient
-        colors={['rgba(8,20,22,0.55)', 'rgba(8,20,22,0.80)', 'rgba(8,20,22,0.96)']}
-        locations={[0, 0.45, 1]}
+        colors={['rgba(8,20,22,0.30)', 'rgba(8,20,22,0.66)', 'rgba(8,20,22,0.93)']}
+        locations={[0, 0.42, 1]}
         style={StyleSheet.absoluteFill}
       />
 
