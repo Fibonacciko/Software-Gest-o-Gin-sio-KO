@@ -518,11 +518,26 @@ O dono viu-a e preferiu **não ter emoji nenhum na aplicação** — o que os
 tornava infantis não era serem emoji, era serem pessoas e pedaços de pessoas:
 uma perna, um bíceps, uma bailarina.
 
-**Não há página nenhuma na gestão que edite modalidades.** A API tem as rotas
-(`POST`, `PUT` e `DELETE /api/activities`), mas nenhum ecrã lhes chama — os
-nomes de hoje foram postos à mão, por fora. Por isso aquilo é um script e não
-um botão. É uma falta a decidir com o dono: as modalidades são o que
-distingue os sócios e não se mexem em lado nenhum.
+**As modalidades mexem-se nas Aulas**, no cartão do fim da página, e **só
+pelo administrador** — é o horário do ginásio. Até novembro de 2026 não havia
+ecrã nenhum: a API tinha as rotas e ninguém lhes chamava, e os nomes de hoje
+foram postos à mão, por fora do software.
+
+- **Não se apagam, desligam-se** (`is_active`), e **podem voltar**
+  (`POST /api/activities/{id}/ligar`). Desligar não apaga nada, por isso tem
+  de haver caminho de volta — sem ele, um engano só se corrigia por fora.
+- **Antes de desligar, o ecrã pergunta ao servidor quem fica preso**
+  (`GET /api/activities/{id}/uso`: sócios, presenças e aulas) e mostra o
+  número. O id de uma modalidade desligada continua gravado nas fichas e nas
+  presenças, e essas passam a mostrar uma modalidade sem nome.
+- Uma modalidade desligada **não aparece em mais lado nenhum**: o
+  `GET /api/activities` só as devolve a quem pedir
+  `incluir_desligadas=true`, e só esta página pede.
+- **Corrigir o nome não a ressuscita**: o `PUT` mexe no nome, na cor e na
+  descrição, e não no estado.
+- A **cor** é o que distingue a modalidade em todo o lado — nas presenças, no
+  horário e na aplicação do sócio, onde é a única marca (ver os emoji, acima).
+  Por isso escolhe-se de uma paleta, e não à sorte.
 
 
 Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal;

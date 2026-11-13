@@ -1508,9 +1508,57 @@ async def root():
 
 # Activities/Modalidades Routes
 @api_router.get("/activities", response_model=List[Activity])
-async def get_activities(current_user: User = Depends(require_admin_or_staff)):
-    activities = await db.activities.find({"is_active": True}).to_list(1000)
+async def get_activities(
+    incluir_desligadas: bool = False,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """As modalidades do ginasio.
+
+    Por omissao so as que estao a funcionar. Com `incluir_desligadas`, vem
+    tambem as que foram desligadas — e so a pagina que as gere e que pede
+    assim, para se poderem voltar a ligar. Em todo o resto do software uma
+    modalidade desligada nao deve aparecer.
+    """
+    filtro = {} if incluir_desligadas else {"is_active": True}
+    activities = await db.activities.find(filtro).to_list(1000)
     return [Activity(**parse_from_mongo(activity)) for activity in activities]
+
+
+@api_router.get("/activities/{activity_id}/uso")
+async def uso_da_modalidade(activity_id: str, current_user: User = Depends(require_admin)):
+    """Quem e que ficaria a apanhar com o desligar desta modalidade.
+
+    Uma modalidade desligada deixa de aparecer nas listas, mas o id dela
+    continua gravado nas fichas dos socios, nas presencas e nas aulas. As
+    presencas antigas passam a mostrar um nome que ja nao existe.
+
+    Por isso nao se desliga as cegas: mostra-se primeiro o que esta preso a
+    ela. Nao se apaga nada — o desligar e so uma marca — mas quem o faz tem
+    de saber o que esta a fazer.
+    """
+    if not await db.activities.find_one({"id": activity_id}):
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada.")
+
+    return {
+        "membros": await db.members.count_documents(
+            {"$or": [{"activity_ids": activity_id}, {"activity_id": activity_id}]}
+        ),
+        "presencas": await db.attendance.count_documents({"activity_id": activity_id}),
+        "aulas": await db.class_slots.count_documents({"activity_id": activity_id}),
+    }
+
+
+@api_router.post("/activities/{activity_id}/ligar", response_model=Activity)
+async def ligar_modalidade(activity_id: str, current_user: User = Depends(require_admin)):
+    """Volta a ligar uma modalidade desligada.
+
+    Desligar nao apaga nada, por isso tem de haver caminho de volta. Sem
+    isto, um engano so se corrigia por fora do software.
+    """
+    r = await db.activities.update_one({"id": activity_id}, {"$set": {"is_active": True}})
+    if r.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada.")
+    return Activity(**parse_from_mongo(await db.activities.find_one({"id": activity_id})))
 
 @api_router.post("/activities", response_model=Activity)
 async def create_activity(

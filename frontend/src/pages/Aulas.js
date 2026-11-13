@@ -28,6 +28,15 @@ const VAZIA = {
   is_active: true
 };
 
+/** Uma modalidade nova começa com a cor da marca; muda-se a seguir. */
+const MODALIDADE_VAZIA = { name: '', color: '#B8651B', description: '' };
+
+/** Cores à escolha, as mesmas que as modalidades de hoje já usam. */
+const CORES = [
+  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e',
+  '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899',
+];
+
 const dataPt = (iso) =>
   new Date(`${String(iso).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-PT', {
     weekday: 'short',
@@ -60,6 +69,13 @@ const Aulas = () => {
   const [inscritosAbertos, setInscritosAbertos] = useState(null);
   const [inscritos, setInscritos] = useState([]);
 
+  // As modalidades vistas de dentro: inclui as desligadas, para se poderem
+  // voltar a ligar. Só o administrador as vê assim.
+  const [todasAsModalidades, setTodasAsModalidades] = useState([]);
+  const [modalidadeAberta, setModalidadeAberta] = useState(false);
+  const [modalidadeAEditar, setModalidadeAEditar] = useState(null);
+  const [formModalidade, setFormModalidade] = useState(MODALIDADE_VAZIA);
+
   const carregar = useCallback(async () => {
     try {
       setACarregar(true);
@@ -77,12 +93,22 @@ const Aulas = () => {
       setGrelha(g.data);
       setModalidades(m.data);
       setProximas(p.data);
+
+      // As desligadas só interessam a quem as pode voltar a ligar
+      if (isAdmin()) {
+        const todas = await axios
+          .get(`${API}/activities`, { params: { incluir_desligadas: true } })
+          .catch(() => ({ data: m.data }));
+        setTodasAsModalidades(todas.data);
+      } else {
+        setTodasAsModalidades(m.data);
+      }
     } catch {
       toast.error('Não consegui carregar as aulas.');
     } finally {
       setACarregar(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     carregar();
@@ -198,6 +224,99 @@ const Aulas = () => {
 
   const nomeDaModalidade = (id) => modalidades.find((m) => m.id === id)?.name || '—';
   const corDaModalidade = (id) => modalidades.find((m) => m.id === id)?.color || '#888';
+
+  // ----------------------------------------------------------- modalidades
+
+  const abrirModalidade = (m) => {
+    setModalidadeAEditar(m || null);
+    setFormModalidade(
+      m
+        ? { name: m.name, color: m.color || '#B8651B', description: m.description || '' }
+        : MODALIDADE_VAZIA
+    );
+    setModalidadeAberta(true);
+  };
+
+  const guardarModalidade = async (e) => {
+    e.preventDefault();
+    const nome = formModalidade.name.trim();
+    if (!nome) {
+      toast.error('A modalidade tem de ter nome.');
+      return;
+    }
+    const corpo = {
+      name: nome,
+      color: formModalidade.color,
+      description: formModalidade.description.trim() || null
+    };
+    try {
+      if (modalidadeAEditar) {
+        await axios.put(`${API}/activities/${modalidadeAEditar.id}`, corpo);
+        toast.success('Modalidade corrigida.');
+      } else {
+        await axios.post(`${API}/activities`, corpo);
+        toast.success('Modalidade criada.');
+      }
+      setModalidadeAberta(false);
+      carregar();
+    } catch (erro) {
+      toast.error(erro.response?.data?.detail || 'Não consegui guardar.');
+    }
+  };
+
+  /**
+   * Desligar uma modalidade.
+   *
+   * Não apaga nada — é uma marca — mas o id dela fica gravado nas fichas,
+   * nas presenças e nas aulas, e essas passam a mostrar um nome que já não
+   * existe. Por isso pergunta-se primeiro ao servidor quem fica preso e
+   * mostra-se o número antes de perguntar.
+   */
+  const desligarModalidade = async (m) => {
+    let uso = null;
+    try {
+      uso = (await axios.get(`${API}/activities/${m.id}/uso`)).data;
+    } catch {
+      toast.error('Não consegui saber quem usa esta modalidade.');
+      return;
+    }
+
+    const presos = [
+      uso.membros ? `${uso.membros} ${uso.membros === 1 ? 'sócio' : 'sócios'}` : null,
+      uso.presencas ? `${uso.presencas} ${uso.presencas === 1 ? 'presença' : 'presenças'}` : null,
+      uso.aulas ? `${uso.aulas} ${uso.aulas === 1 ? 'aula no horário' : 'aulas no horário'}` : null
+    ].filter(Boolean);
+
+    const aviso = presos.length
+      ? `Desligar "${m.name}"?
+
+Está a ser usada por ${presos.join(', ')}.
+` +
+        'Nada é apagado, mas ela deixa de aparecer nas listas e essas presenças ' +
+        'passam a mostrar uma modalidade sem nome. Pode voltar a ligá-la aqui.'
+      : `Desligar "${m.name}"?
+
+Ninguém a está a usar. Pode voltar a ligá-la aqui.`;
+
+    if (!window.confirm(aviso)) return;
+    try {
+      await axios.delete(`${API}/activities/${m.id}`);
+      toast.success('Modalidade desligada.');
+      carregar();
+    } catch {
+      toast.error('Não consegui desligar.');
+    }
+  };
+
+  const ligarModalidade = async (m) => {
+    try {
+      await axios.post(`${API}/activities/${m.id}/ligar`);
+      toast.success(`${m.name} voltou ao activo.`);
+      carregar();
+    } catch {
+      toast.error('Não consegui ligar.');
+    }
+  };
 
   /** As ocorrências agrupadas por dia, para a lista dos próximos dias. */
   const porDia = () => {
@@ -390,6 +509,154 @@ const Aulas = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* ------------------------------------------------- as modalidades */}
+      {isAdmin() && (
+        <Card>
+          <CardHeader className="pb-3 flex flex-row items-start justify-between gap-3">
+            <div>
+              <CardTitle className="text-base">Modalidades</CardTitle>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                O que o ginásio ensina. Entram no check-in, nas presenças, nas aulas e
+                nas contas — por isso não se apagam: desligam-se, e podem voltar.
+              </p>
+            </div>
+            <Button size="sm" onClick={() => abrirModalidade(null)} data-testid="nova-modalidade">
+              <Plus size={15} className="mr-1" /> Nova
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {todasAsModalidades.map((m) => (
+                <div
+                  key={m.id}
+                  className="p-3 rounded-lg flex items-center gap-3"
+                  style={{
+                    background: 'var(--background-elevated)',
+                    border: '1px solid var(--border-light)',
+                    opacity: m.is_active ? 1 : 0.55
+                  }}
+                  data-testid={`modalidade-${m.id}`}
+                >
+                  <span
+                    className="w-4 h-4 rounded-full shrink-0"
+                    style={{ background: m.color || '#888' }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                      {m.name}
+                    </p>
+                    {m.description ? (
+                      <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
+                        {m.description}
+                      </p>
+                    ) : null}
+                    {!m.is_active && (
+                      <Badge variant="outline" className="mt-1 text-[10px] font-normal">
+                        Desligada
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                            title="Corrigir" onClick={() => abrirModalidade(m)}
+                            data-testid={`editar-modalidade-${m.id}`}>
+                      <Edit size={14} />
+                    </Button>
+                    {m.is_active ? (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600"
+                              title="Desligar" onClick={() => desligarModalidade(m)}
+                              data-testid={`desligar-modalidade-${m.id}`}>
+                        <Ban size={14} />
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="icon" className="h-8 w-8"
+                              title="Voltar a ligar" onClick={() => ligarModalidade(m)}
+                              data-testid={`ligar-modalidade-${m.id}`}>
+                        <RotateCcw size={14} />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ----------------------------------- criar / corrigir modalidade */}
+      <Dialog open={modalidadeAberta} onOpenChange={setModalidadeAberta}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {modalidadeAEditar ? 'Corrigir modalidade' : 'Nova modalidade'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={guardarModalidade} className="space-y-4">
+            <div>
+              <Label htmlFor="mod-nome">Nome</Label>
+              <Input
+                id="mod-nome"
+                value={formModalidade.name}
+                onChange={(e) => setFormModalidade({ ...formModalidade, name: e.target.value })}
+                placeholder="Ex: Muay Thai"
+                data-testid="modalidade-nome"
+              />
+            </div>
+
+            <div>
+              <Label>Cor</Label>
+              <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
+                É por ela que a modalidade se reconhece — nas presenças, no horário e na
+                aplicação do sócio.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {CORES.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setFormModalidade({ ...formModalidade, color: c })}
+                    className="w-8 h-8 rounded-full"
+                    style={{
+                      background: c,
+                      outline: formModalidade.color === c ? '2px solid white' : 'none',
+                      outlineOffset: 2
+                    }}
+                    aria-label={c}
+                  />
+                ))}
+                <Input
+                  type="color"
+                  value={formModalidade.color}
+                  onChange={(e) => setFormModalidade({ ...formModalidade, color: e.target.value })}
+                  className="h-9 w-14 p-1"
+                  data-testid="modalidade-cor"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="mod-descricao">Descrição</Label>
+              <Input
+                id="mod-descricao"
+                value={formModalidade.description}
+                onChange={(e) =>
+                  setFormModalidade({ ...formModalidade, description: e.target.value })
+                }
+                placeholder="Opcional"
+                data-testid="modalidade-descricao"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setModalidadeAberta(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" data-testid="guardar-modalidade">Guardar</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* --------------------------------------------- criar / corrigir */}
       <Dialog open={aberta} onOpenChange={setAberta}>
