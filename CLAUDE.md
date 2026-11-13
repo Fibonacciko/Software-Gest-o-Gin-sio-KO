@@ -938,10 +938,9 @@ canto, que foi o que aconteceu à primeira.
 deixam de chegar a quem tem a aplicação instalada, até instalar um APK novo
 de 99 MB.
 
-Trocar isso por **um segundo de cinzento na abertura** não compensa. A
-alteração fica para a próxima vez que houver uma razão verdadeira para gerar
-um APK — uma biblioteca nova, uma permissão, uma subida de SDK — e nessa vai
-de boleia, sem custar nada a ninguém.
+Trocar isso por **um segundo de cinzento na abertura** não compensa. E deixou
+de ser alteração adiada: o dono viu-o a funcionar e **gosta dele assim**. Fica
+como está, e não é para mexer na próxima compilação nem em nenhuma.
 
 **A profundidade vem da inclinação, não de um motor 3D.** As três camadas do
 fundo são maiores do que o ecrã e deslizam a velocidades diferentes conforme
