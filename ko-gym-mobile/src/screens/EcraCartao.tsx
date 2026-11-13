@@ -226,24 +226,10 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           pointerEvents="none"
         />
 
-        {/* O nome no canto de cima, ao lado do retrato: é quem está a abrir a
-            aplicação, e é a primeira coisa que se lê. O número e as
-            modalidades ficam em baixo, assentes na soleira da porta. */}
-        <Text
-          style={[estilos.nome, estilos.nomeNaCapa, { top: margens.top + espaco.m }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.7}
-        >
-          {nomeCurto(socio.name)}
-        </Text>
-
+        {/* Em cima da soleira: primeiro as modalidades — o que ele treina —
+            e o número por baixo. O número é o que menos se lê dos três e
+            fica por isso no fim. */}
         <View style={[estilos.capaTexto, { paddingBottom: espaco.m }]}>
-          <Text style={estilos.numeroSocio}>Sócio n.º {socio.member_number}</Text>
-
-          {/* A modalidade vem agarrada ao nome e ao número: é o que o sócio é
-              no ginásio, e fica junto do resto da identificação. Esteve no fim
-              da página, a seguir aos planos, onde não dizia nada a ninguém. */}
           {minhasModalidades.length > 0 ? (
             <View style={estilos.modalidades}>
               {minhasModalidades.map((m) => (
@@ -254,6 +240,9 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
               ))}
             </View>
           ) : null}
+          <Text style={[estilos.numeroSocio, estilos.numeroPorBaixo]}>
+            Sócio n.º {socio.member_number}
+          </Text>
         </View>
 
         {/* O retrato do sócio, que também é o botão de o trocar, fica no
@@ -284,6 +273,18 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           ) : null}
         </Pressable>
       </View>
+
+      {/* O nome fica entre a fotografia e o check-in, por baixo da
+          modalidade. Esteve por cima da fotografia, no canto; em terreno
+          limpo lê-se melhor, e é dele que a página passa a começar. */}
+      <Text
+        style={estilos.nome}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
+      >
+        {nomeCurto(socio.name)}
+      </Text>
 
       {/* O que se faz todos os dias */}
       <Pressable
@@ -494,6 +495,7 @@ const estilos = StyleSheet.create({
 
   nome: {
     color: cores.texto,
+    marginBottom: espaco.m,
     fontSize: 27,
     // A fonte que o dono pediu, parecida com a Comic Sans MS. Carregada no
     // App.tsx; se ainda nao estiver pronta, o sistema escolhe a sua.
@@ -536,8 +538,7 @@ const estilos = StyleSheet.create({
   },
   capaFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 0 },
-  // O nome encosta à esquerda e pára antes do retrato, que está no canto
-  nomeNaCapa: { position: 'absolute', left: espaco.m, right: 92 },
+  numeroPorBaixo: { marginTop: espaco.s },
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {

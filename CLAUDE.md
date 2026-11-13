@@ -906,10 +906,12 @@ diferentes da mesma fotografia:
   fotografia, e entrar na aplicação é mesmo entrar pela porta. Leva um
   escurecimento por cima, mais forte em baixo, onde estão os campos.
 - `assets/ginasio.jpg` — a **capa do cartão do sócio**: a toda a largura e
-  **até ao topo do ecrã**, por baixo da barra de estado. O **nome** fica no
-  canto de cima à esquerda, ao lado do retrato do sócio — que também é o
-  botão de o trocar —, e o **número e as modalidades** em baixo, assentes na
-  soleira da porta. O corte da imagem deixa **ar por cima do "DIA UM"**: a
+  **até ao topo do ecrã**, por baixo da barra de estado. Em cima da soleira
+  ficam as **modalidades** e, por baixo delas, o **número de sócio** — que é
+  o que menos se lê dos três. O **retrato do sócio**, que também é o botão
+  de o trocar, fica no canto de cima. O **nome** vem **a seguir à
+  fotografia**, já fora dela, entre a imagem e o check-in: esteve por cima da
+  fotografia e em terreno limpo lê-se melhor. O corte da imagem deixa **ar por cima do "DIA UM"**: a
   começar mais abaixo, ele roçava o bordo. Estavam num bloco à parte, por cima de
   uma fotografia pequena com margens; assim a fotografia é a primeira coisa
   que se vê. Leva um escurecimento em cima, por causa da barra de estado, e
