@@ -32,7 +32,7 @@ import MinhasMetricas from '../componentes/MinhasMetricas';
 import Versao from '../componentes/Versao';
 import Vidro from '../componentes/Vidro';
 import { dataPt } from '../lib/datas';
-import { nomeCurto } from '../lib/nomes';
+import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
 import { cores, espaco, raio, sombra } from '../theme';
 
@@ -214,7 +214,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           estavam num bloco à parte por cima de uma fotografia pequena;
           assim a fotografia é a primeira coisa que se vê, e a identificação
           assenta nela. */}
-      <View style={[estilos.capa, { height: 300 + margens.top, marginTop: -(margens.top + espaco.m) }]}>
+      <View style={[estilos.capa, { height: 330 + margens.top, marginTop: -(margens.top + espaco.m) }]}>
         <Image source={FOTO_DO_GINASIO} style={estilos.capaFoto} resizeMode="cover" />
 
         {/* Escurece em cima, por causa da barra de estado, e em baixo, para
@@ -226,10 +226,19 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           pointerEvents="none"
         />
 
+        {/* O nome no canto de cima, ao lado do retrato: é quem está a abrir a
+            aplicação, e é a primeira coisa que se lê. O número e as
+            modalidades ficam em baixo, assentes na soleira da porta. */}
+        <Text
+          style={[estilos.nome, estilos.nomeNaCapa, { top: margens.top + espaco.m }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+        >
+          {nomeCurto(socio.name)}
+        </Text>
+
         <View style={[estilos.capaTexto, { paddingBottom: espaco.m }]}>
-          <Text style={estilos.nome} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-            {nomeCurto(socio.name)}
-          </Text>
           <Text style={estilos.numeroSocio}>Sócio n.º {socio.member_number}</Text>
 
           {/* A modalidade vem agarrada ao nome e ao número: é o que o sócio é
@@ -240,7 +249,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
               {minhasModalidades.map((m) => (
                 <View key={m.id} style={[estilos.modalidade, { borderColor: m.color }]}>
                   <View style={[estilos.pontoCor, { backgroundColor: m.color }]} />
-                  <Text style={estilos.modalidadeTexto}>{m.name}</Text>
+                  <Text style={estilos.modalidadeTexto}>{semEmoji(m.name)}</Text>
                 </View>
               ))}
             </View>
@@ -426,7 +435,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
                 onPress={() => encostarTelemovel(m.id)}
               >
                 <View style={[estilos.pontoCor, { backgroundColor: m.color }]} />
-                <Text style={estilos.opcaoTexto}>{m.name}</Text>
+                <Text style={estilos.opcaoTexto}>{semEmoji(m.name)}</Text>
               </Pressable>
             ))}
             <Pressable onPress={() => setEscolhaAberta(false)} style={estilos.cancelar}>
@@ -443,7 +452,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
             {resultado?.already_checked_in ? (
               <>
                 <Text style={estilos.celebracaoTitulo}>Já cá estiveste hoje</Text>
-                <Text style={estilos.celebracaoSub}>{resultado.activity_name}</Text>
+                <Text style={estilos.celebracaoSub}>{semEmoji(resultado.activity_name)}</Text>
               </>
             ) : (
               <>
@@ -452,7 +461,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
                   {resultado?.milestone ? `Treino ${resultado.milestone}. Marco batido!` : 'Check-in feito'}
                 </Text>
                 <Text style={estilos.celebracaoSub}>
-                  {resultado?.activity_name}
+                  {semEmoji(resultado?.activity_name)}
                   {resultado?.streak_weeks
                     ? ` · ${resultado.streak_weeks} ${
                         resultado.streak_weeks === 1 ? 'semana seguida' : 'semanas seguidas'
@@ -527,6 +536,8 @@ const estilos = StyleSheet.create({
   },
   capaFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 0 },
+  // O nome encosta à esquerda e pára antes do retrato, que está no canto
+  nomeNaCapa: { position: 'absolute', left: espaco.m, right: 92 },
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {

@@ -495,6 +495,19 @@ sócio lê-o na aplicação em **Os teus planos**.
 
 ### Modalidades
 
+**Os emoji dos nomes não aparecem na aplicação.** Na base de dados as
+modalidades chamam-se `🥊 Boxe`, `🦵 Kickboxing`, `🏋️ Musculação`. Juntos num
+ecrã são uma luva, uma perna, um quimono, um bíceps e um halterofilista —
+desenhos de autores diferentes, tamanhos diferentes, e em Android alguns nem
+aparecem iguais. Por decisão do dono saem (`semEmoji()`, em
+`src/lib/nomes.ts`, com testes), e o que fica a distinguir cada modalidade é
+a **cor**, que cada uma já tem e que é a mesma em todo o lado.
+
+Só se tira o que está **à frente** do nome: um emoji no meio de um nome
+escrito à mão é escolha de quem o escreveu. E saem **só da aplicação** — na
+gestão os nomes ficam como estão, que é onde se escrevem.
+
+
 Um sócio pode ter **várias** (`activity_ids`). A primeira é a principal;
 `activity_id` existe para compatibilidade e acompanha sempre a primeira da
 lista.
@@ -861,9 +874,11 @@ diferentes da mesma fotografia:
   fotografia, e entrar na aplicação é mesmo entrar pela porta. Leva um
   escurecimento por cima, mais forte em baixo, onde estão os campos.
 - `assets/ginasio.jpg` — a **capa do cartão do sócio**: a toda a largura e
-  **até ao topo do ecrã**, por baixo da barra de estado. O nome, o número e as
-  modalidades assentam em cima dela, e o retrato do sócio — que também é o
-  botão de o trocar — fica no canto. Estavam num bloco à parte, por cima de
+  **até ao topo do ecrã**, por baixo da barra de estado. O **nome** fica no
+  canto de cima à esquerda, ao lado do retrato do sócio — que também é o
+  botão de o trocar —, e o **número e as modalidades** em baixo, assentes na
+  soleira da porta. O corte da imagem deixa **ar por cima do "DIA UM"**: a
+  começar mais abaixo, ele roçava o bordo. Estavam num bloco à parte, por cima de
   uma fotografia pequena com margens; assim a fotografia é a primeira coisa
   que se vê. Leva um escurecimento em cima, por causa da barra de estado, e
   em baixo, para o nome se ler em cima do chão iluminado.

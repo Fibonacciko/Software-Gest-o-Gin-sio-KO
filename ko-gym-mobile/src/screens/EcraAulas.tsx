@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Aula, carregarAulas, desmarcarAula, marcarAula, Socio } from '../api';
+import { semEmoji } from '../lib/nomes';
 import Vidro from '../componentes/Vidro';
 import { cores, espaco, raio } from '../theme';
 
@@ -150,7 +151,7 @@ export default function EcraAulas({ socio }: Props) {
                   </View>
                   <View style={estilos.info}>
                     <Text style={[estilos.nome, { color: a.activity_color || cores.texto }]}>
-                      {a.activity_name}
+                      {semEmoji(a.activity_name)}
                       {a.label ? ` · ${a.label}` : ''}
                     </Text>
                     <Text style={estilos.detalhe}>
