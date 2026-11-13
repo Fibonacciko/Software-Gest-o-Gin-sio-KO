@@ -555,8 +555,12 @@ const estilos = StyleSheet.create({
   capaFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   // Sobe o suficiente para o nome caber por baixo, sem lhe tocar
   capaTexto: { position: 'absolute', left: espaco.m, right: espaco.m, bottom: 36 },
-  // Encostado às modalidades: são a mesma coisa — quem ele é no ginásio
-  numeroPorBaixo: { marginTop: 2 },
+  // Encostado às modalidades: são a mesma coisa — quem ele é no ginásio.
+  //
+  // A margem sozinha não chegava: a caixa de uma linha de texto traz folga
+  // por cima das letras, e era ela que os mantinha afastados. Com a altura
+  // da linha presa ao tamanho da letra, o que se vê é o que se escreve aqui.
+  numeroPorBaixo: { marginTop: -2, lineHeight: 16 },
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {
