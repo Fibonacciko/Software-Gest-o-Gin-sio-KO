@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { entrar, Socio } from '../api';
+import { alturaDaPorta, topoDaPorta } from '../lib/porta';
 import { cores, espaco, raio, superficie } from '../theme';
 
 type Props = {
@@ -134,7 +135,17 @@ const estilos = StyleSheet.create({
   // Medidas explícitas, e não `absoluteFill`: uma `Image` sem largura e altura
   // fica do tamanho natural do ficheiro e vê-se só o canto dele. Já tinha
   // acontecido com as imagens do `Fundo`.
-  porta: { position: 'absolute', left: 0, top: 0, width: LARGURA, height: ALTURA },
+  //
+  // A altura e o topo não são os do ecrã: são os que põem o "DIA UM" pintado
+  // na parede dentro da caixa do número de sócio, em qualquer telemóvel.
+  // As contas e os porquês estão em `src/lib/porta.ts`, com testes.
+  porta: {
+    position: 'absolute',
+    left: 0,
+    top: topoDaPorta(LARGURA, ALTURA),
+    width: LARGURA,
+    height: alturaDaPorta(LARGURA, ALTURA),
+  },
   conteudo: { padding: espaco.g, paddingTop: 80, gap: espaco.m },
   // O logotipo ja traz o circulo e o fundo: nao leva caixa nenhuma por baixo
   logo: {

@@ -641,7 +641,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (34 testes, 4 segundos):
+A **aplicação do sócio** também tem os seus (60 testes, 4 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest
@@ -649,8 +649,10 @@ cd ko-gym-mobile && npx jest
 
 Protegem a lógica que vive só na aplicação: o **horário** lido do texto da
 ficha (`lerHorario`, `estadoDeHoje`), a **data à portuguesa**, o **nome no
-cartão** e os **endereços das imagens**, miniaturas incluídas. São testes de
-funções, não de ecrãs: o que se vê continua a confirmar-se no navegador.
+cartão**, os **endereços das imagens** (miniaturas incluídas) e o **encaixe
+da porta** no ecrã de entrada. São testes de funções, não de ecrãs: o que se
+vê continua a confirmar-se no navegador — tirando os feitios de ecrã que não
+se têm à mão, e esses só o teste alcança.
 
 **Não há atalho `yarn test` aqui, e é de propósito.** Qualquer mexida nos
 `scripts` do `package.json` **muda a impressão digital** da aplicação — medido:
@@ -905,6 +907,18 @@ diferentes da mesma fotografia:
   (9:19,5), por trás do ecrã de entrada. É o único ecrã de pé como a
   fotografia, e entrar na aplicação é mesmo entrar pela porta. Leva um
   escurecimento por cima, mais forte em baixo, onde estão os campos.
+
+  **Esta fotografia está agarrada à caixa do número de sócio, e não ao
+  ecrã.** O "DIA UM" pintado na parede cai mesmo por cima dessa caixa, e com
+  a fotografia esticada à altura do ecrã as letras ficavam numa *fracção*
+  dela: num telemóvel mais alto desciam, num mais baixo subiam, e acabavam
+  sempre a roçar uma das linhas — a de cima no emulador, a de baixo no
+  telemóvel do dono. Agora desenha-se maior do que o ecrã e **sobe** o que
+  for preciso para as letras ficarem no meio da caixa. Sobe e nunca desce,
+  que descer descobria o topo: quando as letras ficariam altas de mais, o
+  que cresce é a fotografia — numa fotografia maior elas caem mais abaixo.
+  As contas estão em `src/lib/porta.ts`, com testes em sete feitios de ecrã
+  — é a única maneira de confirmar um telemóvel que não se tem à mão.
 - `assets/ginasio.jpg` — a **capa do cartão do sócio**: a toda a largura e
   **até ao topo do ecrã**, por baixo da barra de estado. Em cima da soleira
   ficam as **modalidades** e, por baixo delas, o **número de sócio** — que é
