@@ -1,17 +1,17 @@
 import { nomeDoDia, tamanhoDaTinta, TINTA, MEIO_DA_TINTA, POR_EXTENSO } from './dia';
 
 describe('o que a parede diz', () => {
-  it('conta por extenso ate ao vinte', () => {
+  it('conta por extenso ate ao nove', () => {
     expect(nomeDoDia(1)).toBe('DIA UM');
     expect(nomeDoDia(2)).toBe('DIA DOIS');
     expect(nomeDoDia(3)).toBe('DIA TRÊS');
-    expect(nomeDoDia(14)).toBe('DIA CATORZE');
-    expect(nomeDoDia(16)).toBe('DIA DEZASSEIS');
-    expect(nomeDoDia(20)).toBe('DIA VINTE');
+    expect(nomeDoDia(4)).toBe('DIA QUATRO');
+    expect(nomeDoDia(9)).toBe('DIA NOVE');
   });
 
-  it('passa a algarismos a partir do vinte e um', () => {
-    expect(nomeDoDia(21)).toBe('DIA 21');
+  it('passa a algarismos a partir do dez', () => {
+    expect(nomeDoDia(10)).toBe('DIA 10');
+    expect(nomeDoDia(17)).toBe('DIA 17');
     expect(nomeDoDia(137)).toBe('DIA 137');
     expect(nomeDoDia(1000)).toBe('DIA 1000');
   });
@@ -24,13 +24,21 @@ describe('o que a parede diz', () => {
     expect(nomeDoDia(-3)).toBe('DIA UM');
   });
 
-  it('os numeros estao em portugues de Portugal', () => {
-    expect(POR_EXTENSO).toContain('CATORZE');
-    expect(POR_EXTENSO).toContain('DEZASSEIS');
-    expect(POR_EXTENSO).toContain('DEZASSETE');
-    expect(POR_EXTENSO).toContain('DEZANOVE');
-    expect(POR_EXTENSO).not.toContain('QUATORZE');
-    expect(POR_EXTENSO).not.toContain('DEZESSEIS');
+  // A parede livre entre os caixilhos da porta da 196 pixeis no ecra, e o
+  // "DIA " mais o espaco levam 54. Por extenso ate ao vinte, o DEZASSETE
+  // encostava aos caixilhos dos dois lados; acabando no nove, a frase mais
+  // larga e o "DIA QUATRO". Dez letras e o tecto que isso da.
+  it('nenhuma frase cresce ao ponto de bater nos caixilhos', () => {
+    const maior = Math.max(
+      ...Array.from({ length: 9999 }, (_, i) => nomeDoDia(i + 1).length)
+    );
+    expect(maior).toBeLessThanOrEqual('DIA QUATRO'.length);
+  });
+
+  it('as palavras sao as dos nove primeiros dias', () => {
+    expect(POR_EXTENSO).toHaveLength(9);
+    expect(POR_EXTENSO[0]).toBe('UM');
+    expect(POR_EXTENSO[8]).toBe('NOVE');
   });
 });
 

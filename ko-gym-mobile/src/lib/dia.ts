@@ -16,9 +16,17 @@
  * biblioteca, para não mexer na impressão digital da aplicação.
  */
 
-/** Os números por extenso, que é como estava pintado. Do vinte em diante
- *  passam a algarismos: "DIA VINTE E SETE" não cabe na parede, e "DIA 137"
- *  tem o ar certo — é um número que se gaba. */
+/**
+ * Os números por extenso, que é como estava pintado. **Vão até ao nove**, e
+ * do dez em diante são algarismos.
+ *
+ * O corte está aqui por medida, não por gosto: entre os caixilhos da porta a
+ * parede livre dá **196 pixeis** no ecrã, e o "DIA " mais o espaço levam 54
+ * desses. Por extenso até ao vinte, três frases chegavam ao limite —
+ * DEZASSEIS 193, DEZANOVE 186 e DEZASSETE 196, que encostava ao caixilho dos
+ * dois lados. Acabando no nove, a mais larga passa a ser o "DIA QUATRO", com
+ * 156, e em algarismos nunca mais cresce: o "DIA 9999" dá 126.
+ */
 export const POR_EXTENSO = [
   'UM',
   'DOIS',
@@ -29,17 +37,6 @@ export const POR_EXTENSO = [
   'SETE',
   'OITO',
   'NOVE',
-  'DEZ',
-  'ONZE',
-  'DOZE',
-  'TREZE',
-  'CATORZE',
-  'QUINZE',
-  'DEZASSEIS',
-  'DEZASSETE',
-  'DEZOITO',
-  'DEZANOVE',
-  'VINTE',
 ];
 
 /**

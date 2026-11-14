@@ -641,7 +641,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (90 testes, 10 segundos):
+A **aplicação do sócio** também tem os seus (91 testes, 10 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest
@@ -1050,10 +1050,14 @@ onde estava pintado o "DIA UM", estão agora os dias daquele sócio — `DIA UM`
 `DIA DOIS`, `DIA TRÊS`. Foi ideia do dono: cada dia de treino é um dia, e a
 parede conta-os.
 
-- **Por extenso até ao vinte, algarismos daí em diante.** "DIA VINTE E
-  SETE" não cabe na parede; "DIA 137" cabe e tem o ar certo — é um número
-  que se gaba. Em português de Portugal: *catorze*, *dezasseis*,
-  *dezassete*, *dezanove*.
+- **Por extenso até ao nove, algarismos daí em diante**, e o corte está aí
+  por medida. A parede livre entre os caixilhos da porta dá **196 pixeis**
+  no ecrã, e o "DIA " mais o espaço levam 54 desses. Com as palavras até ao
+  vinte, três frases chegavam ao limite — DEZASSEIS 193, DEZANOVE 186 e
+  DEZASSETE **196**, que encostava ao caixilho dos dois lados. Acabando no
+  nove, a mais larga passa a ser o "DIA QUATRO", com 156, e em algarismos
+  nunca mais cresce: o "DIA 9999" dá 126. Há um teste a guardar isto, pelo
+  número de letras.
 - **Quem ainda não treinou nenhuma vez fica no "DIA UM"**, que é o que a
   fotografia conta: alguém parado à porta, antes de começar. No dia do
   primeiro check-in a parede continua a dizer o mesmo — é quando passa a
