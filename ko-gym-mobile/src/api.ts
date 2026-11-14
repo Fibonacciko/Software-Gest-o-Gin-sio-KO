@@ -14,8 +14,10 @@ export type Socio = {
   phone: string;
   qr_code: string;
   workout_count: number;
-  /** Os treinos deste mês. O total está na parede da capa. */
+  /** Os treinos deste mês, que é o que o cartão dos números mostra. */
   workout_count_month?: number;
+  /** Os dias diferentes em que treinou — o que a parede da capa diz. */
+  training_days?: number;
   streak_weeks: number;
   checked_in_today: boolean;
   current_motivational_note?: string | null;

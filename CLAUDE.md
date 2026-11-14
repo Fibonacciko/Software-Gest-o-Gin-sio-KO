@@ -622,7 +622,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 302 testes e demoram 16 segundos.
+backend** — são 304 testes e demoram 16 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -990,10 +990,10 @@ que fica dentro do quadro. E as duas `Image` levam **largura e altura
 explícitas** — sem elas ficam do tamanho natural do ficheiro e vê-se só o
 canto, que foi o que aconteceu à primeira.
 
-**A tinta na parede diz quantos treinos ele leva.** Na capa do cartão, onde
-estava pintado o "DIA UM", está agora o número de treinos daquele sócio —
-`DIA UM`, `DIA DOIS`, `DIA TRÊS` —, e sobe a cada check-in. Foi ideia do
-dono: cada treino é um dia, e a parede conta-os.
+**A tinta na parede diz em quantos dias ele treinou.** Na capa do cartão,
+onde estava pintado o "DIA UM", estão agora os dias daquele sócio — `DIA UM`,
+`DIA DOIS`, `DIA TRÊS`. Foi ideia do dono: cada dia de treino é um dia, e a
+parede conta-os.
 
 - **Por extenso até ao vinte, algarismos daí em diante.** "DIA VINTE E
   SETE" não cabe na parede; "DIA 137" cabe e tem o ar certo — é um número
@@ -1003,13 +1003,20 @@ dono: cada treino é um dia, e a parede conta-os.
   fotografia conta: alguém parado à porta, antes de começar. No dia do
   primeiro check-in a parede continua a dizer o mesmo — é quando passa a
   ser verdade.
-- O número é o `workout_count`, que o servidor conta das presenças daquele
-  sócio.
-- **E por isso o cartão dos números passou a dizer o mês**: o total está na
-  parede, e o mesmo número duas vezes no mesmo ecrã não acrescenta nada. O
-  mês é o que ainda se pode mudar. É o `workout_count_month`, contado no
-  mesmo sítio e na mesma passagem que a sequência de semanas — não custa
-  consulta nenhuma a mais.
+- **São dias, e não treinos** (`training_days`, e não `workout_count`).
+  Há quem treine duas modalidades no mesmo dia: são dois treinos e um dia
+  só, e a palavra que está na parede é "DIA". Sem esta distinção a parede
+  andava duas casas num dia a quem treina de manhã e à tarde.
+- **O que conta é o check-in**, venha de onde vier — a etiqueta NFC, o QR
+  lido na receção ou o lançamento à mão ao balcão. Entrar na aplicação não
+  conta para nada.
+- **E por isso o cartão dos números passou a dizer o mês**: o total deixou
+  de aparecer, que o mesmo número duas vezes no mesmo ecrã não acrescenta
+  nada. O mês é o que ainda se pode mudar, e esse conta **treinos** — quem
+  treina duas vezes num dia vê o cartão subir e a parede ficar quieta. É o
+  `workout_count_month`.
+- Os dias, o mês e a sequência de semanas são contados **na mesma passagem**
+  pelas presenças do sócio: não custa consulta nenhuma a mais.
 - **A letra é a Anton, esticada 13%** (`ESTICA`): foi medida contra a
   pintura original, letra a letra, e assenta-lhe por cima. A pintura era
   mais larga do que a Anton de origem.

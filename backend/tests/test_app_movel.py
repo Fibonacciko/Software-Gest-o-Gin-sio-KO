@@ -122,3 +122,41 @@ def test_sem_treinos_o_mes_fica_a_zero(cliente, criar_socio):
     cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
     assert cartao["workout_count"] == 0
     assert cartao["workout_count_month"] == 0
+
+
+def test_dois_treinos_no_mesmo_dia_sao_um_dia_so(cliente, admin, criar_socio, modalidades):
+    """A parede da capa conta dias, nao treinos.
+
+    Ha quem treine duas modalidades no mesmo dia: sao dois treinos e um dia
+    so. O cartao dos numeros conta os treinos; a parede conta os dias.
+    """
+    socio = criar_socio(telefone="912345678", activity_ids=[modalidades[0]["id"]])
+    hoje = date.today()
+
+    for quando, modalidade in (
+        (hoje, modalidades[0]),
+        (hoje, modalidades[1]),
+        (hoje - timedelta(days=70), modalidades[0]),
+    ):
+        r = cliente.post(
+            "/api/attendance",
+            headers=admin,
+            json={
+                "member_id": socio["id"],
+                "activity_id": modalidade["id"],
+                "check_in_date": quando.isoformat(),
+                "method": "manual",
+            },
+        )
+        assert r.status_code == 200, r.text
+
+    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    assert cartao["workout_count"] == 3       # tres treinos
+    assert cartao["training_days"] == 2       # em dois dias
+    assert cartao["workout_count_month"] == 2
+
+
+def test_sem_treinos_nao_ha_dias(cliente, criar_socio):
+    socio = criar_socio(telefone="912345678")
+    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    assert cartao["training_days"] == 0

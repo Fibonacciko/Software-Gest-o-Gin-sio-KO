@@ -230,8 +230,9 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       <View style={[estilos.capa, { height: 312 + margens.top, marginTop: -(margens.top + espaco.m) }]}>
         <Image source={FOTO_DO_GINASIO} style={estilos.capaFoto} resizeMode="cover" />
 
-        {/* A tinta na parede: já não é pintura, é o número de treinos deste
-            sócio, e sobe a cada check-in. Fica no sítio exacto onde a
+        {/* A tinta na parede: já não é pintura, são os dias em que este
+            sócio treinou — dias e não treinos, que quem treina duas
+            modalidades no mesmo dia treinou num dia só. Fica no sítio onde a
             pintura estava, na mesma letra (Anton esticada) e da mesma cor —
             tinta gasta, pouco mais clara do que a parede.
 
@@ -250,7 +251,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
             adjustsFontSizeToFit
             minimumFontScale={0.5}
           >
-            {nomeDoDia(socio.workout_count)}
+            {nomeDoDia(socio.training_days ?? socio.workout_count)}
           </Text>
         </View>
 

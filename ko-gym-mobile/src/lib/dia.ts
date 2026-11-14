@@ -3,9 +3,13 @@
  *
  * A fotografia que lá esteve tinha "DIA UM" pintado na parede, e era pintura:
  * ficava "DIA UM" ao sócio que treinava há três anos. A fotografia passou a
- * ser a mesma sala **sem letra nenhuma**, e o que lá está agora é texto — o
- * número de treinos daquele sócio, escrito na parede, que sobe a cada
- * check-in.
+ * ser a mesma sala **sem letra nenhuma**, e o que lá está agora é texto — os
+ * dias em que aquele sócio treinou, escritos na parede.
+ *
+ * **Dias, e não treinos** (`training_days`, não `workout_count`): quem treina
+ * duas modalidades no mesmo dia fez dois treinos num dia só, e a palavra que
+ * está na parede é "DIA". Os treinos contam-se no cartão dos números, logo
+ * ali abaixo.
  *
  * A letra é a **Anton**, esticada 13% (`ESTICA`): é a que assenta por cima da
  * pintura original, letra a letra. Entra como ficheiro em `assets/` e não como
