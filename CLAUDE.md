@@ -703,6 +703,41 @@ acabar.
 Cópias de segurança automáticas todas as noites às 3h30 (`/root/backup-ko-gym.sh`),
 as últimas 30 em `/root/backups/`, registo em `/var/log/ko-gym-backup.log`.
 
+### A cópia que fica no computador do dono
+
+**As cópias do servidor vivem no próprio servidor.** Se a máquina morrer,
+morrem com ela. O `GUARDAR-COPIA.bat`, na raiz, traz tudo para o computador
+do dono — mostra primeiro o que vai fazer e só escreve depois de um "s".
+(`servidor/guardar-copia.py`.)
+
+Cada cópia fica numa pasta com a data, dentro de **`CÓPIAS DE SEGURANÇA`**, e
+leva seis pastas com nomes que se percebem sem saber de informática — foram
+pedidos assim pelo dono, e a ordem é a dele:
+
+| | O que é |
+|---|---|
+| `1 - CODIGO APP MOBILE` | os ficheiros da aplicação, como estão, para abrir e ler |
+| `2 - CODIGO SOFTWARE` | o site de gestão, o servidor e os guiões da máquina |
+| `3 - BASE DE DADOS DE PRODUCAO` | o despejo mais recente do servidor |
+| `4 - FOTOGRAFIAS` | o volume do Docker, que não está no Git nem no GitHub |
+| `5 - FORA DO GIT` | os `.env` e o `INICIAR-APP.bat` — os únicos que não existem noutro lado |
+| `6 - REPOSITORIO INTEIRO` | o `git bundle`, com a história toda, e um `COMO REPOR.txt` |
+
+As pastas 1 e 2 saem de `git archive HEAD`, e por isso **levam só o que está
+gravado** — nunca o `node_modules` nem o `venv`. Há um `LEIA-ME.txt` em cada
+cópia a explicar o que é cada pasta.
+
+**Esta pasta nunca pode ir para o Git**: a base de dados leva o nome, o
+telefone e a data de nascimento dos 340 sócios, e o `5 - FORA DO GIT` leva as
+senhas. Já aconteceu a regra deixar de a apanhar — chamava-se `CODIGO`,
+passou a `CÓDIGO APP.MOBILE` e o `.gitignore` ficou a apontar para um nome
+que já não existia, sem erro nenhum. Por isso hoje o `.gitignore` tem os dois
+nomes da pasta **e** os ficheiros em si (`*.bundle`, `*.archive.gz`): se ela
+mudar de nome outra vez, o conteúdo continua de fora.
+
+**Nunca correr `git clean -xfd` na raiz** — apaga tudo o que está ignorado, e
+estas cópias com ele.
+
 ### Aplicação móvel
 
 ```bash
