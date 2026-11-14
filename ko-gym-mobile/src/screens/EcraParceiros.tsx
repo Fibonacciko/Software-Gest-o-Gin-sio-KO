@@ -173,15 +173,18 @@ const estilos = StyleSheet.create({
   descricao: { color: cores.textoSecundario, fontSize: 14, marginTop: espaco.s, lineHeight: 20 },
   linha: { color: cores.textoSecundario, fontSize: 13, marginTop: espaco.s },
   accoes: { flexDirection: 'row', gap: espaco.s, marginTop: espaco.m },
+  // Cheios, no dourado do "Deixar uma avaliacao" do Ginasio, por decisao do
+  // dono: sao as duas accoes do cartao e passam a ler-se como tal.
   botao: {
     borderWidth: 1,
-    borderColor: cores.laranja,
+    borderColor: cores.dourado,
+    backgroundColor: cores.dourado,
     borderRadius: 10,
     paddingVertical: espaco.s,
     paddingHorizontal: espaco.m,
   },
   premido: { opacity: 0.7 },
-  // Em ouro, como as letras de tudo o que e para carregar. A caixa fica
-  // com o contorno que tinha.
-  botaoTexto: { color: cores.ouro, fontWeight: '600' },
+  // Escuras, como no "Deixar uma avaliacao": em cima do dourado, letras
+  // douradas nao se liam.
+  botaoTexto: { color: '#1A1A1A', fontWeight: '700' },
 });
