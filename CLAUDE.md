@@ -641,7 +641,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (82 testes, 10 segundos):
+A **aplicação do sócio** também tem os seus (90 testes, 10 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest
@@ -900,12 +900,15 @@ em cima de verde-azulado**, porque são cores opostas. O cinzento competia com
 ele. O laranja continua a ser só para o que é para carregar — o check-in, os
 números, o logótipo — e nunca para o fundo.
 
-**Há duas portas, e são duas fotografias diferentes.** A do ecrã de entrada
-é uma imagem da entrada vista de fora — a porta aberta, o candeeiro aceso lá
-dentro, o ringue ao fundo e um miúdo parado à soleira. A do cartão do sócio é
-a fotografia da porta do ginásio a sério. Foi decisão do dono, que trocou a
-primeira: a outra tinha o "DIA UM" pintado na parede, esta não tem letras
-nenhumas, e é esta que ele quer que o sócio veja ao entrar.
+**A porta aparece em dois sítios, e é a mesma imagem cortada de duas
+maneiras.** A entrada vista de fora: a porta aberta, o candeeiro aceso lá
+dentro, o ringue ao fundo e um miúdo parado à soleira. De pé no ecrã de
+entrada, deitada na capa do cartão.
+
+A imagem que lá esteve antes tinha o **"DIA UM" pintado na parede**. Era
+pintura: ficava "DIA UM" ao sócio que treina há três anos. Esta não tem letras
+nenhumas — e é por isso que a parede passou a poder dizer a verdade (ver **A
+tinta na parede**, mais abaixo).
 
 - `assets/porta.jpg` — por trás do ecrã de entrada, **cortada no feitio do
   telemóvel** (9:19,5) a partir de uma imagem bem mais larga: o recorte é
@@ -959,8 +962,11 @@ nenhumas, e é esta que ele quer que o sócio veja ao entrar.
   num ecrã que é para ser a porta do ginásio. A cor da palavra é o que sobra
   a dizer onde se carrega, e por isso fica.
 
-- `assets/ginasio.jpg` — a **capa do cartão do sócio**: a toda a largura e
-  **até ao topo do ecrã**, por baixo da barra de estado. Em cima da soleira
+- `assets/ginasio.jpg` — a **capa do cartão do sócio**: a mesma imagem,
+  cortada ao baixo, a toda a largura e **até ao topo do ecrã**, por baixo da
+  barra de estado. O corte é feito a apanhar **do tecto aos pés** — o
+  candeeiro no alto, o miúdo inteiro, o chão por baixo dele —, que é o
+  enquadramento que a capa já tinha. Em cima da soleira
   ficam as **modalidades** e, por baixo delas, o **número de sócio** — que é
   o que menos se lê dos três. O **retrato do sócio**, que também é o botão
   de o trocar, fica no canto de cima. O **nome** fica **a cavalo no bordo
@@ -974,8 +980,7 @@ nenhumas, e é esta que ele quer que o sócio veja ao entrar.
   três espaços entre a **modalidade, o número e o nome** medem-se também
   pelas letras — 9 pixeis cada um, que é o que os faz ler como um bloco só:
   quem ele é no ginásio. E o check-in encosta ao nome sem margem sua, que a
-  folga deixada pela capa já chega. O corte da imagem deixa **ar por cima do "DIA UM"**: a
-  começar mais abaixo, ele roçava o bordo. Estavam num bloco à parte, por cima de
+  folga deixada pela capa já chega. Estavam num bloco à parte, por cima de
   uma fotografia pequena com margens; assim a fotografia é a primeira coisa
   que se vê. Leva um escurecimento em cima, por causa da barra de estado, e
   em baixo, para o nome se ler em cima do chão iluminado.
@@ -984,6 +989,38 @@ Os cortes são feitos **no ficheiro**, não com `resizeMode`: assim sabe-se o
 que fica dentro do quadro. E as duas `Image` levam **largura e altura
 explícitas** — sem elas ficam do tamanho natural do ficheiro e vê-se só o
 canto, que foi o que aconteceu à primeira.
+
+**A tinta na parede diz quantos treinos ele leva.** Na capa do cartão, onde
+estava pintado o "DIA UM", está agora o número de treinos daquele sócio —
+`DIA UM`, `DIA DOIS`, `DIA TRÊS` —, e sobe a cada check-in. Foi ideia do
+dono: cada treino é um dia, e a parede conta-os.
+
+- **Por extenso até ao vinte, algarismos daí em diante.** "DIA VINTE E
+  SETE" não cabe na parede; "DIA 137" cabe e tem o ar certo — é um número
+  que se gaba. Em português de Portugal: *catorze*, *dezasseis*,
+  *dezassete*, *dezanove*.
+- **Quem ainda não treinou nenhuma vez fica no "DIA UM"**, que é o que a
+  fotografia conta: alguém parado à porta, antes de começar. No dia do
+  primeiro check-in a parede continua a dizer o mesmo — é quando passa a
+  ser verdade.
+- O número é o `workout_count`, que o servidor conta das presenças daquele
+  sócio.
+- **A letra é a Anton, esticada 13%** (`ESTICA`): foi medida contra a
+  pintura original, letra a letra, e assenta-lhe por cima. A pintura era
+  mais larga do que a Anton de origem.
+- **A cor é tinta gasta, não um letreiro**: a cor da luz do ginásio a 0,28
+  de opacidade. Medido: a pintura ficava 34 pontos de verde acima da
+  parede, e a 0,38 esta ficava 47 — lia-se como letreiro novo.
+- Vai **por baixo do escurecimento** da capa, como ia a pintura. É o que a
+  faz pertencer à fotografia em vez de assentar por cima dela.
+- Fica no sítio exacto onde a pintura estava (`TINTA`, em `src/lib/dia.ts`,
+  com testes), e **cresce com a capa**: a capa é 312 mais a barra de
+  estado, que muda de telemóvel para telemóvel.
+- **A fonte entra como ficheiro em `assets/`, e não como biblioteca.** Há um
+  pacote `@expo-google-fonts/anton` que daria o mesmo, mas uma dependência
+  nova mexe na impressão digital e as atualizações pelo ar deixavam de
+  chegar a quem tem a aplicação instalada. O `expo-font` já cá estava; o
+  `.ttf` é um ficheiro como as fotografias, e vai pelo ar com elas.
 
 **O ecrã de arranque ainda é cinzento, e fica assim de propósito.** O
 `splash.backgroundColor` e o fundo do ícone, no `app.json`, continuam em

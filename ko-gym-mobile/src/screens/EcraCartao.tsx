@@ -32,6 +32,7 @@ import MinhasMetricas from '../componentes/MinhasMetricas';
 import Versao from '../componentes/Versao';
 import Vidro from '../componentes/Vidro';
 import { dataPt } from '../lib/datas';
+import { ESTICA, MEIO_DA_TINTA, nomeDoDia, tamanhoDaTinta } from '../lib/dia';
 import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
 import { cores, espaco, raio, sombra } from '../theme';
@@ -44,6 +45,9 @@ import { cores, espaco, raio, sombra } from '../theme';
  * a fotografia. Com 13, fica cerca de metade das letras em cima dela.
  */
 const NOME_A_ESPREITAR = 13;
+
+/** A altura da caixa onde a tinta se centra. Só tem de dar para a letra. */
+const ALTURA_DA_TINTA = 60;
 
 const LOGOTIPO = require('../../assets/logo-ko.png');
 const FOTO_DO_GINASIO = require('../../assets/ginasio.jpg');
@@ -225,6 +229,30 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
           assenta nela. */}
       <View style={[estilos.capa, { height: 312 + margens.top, marginTop: -(margens.top + espaco.m) }]}>
         <Image source={FOTO_DO_GINASIO} style={estilos.capaFoto} resizeMode="cover" />
+
+        {/* A tinta na parede: já não é pintura, é o número de treinos deste
+            sócio, e sobe a cada check-in. Fica no sítio exacto onde a
+            pintura estava, na mesma letra (Anton esticada) e da mesma cor —
+            tinta gasta, pouco mais clara do que a parede.
+
+            Vai **por baixo do escurecimento**, como ia a pintura: é o que a
+            faz pertencer à fotografia em vez de assentar por cima dela. */}
+        <View
+          style={[
+            estilos.tinta,
+            { top: MEIO_DA_TINTA * (312 + margens.top) - ALTURA_DA_TINTA / 2 },
+          ]}
+          pointerEvents="none"
+        >
+          <Text
+            style={[estilos.tintaTexto, { fontSize: tamanhoDaTinta(312 + margens.top) }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.5}
+          >
+            {nomeDoDia(socio.workout_count)}
+          </Text>
+        </View>
 
         {/* Escurece em cima, por causa da barra de estado, e em baixo, para
             o nome se ler em cima do chão iluminado. */}
@@ -553,6 +581,31 @@ const estilos = StyleSheet.create({
     backgroundColor: cores.fundo,
   },
   capaFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  // A caixa onde a tinta se centra. Centra-se em vez de se acertar pelo topo
+  // porque a caixa de texto tem folgas diferentes em cada sistema, e ao meio
+  // da parede dois pixeis não se vêem.
+  tinta: {
+    position: 'absolute',
+    left: '12%',
+    right: '12%',
+    height: ALTURA_DA_TINTA,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tintaTexto: {
+    fontFamily: 'Anton',
+    // A pintura era mais larga do que a Anton: esticada assenta-lhe por cima
+    transform: [{ scaleX: ESTICA }],
+    // Tinta gasta na parede, não um letreiro: a cor é a da luz do ginásio,
+    // com pouca opacidade — medida na pintura original, que ficava pouco
+    // mais clara do que a parede.
+    color: cores.luz,
+    // 0,28 e nao mais: medido. A pintura original ficava 34 pontos de verde
+    // acima da parede, e a 0,38 esta ficava 47 — lia-se como um letreiro
+    // novo e nao como tinta velha.
+    opacity: 0.28,
+    letterSpacing: 1,
+  },
   // Desce até quase ao nome: a distância que lhes fica entre letras é a
   // mesma que separa o número das modalidades. São as três a mesma coisa —
   // quem ele é no ginásio — e lêem-se como um bloco só.

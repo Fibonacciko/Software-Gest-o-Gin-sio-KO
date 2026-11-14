@@ -111,10 +111,18 @@ export default function App() {
     if (id === 'loja') return <EcraLoja socio={socio} />;
     return <EcraGinasio />;
   };
-  // A fonte do nome no cartao, parecida com a Comic Sans MS. Se falhar o
-  // carregamento seguimos em frente: o sistema escolhe a sua e ninguem fica
-  // sem app por causa de uma letra.
-  const [fontesProntas, erroDasFontes] = useFonts({ ComicNeue_400Regular, ComicNeue_700Bold });
+  // A fonte do nome no cartao, parecida com a Comic Sans MS, e a Anton, que
+  // e a letra da tinta na parede da capa. A Anton entra como ficheiro em
+  // `assets/` de proposito, e nao como biblioteca: uma dependencia nova
+  // mexeria na impressao digital e as atualizacoes pelo ar deixavam de
+  // chegar a quem tem a app instalada. Se o carregamento falhar seguimos em
+  // frente: o sistema escolhe a sua e ninguem fica sem app por causa de uma
+  // letra.
+  const [fontesProntas, erroDasFontes] = useFonts({
+    ComicNeue_400Regular,
+    ComicNeue_700Bold,
+    Anton: require('./assets/Anton-Regular.ttf'),
+  });
 
   // O socio fica com sessao iniciada; a app abre logo no cartao
   useEffect(() => {
