@@ -35,7 +35,7 @@ import { dataPt } from '../lib/datas';
 import { ESTICA, MEIO_DA_TINTA, nomeDoDia, tamanhoDaTinta } from '../lib/dia';
 import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
-import { cores, degradeCheckin, espaco, raio, sombra } from '../theme';
+import { checkin, cores, espaco, raio, sombra } from '../theme';
 
 /**
  * Quanto o nome do sócio desce para fora da fotografia, em pixeis.
@@ -335,17 +335,11 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         onPress={comecarCheckin}
         disabled={aLerNfc}
       >
-        {/* O degradê do logotipo. Só quando há check-in para fazer: feito o
-            do dia, o botão fica verde e chapado, que é outra coisa. */}
-        {!socio.checked_in_today ? (
-          <LinearGradient
-            colors={degradeCheckin}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-        ) : null}
+        {/* A barra de luz dourada no bordo esquerdo — a cor do logotipo, que
+            aqui só acende um lado em vez de pintar o botão todo. Só quando há
+            check-in para fazer: feito o do dia, o botão fica verde e chapado,
+            que é outra coisa. */}
+        {!socio.checked_in_today ? <View style={estilos.barraDoCheckin} /> : null}
         {aLerNfc ? (
           <>
             <ActivityIndicator color={cores.texto} />
@@ -532,7 +526,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
             ) : null}
 
             <Pressable style={estilos.botaoFechar} onPress={() => setResultado(null)}>
-              <Text style={estilos.botaoCheckinTexto}>FECHAR</Text>
+              <Text style={estilos.botaoFecharTexto}>FECHAR</Text>
             </Pressable>
           </View>
         </View>
@@ -631,28 +625,33 @@ const estilos = StyleSheet.create({
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {
-    // Fica por baixo do degradê, e é o que se vê se ele não chegar a pintar
-    backgroundColor: cores.laranja,
+    backgroundColor: checkin.fundo,
     borderRadius: raio.g,
-    // Sem isto o degradê sai pelos cantos arredondados fora
+    // Sem isto a barra de luz saía pelos cantos arredondados fora
     overflow: 'hidden',
-    paddingVertical: espaco.g,
+    // A altura do botão do QR, e não a de antes: por decisão do dono, que
+    // quis o check-in com menos presença.
+    paddingVertical: espaco.m,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: espaco.s,
     // Encostado ao nome: o espaço que a capa deixa por baixo já chega
     marginTop: 0,
-    // O unico elemento com sombra no ecra. E o que se carrega todos os dias:
-    // se tudo tivesse relevo, nada o teria.
-    ...sombra.flutuante,
-    shadowColor: cores.laranja,
-    // Era 0,5 e fazia um halo que puxava o olho de qualquer ponto do ecrã.
-    // A sombra é para lhe dar chão, não para o acender.
-    shadowOpacity: 0.3,
+    // Sem sombra. O halo alaranjado que aqui estava puxava o olho de
+    // qualquer ponto do ecrã, e era metade da presença de que o dono se
+    // queixava. Quem o distingue agora é a barra de luz.
+  },
+  barraDoCheckin: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: checkin.barraLargura,
+    backgroundColor: checkin.barra,
   },
   botaoFeito: { backgroundColor: cores.verde },
-  botaoCheckinTexto: { color: cores.texto, fontSize: 18, fontWeight: '800', letterSpacing: 1 },
+  botaoCheckinTexto: { color: cores.texto, fontSize: 16, fontWeight: '800', letterSpacing: 1 },
   dica: { color: cores.textoSecundario, fontSize: 13, textAlign: 'center', marginTop: espaco.s },
   erro: { color: cores.vermelho, textAlign: 'center', marginTop: espaco.s },
 
@@ -795,6 +794,9 @@ const estilos = StyleSheet.create({
     marginTop: espaco.m,
     lineHeight: 22,
   },
+  // A letra que o check-in tinha antes de encolher. O botão da janela de
+  // celebração não encolheu com ele: ali não há nada a competir.
+  botaoFecharTexto: { color: cores.texto, fontSize: 18, fontWeight: '800', letterSpacing: 1 },
   botaoFechar: {
     backgroundColor: cores.laranja,
     borderRadius: 14,

@@ -37,21 +37,26 @@ export const cores = {
 };
 
 /**
- * O degrade do botao de check-in, tirado do **proprio logotipo**: ele e um
- * circulo que vai do dourado no meio (#FBBF07) ao laranja no bordo (#F9A107).
- * Por decisao do dono, que achava o laranja chapado "muito basico".
+ * O botao de check-in: um castanho fundo com uma **barra de luz dourada** no
+ * bordo esquerdo. Escolhido pelo dono de entre vinte e um feitios vistos no
+ * proprio ecra -- queria "menos presenca", e esta e a mais contida que ainda
+ * se le como um botao cheio.
  *
- * As duas cores vem **descidas de brilho**, e isso tambem foi pedido: o botao
- * nao pode ficar mais gritante do que ja era. O peso medio das duas e o mesmo
- * que o do laranja chapado que aqui estava (luminancia 118 contra 117), por
- * isso o botao mudou de feitio sem mudar de volume. O que se alargou foi a
- * **distancia entre as pontas** -- com as luminancias do logotipo, a 188 e
- * 170, nao se via degrade nenhum num botao deste tamanho.
+ * O dourado e o do **logotipo**, que e um circulo do dourado no meio
+ * (#FBBF07) ao laranja do bordo (#F9A107). Aqui ele nao pinta o botao todo:
+ * e so o fio que o acende de um lado.
  *
- * Do dourado em cima a esquerda ao laranja em baixo a direita, que e o
- * sentido em que a luz cai em todo o resto da aplicacao.
+ * Pesa 70 de luminancia, contra 117 do laranja chapado que aqui estava. O
+ * botao deixou de puxar o olho de qualquer ponto do ecra -- e, pela mesma
+ * razao, deixou de levar sombra: o halo alaranjado era metade da presenca
+ * de que o dono se queixava.
  */
-export const degradeCheckin = ['#BB8E05', '#8D5B04'] as const;
+export const checkin = {
+  fundo: '#6E3E12',
+  barra: '#D6A306',
+  /** A barra e estreita de proposito: e um fio de luz, nao uma faixa. */
+  barraLargura: 5,
+};
 
 export const espaco = {
   xs: 4,

@@ -106,3 +106,6 @@ frontend/node_modules/.cache/default-development/0.pack
 # Nao entram no APK nem fazem falta a ninguem que clone o projeto.
 ko-gym-mobile/web/
 ko-gym-mobile/public/
+
+# Imagens de previsualizacao, para ver uma alteracao antes de a publicar
+/_ver/

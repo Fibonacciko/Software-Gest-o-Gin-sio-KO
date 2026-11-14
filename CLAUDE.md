@@ -900,26 +900,37 @@ em cima de verde-azulado**, porque são cores opostas. O cinzento competia com
 ele. O laranja continua a ser só para o que é para carregar — o check-in, os
 números, o logótipo — e nunca para o fundo.
 
-**O botão de check-in é o degradê do logotipo, descido de brilho.** O
-logotipo é um círculo que vai do dourado no meio (`#FBBF07`) ao laranja do
-bordo (`#F9A107`), e são essas as duas cores do botão — por decisão do dono,
-que achava o laranja chapado que lá estava "muito básico".
+**O botão de check-in é escuro, com uma barra de luz à esquerda.** Era um
+laranja chapado (`#B8651B`), grande e com um halo alaranjado à volta, e o dono
+queria-o com "menos presença". Hoje é um castanho fundo (`#6E3E12`) com um fio
+dourado de 5 pixeis no bordo esquerdo — o dourado é o do logotipo (`#D6A306`),
+que aqui acende um lado em vez de pintar o botão todo. (`checkin`, no
+`theme.ts`.)
 
-Vêm **descidas**, e isso foi pedido na mesma frase: o botão não podia ficar
-mais gritante do que já era. O peso médio das duas é o mesmo que o do chapado
-de antes — luminância 118 contra 117 —, por isso o botão mudou de feitio sem
-mudar de volume. O que se alargou foi a **distância entre as pontas**: com as
-luminâncias do logotipo, 188 e 170, não se via degradê nenhum num botão deste
-tamanho.
+Mudaram três coisas ao mesmo tempo, e são as três a mesma decisão:
 
-Vai do dourado em cima à esquerda ao laranja em baixo à direita, que é o
-sentido em que a luz cai em todo o resto da aplicação. E a **sombra
-alaranjada passou de 0,5 para 0,3**: fazia um halo que puxava o olho de
-qualquer ponto do ecrã, e a sombra é para lhe dar chão, não para o acender.
+- **A cor**: de 117 de luminância para 70. Deixou de puxar o olho de qualquer
+  ponto do ecrã.
+- **O tamanho**: passou a ter a altura do botão do QR que está logo por baixo
+  (`espaco.m` em vez de `espaco.g`), e a letra passou de 18 para 16.
+- **A sombra**: saiu. O halo alaranjado era metade da presença de que o dono
+  se queixava, e o que distingue agora o botão é a barra.
 
-Um dourado escuro lê-se como **mostarda** — não há amarelo que seja vivo e
-discreto ao mesmo tempo. Se um dia o dono quiser mais brilho do logotipo, é
-o `degradeCheckin` do `theme.ts` e mais nada.
+**O caminho até aqui está nos ficheiros, e vale a pena saber porquê.** Foram
+vinte e um feitios, vistos todos no próprio ecrã — não em maquetas: o ecrã
+corria no navegador e o botão foi trocado por dentro, um de cada vez. Pelo
+caminho ficou aprendido que
+
+- **um dourado escuro lê-se como mostarda.** Não há amarelo que seja vivo e
+  discreto ao mesmo tempo, e as duas cores do logotipo são ambas amarelas.
+- **a transparência não serve para apagar esta cor**: por cima do fundo
+  verde-azulado, o dourado a 55% vira azeitona.
+- **o laranja tem de vir à frente.** Num degradê de laranja para dourado, com
+  o laranja a liderar, a média dá `#AD6412` — que é praticamente o laranja da
+  marca. Ao contrário, dá mostarda.
+- **abaixo dos 70 de luminância o botão compete com o do QR**, que é de vidro
+  e está logo por baixo. O que é a acção principal da aplicação passava a
+  parecer uma opção secundária.
 
 **A porta aparece em dois sítios, e é a mesma imagem cortada de duas
 maneiras.** A entrada vista de fora: a porta aberta, o candeeiro aceso lá
@@ -1103,11 +1114,9 @@ delas chega sozinha num fundo preto:
    mais claro em cima à esquerda. É o que lhe dá corpo — o risco de luz no
    bordo, sozinho, dava-lhe o contorno mas não o volume.
 3. **O bordo claro em cima** (`vidroBrilho`), que já lá estava.
-4. **Uma sombra larga e fraca**, agora em todos os cartões e não só no botão
-   de check-in. É chão, não é relevo: curta e escura fazia o cartão parecer
-   recortado em papel. O botão de check-in continua a ser o único com **sombra
-   alaranjada**, que é o que o mantém à frente de tudo — mais fraca desde
-   que ele passou a ter o degradê do logotipo.
+4. **Uma sombra larga e fraca**, agora em todos os cartões. É chão, não é
+   relevo: curta e escura fazia o cartão parecer recortado em papel. O botão
+   de check-in teve a sua, alaranjada, e **deixou de ter** — ver acima.
 
 **O pó de luz** (`particulas.png`) enche o fundo sem lhe dar assunto: pontos
 de **branco sujo** de tamanhos muito diferentes — todos iguais leem-se como um
