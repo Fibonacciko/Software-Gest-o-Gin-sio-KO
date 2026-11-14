@@ -35,7 +35,7 @@ import { dataPt } from '../lib/datas';
 import { ESTICA, MEIO_DA_TINTA, nomeDoDia, tamanhoDaTinta } from '../lib/dia';
 import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
-import { cores, espaco, raio, sombra } from '../theme';
+import { cores, degradeCheckin, espaco, raio, sombra } from '../theme';
 
 /**
  * Quanto o nome do sócio desce para fora da fotografia, em pixeis.
@@ -335,6 +335,17 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         onPress={comecarCheckin}
         disabled={aLerNfc}
       >
+        {/* O degradê do logotipo. Só quando há check-in para fazer: feito o
+            do dia, o botão fica verde e chapado, que é outra coisa. */}
+        {!socio.checked_in_today ? (
+          <LinearGradient
+            colors={degradeCheckin}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+        ) : null}
         {aLerNfc ? (
           <>
             <ActivityIndicator color={cores.texto} />
@@ -620,8 +631,11 @@ const estilos = StyleSheet.create({
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {
+    // Fica por baixo do degradê, e é o que se vê se ele não chegar a pintar
     backgroundColor: cores.laranja,
     borderRadius: raio.g,
+    // Sem isto o degradê sai pelos cantos arredondados fora
+    overflow: 'hidden',
     paddingVertical: espaco.g,
     alignItems: 'center',
     justifyContent: 'center',
@@ -633,7 +647,9 @@ const estilos = StyleSheet.create({
     // se tudo tivesse relevo, nada o teria.
     ...sombra.flutuante,
     shadowColor: cores.laranja,
-    shadowOpacity: 0.5,
+    // Era 0,5 e fazia um halo que puxava o olho de qualquer ponto do ecrã.
+    // A sombra é para lhe dar chão, não para o acender.
+    shadowOpacity: 0.3,
   },
   botaoFeito: { backgroundColor: cores.verde },
   botaoCheckinTexto: { color: cores.texto, fontSize: 18, fontWeight: '800', letterSpacing: 1 },

@@ -36,6 +36,23 @@ export const cores = {
   vidroBrilho: 'rgba(255,255,255,0.24)',
 };
 
+/**
+ * O degrade do botao de check-in, tirado do **proprio logotipo**: ele e um
+ * circulo que vai do dourado no meio (#FBBF07) ao laranja no bordo (#F9A107).
+ * Por decisao do dono, que achava o laranja chapado "muito basico".
+ *
+ * As duas cores vem **descidas de brilho**, e isso tambem foi pedido: o botao
+ * nao pode ficar mais gritante do que ja era. O peso medio das duas e o mesmo
+ * que o do laranja chapado que aqui estava (luminancia 118 contra 117), por
+ * isso o botao mudou de feitio sem mudar de volume. O que se alargou foi a
+ * **distancia entre as pontas** -- com as luminancias do logotipo, a 188 e
+ * 170, nao se via degrade nenhum num botao deste tamanho.
+ *
+ * Do dourado em cima a esquerda ao laranja em baixo a direita, que e o
+ * sentido em que a luz cai em todo o resto da aplicacao.
+ */
+export const degradeCheckin = ['#BB8E05', '#8D5B04'] as const;
+
 export const espaco = {
   xs: 4,
   s: 8,
