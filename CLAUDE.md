@@ -622,7 +622,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 270 testes e demoram 13 segundos.
+backend** — são 302 testes e demoram 16 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -1005,6 +1005,11 @@ dono: cada treino é um dia, e a parede conta-os.
   ser verdade.
 - O número é o `workout_count`, que o servidor conta das presenças daquele
   sócio.
+- **E por isso o cartão dos números passou a dizer o mês**: o total está na
+  parede, e o mesmo número duas vezes no mesmo ecrã não acrescenta nada. O
+  mês é o que ainda se pode mudar. É o `workout_count_month`, contado no
+  mesmo sítio e na mesma passagem que a sequência de semanas — não custa
+  consulta nenhuma a mais.
 - **A letra é a Anton, esticada 13%** (`ESTICA`): foi medida contra a
   pintura original, letra a letra, e assenta-lhe por cima. A pintura era
   mais larga do que a Anton de origem.

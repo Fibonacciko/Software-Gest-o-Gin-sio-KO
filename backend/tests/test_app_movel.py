@@ -1,4 +1,7 @@
 """Login e cartão do sócio na aplicação móvel."""
+from datetime import date, timedelta
+
+
 def entrar(cliente, numero, telefone):
     return cliente.post(
         "/api/mobile/auth/login",
@@ -82,3 +85,40 @@ def test_sequencia_de_semanas_conta_a_partir_dos_treinos(
     ).json()
     assert cartao["streak_weeks"] == 1
     assert cartao["checked_in_today"] is True
+
+
+def test_o_cartao_conta_os_treinos_do_mes(cliente, admin, criar_socio, modalidades):
+    """O total vai para a parede da capa; o cartao dos numeros mostra o mes.
+
+    Um treino de ha dois meses conta para o total e nao conta para o mes.
+    """
+    socio = criar_socio(telefone="912345678", activity_ids=[modalidades[0]["id"]])
+    hoje = date.today()
+
+    for quando, modalidade in (
+        (hoje, modalidades[0]),
+        (hoje.replace(day=1), modalidades[1]),
+        (hoje - timedelta(days=70), modalidades[2 % len(modalidades)]),
+    ):
+        r = cliente.post(
+            "/api/attendance",
+            headers=admin,
+            json={
+                "member_id": socio["id"],
+                "activity_id": modalidade["id"],
+                "check_in_date": quando.isoformat(),
+                "method": "manual",
+            },
+        )
+        assert r.status_code == 200, r.text
+
+    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    assert cartao["workout_count"] == 3
+    assert cartao["workout_count_month"] == 2
+
+
+def test_sem_treinos_o_mes_fica_a_zero(cliente, criar_socio):
+    socio = criar_socio(telefone="912345678")
+    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    assert cartao["workout_count"] == 0
+    assert cartao["workout_count_month"] == 0

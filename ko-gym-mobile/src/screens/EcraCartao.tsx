@@ -384,9 +384,14 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
 
       {/* Números */}
       <View style={estilos.numeros}>
+        {/* Os treinos **deste mês**, e não o total: o total está agora na
+            parede da capa, e dizer o mesmo número duas vezes no mesmo ecrã
+            não acrescenta nada. O mês é o que ainda se pode mudar. */}
         <Vidro estilo={estilos.numeroCaixa}>
-          <Text style={estilos.numeroGrande}>{socio.workout_count}</Text>
-          <Text style={estilos.numeroEtiqueta}>treinos</Text>
+          <Text style={estilos.numeroGrande}>{socio.workout_count_month ?? 0}</Text>
+          <Text style={estilos.numeroEtiqueta}>
+            {socio.workout_count_month === 1 ? 'treino este mês' : 'treinos este mês'}
+          </Text>
         </Vidro>
         <Vidro estilo={estilos.numeroCaixa}>
           <Text style={estilos.numeroGrande}>{socio.streak_weeks}</Text>

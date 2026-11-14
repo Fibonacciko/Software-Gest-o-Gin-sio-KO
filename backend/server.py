@@ -220,6 +220,9 @@ class MobileMember(BaseModel):
     photo_url: Optional[str] = None
     qr_code: str  # Base64 QR code image
     workout_count: int = 0  # Total workouts
+    # Os treinos deste mes. O total vive na parede da capa ("DIA 137"); o
+    # cartao dos numeros mostra o mes, que e o que se pode ainda mudar.
+    workout_count_month: int = 0
     current_motivational_note: Optional[str] = None
     subscription_active: bool = True
     fcm_token: Optional[str] = None
@@ -3548,6 +3551,7 @@ async def build_mobile_member(member: dict) -> MobileMember:
     ).to_list(2000)
 
     semanas = set()
+    treinos_do_mes = 0
     for r in registos:
         valor = r.get("check_in_date")
         if isinstance(valor, str):
@@ -3561,6 +3565,8 @@ async def build_mobile_member(member: dict) -> MobileMember:
             continue
         inicio_semana = d - timedelta(days=d.weekday())
         semanas.add(inicio_semana)
+        if (d.year, d.month) == (hoje.year, hoje.month):
+            treinos_do_mes += 1
 
     streak = 0
     semana_atual = hoje - timedelta(days=hoje.weekday())
@@ -3573,6 +3579,7 @@ async def build_mobile_member(member: dict) -> MobileMember:
 
     dados = derive_member_status(normalize_member_activities(parse_from_mongo(dict(member))))
     dados["workout_count"] = workout_count
+    dados["workout_count_month"] = treinos_do_mes
     dados["current_motivational_note"] = get_motivational_note_for_member(workout_count, "pt")
     dados["streak_weeks"] = streak
     dados["checked_in_today"] = checked_in_today
