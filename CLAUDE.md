@@ -912,8 +912,8 @@ vidro: num botão largo e baixo, a diagonal quase só se vê nos cantos.
 **O alto do degradê é a cor das letras no resto da aplicação** (`cores.ouro`,
 `#D6A306`), por decisão do dono: o **Mostrar o meu QR**, os dois **Pedir** dos
 planos, o **Reservar** da loja, os **preços dos artigos**, o **Ginásio KO** e
-o **ENTRAR** do ecrã de entrada, e nos Parceiros a **vantagem** e a
-**inicial** de quem não mandou logotipo. Antes
+o **ENTRAR** do ecrã de entrada, e nos Parceiros o **Ligar**, o **Visitar o
+site**, a **vantagem** e a **inicial** de quem não mandou logotipo. Antes
 andavam por dois tons de laranja e um dourado, sem razão nenhuma.
 
 **São só as letras.** Houve uma versão em que estes passaram todos a botões
@@ -931,10 +931,11 @@ em fotografia:
   chapado. É o botão mais visível daquele ecrã de propósito — é o que mais
   ajuda o ginásio e é o que as pessoas se esquecem de fazer —, e apagá-lo
   desfazia essa decisão.
-- O **Ligar** e o **Visitar o site** dos Parceiros são **iguais a esse**:
-  cheios de dourado, com as letras escuras. Chegaram a ter só as letras em
-  ouro e o contorno de antes, e o dono preferiu-os cheios — são as duas
-  acções do cartão do parceiro e passam a ler-se como tal.
+- O **Ligar** e o **Visitar o site** dos Parceiros levam esse dourado
+  **só no aro**, com as letras em ouro e nada por dentro. Chegaram a estar
+  cheios, como o do Ginásio, e o dono preferiu-os de contorno: ali são duas
+  acções pequenas dentro de um cartão, e cheias pesavam mais do que a
+  vantagem, que é o que conta no cartão do parceiro.
 
 O que lhe tirou presença não foi a cor — foi o resto:
 

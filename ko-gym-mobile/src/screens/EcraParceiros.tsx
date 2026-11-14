@@ -173,18 +173,16 @@ const estilos = StyleSheet.create({
   descricao: { color: cores.textoSecundario, fontSize: 14, marginTop: espaco.s, lineHeight: 20 },
   linha: { color: cores.textoSecundario, fontSize: 13, marginTop: espaco.s },
   accoes: { flexDirection: 'row', gap: espaco.s, marginTop: espaco.m },
-  // Cheios, no dourado do "Deixar uma avaliacao" do Ginasio, por decisao do
-  // dono: sao as duas accoes do cartao e passam a ler-se como tal.
+  // So o aro, no dourado do "Deixar uma avaliacao" do Ginasio -- por dentro
+  // nao leva nada. Por decisao do dono, que os viu cheios e preferiu assim.
   botao: {
     borderWidth: 1,
     borderColor: cores.dourado,
-    backgroundColor: cores.dourado,
     borderRadius: 10,
     paddingVertical: espaco.s,
     paddingHorizontal: espaco.m,
   },
   premido: { opacity: 0.7 },
-  // Escuras, como no "Deixar uma avaliacao": em cima do dourado, letras
-  // douradas nao se liam.
-  botaoTexto: { color: '#1A1A1A', fontWeight: '700' },
+  // De volta ao ouro: sem o dourado por tras, letras escuras nao se liam.
+  botaoTexto: { color: cores.ouro, fontWeight: '600' },
 });
