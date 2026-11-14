@@ -3,6 +3,7 @@ import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'r
 import { carregarPlanos, enderecoDaImagem, pedirPlano, Plano, TipoDePlano } from '../api';
 import { dataPt } from '../lib/datas';
 import Vidro from './Vidro';
+import BotaoDourado from './BotaoDourado';
 import { cores, espaco, raio, sombra } from '../theme';
 
 const TIPOS: { tipo: TipoDePlano; etiqueta: string; icone: string }[] = [
@@ -83,15 +84,15 @@ export default function MeusPlanos({ socioId }: { socioId: string }) {
               ) : pedido ? (
                 <Text style={estilos.pedido}>Pedido ✓</Text>
               ) : (
-                <Pressable
-                  style={({ pressed }) => [estilos.botao, pressed && estilos.premido]}
-                  onPress={() => pedir(tipo)}
-                  disabled={aPedir === tipo}
+                <BotaoDourado
+                  estilo={estilos.botao}
+                  aoTocar={() => pedir(tipo)}
+                  desativado={aPedir === tipo}
                 >
                   <Text style={estilos.botaoTexto}>
                     {aPedir === tipo ? '…' : 'Pedir'}
                   </Text>
-                </Pressable>
+                </BotaoDourado>
               )}
             </View>
           );
@@ -146,16 +147,15 @@ const estilos = StyleSheet.create({
   linhaTexto: { flex: 1, minWidth: 0 },
   linhaTitulo: { color: cores.texto, fontSize: 15, fontWeight: '600' },
   linhaSub: { color: cores.textoSecundario, fontSize: 12, marginTop: 2 },
+  // Era um vidro alaranjado com a letra cor de laranja. Passou ao degrade
+  // dourado como tudo o que e para carregar, por decisao do dono.
   botao: {
     paddingHorizontal: espaco.m,
     paddingVertical: espaco.s,
     borderRadius: raio.redondo,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: cores.laranjaClaro,
-    backgroundColor: 'rgba(232,132,42,0.14)',
   },
   premido: { opacity: 0.7 },
-  botaoTexto: { color: cores.laranjaClaro, fontSize: 13, fontWeight: '700' },
+  botaoTexto: { color: cores.texto, fontSize: 13, fontWeight: '700' },
   pedido: { color: cores.verde, fontSize: 13, fontWeight: '700' },
   pedirNovo: {
     color: cores.laranjaClaro,

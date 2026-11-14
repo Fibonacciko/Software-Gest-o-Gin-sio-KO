@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { Aula, carregarAulas, desmarcarAula, marcarAula, Socio } from '../api';
 import { semEmoji } from '../lib/nomes';
 import Vidro from '../componentes/Vidro';
+import BotaoDourado from '../componentes/BotaoDourado';
 import { cores, espaco, raio } from '../theme';
 
 type Props = { socio: Socio };
@@ -190,15 +191,15 @@ export default function EcraAulas({ socio }: Props) {
                         </Text>
                       </Pressable>
                     ) : (
-                      <Pressable
-                        style={({ pressed }) => [estilos.botao, pressed && estilos.premido]}
-                        onPress={() => marcar(a)}
-                        disabled={aMexerNesta}
+                      <BotaoDourado
+                        estilo={estilos.botao}
+                        aoTocar={() => marcar(a)}
+                        desativado={aMexerNesta}
                       >
                         <Text style={estilos.botaoTexto}>
                           {aMexerNesta ? '…' : lugares > 0 ? 'Marcar' : 'Lista de espera'}
                         </Text>
-                      </Pressable>
+                      </BotaoDourado>
                     )}
                   </View>
                 )}
@@ -258,11 +259,12 @@ const estilos = StyleSheet.create({
   veio: { color: cores.verde, fontSize: 13, fontWeight: '700' },
   faltou: { color: cores.vermelho, fontSize: 13, fontWeight: '700' },
 
+  // Era o laranja chapado. Passou ao degrade dourado como tudo o que e para
+  // carregar, por decisao do dono.
   botao: {
     paddingHorizontal: espaco.m,
     paddingVertical: espaco.s,
     borderRadius: raio.redondo,
-    backgroundColor: cores.laranja,
   },
   botaoTexto: { color: cores.texto, fontSize: 13, fontWeight: '800' },
   botaoSair: {

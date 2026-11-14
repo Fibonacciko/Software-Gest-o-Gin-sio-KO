@@ -909,6 +909,23 @@ logotipo, descidas de brilho. (`degradeCheckin`, no `theme.ts`.)
 O sentido é **de cima para baixo**, e não na diagonal como nas superfícies de
 vidro: num botão largo e baixo, a diagonal quase só se vê nos cantos.
 
+**E é agora a cor de tudo o que é para carregar**, por decisão do dono. O
+mesmo degradê está no **QR**, nos dois **Pedir** dos planos, no **Marcar** das
+aulas, no **Reservar** da loja (na lista e na janela) e no **Deixar uma
+avaliação** do Ginásio. Antes era cada um com o seu: uns chapados de
+`#B8651B`, outros de vidro com a letra em `#E8842A`, e um dourado `#F5A623` no
+Google — três tons da mesma cor, sem nada que os distinguisse.
+
+Quem os pinta é o **`BotaoDourado`** (`src/componentes/BotaoDourado.tsx`): o
+feitio de cada um continua a ser dele — redondo, comprido, pequeno — e o que
+o componente garante é que a cor e o sentido são os mesmos. Os **preços da
+loja** ficam em `cores.ouro`, que é o alto do degradê: texto não pode ser
+degradê.
+
+O **"Reservar" da lista** era um texto com ar de botão que não fazia nada —
+quem lhe tocava ficava à espera. Passou a abrir o artigo, como a fotografia
+ao lado.
+
 O que lhe tirou presença não foi a cor — foi o resto:
 
 - **O tamanho**: passou a ter a altura do botão do QR que está logo por baixo
