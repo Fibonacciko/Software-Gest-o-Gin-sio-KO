@@ -12,7 +12,8 @@ import * as Haptics from 'expo-haptics';
 import { Aula, carregarAulas, desmarcarAula, marcarAula, Socio } from '../api';
 import { semEmoji } from '../lib/nomes';
 import Vidro from '../componentes/Vidro';
-import { cores, espaco, raio } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { cores, degradeCheckin, espaco, raio } from '../theme';
 
 type Props = { socio: Socio };
 
@@ -195,6 +196,15 @@ export default function EcraAulas({ socio }: Props) {
                         onPress={() => marcar(a)}
                         disabled={aMexerNesta}
                       >
+                        {/* O degradê do check-in, por decisão do dono: é a
+                            cor do que é para carregar. */}
+                        <LinearGradient
+                          colors={degradeCheckin}
+                          start={{ x: 0.5, y: 0 }}
+                          end={{ x: 0.5, y: 1 }}
+                          style={StyleSheet.absoluteFill}
+                          pointerEvents="none"
+                        />
                         <Text style={estilos.botaoTexto}>
                           {aMexerNesta ? '…' : lugares > 0 ? 'Marcar' : 'Lista de espera'}
                         </Text>
@@ -262,7 +272,14 @@ const estilos = StyleSheet.create({
     paddingHorizontal: espaco.m,
     paddingVertical: espaco.s,
     borderRadius: raio.redondo,
+    // Fica por baixo do degrade, e e o que se ve se ele nao chegar a pintar
     backgroundColor: cores.laranja,
+    // Sem isto o degrade sai pelos cantos arredondados fora
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: cores.ouro,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   botaoTexto: { color: cores.texto, fontSize: 13, fontWeight: '800' },
   botaoSair: {

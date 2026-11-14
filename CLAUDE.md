@@ -919,10 +919,16 @@ cheios com o degradê, e o dono travou-a: o "Mostrar o meu QR" ficava igual ao
 check-in, logo por baixo dele, e deixava de se perceber qual era o principal.
 As caixas ficam como estavam — vidro é vidro.
 
-Ficaram de fora o **Marcar** das aulas e o **Deixar uma avaliação** do
-Ginásio: nenhum deles tem letras cor de laranja. Um é branco sobre laranja
-chapado, o outro é escuro sobre dourado, e letras em ouro por cima de
-qualquer um deles não se liam.
+Dois da lista não tinham letras cor de laranja — são caixas cheias, com a
+cor no fundo —, e por isso foram decididos à parte, vistos os dois caminhos
+em fotografia:
+
+- O **Marcar** das aulas leva o **degradê do check-in** na caixa, com as
+  letras brancas como estavam.
+- O **Deixar uma avaliação** do Ginásio **fica como está**, no dourado
+  chapado. É o botão mais visível daquele ecrã de propósito — é o que mais
+  ajuda o ginásio e é o que as pessoas se esquecem de fazer —, e apagá-lo
+  desfazia essa decisão.
 
 O que lhe tirou presença não foi a cor — foi o resto:
 
