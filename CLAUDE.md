@@ -649,7 +649,7 @@ cd ko-gym-mobile && npx jest
 
 Protegem a lógica que vive só na aplicação: o **horário** lido do texto da
 ficha (`lerHorario`, `estadoDeHoje`), a **data à portuguesa**, o **nome no
-cartão**, os **endereços das imagens** (miniaturas incluídas) e o **encaixe
+cartão**, a **tinta na parede** da capa, os **endereços das imagens** (miniaturas incluídas) e o **encaixe
 da porta** no ecrã de entrada. São testes de funções, não de ecrãs: o que se
 vê continua a confirmar-se no navegador — tirando os feitios de ecrã que não
 se têm à mão, e esses só o teste alcança.
