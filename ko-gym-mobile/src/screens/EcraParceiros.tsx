@@ -156,12 +156,16 @@ const estilos = StyleSheet.create({
   topo: { flexDirection: 'row', alignItems: 'center', gap: espaco.m },
   logo: { width: 56, height: 56, borderRadius: raio.s, backgroundColor: cores.fundoElevado },
   logoVazio: { alignItems: 'center', justifyContent: 'center' },
-  logoLetra: { color: cores.laranjaClaro, fontSize: 24, fontWeight: '800' },
+  // A inicial faz as vezes do logotipo de quem nao mandou nenhum. Em ouro,
+  // para nao ficar um laranja sozinho no meio do cartao.
+  logoLetra: { color: cores.ouro, fontSize: 24, fontWeight: '800' },
   cabecalho: { flex: 1 },
   nome: { color: cores.texto, fontSize: 17, fontWeight: '700' },
   categoria: { color: cores.textoSecundario, fontSize: 12, marginTop: 2 },
+  // A vantagem e o que mais conta no cartao do parceiro, e por isso leva a
+  // cor forte -- a mesma dos precos da loja.
   vantagem: {
-    color: cores.dourado,
+    color: cores.ouro,
     fontSize: 16,
     fontWeight: '700',
     marginTop: espaco.m,
@@ -177,5 +181,7 @@ const estilos = StyleSheet.create({
     paddingHorizontal: espaco.m,
   },
   premido: { opacity: 0.7 },
-  botaoTexto: { color: cores.laranjaClaro, fontWeight: '600' },
+  // Em ouro, como as letras de tudo o que e para carregar. A caixa fica
+  // com o contorno que tinha.
+  botaoTexto: { color: cores.ouro, fontWeight: '600' },
 });

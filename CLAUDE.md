@@ -911,8 +911,10 @@ vidro: num botão largo e baixo, a diagonal quase só se vê nos cantos.
 
 **O alto do degradê é a cor das letras no resto da aplicação** (`cores.ouro`,
 `#D6A306`), por decisão do dono: o **Mostrar o meu QR**, os dois **Pedir** dos
-planos, o **Reservar** da loja e os **preços dos artigos**. Antes andavam por
-dois tons de laranja e um dourado, sem razão nenhuma.
+planos, o **Reservar** da loja, os **preços dos artigos**, o **Ginásio KO** e
+o **ENTRAR** do ecrã de entrada, e nos Parceiros o **Ligar**, o **Visitar o
+site**, a **vantagem** e a **inicial** de quem não mandou logotipo. Antes
+andavam por dois tons de laranja e um dourado, sem razão nenhuma.
 
 **São só as letras.** Houve uma versão em que estes passaram todos a botões
 cheios com o degradê, e o dono travou-a: o "Mostrar o meu QR" ficava igual ao
