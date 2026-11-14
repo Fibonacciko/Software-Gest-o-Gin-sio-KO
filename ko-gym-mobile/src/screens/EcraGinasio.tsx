@@ -13,7 +13,6 @@ import {
 import { carregarFichaDoGinasio, enderecoDaImagem, FichaDoGinasio } from '../api';
 import { estadoDeHoje, lerHorario, NOME_DO_DIA } from '../lib/horario';
 import Vidro from '../componentes/Vidro';
-import BotaoDourado from '../componentes/BotaoDourado';
 import { cores, espaco, raio } from '../theme';
 
 const GOOGLE = require('../../assets/google.png');
@@ -123,26 +122,19 @@ export default function EcraGinasio() {
     /** Largura inteira. Os botões de acção são dois por linha; este não. */
     cheio?: boolean;
     aoTocar: () => void;
-  }) =>
-    // O de destaque -- a avaliacao no Google -- leva o degrade dourado, como
-    // tudo o que e para carregar. Os outros ficam de vidro: sao contactos e
-    // caminhos, nao accoes.
-    destaque ? (
-      <BotaoDourado estilo={[estilos.botao, cheio && estilos.botaoCheio]} aoTocar={aoTocar}>
-        <Text style={[estilos.botaoTexto, estilos.botaoTextoDestaque]}>{texto}</Text>
-      </BotaoDourado>
-    ) : (
-      <Pressable
-        style={({ pressed }) => [
-          estilos.botao,
-          cheio && estilos.botaoCheio,
-          pressed && { opacity: 0.75 },
-        ]}
-        onPress={aoTocar}
-      >
-        <Text style={estilos.botaoTexto}>{texto}</Text>
-      </Pressable>
-    );
+  }) => (
+    <Pressable
+      style={({ pressed }) => [
+        estilos.botao,
+        cheio && estilos.botaoCheio,
+        destaque && estilos.botaoDestaque,
+        pressed && { opacity: 0.75 },
+      ]}
+      onPress={aoTocar}
+    >
+      <Text style={[estilos.botaoTexto, destaque && estilos.botaoTextoDestaque]}>{texto}</Text>
+    </Pressable>
+  );
 
   return (
     <ScrollView
@@ -374,8 +366,7 @@ const estilos = StyleSheet.create({
     backgroundColor: 'rgba(58,58,58,0.6)',
   },
   botaoCheio: { flexGrow: 0, flexBasis: 'auto', alignSelf: 'stretch' },
-  // A cor sai agora do `BotaoDourado`. Fica o bordo, que o degrade nao da.
-  botaoDestaque: { borderColor: cores.ouro },
+  botaoDestaque: { backgroundColor: cores.dourado, borderColor: cores.dourado },
   botaoTexto: { color: cores.texto, fontSize: 15, fontWeight: '600' },
   botaoTextoDestaque: { color: '#1A1A1A', fontWeight: '800', letterSpacing: 0.5 },
 });

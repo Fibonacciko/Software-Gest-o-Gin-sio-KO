@@ -21,7 +21,6 @@ import {
   Reserva,
   Socio,
 } from '../api';
-import BotaoDourado from '../componentes/BotaoDourado';
 import CartaoDeDestaque from '../componentes/CartaoDeDestaque';
 import GaleriaDoArtigo from '../componentes/GaleriaDoArtigo';
 import { cores, espaco, raio, superficie } from '../theme';
@@ -212,11 +211,7 @@ export default function EcraLoja({ socio }: Props) {
               />
               <View style={estilos.rodape}>
                 <Text style={estilos.preco}>{a.price.toFixed(2)} €</Text>
-                {/* Tinha ar de botao e nao fazia nada: quem lhe tocava ficava
-                    a espera. Agora abre o artigo, como a fotografia. */}
-                <BotaoDourado estilo={estilos.reservar} aoTocar={() => abrir(a)}>
-                  <Text style={estilos.reservarTexto}>Reservar</Text>
-                </BotaoDourado>
+                <Text style={estilos.reservar}>Reservar</Text>
               </View>
             </View>
           );
@@ -304,13 +299,17 @@ export default function EcraLoja({ socio }: Props) {
 
                 {erro ? <Text style={estilos.erro}>{erro}</Text> : null}
 
-                <BotaoDourado estilo={estilos.confirmar} aoTocar={confirmar} desativado={aReservar}>
+                <Pressable
+                  style={({ pressed }) => [estilos.confirmar, pressed && estilos.premido]}
+                  onPress={confirmar}
+                  disabled={aReservar}
+                >
                   {aReservar ? (
                     <ActivityIndicator color={cores.texto} />
                   ) : (
                     <Text style={estilos.confirmarTexto}>RESERVAR</Text>
                   )}
-                </BotaoDourado>
+                </Pressable>
                 <Pressable style={estilos.cancelar} onPress={() => setEscolhido(null)}>
                   <Text style={estilos.cancelarTexto}>Cancelar</Text>
                 </Pressable>
@@ -361,12 +360,7 @@ const estilos = StyleSheet.create({
     paddingHorizontal: espaco.xs,
   },
   preco: { color: cores.ouro, fontSize: 18, fontWeight: '800' },
-  reservar: {
-    paddingHorizontal: espaco.m,
-    paddingVertical: espaco.xs,
-    borderRadius: raio.redondo,
-  },
-  reservarTexto: { color: cores.texto, fontWeight: '700' },
+  reservar: { color: cores.ouro, fontWeight: '700' },
   fundoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
   janela: {
     backgroundColor: cores.fundoCartao,
@@ -415,8 +409,10 @@ const estilos = StyleSheet.create({
   contadorValor: { color: cores.texto, fontSize: 20, fontWeight: '800', minWidth: 28, textAlign: 'center' },
   total: { color: cores.dourado, fontSize: 16, fontWeight: '700', marginTop: espaco.m },
   confirmar: {
+    backgroundColor: cores.laranja,
     borderRadius: raio.m,
     paddingVertical: espaco.m,
+    alignItems: 'center',
     marginTop: espaco.g,
   },
   confirmarTexto: { color: cores.texto, fontWeight: '800', fontSize: 16, letterSpacing: 1 },

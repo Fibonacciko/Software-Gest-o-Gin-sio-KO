@@ -5,8 +5,9 @@ export const cores = {
   laranja: '#B8651B',
   laranjaClaro: '#E8842A',
   dourado: '#F5A623',
-  /** O alto do degrade dos botoes, para o texto que nao pode ser degrade --
-   *  os precos da loja. Ver `degradeDourado`, mais abaixo. */
+  /** O alto do degrade do check-in. E a cor das **letras** de tudo o que e
+   *  para carregar: o QR, os pedidos de plano, a reserva na loja e os precos
+   *  dos artigos. Por decisao do dono -- so as letras, nao as caixas. */
   ouro: '#D6A306',
   // Os escuros sao **verde-azulados**, nao cinzentos. Vieram da fotografia da
   // porta do ginasio: #0c1417 no escuro, #3a6c61 na parede iluminada, #aee0bb
@@ -40,21 +41,20 @@ export const cores = {
 };
 
 /**
- * **A cor de tudo o que e para carregar**: um degrade de cima para baixo, do
- * dourado ao laranja. Escolhido pelo dono para o botao de check-in, de entre
- * vinte e um feitios vistos no proprio ecra, e dali alargado a aplicacao
- * toda -- o QR, os pedidos de plano, a marcacao de aulas, a reserva na loja
- * e a avaliacao no Google.
+ * O botao de check-in: um degrade **de cima para baixo**, do dourado ao
+ * laranja. Escolhido pelo dono de entre vinte e um feitios vistos no proprio
+ * ecra.
  *
  * As duas cores saem do **logotipo**, que e um circulo do dourado no meio
  * (#FBBF07) ao laranja do bordo (#F9A107), e vem descidas de brilho. O
  * sentido e de cima para baixo, e nao na diagonal como nas superficies de
  * vidro: num botao largo e baixo, a diagonal quase so se ve nos cantos.
  *
- * Quem o pinta e o `BotaoDourado`, para o degrade ser o mesmo em todo o
- * lado.
+ * O que lhe tirou presenca nao foi a cor -- foi o **tamanho** (passou a ter
+ * a altura do botao do QR) e a **sombra**, que saiu: o halo alaranjado era o
+ * que o fazia puxar o olho de qualquer ponto do ecra.
  */
-export const degradeDourado = ['#D6A306', '#A85A12'] as const;
+export const degradeCheckin = ['#D6A306', '#A85A12'] as const;
 
 export const espaco = {
   xs: 4,

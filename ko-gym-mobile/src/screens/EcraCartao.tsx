@@ -27,7 +27,6 @@ import {
   sair,
   Socio,
 } from '../api';
-import BotaoDourado from '../componentes/BotaoDourado';
 import MeusPlanos from '../componentes/MeusPlanos';
 import MinhasMetricas from '../componentes/MinhasMetricas';
 import Versao from '../componentes/Versao';
@@ -36,7 +35,7 @@ import { dataPt } from '../lib/datas';
 import { ESTICA, MEIO_DA_TINTA, nomeDoDia, tamanhoDaTinta } from '../lib/dia';
 import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
-import { cores, degradeDourado, espaco, raio, sombra } from '../theme';
+import { cores, degradeCheckin, espaco, raio, sombra } from '../theme';
 
 /**
  * Quanto o nome do sócio desce para fora da fotografia, em pixeis.
@@ -341,7 +340,7 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
             outra coisa. */}
         {!socio.checked_in_today ? (
           <LinearGradient
-            colors={degradeDourado}
+            colors={degradeCheckin}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -371,9 +370,12 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       {/* O QR vem logo por baixo do check-in: é a outra maneira de o fazer,
           para a receção ler. Estava no fundo da página, a seguir a tudo o
           resto, e quem precisava dele tinha de ir à procura. */}
-      <BotaoDourado estilo={estilos.botaoQr} aoTocar={() => setQrAberto(true)}>
+      <Pressable
+        style={({ pressed }) => [estilos.botaoQr, pressed && { opacity: 0.8 }]}
+        onPress={() => setQrAberto(true)}
+      >
         <Text style={estilos.botaoQrTexto}>Mostrar o meu QR</Text>
-      </BotaoDourado>
+      </Pressable>
 
       {/* Estado, quota e seguro — tudo numa linha, logo abaixo do check-in */}
       <Vidro desfocado forte estilo={estilos.cartaoEstado}>
@@ -710,14 +712,18 @@ const estilos = StyleSheet.create({
   pontoCor: { width: 8, height: 8, borderRadius: 4 },
   modalidadeTexto: { color: cores.texto, fontSize: 13 },
 
-  // Era de vidro com a letra cor de laranja. Passou ao degradê dourado como
-  // tudo o que é para carregar, por decisão do dono.
   botaoQr: {
+    backgroundColor: cores.vidro,
     borderRadius: raio.g,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: cores.vidroBordo,
     paddingVertical: espaco.m,
+    alignItems: 'center',
     marginTop: espaco.m,
   },
-  botaoQrTexto: { color: cores.texto, fontSize: 15, fontWeight: '700' },
+  // Em ouro, como todas as letras do que e para carregar. A caixa fica de
+  // vidro, como estava: o dono quis a cor nas letras e mais nada.
+  botaoQrTexto: { color: cores.ouro, fontSize: 15, fontWeight: '700' },
 
   empurrao: { flexGrow: 1, minHeight: espaco.s },
   sair: { alignItems: 'center', paddingVertical: espaco.s },

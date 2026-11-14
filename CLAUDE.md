@@ -909,22 +909,20 @@ logotipo, descidas de brilho. (`degradeCheckin`, no `theme.ts`.)
 O sentido é **de cima para baixo**, e não na diagonal como nas superfícies de
 vidro: num botão largo e baixo, a diagonal quase só se vê nos cantos.
 
-**E é agora a cor de tudo o que é para carregar**, por decisão do dono. O
-mesmo degradê está no **QR**, nos dois **Pedir** dos planos, no **Marcar** das
-aulas, no **Reservar** da loja (na lista e na janela) e no **Deixar uma
-avaliação** do Ginásio. Antes era cada um com o seu: uns chapados de
-`#B8651B`, outros de vidro com a letra em `#E8842A`, e um dourado `#F5A623` no
-Google — três tons da mesma cor, sem nada que os distinguisse.
+**O alto do degradê é a cor das letras no resto da aplicação** (`cores.ouro`,
+`#D6A306`), por decisão do dono: o **Mostrar o meu QR**, os dois **Pedir** dos
+planos, o **Reservar** da loja e os **preços dos artigos**. Antes andavam por
+dois tons de laranja e um dourado, sem razão nenhuma.
 
-Quem os pinta é o **`BotaoDourado`** (`src/componentes/BotaoDourado.tsx`): o
-feitio de cada um continua a ser dele — redondo, comprido, pequeno — e o que
-o componente garante é que a cor e o sentido são os mesmos. Os **preços da
-loja** ficam em `cores.ouro`, que é o alto do degradê: texto não pode ser
-degradê.
+**São só as letras.** Houve uma versão em que estes passaram todos a botões
+cheios com o degradê, e o dono travou-a: o "Mostrar o meu QR" ficava igual ao
+check-in, logo por baixo dele, e deixava de se perceber qual era o principal.
+As caixas ficam como estavam — vidro é vidro.
 
-O **"Reservar" da lista** era um texto com ar de botão que não fazia nada —
-quem lhe tocava ficava à espera. Passou a abrir o artigo, como a fotografia
-ao lado.
+Ficaram de fora o **Marcar** das aulas e o **Deixar uma avaliação** do
+Ginásio: nenhum deles tem letras cor de laranja. Um é branco sobre laranja
+chapado, o outro é escuro sobre dourado, e letras em ouro por cima de
+qualquer um deles não se liam.
 
 O que lhe tirou presença não foi a cor — foi o resto:
 
