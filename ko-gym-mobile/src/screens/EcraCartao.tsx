@@ -35,7 +35,7 @@ import { dataPt } from '../lib/datas';
 import { ESTICA, MEIO_DA_TINTA, nomeDoDia, tamanhoDaTinta } from '../lib/dia';
 import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
-import { checkin, cores, espaco, raio, sombra } from '../theme';
+import { cores, degradeCheckin, espaco, raio, sombra } from '../theme';
 
 /**
  * Quanto o nome do sócio desce para fora da fotografia, em pixeis.
@@ -335,11 +335,18 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         onPress={comecarCheckin}
         disabled={aLerNfc}
       >
-        {/* A barra de luz dourada no bordo esquerdo — a cor do logotipo, que
-            aqui só acende um lado em vez de pintar o botão todo. Só quando há
-            check-in para fazer: feito o do dia, o botão fica verde e chapado,
-            que é outra coisa. */}
-        {!socio.checked_in_today ? <View style={estilos.barraDoCheckin} /> : null}
+        {/* O degradê do logotipo, de cima para baixo. Só quando há check-in
+            para fazer: feito o do dia, o botão fica verde e chapado, que é
+            outra coisa. */}
+        {!socio.checked_in_today ? (
+          <LinearGradient
+            colors={degradeCheckin}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+        ) : null}
         {aLerNfc ? (
           <>
             <ActivityIndicator color={cores.texto} />
@@ -625,9 +632,10 @@ const estilos = StyleSheet.create({
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
   botaoCheckin: {
-    backgroundColor: checkin.fundo,
+    // Fica por baixo do degradê, e é o que se vê se ele não chegar a pintar
+    backgroundColor: cores.laranja,
     borderRadius: raio.g,
-    // Sem isto a barra de luz saía pelos cantos arredondados fora
+    // Sem isto o degradê saía pelos cantos arredondados fora
     overflow: 'hidden',
     // A altura do botão do QR, e não a de antes: por decisão do dono, que
     // quis o check-in com menos presença.
@@ -640,15 +648,7 @@ const estilos = StyleSheet.create({
     marginTop: 0,
     // Sem sombra. O halo alaranjado que aqui estava puxava o olho de
     // qualquer ponto do ecrã, e era metade da presença de que o dono se
-    // queixava. Quem o distingue agora é a barra de luz.
-  },
-  barraDoCheckin: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: checkin.barraLargura,
-    backgroundColor: checkin.barra,
+    // queixava.
   },
   botaoFeito: { backgroundColor: cores.verde },
   botaoCheckinTexto: { color: cores.texto, fontSize: 16, fontWeight: '800', letterSpacing: 1 },

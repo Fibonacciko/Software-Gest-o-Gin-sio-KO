@@ -900,21 +900,21 @@ em cima de verde-azulado**, porque são cores opostas. O cinzento competia com
 ele. O laranja continua a ser só para o que é para carregar — o check-in, os
 números, o logótipo — e nunca para o fundo.
 
-**O botão de check-in é escuro, com uma barra de luz à esquerda.** Era um
-laranja chapado (`#B8651B`), grande e com um halo alaranjado à volta, e o dono
-queria-o com "menos presença". Hoje é um castanho fundo (`#6E3E12`) com um fio
-dourado de 5 pixeis no bordo esquerdo — o dourado é o do logotipo (`#D6A306`),
-que aqui acende um lado em vez de pintar o botão todo. (`checkin`, no
-`theme.ts`.)
+**O botão de check-in é um degradê de cima para baixo, do dourado ao
+laranja.** Era um laranja chapado (`#B8651B`), grande e com um halo
+alaranjado à volta, e o dono achava-o "muito básico" e com presença a mais.
+Hoje vai de `#D6A306` em cima a `#A85A12` em baixo — as duas cores do
+logotipo, descidas de brilho. (`degradeCheckin`, no `theme.ts`.)
 
-Mudaram três coisas ao mesmo tempo, e são as três a mesma decisão:
+O sentido é **de cima para baixo**, e não na diagonal como nas superfícies de
+vidro: num botão largo e baixo, a diagonal quase só se vê nos cantos.
 
-- **A cor**: de 117 de luminância para 70. Deixou de puxar o olho de qualquer
-  ponto do ecrã.
+O que lhe tirou presença não foi a cor — foi o resto:
+
 - **O tamanho**: passou a ter a altura do botão do QR que está logo por baixo
   (`espaco.m` em vez de `espaco.g`), e a letra passou de 18 para 16.
 - **A sombra**: saiu. O halo alaranjado era metade da presença de que o dono
-  se queixava, e o que distingue agora o botão é a barra.
+  se queixava.
 
 **O caminho até aqui está nos ficheiros, e vale a pena saber porquê.** Foram
 vinte e um feitios, vistos todos no próprio ecrã — não em maquetas: o ecrã
