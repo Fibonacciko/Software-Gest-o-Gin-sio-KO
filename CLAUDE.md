@@ -641,7 +641,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (75 testes, 5 segundos):
+A **aplicação do sócio** também tem os seus (82 testes, 10 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest
@@ -900,38 +900,51 @@ em cima de verde-azulado**, porque são cores opostas. O cinzento competia com
 ele. O laranja continua a ser só para o que é para carregar — o check-in, os
 números, o logótipo — e nunca para o fundo.
 
-**A porta do ginásio aparece em dois sítios**, cortada de maneiras
-diferentes da mesma fotografia:
+**Há duas portas, e são duas fotografias diferentes.** A do ecrã de entrada
+é uma imagem da entrada vista de fora — a porta aberta, o candeeiro aceso lá
+dentro, o ringue ao fundo e um miúdo parado à soleira. A do cartão do sócio é
+a fotografia da porta do ginásio a sério. Foi decisão do dono, que trocou a
+primeira: a outra tinha o "DIA UM" pintado na parede, esta não tem letras
+nenhumas, e é esta que ele quer que o sócio veja ao entrar.
 
-- `assets/porta.jpg` — a porta inteira, **cortada no feitio do telemóvel**
-  (9:19,5), por trás do ecrã de entrada. É o único ecrã de pé como a
-  fotografia, e entrar na aplicação é mesmo entrar pela porta. Leva um
-  escurecimento por cima, mais forte em baixo, onde estão os campos.
+- `assets/porta.jpg` — por trás do ecrã de entrada, **cortada no feitio do
+  telemóvel** (9:19,5) a partir de uma imagem bem mais larga: o recorte é
+  centrado na luz do vão, e não a meio do ficheiro, para a porta não ficar
+  torta. É o único ecrã de pé como a fotografia, e entrar na aplicação é
+  mesmo entrar pela porta.
 
-  **Esta fotografia está agarrada à caixa do número de sócio, e não ao
-  ecrã.** O "DIA UM" pintado na parede cai mesmo por cima dessa caixa, e com
-  a fotografia esticada à altura do ecrã as letras ficavam numa *fracção*
-  dela: num telemóvel mais alto desciam, num mais baixo subiam, e acabavam
-  sempre a roçar uma das linhas — a de cima no emulador, a de baixo no
-  telemóvel do dono. Agora desenha-se maior do que o ecrã e **sobe** o que
-  for preciso para as letras ficarem no meio da caixa. Sobe e nunca desce,
-  que descer descobria o topo: quando as letras ficariam altas de mais, o
-  que cresce é a fotografia — numa fotografia maior elas caem mais abaixo.
-  As contas estão em `src/lib/porta.ts`, com testes em sete feitios de ecrã
-  — é a única maneira de confirmar um telemóvel que não se tem à mão.
+  Leva um escurecimento por cima, mais forte em baixo, onde estão os campos,
+  e **leve**: esta imagem já é escura de si, e carregá-la mais apagava o
+  verde da sala e as cordas do ringue, que é o que ela tem para dar. O que
+  faz o texto ler-se são as caixas de vidro, não o escurecimento.
 
-  **O nome do ginásio fica mesmo por baixo do candeeiro**, pela mesma conta
-  e no mesmo sítio (`desvioDoNome`): a caixa de texto dele começa onde a luz
-  acaba (0,2812 do ficheiro), como quem está debaixo do foco. Por baixo, e
-  não dentro: pôr o nome em cima da luz é outra coisa, e não é o que o dono
-  pediu. O candeeiro e o "DIA UM" estão na mesma fotografia, a uma distância
-  fixa um do outro, por isso quem acerta um acerta o outro.
+  **Esta fotografia está agarrada ao candeeiro, e não ao ecrã.** Desenha-se
+  maior do que o ecrã e **sobe** o que for preciso para a luz do candeeiro
+  acabar exactamente onde o nome do ginásio começa: o nome fica debaixo do
+  foco, como quem está à entrada, e o candeeiro cai no mesmo sítio em
+  qualquer telemóvel, em vez de subir e descer com a altura do ecrã. Sobe e
+  nunca desce, que descer descobria o topo: quando a luz ficaria alta de
+  mais, o que cresce é a fotografia — numa fotografia maior o candeeiro cai
+  mais abaixo. As contas estão em `src/lib/porta.ts`, com testes em sete
+  feitios de ecrã — é a única maneira de confirmar um telemóvel que não se
+  tem à mão.
 
-  Desce com `top`, que **desvia o que se desenha sem mexer no que se mede**:
-  o subtítulo, os campos e o "DIA UM" ficam onde estavam. Num ecrã muito
-  alto a fotografia cresce para o cobrir e o candeeiro sobe com ela, por
-  isso o nome tem um tecto (`NOME_NAO_SOBE_ACIMA_DE`), que o impede de ir
-  bater no logotipo.
+  **Por baixo do candeeiro, e não dentro dele**: pôr o nome em cima da luz é
+  outra coisa, e não é o que o dono pediu. O candeeiro é o foco (0,259 a
+  0,2826 do ficheiro), não o cone de luz que ele deita por baixo nem o
+  clarão da parede. Num ecrã pequeno de mais, onde a fotografia já não pode
+  crescer, é o nome que sobe ao encontro da luz (`desvioDoNome`), com um
+  tecto (`NOME_NAO_SOBE_ACIMA_DE`) que o impede de ir bater no logotipo.
+  Sobe com `top`, que **desvia o que se desenha sem mexer no que se mede**:
+  o subtítulo e os campos ficam onde estavam.
+
+  **O nome mede-se a partir do topo do ecrã**, e não a partir da caixa do
+  número de sócio. Por cima dele só está o logotipo, que tem medidas fixas e
+  não é texto; a caixa, essa, vem depois de três linhas com acentos —
+  "Ginásio", "sócio", "Número" —, que no Android ficam mais altas do que no
+  navegador e a empurram uns pixeis para baixo. Era isso o
+  `DESCIDA_NO_ANDROID`, que a fotografia nova dispensou: media-se o "DIA UM"
+  pela caixa, e por isso ele herdava a descida.
 
   **O botão ENTRAR não tem laranja**, por decisão do dono: é vidro, como os
   dois campos por cima dele, e só a palavra fica cor de laranja. O ecrã fica
@@ -939,12 +952,6 @@ diferentes da mesma fotografia:
   num ecrã que é para ser a porta do ginásio. A cor da palavra é o que sobra
   a dizer onde se carrega, e por isso fica.
 
-  **No Android o formulário desce uns 8 pixeis** (`DESCIDA_NO_ANDROID`). As
-  linhas de texto com acentos — "Ginásio", "sócio", "Número" — ficam mais
-  altas do que no navegador, e as três que estão por cima da caixa empurram-na
-  para baixo. Aparece de duas maneiras, que são a mesma: o "DIA UM" parece
-  subido dentro da caixa, e o nome cai para fora da luz. Não há como medir
-  isto sem o telemóvel na mão, por isso é um número só, com nome próprio.
 - `assets/ginasio.jpg` — a **capa do cartão do sócio**: a toda a largura e
   **até ao topo do ecrã**, por baixo da barra de estado. Em cima da soleira
   ficam as **modalidades** e, por baixo delas, o **número de sócio** — que é

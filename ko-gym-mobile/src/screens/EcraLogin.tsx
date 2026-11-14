@@ -65,10 +65,14 @@ export default function EcraLogin({ aoEntrar }: Props) {
       />
       {/* Sem isto não se lia nada por cima dela. O escurecimento é mais forte
           em baixo, onde estão os campos e o botão, e deixa respirar em cima,
-          onde está a luz do candeeiro. */}
+          onde está a luz do candeeiro.
+
+          É leve: a fotografia já é escura de si, e carregá-la mais apagava o
+          verde da sala e as cordas do ringue, que é o que ela tem para dar.
+          O que torna o texto legível são as caixas de vidro, não isto. */}
       <LinearGradient
-        colors={['rgba(8,20,22,0.30)', 'rgba(8,20,22,0.66)', 'rgba(8,20,22,0.93)']}
-        locations={[0, 0.42, 1]}
+        colors={['rgba(8,20,22,0.15)', 'rgba(8,20,22,0.46)', 'rgba(8,20,22,0.90)']}
+        locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -141,9 +145,9 @@ const estilos = StyleSheet.create({
   // fica do tamanho natural do ficheiro e vê-se só o canto dele. Já tinha
   // acontecido com as imagens do `Fundo`.
   //
-  // A altura e o topo não são os do ecrã: são os que põem o "DIA UM" pintado
-  // na parede dentro da caixa do número de sócio, em qualquer telemóvel.
-  // As contas e os porquês estão em `src/lib/porta.ts`, com testes.
+  // A altura e o topo não são os do ecrã: são os que põem a luz do candeeiro
+  // a acabar onde o nome do ginásio começa, em qualquer telemóvel. As contas
+  // e os porquês estão em `src/lib/porta.ts`, com testes.
   porta: {
     position: 'absolute',
     left: 0,
@@ -163,10 +167,12 @@ const estilos = StyleSheet.create({
     fontSize: 30,
     fontWeight: '800',
     textAlign: 'center',
-    // Desce até ficar mesmo por baixo do candeeiro da fotografia, a apanhar
-    // a luz que ele deita. É um desvio do que se desenha, não do que se
-    // mede: o subtítulo e os campos ficam onde estão, e com eles o "DIA UM"
-    // dentro da caixa. (`src/lib/porta.ts`)
+    // Fica mesmo por baixo do candeeiro da fotografia, a apanhar a luz que
+    // ele deita. Quem se encosta a quem é a fotografia ao nome, por isso
+    // isto é zero quase sempre; num ecrã pequeno, onde ela já não pode
+    // crescer, é o nome que sobe ao encontro da luz. É um desvio do que se
+    // desenha, não do que se mede: o subtítulo e os campos ficam onde
+    // estão. (`src/lib/porta.ts`)
     top: desvioDoNome(LARGURA, ALTURA),
   },
   subtitulo: {
