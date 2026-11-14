@@ -162,7 +162,9 @@ const estilos = StyleSheet.create({
     alignSelf: 'center',
   },
   titulo: {
-    color: cores.laranjaClaro,
+    // Em ouro, como as letras de tudo o resto. O nome fica debaixo da luz do
+    // candeeiro, e o ouro casa com ela melhor do que o laranja casava.
+    color: cores.ouro,
     fontSize: 30,
     fontWeight: '800',
     textAlign: 'center',
@@ -204,7 +206,7 @@ const estilos = StyleSheet.create({
     marginTop: espaco.s,
   },
   botaoPressionado: { opacity: 0.8 },
-  botaoTexto: { color: cores.laranjaClaro, fontWeight: '800', fontSize: 16, letterSpacing: 1 },
+  botaoTexto: { color: cores.ouro, fontWeight: '800', fontSize: 16, letterSpacing: 1 },
   ajuda: {
     color: cores.textoSecundario,
     fontSize: 13,

@@ -1010,7 +1010,9 @@ tinta na parede**, mais abaixo).
   pela caixa, e por isso ele herdava a descida.
 
   **O botão ENTRAR não tem laranja**, por decisão do dono: é vidro, como os
-  dois campos por cima dele, e só a palavra fica cor de laranja. O ecrã fica
+  dois campos por cima dele, e só a palavra fica colorida — hoje em
+  `cores.ouro`, como o nome do ginásio por cima e como as letras de tudo o
+  que é para carregar no resto da aplicação. O ecrã fica
   mais calmo e a fotografia ganha — o laranja era o que mais puxava o olho
   num ecrã que é para ser a porta do ginásio. A cor da palavra é o que sobra
   a dizer onde se carrega, e por isso fica.
