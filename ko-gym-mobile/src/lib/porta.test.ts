@@ -11,10 +11,10 @@ import {
   desvioDoNome,
 } from './porta';
 
-// O logotipo acaba aos 212 e o subtitulo comeca aos 288: sao as duas coisas
-// em que o nome do ginasio nao pode ir bater.
+// O logotipo acaba aos 212 e a etiqueta do primeiro campo comeca aos 303:
+// sao as duas coisas em que o nome do ginasio nao pode ir bater.
 const LOGOTIPO_ACABA_AOS = 212;
-const SUBTITULO_COMECA_AOS = 288;
+const PRIMEIRA_ETIQUETA_AOS = 303;
 
 // Os telemoveis que interessam, do mais baixo ao mais alto que se ve hoje
 const ECRAS: [number, number][] = [
@@ -75,10 +75,10 @@ describe('o nome do ginasio por baixo do candeeiro', () => {
     expect(nome.base).toBeLessThan(fimDoCone);
   });
 
-  it.each(ECRAS)('em %ix%i o nome nao bate no logotipo nem no subtitulo', (largura, altura) => {
+  it.each(ECRAS)('em %ix%i o nome nao bate no logotipo nem nos campos', (largura, altura) => {
     const nome = nomeNoEcra(largura, altura);
     expect(nome.topo).toBeGreaterThan(LOGOTIPO_ACABA_AOS);
-    expect(nome.base).toBeLessThan(SUBTITULO_COMECA_AOS);
+    expect(nome.base).toBeLessThan(PRIMEIRA_ETIQUETA_AOS);
   });
 
   it('o candeeiro nao se mexe de telemovel para telemovel, salvo nos pequenos', () => {

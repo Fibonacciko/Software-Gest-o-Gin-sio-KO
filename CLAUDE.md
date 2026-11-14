@@ -918,6 +918,13 @@ nenhumas, e é esta que ele quer que o sócio veja ao entrar.
   verde da sala e as cordas do ringue, que é o que ela tem para dar. O que
   faz o texto ler-se são as caixas de vidro, não o escurecimento.
 
+  **O ecrã diz o nome do ginásio e mais nada.** O "O teu cartão de sócio"
+  que estava por baixo saiu por decisão do dono: quem abre a aplicação já
+  sabe o que ela é, e a linha só tapava a fotografia. Pela mesma razão as
+  caixas dos campos e o botão são de **vidro escuro leve** — deixam passar
+  as cordas do ringue e o miúdo à entrada, e o que faz o texto ler-se é o
+  contraste da caixa, não ela ser opaca.
+
   **Esta fotografia está agarrada ao candeeiro, e não ao ecrã.** Desenha-se
   maior do que o ecrã e **sobe** o que for preciso para a luz do candeeiro
   acabar exactamente onde o nome do ginásio começa: o nome fica debaixo do

@@ -83,7 +83,6 @@ export default function EcraLogin({ aoEntrar }: Props) {
           resizeMode="contain"
         />
         <Text style={estilos.titulo}>Ginásio KO</Text>
-        <Text style={estilos.subtitulo}>O teu cartão de sócio</Text>
 
         <View style={estilos.campo}>
           <Text style={estilos.etiqueta}>Número de sócio</Text>
@@ -137,7 +136,7 @@ const { width: LARGURA, height: ALTURA } = Dimensions.get('window');
 // Mais opaco do que o vidro habitual: por cima de uma fotografia, o
 // translúcido de sempre deixava a parede a aparecer pelo meio do texto.
 // É o mesmo nos campos e no botão — são a mesma coluna de caixas.
-const VIDRO_DA_PORTA = 'rgba(8,20,22,0.55)';
+const VIDRO_DA_PORTA = 'rgba(8,20,22,0.32)';
 
 const estilos = StyleSheet.create({
   raiz: { flex: 1 },
@@ -174,10 +173,8 @@ const estilos = StyleSheet.create({
     // desenha, não do que se mede: o subtítulo e os campos ficam onde
     // estão. (`src/lib/porta.ts`)
     top: desvioDoNome(LARGURA, ALTURA),
-  },
-  subtitulo: {
-    color: cores.textoSecundario,
-    textAlign: 'center',
+    // A folga que o subtítulo deixava quando aqui estava: sem ela o primeiro
+    // campo encostava-se ao nome.
     marginBottom: espaco.m,
   },
   campo: { gap: espaco.xs },
