@@ -97,8 +97,16 @@ frontend/node_modules/.cache/default-development/0.pack
 # por preferencia do dono, mas nunca podem ir para o Git: sao dezenas de MB
 # por copia e a da base de dados leva os dados pessoais de todos os socios.
 # NUNCA correr "git clean -xfd" nesta pasta -- apaga tudo o que esta ignorado.
-/CÓDIGO/
-/CODIGO/
+# A regra tem de apanhar o nome da pasta tal como ela esta: chamou-se
+# CODIGO, passou a "CÓDIGO APP.MOBILE", e a regra antiga deixou de a
+# apanhar sem ninguem dar por isso. Por isso vao os dois nomes e tudo o
+# que comece por eles.
+/CÓDIGO*/
+/CODIGO*/
+# E, por seguranca, as proprias copias onde quer que estejam: se a pasta
+# mudar de nome outra vez, estes ficheiros continuam fora do Git.
+*.bundle
+*.archive.gz
 
 # O CanvasKit do Skia, so para ver a aplicacao no navegador durante o
 # desenvolvimento. Sao 8 MB de WebAssembly por pasta, e geram-se com
