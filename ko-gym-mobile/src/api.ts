@@ -274,6 +274,57 @@ export async function escolherPin(numeroSocio: string, telefone: string, pin: st
   );
 }
 
+/**
+ * A resposta ao pedido de codigo. **Vem sempre 200**, com o motivo por
+ * palavras: nao haver email na ficha, nao haver PIN para recuperar ou ter
+ * pedido o codigo ha pouco nao sao erros, e cada um precisa de uma frase
+ * diferente no ecra.
+ */
+export type PedidoDeCodigo = {
+  enviado: boolean;
+  /** `sem_socio`, `sem_pin`, `sem_email`, `sem_correio`, `ha_pouco`, `falhou`. */
+  motivo?: string;
+  /** A caixa de correio, escondida: `f***@gmail.com`. */
+  email?: string;
+  minutos?: number;
+  segundos?: number;
+  /**
+   * A frase a mostrar ao socio. **Vem do servidor de proposito**: quando ele
+   * pergunta ao balcao o que diz o telemovel, quem atende tem de ler o mesmo.
+   */
+  mensagem: string;
+};
+
+/**
+ * Pedir um codigo por email, para escolher um PIN novo.
+ *
+ * **O endereco nao se manda, vai-se buscar a ficha**: senao bastava escrever
+ * o numero de outra pessoa e um email nosso para receber o codigo dela.
+ */
+export async function pedirCodigoDoPin(numeroSocio: string) {
+  return pedir<PedidoDeCodigo>('/mobile/auth/pin/esqueci', {
+    method: 'POST',
+    body: JSON.stringify({ member_number: numeroSocio.trim() }),
+  });
+}
+
+/**
+ * O codigo do email autoriza um PIN novo, e **entra logo** -- sem voltar ao
+ * ecra de entrada a escrever o PIN que se acabou de escolher.
+ */
+export async function recuperarOPin(numeroSocio: string, codigo: string, pin: string) {
+  return guardarSessao(
+    await pedir<Entrada>('/mobile/auth/pin/recuperar', {
+      method: 'POST',
+      body: JSON.stringify({
+        member_number: numeroSocio.trim(),
+        codigo: codigo.trim(),
+        pin: pin.trim(),
+      }),
+    })
+  );
+}
+
 export async function sessaoGuardada(): Promise<string | null> {
   try {
     const bruto = await AsyncStorage.getItem(CHAVE_SESSAO);

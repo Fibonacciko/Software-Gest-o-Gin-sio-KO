@@ -22,6 +22,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 import json
 import random
+import secrets
 import firebase_admin
 from firebase_admin import credentials, messaging
 
@@ -30,6 +31,7 @@ from utils.logger import gym_logger, LoggingMiddleware
 from utils.cache import gym_cache, BusinessCache, cache_result
 from utils.rate_limiter import gym_rate_limiter, auth_rate_limit, api_rate_limit, dashboard_rate_limit, RateLimitMiddleware
 from utils.analytics import AnalyticsEngine
+from utils.correio import enviar_email, correio_configurado, esconder_email
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -260,10 +262,22 @@ class EscolherPin(BaseModel):
 
 
 class TrocarPin(BaseModel):
-    """Trocar o PIN, sabendo o actual. Esquecido, vai-se ao balcao."""
+    """Trocar o PIN, sabendo o actual."""
     member_number: str
     pin_actual: str
     pin_novo: str
+
+
+class EsqueciOPin(BaseModel):
+    """Pedir um codigo por email, para escolher um PIN novo."""
+    member_number: str
+
+
+class RecuperarOPin(BaseModel):
+    """O codigo que veio no email, e o PIN novo que ele autoriza."""
+    member_number: str
+    codigo: str
+    pin: str
 
 # FCM Token Update Model  
 class FCMTokenUpdate(BaseModel):
@@ -2482,6 +2496,7 @@ async def estado_do_pin(
     return {
         "definido": bool(socio.get("pin_hash")),
         "bloqueado_ate": ate.isoformat() if ate else None,
+        "codigo_a_aguardar": codigo_a_aguardar(socio),
     }
 
 
@@ -2510,7 +2525,9 @@ async def limpar_o_pin(
 
     await db.members.update_one(
         {"id": member_id},
-        {"$set": {"pin_hash": None, "pin_tentativas": 0, "pin_bloqueado_ate": None}},
+        {"$set": {"pin_hash": None, "pin_tentativas": 0, "pin_bloqueado_ate": None,
+                  "pin_reset_hash": None, "pin_reset_expira": None,
+                  "pin_reset_tentativas": 0, "pin_reset_enviado": None}},
     )
     await log_audit(
         current_user, "update", "member", entity_id=member_id,
@@ -3918,7 +3935,7 @@ def recusar_por_bloqueio(ate: datetime) -> None:
     raise HTTPException(
         status_code=429,
         detail=f"Demasiadas tentativas. Tenta daqui a {faltam} minutos, "
-               f"ou passa pela receção.",
+               f"pede um código por email, ou passa pela receção.",
     )
 
 
@@ -3977,7 +3994,8 @@ async def entrar_na_aplicacao(request: Request, credentials: MobileMemberLogin):
             await falhou_o_pin(socio)
         raise HTTPException(
             status_code=401,
-            detail="Número de sócio ou PIN não conferem. Se te esqueceste, passa pela receção.",
+            detail="Número de sócio ou PIN não conferem. "
+                   "Se te esqueceste, carrega em Esqueci-me do PIN.",
         )
 
     # --- ainda sem PIN: o telemovel
@@ -4065,6 +4083,259 @@ async def trocar_o_pin(request: Request, dados: TrocarPin):
         if socio.get("pin_hash"):
             await falhou_o_pin(socio)
     raise HTTPException(status_code=401, detail="O PIN actual não confere.")
+
+
+# ------------------------------------------------------------------------
+# Recuperar o PIN esquecido
+# ------------------------------------------------------------------------
+#
+# Ha **dois caminhos**, por decisao do dono, e os dois sao precisos:
+#
+# 1. **Por email**, para quem tem email na ficha -- a maior parte dos 340.
+#    Nao custa dinheiro e resolve-se sem sair de casa.
+# 2. **Ao balcao**, para quem nao tem (`POST /members/{id}/limpar-pin`).
+#    E tambem a rede de seguranca de quem perdeu o acesso ao email.
+#
+# **O que nao pode haver e um "esqueci-me" que volte ao telemovel**: era
+# isso que reabria o buraco todo -- bastava escrever o numero de outra
+# pessoa, dizer que se esqueceu, e entrar com o telemovel dela, que qualquer
+# colega de treino sabe. Por isso a recuperacao tem de passar por uma coisa
+# que **so o socio tem**: a caixa de correio dele, ou a cara dele ao balcao.
+# O codigo prova **posse** e nao **conhecimento**, que e a diferenca toda.
+
+MINUTOS_DO_CODIGO = 15
+TENTATIVAS_DO_CODIGO = 5
+SEGUNDOS_ENTRE_EMAILS = 120  # para ninguem encher a caixa de correio de outro
+
+ASSUNTO_DO_CODIGO = "Código para escolher um PIN novo"
+
+
+def _codigo_novo() -> str:
+    """Seis digitos sorteados com o `secrets`, e nao com o `random`.
+
+    O `random` do Python e previsivel a quem veja saidas suficientes. Para
+    um codigo que abre uma conta isso nao serve, e o `secrets` nao custa
+    nada.
+    """
+    return f"{secrets.randbelow(1000000):06d}"
+
+
+def _quando(valor) -> Optional[datetime]:
+    if not valor:
+        return None
+    quando = valor if isinstance(valor, datetime) else datetime.fromisoformat(str(valor))
+    return quando.replace(tzinfo=timezone.utc) if quando.tzinfo is None else quando
+
+
+def codigo_a_aguardar(socio: dict) -> bool:
+    """Ha um codigo por usar, ainda dentro da validade?
+
+    O balcao ve isto na ficha: quem chega a dizer que nao entra pode ja ter
+    pedido o codigo e nao ter ido ao email.
+    """
+    if not socio.get("pin_reset_hash"):
+        return False
+    expira = _quando(socio.get("pin_reset_expira"))
+    return bool(expira and expira > datetime.now(timezone.utc))
+
+
+def segundos_para_outro_email(socio: dict) -> int:
+    """Quanto falta para se poder pedir outro codigo. Zero se puder ser ja."""
+    enviado = _quando(socio.get("pin_reset_enviado"))
+    if not enviado:
+        return 0
+    passados = (datetime.now(timezone.utc) - enviado).total_seconds()
+    return max(0, int(SEGUNDOS_ENTRE_EMAILS - passados))
+
+
+async def _limpar_o_codigo(socio_id: str) -> None:
+    await db.members.update_one(
+        {"id": socio_id},
+        {"$set": {"pin_reset_hash": None, "pin_reset_expira": None,
+                  "pin_reset_tentativas": 0, "pin_reset_enviado": None}},
+    )
+
+
+async def _registar_recuperacao(socio: dict) -> None:
+    """Fica no registo de alteracoes: e um acontecimento de seguranca.
+
+    Nao ha utilizador da gestao a fazer isto -- foi o proprio socio, pela
+    caixa de correio dele -- por isso o autor do registo e ele.
+    """
+    try:
+        registo = AuditLog(
+            user_id=socio["id"],
+            username=f"{socio.get('name')} (socio)",
+            action="update",
+            entity_type="member",
+            entity_id=socio["id"],
+            details="Recuperou o PIN por email",
+        )
+        await db.audit_logs.insert_one(prepare_for_mongo(registo.dict()))
+    except Exception as e:
+        logger.error("Falhou o registo da recuperacao do PIN: %s", type(e).__name__)
+
+
+@api_router.post("/mobile/auth/pin/esqueci")
+@auth_rate_limit()
+async def esqueci_o_pin(request: Request, dados: EsqueciOPin):
+    """Manda um codigo de seis digitos para o email da ficha do socio.
+
+    **Responde sempre 200, com o motivo por palavras.** Nao haver email na
+    ficha, nao haver PIN para recuperar, ter pedido o codigo ha pouco --
+    nada disto e um erro, e cada um precisa de uma frase diferente no ecra
+    do socio. **As palavras vem do servidor**, e nao da aplicacao, para quem
+    atende ao balcao ler o mesmo que o socio tem no telemovel.
+
+    O email **so se vai buscar a ficha, nunca se recebe**: senao bastava
+    escrever o numero de outra pessoa e um endereco nosso para receber o
+    codigo dela.
+    """
+    candidatos = await socios_com_o_numero(dados.member_number)
+    if not candidatos:
+        return {
+            "enviado": False, "motivo": "sem_socio",
+            "mensagem": "Não encontrámos esse número de sócio. "
+                        "Confirma na receção.",
+        }
+
+    socio = next((m for m in candidatos if m.get("pin_hash")), None)
+    if not socio:
+        return {
+            "enviado": False, "motivo": "sem_pin",
+            "mensagem": "Essa conta ainda não tem PIN. Entra com o número de "
+                        "sócio e o telemóvel, e escolhe um.",
+        }
+
+    email = (socio.get("email") or "").strip()
+    if "@" not in email:
+        return {
+            "enviado": False, "motivo": "sem_email",
+            "mensagem": "Não há email nesta ficha. Passa pela receção "
+                        "para apagarmos o PIN — depois escolhes outro, como da "
+                        "primeira vez.",
+        }
+
+    if not correio_configurado():
+        return {
+            "enviado": False, "motivo": "sem_correio",
+            "mensagem": "Não foi possível enviar o email agora. Passa pela "
+                        "receção para apagarmos o PIN.",
+        }
+
+    faltam = segundos_para_outro_email(socio)
+    if faltam:
+        return {
+            "enviado": False, "motivo": "ha_pouco", "segundos": faltam,
+            "mensagem": f"Já enviámos um código há pouco. Vê o "
+                        f"email, ou tenta daqui a {faltam} segundos.",
+        }
+
+    codigo = _codigo_novo()
+    agora = datetime.now(timezone.utc)
+    await db.members.update_one(
+        {"id": socio["id"]},
+        {"$set": {
+            "pin_reset_hash": guardar_pin(codigo),
+            "pin_reset_expira": (agora + timedelta(minutes=MINUTOS_DO_CODIGO)).isoformat(),
+            "pin_reset_tentativas": 0,
+            "pin_reset_enviado": agora.isoformat(),
+        }},
+    )
+
+    primeiro = (socio.get("name") or "").split(" ")[0]
+    texto = (
+        f"Olá {primeiro},\n\n"
+        f"Pediste um código para escolher um PIN novo na aplicação do "
+        f"Ginásio KO.\n\n"
+        f"    {codigo}\n\n"
+        f"Escreve-o na aplicação e escolhe o PIN que quiseres. O código "
+        f"serve\n"
+        f"durante {MINUTOS_DO_CODIGO} minutos e só pode ser usado uma vez.\n\n"
+        f"Se não foste tu a pedir, não precisas de fazer nada: o teu PIN\n"
+        f"continua a valer e quem pediu não recebeu nada.\n\n"
+        f"Ginásio KO\n"
+        f"https://ginasioko.site\n"
+    )
+    if not await enviar_email(email, ASSUNTO_DO_CODIGO, texto):
+        # O codigo nao serve a ninguem se a mensagem nao saiu, e deixar o
+        # `pin_reset_enviado` gravado prendia o socio dois minutos a espera
+        # de um email que nunca vem.
+        await _limpar_o_codigo(socio["id"])
+        return {
+            "enviado": False, "motivo": "falhou",
+            "mensagem": "Não foi possível enviar o email. Tenta outra vez, ou "
+                        "passa pela receção para apagarmos o PIN.",
+        }
+
+    escondido = esconder_email(email)
+    return {
+        "enviado": True,
+        "email": escondido,
+        "minutos": MINUTOS_DO_CODIGO,
+        "mensagem": f"Enviámos um código de {TAMANHO_DO_PIN} dígitos para "
+                    f"{escondido}. Serve durante {MINUTOS_DO_CODIGO} minutos.",
+    }
+
+
+@api_router.post("/mobile/auth/pin/recuperar")
+@auth_rate_limit()
+async def recuperar_o_pin(request: Request, dados: RecuperarOPin):
+    """O codigo do email autoriza um PIN novo, e entra.
+
+    **Nao olha ao travao das tentativas** (`pin_bloqueado_ate`), e limpa-o:
+    quem se esqueceu costuma ter tentado cinco vezes antes de pedir o
+    codigo, e ficar quinze minutos de castigo depois de provar quem e pela
+    caixa de correio nao serve de nada a ninguem.
+
+    **Entra logo**, sem voltar ao ecra de entrada a escrever o PIN que
+    acabou de escolher.
+
+    A **suspensao continua a mandar**: o `abrir_sessao` recusa, como em
+    qualquer outra entrada.
+    """
+    queixa = pin_fraco(dados.pin)
+    if queixa:
+        raise HTTPException(status_code=400, detail=queixa)
+
+    candidatos = await socios_com_o_numero(dados.member_number)
+    socio = next((m for m in candidatos if m.get("pin_reset_hash")), None)
+    if not socio:
+        raise HTTPException(
+            status_code=400,
+            detail="Não há nenhum código a aguardar. Pede um código por email.",
+        )
+
+    if not codigo_a_aguardar(socio):
+        await _limpar_o_codigo(socio["id"])
+        raise HTTPException(status_code=400, detail="O código expirou. Pede outro.")
+
+    if int(socio.get("pin_reset_tentativas") or 0) >= TENTATIVAS_DO_CODIGO:
+        await _limpar_o_codigo(socio["id"])
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiadas tentativas com esse código. Pede outro.",
+        )
+
+    if not pin_confere(dados.codigo, socio.get("pin_reset_hash")):
+        await db.members.update_one(
+            {"id": socio["id"]}, {"$inc": {"pin_reset_tentativas": 1}}
+        )
+        raise HTTPException(
+            status_code=401,
+            detail="O código não confere. Confirma no email.",
+        )
+
+    await db.members.update_one(
+        {"id": socio["id"]},
+        {"$set": {"pin_hash": guardar_pin(dados.pin),
+                  "pin_tentativas": 0, "pin_bloqueado_ate": None,
+                  "pin_reset_hash": None, "pin_reset_expira": None,
+                  "pin_reset_tentativas": 0, "pin_reset_enviado": None}},
+    )
+    await _registar_recuperacao(socio)
+    socio = await db.members.find_one({"id": socio["id"]})
+    return await abrir_sessao(socio)
 
 @api_router.get("/mobile/profile", response_model=MobileMember)
 async def get_mobile_profile(member_id: str):

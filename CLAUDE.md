@@ -698,12 +698,65 @@ buraco: se continuasse a valer, saber o número e o telemóvel de alguém
 continuava a dar entrada na conta dele, e o PIN não tapava nada. Há um teste
 só para isto.
 
-- **Não há "esqueci-me do PIN" na aplicação**, e é de propósito: se ela
-  deixasse voltar ao telemóvel para recuperar, bastava dizer que se esqueceu.
-  **Limpa-se ao balcão** (`POST /api/members/{id}/limpar-pin`), na ficha do
-  sócio, e depois disso ele escolhe outro como da primeira vez. **O
-  colaborador também pode** — é ele que está ao balcão quando a pessoa chega
-  a dizer que não entra.
+#### Esquecido, há dois caminhos — e nenhum volta ao telemóvel
+
+Decisão do dono, em novembro de 2026: **os dois**, porque a maior parte dos
+340 tem email na ficha mas nem todos têm.
+
+Se a aplicação deixasse recuperar **voltando ao telemóvel**, bastava dizer
+que se tinha esquecido para entrar na conta de qualquer pessoa sabendo-lhe o
+número — e o PIN não tapava nada. Por isso a recuperação tem de passar por
+uma coisa que **só o sócio tem**: a caixa de correio dele, ou a cara dele ao
+balcão. O código prova **posse** e não **conhecimento**, que é a diferença
+toda.
+
+- **Por email**, para quem tem email na ficha. Carrega em "Esqueci-me do
+  PIN", recebe seis dígitos (`POST /api/mobile/auth/pin/esqueci`),
+  escreve-os com o PIN novo (`.../pin/recuperar`) e **entra logo** — sem
+  voltar ao ecrã de entrada a escrever o PIN que acabou de escolher. O
+  código **serve 15 minutos e uma vez só**, morre ao fim de **cinco
+  tentativas**, e não se pede outro antes de **dois minutos**, senão
+  qualquer pessoa enchia a caixa de correio de outra.
+- **Ao balcão** (`POST /api/members/{id}/limpar-pin`), na ficha do sócio,
+  para quem não tem email ou perdeu o acesso a ele. **O colaborador também
+  pode** — é ele que está ao balcão quando a pessoa chega a dizer que não
+  entra. Apagar o PIN **mata também o código**, se houver um a aguardar: um
+  código de pé por mais quinze minutos era uma segunda porta aberta sem
+  ninguém saber.
+
+**O endereço vai-se buscar à ficha, nunca se recebe**: senão bastava
+escrever o número de outra pessoa e um email nosso para receber o código
+dela. E a resposta **esconde-o** (`s***@exemplo.pt`) — o sócio precisa de
+saber qual das caixas foi, não de a ver escrita num ecrã que outra pessoa
+pode estar a espreitar.
+
+**O cartão da ficha diz qual dos dois caminhos é o desta pessoa**: havendo
+email, manda-se o sócio pedir o código em vez de lhe apagar o PIN; não
+havendo, diz-o por palavras. E mostra se **há um código a aguardar**, para
+não se apagar o PIN a quem já tem a resposta na caixa de correio.
+
+**Recuperar limpa o travão das tentativas**: quem se esqueceu costuma ter
+tentado cinco vezes antes de pedir o código, e ficar quinze minutos de
+castigo depois de provar quem é pela caixa de correio não serve de nada a
+ninguém.
+
+**As palavras vêm do servidor** (`mensagem`), enviado ou não, e não da
+aplicação — quando o sócio pergunta ao balcão o que diz o telemóvel, quem
+atende tem de ler o mesmo. Por isso a rota responde sempre **200 com o
+motivo**: não haver email na ficha, não haver PIN para recuperar ou ter
+pedido o código há pouco não são erros, e cada um precisa de uma frase
+diferente no ecrã.
+
+**O email sai por SMTP, sem dependência nenhuma nova** — `utils/correio.py`,
+com o `smtplib` da biblioteca padrão. Um fornecedor transaccional (Resend,
+Brevo, Mailgun) daria melhor entrega, mas obrigava a conta, chave e domínio
+verificado para o que são meia dúzia de mensagens por mês. As credenciais
+vivem no `backend/.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+`SMTP_PASSWORD`, `SMTP_DE`, `SMTP_NOME`), que o `docker-compose` já entrega
+ao contentor pelo `env_file`. **Sem elas não rebenta nada**: a aplicação diz
+que não foi possível e manda ao balcão, que é o caminho que já existia. O
+envio corre numa linha de execução à parte (`asyncio.to_thread`), senão
+prendia o servidor inteiro enquanto o Gmail não respondesse.
 - **O balcão nunca vê o PIN**, nem o resumo dele. Só vê **se ele existe**
   (`GET /api/members/{id}/pin`), que é o que precisa para perceber se a pessoa
   à frente se esqueceu ou se ainda nem instalou a aplicação. Guarda-se com
@@ -803,7 +856,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 352 testes e demoram 32 segundos (o bcrypt dos PIN é lento
+backend** — são 381 testes e demoram 55 segundos (o bcrypt dos PIN é lento
 de propósito).
 
 ```bash

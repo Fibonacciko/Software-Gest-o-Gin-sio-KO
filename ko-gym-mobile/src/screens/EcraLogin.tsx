@@ -13,7 +13,14 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { entrarComPin, entrarPelaPrimeiraVez, escolherPin, Socio } from '../api';
+import {
+  entrarComPin,
+  entrarPelaPrimeiraVez,
+  escolherPin,
+  pedirCodigoDoPin,
+  recuperarOPin,
+  Socio,
+} from '../api';
 import { alturaDaPorta, desvioDoNome, topoDaPorta } from '../lib/porta';
 import { cores, espaco, raio, superficie } from '../theme';
 
@@ -27,8 +34,10 @@ type Props = {
  * - `pin` — o normal: número de sócio e PIN.
  * - `primeira` — quem ainda não tem PIN: número e telemóvel.
  * - `escolher` — escolher o PIN, logo a seguir.
+ * - `esqueci` — pedir um código por email, para quem se esqueceu.
+ * - `codigo` — o código que chegou, e o PIN novo que ele autoriza.
  */
-type Passo = 'pin' | 'primeira' | 'escolher';
+type Passo = 'pin' | 'primeira' | 'escolher' | 'esqueci' | 'codigo';
 
 export default function EcraLogin({ aoEntrar }: Props) {
   const [passo, setPasso] = useState<Passo>('pin');
@@ -36,13 +45,19 @@ export default function EcraLogin({ aoEntrar }: Props) {
   const [telefone, setTelefone] = useState('');
   const [pin, setPin] = useState('');
   const [pinOutraVez, setPinOutraVez] = useState('');
+  const [codigo, setCodigo] = useState('');
   const [erro, setErro] = useState<string | null>(null);
+  // A boa notícia, em verde: o código saiu, e para que caixa de correio.
+  // À parte do erro porque não é um erro, e lê-se de outra maneira.
+  const [aviso, setAviso] = useState<string | null>(null);
   const [aCarregar, setACarregar] = useState(false);
 
   const irPara = (p: Passo) => {
     setErro(null);
+    setAviso(null);
     setPin('');
     setPinOutraVez('');
+    setCodigo('');
     setPasso(p);
   };
 
@@ -109,6 +124,64 @@ export default function EcraLogin({ aoEntrar }: Props) {
     }
   };
 
+  /**
+   * Pede o código por email.
+   *
+   * **A frase que o sócio lê vem do servidor**, enviado ou não: é a mesma
+   * que quem atende ao balcão lê na gestão, e assim não há duas versões da
+   * mesma explicação para manter.
+   */
+  const pedirCodigo = async () => {
+    if (!numero.trim()) {
+      setErro('Escreve o número de sócio.');
+      return;
+    }
+    setErro(null);
+    setAviso(null);
+    setACarregar(true);
+    try {
+      const r = await pedirCodigoDoPin(numero);
+      if (r.enviado) {
+        setAviso(r.mensagem);
+        setPasso('codigo');
+      } else {
+        setErro(r.mensagem);
+        // Quem ainda não tem PIN não tem nada a recuperar: o caminho dele é
+        // o da primeira vez, e não vale a pena deixá-lo preso aqui.
+        if (r.motivo === 'sem_pin') setPasso('primeira');
+      }
+    } catch (e: any) {
+      dizer(e, 'Não consegui pedir o código. Tenta outra vez.');
+    } finally {
+      setACarregar(false);
+    }
+  };
+
+  const comCodigo = async () => {
+    if (codigo.trim().length !== 6) {
+      setErro('O código tem 6 dígitos. Confirma no email.');
+      return;
+    }
+    if (pin.trim().length !== 6) {
+      setErro('O PIN tem de ser 6 dígitos.');
+      return;
+    }
+    if (pin.trim() !== pinOutraVez.trim()) {
+      setErro('Os dois PIN não são iguais.');
+      return;
+    }
+    setErro(null);
+    setACarregar(true);
+    try {
+      const { socio } = await recuperarOPin(numero, codigo, pin);
+      aoEntrar(socio);
+    } catch (e: any) {
+      dizer(e, 'Não consegui guardar o PIN novo.');
+    } finally {
+      setACarregar(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={estilos.raiz}
@@ -154,7 +227,7 @@ export default function EcraLogin({ aoEntrar }: Props) {
             placeholderTextColor={cores.textoSecundario}
             keyboardType="number-pad"
             autoCapitalize="none"
-            editable={passo !== 'escolher'}
+            editable={passo !== 'escolher' && passo !== 'codigo'}
           />
         </View>
 
@@ -219,36 +292,95 @@ export default function EcraLogin({ aoEntrar }: Props) {
           </>
         ) : null}
 
+        {passo === 'codigo' ? (
+          <>
+            <View style={estilos.campo}>
+              <Text style={estilos.etiqueta}>Código que recebeste por email</Text>
+              <TextInput
+                style={estilos.entrada}
+                value={codigo}
+                onChangeText={setCodigo}
+                placeholder="000000"
+                placeholderTextColor={cores.textoSecundario}
+                keyboardType="number-pad"
+                maxLength={6}
+              />
+            </View>
+            <View style={estilos.campo}>
+              <Text style={estilos.etiqueta}>Escolhe um PIN de 6 dígitos</Text>
+              <TextInput
+                style={estilos.entrada}
+                value={pin}
+                onChangeText={setPin}
+                placeholder="••••••"
+                placeholderTextColor={cores.textoSecundario}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={6}
+              />
+            </View>
+            <View style={estilos.campo}>
+              <Text style={estilos.etiqueta}>Outra vez, para confirmar</Text>
+              <TextInput
+                style={estilos.entrada}
+                value={pinOutraVez}
+                onChangeText={setPinOutraVez}
+                placeholder="••••••"
+                placeholderTextColor={cores.textoSecundario}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={6}
+              />
+            </View>
+          </>
+        ) : null}
+
+        {aviso && <Text style={estilos.aviso}>{aviso}</Text>}
         {erro && <Text style={estilos.erro}>{erro}</Text>}
 
         <Pressable
           style={({ pressed }) => [estilos.botao, pressed && estilos.botaoPressionado]}
-          onPress={passo === 'pin' ? comPin : passo === 'primeira' ? comTelemovel : guardarPin}
+          onPress={
+            passo === 'pin'
+              ? comPin
+              : passo === 'primeira'
+                ? comTelemovel
+                : passo === 'esqueci'
+                  ? pedirCodigo
+                  : passo === 'codigo'
+                    ? comCodigo
+                    : guardarPin
+          }
           disabled={aCarregar}
         >
           {aCarregar ? (
             <ActivityIndicator color={cores.texto} />
           ) : (
             <Text style={estilos.botaoTexto}>
-              {passo === 'escolher' ? 'GUARDAR O PIN' : 'ENTRAR'}
+              {passo === 'esqueci'
+                ? 'PEDIR O CÓDIGO'
+                : passo === 'escolher' || passo === 'codigo'
+                  ? 'GUARDAR O PIN'
+                  : 'ENTRAR'}
             </Text>
           )}
         </Pressable>
 
-        {/* O caminho da primeira vez, e o de volta. Não há "esqueci-me do
-            PIN" que o resolva sozinho de propósito: se a aplicação deixasse
-            voltar ao telemóvel para recuperar, bastava dizer que se esqueceu
-            para entrar na conta de qualquer pessoa sabendo-lhe o número —
-            que é o buraco que o PIN tapa. */}
+        {/* Os caminhos de lado, e o de volta.
+
+            **O "esqueci-me" nunca volta ao telemóvel**, e é aí que está a
+            diferença: se voltasse, bastava dizer que se esqueceu para entrar
+            na conta de qualquer pessoa sabendo-lhe o número — que é o buraco
+            que o PIN tapa. Vai ao email da ficha, que só o próprio abre, ou
+            ao balcão, que só a ele vê a cara. */}
         {passo === 'pin' ? (
           <>
+            <Pressable onPress={() => irPara('esqueci')}>
+              <Text style={estilos.ligacao}>Esqueci-me do PIN</Text>
+            </Pressable>
             <Pressable onPress={() => irPara('primeira')}>
               <Text style={estilos.ligacao}>É a minha primeira vez aqui</Text>
             </Pressable>
-            <Text style={estilos.ajuda}>
-              Esqueceste-te do PIN? Passa pela receção — apagam-no ali e escolhes
-              outro.
-            </Text>
           </>
         ) : passo === 'primeira' ? (
           <>
@@ -260,10 +392,30 @@ export default function EcraLogin({ aoEntrar }: Props) {
               escolhes a seguir um PIN só teu.
             </Text>
           </>
+        ) : passo === 'esqueci' ? (
+          <>
+            <Pressable onPress={() => irPara('pin')}>
+              <Text style={estilos.ligacao}>Voltar</Text>
+            </Pressable>
+            <Text style={estilos.ajuda}>
+              Enviamos um código para o email da tua ficha, e com ele escolhes
+              um PIN novo. Se não tiveres email na ficha, passa pela receção.
+            </Text>
+          </>
+        ) : passo === 'codigo' ? (
+          <>
+            <Pressable onPress={() => irPara('esqueci')}>
+              <Text style={estilos.ligacao}>Pedir outro código</Text>
+            </Pressable>
+            <Text style={estilos.ajuda}>
+              O código serve uma vez e durante 15 minutos. Se não chegou, vê o
+              lixo eletrónico.
+            </Text>
+          </>
         ) : (
           <Text style={estilos.ajuda}>
-            Guarda-o bem: é com ele que passas a entrar. Se o esqueceres,
-            apagam-no na receção e escolhes outro.
+            Guarda-o bem: é com ele que passas a entrar. Se o esqueceres, pedes
+            um código por email ou passas pela receção.
           </Text>
         )}
       </ScrollView>
@@ -333,6 +485,8 @@ const estilos = StyleSheet.create({
     fontSize: 17,
   },
   erro: { color: cores.vermelho, fontSize: 14 },
+  // O codigo saiu: e boa noticia, e le-se como tal
+  aviso: { color: cores.verde, fontSize: 14, fontWeight: '600' },
   // Em ouro, como as letras de tudo o que e para carregar
   ligacao: {
     color: cores.ouro,
