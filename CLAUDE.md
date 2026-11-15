@@ -408,6 +408,15 @@ sócio vive.
   a ninguém — é o preço certo a pagar para não haver fotografias sem dono à
   vista. Em produção não havia nenhuma: a galeria nunca chegou a ser usada.
 
+**Uma fotografia, um sócio. Não há mandar a vários ao mesmo tempo**, e é de
+propósito. A pergunta pôs-se com a foto da aula de Kids, que tem oito miúdos
+e oito pais a quem interessa; a resposta do dono foi que **as fotografias de
+grupo vão pelo WhatsApp**, onde já vão hoje. O que ele quer aqui é o
+contrário disso: o caminho que **só aquele sócio tem** — e que, por ser só
+dele, dá à aplicação uma razão para existir que um grupo de WhatsApp não
+tem. Construir o envio a vários era construir, dentro da aplicação, a coisa
+que ela serve para não ser.
+
 ### A ficha do ginásio
 
 Morada, horário, contactos e links (Google Maps, avaliações, redes). Preenche-se
