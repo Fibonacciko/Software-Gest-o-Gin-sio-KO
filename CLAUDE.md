@@ -981,6 +981,24 @@ A reconstrução tem de ser **lançada em segundo plano**: demora mais do que o
 tempo limite da ligação SSH, e uma ligação que caia a meio deixa o trabalho por
 acabar.
 
+**Quem vai primeiro, o servidor ou a aplicação?** Vai primeiro **aquele cuja
+mudança o outro lado aguenta**. Entre publicar e a atualização chegar ao
+telemóvel passam duas aberturas da aplicação, e nesse intervalo os dois lados
+não são a mesma versão — a pergunta é qual das metades é que sobrevive a
+estar sozinha.
+
+- **O PIN** (novembro de 2026) foi **servidor primeiro**: a aplicação nova
+  pedia um PIN a um servidor que ainda não sabia o que era isso.
+- **Os tokens** foram **aplicação primeiro**, e é o contrário: a aplicação
+  nova manda um cabeçalho que o servidor antigo ignora sem se queixar, mas o
+  servidor novo recusa **tudo** à aplicação antiga — e quem a tivesse aberta
+  ficava com ela a dizer que a sessão acabou, em ciclo, até a atualização
+  chegar.
+
+Se as duas metades forem incompatíveis nos dois sentidos, não há ordem que
+salve: aí a mudança tem de aceitar as duas versões durante uma semana, e só
+depois é que o lado antigo sai.
+
 Cópias de segurança automáticas todas as noites às 3h30 (`/root/backup-ko-gym.sh`),
 as últimas 30 em `/root/backups/`, registo em `/var/log/ko-gym-backup.log`.
 
