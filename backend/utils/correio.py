@@ -40,10 +40,26 @@ logger = logging.getLogger(__name__)
 SEGUNDOS_DE_ESPERA = 15  # um servidor de email morto nao pode prender o pedido
 
 
+def _porta() -> int:
+    """A porta do `.env`, ou a de sempre.
+
+    Um `SMTP_PORT` mal escrito nao pode rebentar o pedido do socio: ele
+    pediu para recuperar o PIN, nao tem culpa do ficheiro de configuracao, e
+    um 500 nao lhe diz para onde ir. Mal escrita, vale a de sempre, e quem
+    enviar nao conseguira -- e ai a aplicacao manda-o ao balcao, com todas
+    as palavras.
+    """
+    try:
+        return int((os.environ.get("SMTP_PORT") or "587").strip() or 587)
+    except ValueError:
+        logger.error("SMTP_PORT mal escrito no .env; vou pela 587")
+        return 587
+
+
 def _config() -> dict:
     return {
         "host": (os.environ.get("SMTP_HOST") or "").strip(),
-        "porta": int((os.environ.get("SMTP_PORT") or "587").strip() or 587),
+        "porta": _porta(),
         "utilizador": (os.environ.get("SMTP_USER") or "").strip(),
         "senha": os.environ.get("SMTP_PASSWORD") or "",
         "de": (os.environ.get("SMTP_DE") or os.environ.get("SMTP_USER") or "").strip(),
