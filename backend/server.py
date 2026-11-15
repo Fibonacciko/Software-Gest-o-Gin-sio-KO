@@ -805,6 +805,14 @@ class OrdemDosParceiros(BaseModel):
 # Fotografias dos treinos, alojadas aqui, e videos por link para as redes do
 # ginasio: um minuto de video de telemovel sao 50 a 100 MB, e as redes ja
 # tem o conteudo e ja tem publico.
+#
+# **Cada fotografia e de um socio, e so ele a ve.** Comecou por ser uma
+# galeria igual para toda a gente, carregada em App do Socio > Multimedia.
+# Decisao do dono, em novembro de 2026: o que ele quer partilhar sao as fotos
+# daquele socio -- o filho na aula de Kids, o combate de sabado --, e isso nao
+# e para os outros trezentos verem. A galeria mudou-se para a ficha do socio,
+# em Membros, que e onde ja vivem as avaliacoes e os planos: o que e de um so
+# e dele, e carrega-se onde ele esta.
 
 class MediaKind(str, Enum):
     PHOTO = "photo"
@@ -813,6 +821,10 @@ class MediaKind(str, Enum):
 
 class MediaItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    # De quem e. Opcional no modelo guardado so para as fichas antigas, de
+    # quando a galeria era de todos; essas nao aparecem a ninguem -- e o
+    # preco certo a pagar para nao haver fotografias sem dono a vista.
+    member_id: Optional[str] = None
     kind: MediaKind = MediaKind.PHOTO
     url: str                              # Ficheiro nosso, ou link do Instagram
     caption: Optional[str] = None
@@ -822,6 +834,9 @@ class MediaItem(BaseModel):
 
 
 class MediaItemCreate(BaseModel):
+    # Obrigatorio ao criar: uma fotografia sem dono nao chega a socio nenhum,
+    # e ficava a ocupar disco sem ninguem a ver.
+    member_id: str
     kind: MediaKind = MediaKind.PHOTO
     url: str
     caption: Optional[str] = None
@@ -4908,16 +4923,35 @@ async def apagar_parceiro(partner_id: str, current_user: User = Depends(require_
 
 @api_router.post("/media", response_model=MediaItem)
 async def criar_media(dados: MediaItemCreate, current_user: User = Depends(require_admin_or_staff)):
+    """Partilha uma fotografia **com um socio**, e so com ele.
+
+    Carrega-se na ficha dele, em Membros, ao lado das avaliacoes e dos
+    planos. O colaborador tambem publica: e quem esta no ginasio a tirar as
+    fotografias.
+    """
+    socio = await db.members.find_one({"id": dados.member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
     item = MediaItem(**dados.dict())
     await db.media.insert_one(prepare_for_mongo(item.dict()))
     await log_audit(current_user, "create", "media", entity_id=item.id,
-                    details="Publicou um item de multimedia")
+                    details=f"Partilhou uma fotografia com {socio.get('name')}")
     return item
 
 
 @api_router.get("/media", response_model=List[MediaItem])
-async def listar_media(current_user: User = Depends(require_admin_or_staff)):
-    itens = await db.media.find().sort("created_at", -1).to_list(2000)
+async def listar_media(
+    member_id: Optional[str] = None,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """As fotografias partilhadas. Com `member_id`, so as daquele socio.
+
+    Sem ele vem tudo, que e como a pagina de auditoria e os testes as veem;
+    a ficha do socio pede sempre as dele.
+    """
+    procura = {"member_id": member_id} if member_id else {}
+    itens = await db.media.find(procura).sort("created_at", -1).to_list(2000)
     return [MediaItem(**parse_from_mongo(m)) for m in itens]
 
 
@@ -5016,10 +5050,33 @@ async def parceiros_para_a_app():
     return [Partner(**parse_from_mongo(x)) for x in parceiros]
 
 
-@api_router.get("/mobile/media", response_model=List[MediaItem])
-async def multimedia_para_a_app():
-    itens = await db.media.find({"is_active": True}).sort("created_at", -1).to_list(300)
+@api_router.get("/mobile/media/{member_id}", response_model=List[MediaItem])
+async def fotografias_do_socio(member_id: str):
+    """As fotografias **daquele socio**, e so dele.
+
+    Era uma galeria igual para toda a gente. Hoje cada fotografia tem dono
+    (ver o `MediaItem`), e esta rota nunca devolve as de outro: o filho na
+    aula de Kids e para os pais dele, e nao para os outros trezentos socios.
+    """
+    itens = await db.media.find(
+        {"member_id": member_id, "is_active": True}
+    ).sort("created_at", -1).to_list(300)
     return [MediaItem(**parse_from_mongo(m)) for m in itens]
+
+
+@api_router.get("/mobile/media", response_model=List[MediaItem])
+async def multimedia_antiga_da_app():
+    """Vazia, de proposito.
+
+    E o endereco que as versoes da aplicacao anteriores a novembro de 2026
+    chamam -- a galeria de todos, que deixou de existir. Devolver uma lista
+    vazia da-lhes uma galeria vazia em vez de um erro, e sobretudo **nao
+    lhes da as fotografias de ninguem**: era por aqui que um telemovel por
+    actualizar veria as de toda a gente.
+
+    Sai quando nao houver nenhuma aplicacao instalada por actualizar.
+    """
+    return []
 
 
 # A ordem por que a montra se apresenta ao socio, escolhida pelo dono.

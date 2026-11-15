@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
 import AvaliacoesDoSocio from '../components/AvaliacoesDoSocio';
+import FotosDoSocio from '../components/FotosDoSocio';
 import PlanosDoSocio from '../components/PlanosDoSocio';
 import SuspenderSocio from '../components/SuspenderSocio';
 import MultiActivitySelector from '../components/MultiActivitySelector';
@@ -842,6 +843,16 @@ const Members = ({ language, translations }) => {
                   style={{ background: 'var(--gradient-card-bg)', border: '1px solid var(--border-light)' }}
                 >
                   <PlanosDoSocio socio={selectedMember} />
+                </div>
+
+                {/* As fotografias partilhadas com este socio, e so com ele.
+                    Eram uma galeria igual para toda a gente, em App do Socio;
+                    passaram a viver onde o socio vive. */}
+                <div
+                  className="p-4 rounded-lg"
+                  style={{ background: 'var(--gradient-card-bg)', border: '1px solid var(--border-light)' }}
+                >
+                  <FotosDoSocio socio={selectedMember} />
                 </div>
               </div>
             </div>

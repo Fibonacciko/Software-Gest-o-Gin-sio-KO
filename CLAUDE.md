@@ -246,7 +246,7 @@ contar na facturação do mês.
 - **O colaborador também apaga** — quem vende ao balcão tem de poder emendar,
   como já acontecia nas despesas.
 
-### Aplicação do sócio: parceiros, multimédia e montra
+### Aplicação do sócio: parceiros e montra
 
 O conteúdo que o sócio vê no telemóvel carrega-se na gestão, em **App do
 Sócio** (só administrador) e no **Stock**:
@@ -263,10 +263,6 @@ Sócio** (só administrador) e no **Stock**:
   aos que já lá estavam. `POST /api/partners/ordem` recebe os ids todos pela
   ordem que ficam — guardar a posição de um só obrigava a adivinhar o que
   fazer aos que ele passou à frente. Só administrador, e com testes.
-- **Multimédia** — **fotografias alojadas aqui**, **vídeos por link** para as
-  redes do ginásio. Um minuto de vídeo de telemóvel são 50 a 100 MB e as redes
-  já têm o conteúdo e já têm público. O colaborador também pode publicar: é
-  quem está no ginásio a tirar as fotos.
 - **Loja** — a montra, vista do lado de cá. É a **mesma lista do Stock**:
   um artigo criado aqui aparece lá e vice-versa, porque é um só registo em
   `inventory`. O que esta página acrescenta é dizer, artigo a artigo, se ele
@@ -377,6 +373,40 @@ dizem. A galeria é o campo `media` (`[{kind: "photo"|"video", url}]`).
 - Na aplicação, a galeria desliza para o lado e o vídeo **arranca parado e
   sem som**: um vídeo a tocar sozinho no meio da loja rouba a atenção e gasta
   dados a quem só queria ver o preço.
+
+### Fotografias partilhadas com um sócio
+
+**Cada fotografia é de um sócio, e só ele a vê.** Carregam-se em
+**Membros → ver a ficha → Fotografias**, ao lado das avaliações e dos planos,
+e o sócio vê-as na aplicação, numa faixa no Início ("As tuas fotos").
+
+Começou por ser uma **galeria igual para toda a gente**, em App do Sócio →
+Multimédia. Decisão do dono, em novembro de 2026: o que ele quer partilhar
+são as fotos *daquele* sócio — o filho na aula de Kids, o combate de sábado —
+e isso não é para os outros trezentos verem. A galeria mudou-se para onde o
+sócio vive.
+
+- O **sócio não carrega nada**: só vê e guarda o que o ginásio lhe mandou.
+- **Fotografias alojadas aqui**, **vídeos por link** para as redes do
+  ginásio. Um minuto de vídeo de telemóvel são 50 a 100 MB e as redes já têm
+  o conteúdo e já têm público.
+- O **colaborador também publica**: é quem está no ginásio a tirar as fotos.
+- **Uma fotografia sem dono é recusada** (`member_id` é obrigatório no
+  `MediaItemCreate`): ficava a ocupar disco sem chegar a sócio nenhum.
+- **Esconder não é apagar** (`is_active`): o sócio deixa de a ver, o ficheiro
+  fica. Apagar leva o ficheiro, como em todo o lado.
+- `GET /api/mobile/media/{member_id}` traz as dele e nunca as de outro. O
+  `GET /api/mobile/media` antigo — a galeria de todos — **devolve agora uma
+  lista vazia**: é o endereço que uma aplicação por actualizar chama, e era
+  por aí que um telemóvel velho veria as fotografias de toda a gente. Sai
+  quando não houver nenhuma por actualizar.
+- Como o resto da API da aplicação (os pagamentos, as avaliações, os planos),
+  **quem souber o `id` do sócio vê o que é dele**. O `id` é um UUID, que não
+  se adivinha. Subir mais do que isto obriga a pôr senha em todas as rotas da
+  aplicação, e isso é obra à parte.
+- **Fichas antigas sem dono** (de quando a galeria era de todos) não aparecem
+  a ninguém — é o preço certo a pagar para não haver fotografias sem dono à
+  vista. Em produção não havia nenhuma: a galeria nunca chegou a ser usada.
 
 ### A ficha do ginásio
 
@@ -704,7 +734,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 323 testes e demoram 18 segundos.
+backend** — são 325 testes e demoram 17 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -954,11 +984,11 @@ dono, em novembro de 2026.
 
 - O **Corpo** (`EcraCorpo.tsx`) fica a seguir às Aulas: os três primeiros
   separadores são do sócio, os três últimos são do ginásio.
-- As **fotografias passaram a uma faixa no Início** (`FotosDoGinasio.tsx`),
-  entre os planos e os pagamentos. **Não aparece quando não há nenhuma** — que
-  é hoje o caso —, e por isso deixou de haver um ecrã vazio à vista. Dois
-  quadrados e um bocadinho do terceiro, que é o que diz sem legenda que a
-  faixa anda para o lado.
+- As **fotografias passaram a uma faixa no Início** (`MinhasFotos.tsx`),
+  entre os planos e os pagamentos, e são **as dele** (ver **Fotografias
+  partilhadas com um sócio**). **Não aparece quando não há nenhuma**, e por
+  isso deixou de haver um ecrã vazio à vista. Dois quadrados e um bocadinho
+  do terceiro, que é o que diz sem legenda que a faixa anda para o lado.
 - O cartão **"A tua evolução"** e o `EcraMultimedia` foram apagados: o que
   faziam passou para os dois novos.
 - **A balança ainda não chegou**, por isso o Corpo começa vazio para toda a

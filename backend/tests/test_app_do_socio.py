@@ -221,37 +221,11 @@ def test_o_colaborador_nao_muda_a_ordem(cliente, colaborador, tres_parceiros):
 
 
 # ------------------------------------------------------------------ multimédia
-
-def test_publicar_uma_fotografia(cliente, admin):
-    r = cliente.post("/api/media", headers=admin, json={
-        "kind": "photo", "url": "/api/uploads/abc.jpg", "caption": "Aula de Boxe",
-    })
-    assert r.status_code == 200, r.text
-    assert r.json()["kind"] == "photo"
-
-
-def test_publicar_um_video_por_link(cliente, admin):
-    """Os vídeos não são alojados aqui: ficam nas redes do ginásio."""
-    r = cliente.post("/api/media", headers=admin, json={
-        "kind": "video_link", "url": "https://instagram.com/p/xyz", "caption": "Sparring",
-    })
-    assert r.status_code == 200
-    assert r.json()["kind"] == "video_link"
-
-
-def test_a_app_so_ve_a_multimedia_activa(cliente, admin):
-    cliente.post("/api/media", headers=admin, json={"url": "/api/uploads/a.jpg", "caption": "A"})
-    cliente.post("/api/media", headers=admin,
-                 json={"url": "/api/uploads/b.jpg", "caption": "B", "is_active": False})
-    legendas = [m["caption"] for m in cliente.get("/api/mobile/media").json()]
-    assert legendas == ["A"]
-
-
-def test_o_colaborador_pode_publicar_fotografias(cliente, colaborador):
-    """Quem está no ginásio é quem tira as fotos."""
-    r = cliente.post("/api/media", headers=colaborador,
-                     json={"url": "/api/uploads/treino.jpg"})
-    assert r.status_code == 200
+#
+# Estes testes saíram daqui. A multimédia era uma galeria igual para toda a
+# gente, carregada em App do Sócio; passou a ser **de cada sócio**, na ficha
+# dele, e vive agora em `test_multimedia.py` -- onde cada um deles tem o seu
+# equivalente, mais os da privacidade, que são a razão da mudança.
 
 
 # ----------------------------------------------------------------------- montra

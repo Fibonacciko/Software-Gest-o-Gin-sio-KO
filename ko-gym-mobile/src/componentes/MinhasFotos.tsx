@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { carregarMultimedia, enderecoReduzido, ItemMultimedia } from '../api';
+import { carregarFotosDoSocio, enderecoReduzido, ItemMultimedia } from '../api';
 import { dataPt } from '../lib/datas';
 import Vidro from './Vidro';
 import { cores, espaco, raio, sombra } from '../theme';
@@ -21,31 +21,39 @@ const LARGURA = Dimensions.get('window').width;
 const LADO = Math.round((LARGURA - espaco.m * 2 - espaco.s * 2) / 2.4);
 
 /**
- * As fotografias do ginásio, numa faixa no Início.
+ * As fotografias que o ginásio partilhou **com este sócio**, numa faixa no
+ * Início.
  *
- * **Eram um separador inteiro** e passaram a esta faixa, por decisão do dono:
- * as fotografias são poucas e chegam de longe a longe, e um dos seis lugares
- * da barra passou a ser o Corpo, que muda todos os meses e é do próprio
- * sócio. Aqui continuam à vista de quem abre a aplicação — que é o que elas
- * precisam — sem pedirem um ecrã só.
+ * Duas mudanças, e a segunda é a que conta:
+ *
+ * 1. **Eram um separador inteiro** e passaram a esta faixa, por decisão do
+ *    dono: são poucas e chegam de longe a longe, e aquele lugar na barra
+ *    passou a ser o Corpo, que muda todos os meses.
+ * 2. **E eram de toda a gente.** Hoje cada fotografia tem dono: o que o
+ *    ginásio quer partilhar são as fotos *daquele* sócio — o filho na aula
+ *    de Kids, o combate de sábado — e isso não é para os outros trezentos
+ *    verem. Carregam-se na ficha dele, na gestão.
+ *
+ * O sócio **não carrega nada**: só vê e guarda o que lhe mandaram.
  *
  * **A faixa não aparece quando não há nada.** Uma caixa vazia a dizer "ainda
- * não há fotografias" é pior do que não haver caixa nenhuma.
+ * não há fotografias" é pior do que não haver caixa nenhuma — e no princípio
+ * quase ninguém terá nenhuma.
  *
  * Os **vídeos são links** para as redes do ginásio (um minuto de vídeo de
  * telemóvel são 50 a 100 MB, e as redes já têm o conteúdo e já têm público),
  * por isso vão marcados com o triângulo e abrem fora da aplicação.
  */
-export default function FotosDoGinasio() {
+export default function MinhasFotos({ socioId }: { socioId: string }) {
   const [itens, setItens] = useState<ItemMultimedia[] | null>(null);
   const [aberta, setAberta] = useState<ItemMultimedia | null>(null);
   const [tudo, setTudo] = useState(false);
 
   useEffect(() => {
-    carregarMultimedia()
+    carregarFotosDoSocio(socioId)
       .then(setItens)
       .catch(() => setItens([]));
-  }, []);
+  }, [socioId]);
 
   if (!itens || itens.length === 0) return null;
 
@@ -86,7 +94,7 @@ export default function FotosDoGinasio() {
     <>
       <Vidro estilo={estilos.cartao}>
         <View style={estilos.cabecalho}>
-          <Text style={estilos.titulo}>Fotos do ginásio</Text>
+          <Text style={estilos.titulo}>As tuas fotos</Text>
           {itens.length > 4 ? (
             <Pressable onPress={() => setTudo(true)}>
               <Text style={estilos.verTudo}>Ver as {itens.length}</Text>
@@ -124,7 +132,7 @@ export default function FotosDoGinasio() {
       <Modal visible={tudo} transparent animationType="slide" onRequestClose={() => setTudo(false)}>
         <View style={estilos.fundoJanela}>
           <View style={estilos.janela}>
-            <Text style={estilos.janelaTitulo}>Fotos do ginásio</Text>
+            <Text style={estilos.janelaTitulo}>As tuas fotos</Text>
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={estilos.grelha}>
                 {itens.map((i) => quadrado(i, (LARGURA - espaco.g * 2 - espaco.s) / 2))}

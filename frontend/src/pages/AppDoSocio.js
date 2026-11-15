@@ -53,7 +53,6 @@ const ARTIGO_VAZIO = {
   price: '', quantity: '', description: '', photo_url: '', media: []
 };
 
-const MEDIA_VAZIA = { kind: 'photo', url: '', caption: '', taken_on: '', is_active: true };
 
 // A ficha do ginásio: o que o sócio vê no separador "O Ginásio"
 const CAMPOS_DO_GINASIO = [
@@ -80,15 +79,12 @@ const CAMPOS_DO_GINASIO = [
 const AppDoSocio = ({ language }) => {
   const [aba, setAba] = useState('parceiros');
   const [parceiros, setParceiros] = useState([]);
-  const [media, setMedia] = useState([]);
   const [aCarregar, setACarregar] = useState(true);
 
   const [parceiroAberto, setParceiroAberto] = useState(false);
   const [parceiroForm, setParceiroForm] = useState(PARCEIRO_VAZIO);
   const [parceiroAEditar, setParceiroAEditar] = useState(null);
 
-  const [mediaAberta, setMediaAberta] = useState(false);
-  const [mediaForm, setMediaForm] = useState(MEDIA_VAZIA);
   const [artigos, setArtigos] = useState([]);
   // A montra tal como a aplicação a mostra hoje: serve para ordenar esta
   // página pela mesma ordem e para dizer quais são os dois que abrem o ecrã
@@ -111,9 +107,7 @@ const AppDoSocio = ({ language }) => {
       titulo: 'Aplicação do Sócio',
       subtitulo: 'O que o sócio vê no telemóvel. O que puser aqui aparece-lhe lá.',
       parceiros: 'Parceiros',
-      multimedia: 'Multimédia',
       novoParceiro: 'Novo Parceiro',
-      novaFoto: 'Nova Publicação',
       nome: 'Nome',
       beneficio: 'Vantagem para o sócio',
       beneficioAjuda: 'É o que mais conta. Ex: "10% em consultas de fisioterapia"',
@@ -129,14 +123,7 @@ const AppDoSocio = ({ language }) => {
       guardar: 'Guardar',
       cancelar: 'Cancelar',
       tipo: 'Tipo',
-      fotografia: 'Fotografia',
-      videoLink: 'Vídeo (link)',
-      legenda: 'Legenda',
-      data: 'Data',
-      linkDoVideo: 'Link do vídeo',
-      linkAjuda: 'Cole o endereço do Instagram, YouTube ou Facebook',
       semParceiros: 'Ainda não há parceiros. Carregue em Novo Parceiro para começar.',
-      semMedia: 'Ainda não há fotografias nem vídeos publicados.',
       escondido: 'Escondido',
       apagar: 'Apagar',
       editar: 'Editar',
@@ -167,9 +154,7 @@ const AppDoSocio = ({ language }) => {
       titulo: 'Member App',
       subtitulo: 'What the member sees on their phone.',
       parceiros: 'Partners',
-      multimedia: 'Media',
       novoParceiro: 'New Partner',
-      novaFoto: 'New Post',
       nome: 'Name',
       beneficio: 'Member benefit',
       beneficioAjuda: 'This is what matters most. E.g. "10% off physiotherapy"',
@@ -187,14 +172,7 @@ const AppDoSocio = ({ language }) => {
       loja: 'Shop',
       novoArtigo: 'New Item',
       tipo: 'Type',
-      fotografia: 'Photo',
-      videoLink: 'Video (link)',
-      legenda: 'Caption',
-      data: 'Date',
-      linkDoVideo: 'Video link',
-      linkAjuda: 'Paste the Instagram, YouTube or Facebook address',
       semParceiros: 'No partners yet.',
-      semMedia: 'No photos or videos published yet.',
       escondido: 'Hidden',
       apagar: 'Delete',
       editar: 'Edit',
@@ -216,15 +194,13 @@ const AppDoSocio = ({ language }) => {
       // A montra vem do servidor já pela ordem de hoje. Pedimo-la em vez de
       // repetir aqui a conta da rotação: a ordem que o sócio vê tem de ser a
       // mesma que se vê aqui, e duas cópias da mesma regra acabam diferentes.
-      const [p, m, g, a, montra] = await Promise.all([
+      const [p, g, a, montra] = await Promise.all([
         axios.get(`${API}/partners`).catch(() => ({ data: [] })),
-        axios.get(`${API}/media`).catch(() => ({ data: [] })),
         axios.get(`${API}/gym-info`).catch(() => ({ data: {} })),
         axios.get(`${API}/inventory`).catch(() => ({ data: [] })),
         axios.get(`${API}/mobile/shop`).catch(() => ({ data: [] }))
       ]);
       setParceiros(p.data);
-      setMedia(m.data);
       setGinasio(g.data || {});
       setArtigos(a.data);
       setMontraDeHoje(montra.data || []);
@@ -398,54 +374,6 @@ const AppDoSocio = ({ language }) => {
       carregarTudo();
     } catch {
       toast.error('Erro ao eliminar o parceiro');
-    }
-  };
-
-  /* ----------------------------------------------------------- multimédia */
-
-  const guardarMedia = async (e) => {
-    e.preventDefault();
-    if (!mediaForm.url) {
-      toast.error(mediaForm.kind === 'photo' ? 'Escolha uma fotografia.' : 'Cole o link do vídeo.');
-      return;
-    }
-    try {
-      await axios.post(`${API}/media`, {
-        kind: mediaForm.kind,
-        url: mediaForm.url,
-        caption: mediaForm.caption.trim() || null,
-        taken_on: mediaForm.taken_on || null,
-        is_active: mediaForm.is_active
-      });
-      toast.success('Publicado na aplicação.');
-      setMediaAberta(false);
-      setMediaForm(MEDIA_VAZIA);
-      carregarTudo();
-    } catch (erro) {
-      toast.error(erro.response?.data?.detail || 'Erro ao publicar');
-    }
-  };
-
-  const apagarMedia = async (m) => {
-    if (!window.confirm('Apagar esta publicação?')) return;
-    try {
-      await axios.delete(`${API}/media/${m.id}`);
-      toast.success('Publicação eliminada.');
-      carregarTudo();
-    } catch {
-      toast.error('Erro ao eliminar');
-    }
-  };
-
-  const trocarVisibilidade = async (m) => {
-    try {
-      await axios.put(`${API}/media/${m.id}`, {
-        kind: m.kind, url: m.url, caption: m.caption,
-        taken_on: m.taken_on, is_active: !m.is_active
-      });
-      carregarTudo();
-    } catch {
-      toast.error('Erro ao alterar');
     }
   };
 
@@ -632,23 +560,18 @@ const AppDoSocio = ({ language }) => {
         </div>
         {aba !== 'ginasio' && (
           <Button
-            onClick={() => {
-              if (aba === 'parceiros') return abrirParceiro(null);
-              if (aba === 'loja') return abrirArtigo(null);
-              return setMediaAberta(true);
-            }}
+            onClick={() => (aba === 'parceiros' ? abrirParceiro(null) : abrirArtigo(null))}
             className="btn-hover"
             data-testid="novo-item"
           >
             <Plus className="mr-2" size={16} />
-            {aba === 'parceiros' ? txt.novoParceiro : aba === 'loja' ? txt.novoArtigo : txt.novaFoto}
+            {aba === 'parceiros' ? txt.novoParceiro : txt.novoArtigo}
           </Button>
         )}
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Separador id="parceiros" icone={Handshake} texto={txt.parceiros} quantos={parceiros.length} />
-        <Separador id="multimedia" icone={ImageIcon} texto={txt.multimedia} quantos={media.length} />
         <Separador id="loja" icone={ShoppingBag} texto={txt.loja} quantos={gruposDeArtigos().length} />
         <button
           type="button"
@@ -861,7 +784,7 @@ const AppDoSocio = ({ language }) => {
             </div>
           )}
         </>
-      ) : aba === 'ginasio' ? (
+      ) : (
         <Card className="card-shadow">
           <CardHeader>
             <CardTitle className="flex items-center text-base">
@@ -945,52 +868,6 @@ const AppDoSocio = ({ language }) => {
             </form>
           </CardContent>
         </Card>
-      ) : media.length === 0 ? (
-        <Card><CardContent className="p-12 text-center text-gray-500 dark:text-gray-400">
-          {txt.semMedia}
-        </CardContent></Card>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {media.map((m) => (
-            <Card key={m.id} className="card-shadow overflow-hidden" data-testid={`media-${m.id}`}>
-              <div className="aspect-square relative" style={{ background: 'var(--background-elevated)' }}>
-                {m.kind === 'photo' ? (
-                  <img src={enderecoDaImagem(m.url)} alt={m.caption || ''}
-                       className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-3">
-                    <LinkIcon size={28} className="text-gray-400" />
-                    <p className="text-xs text-center break-all" style={{ color: 'var(--text-secondary)' }}>
-                      {m.url.replace(/^https?:\/\//, '').slice(0, 40)}
-                    </p>
-                  </div>
-                )}
-                {!m.is_active && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <Badge variant="outline" className="text-white border-white">{txt.escondido}</Badge>
-                  </div>
-                )}
-              </div>
-              <CardContent className="p-3">
-                {m.caption && (
-                  <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{m.caption}</p>
-                )}
-                <div className="flex justify-end gap-1 mt-2">
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0"
-                          title={m.is_active ? txt.escondido : txt.visivel}
-                          onClick={() => trocarVisibilidade(m)}
-                          data-testid={`visibilidade-${m.id}`}>
-                    {m.is_active ? <Eye size={14} /> : <EyeOff size={14} />}
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          onClick={() => apagarMedia(m)} data-testid={`apagar-media-${m.id}`}>
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       )}
 
       {/* Janela do parceiro */}
@@ -1256,78 +1133,6 @@ const AppDoSocio = ({ language }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Janela da multimédia */}
-      <Dialog open={mediaAberta} onOpenChange={setMediaAberta}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{txt.novaFoto}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={guardarMedia} className="space-y-4">
-            <div>
-              <Label>{txt.tipo}</Label>
-              <Select value={mediaForm.kind}
-                      onValueChange={(v) => setMediaForm({ ...mediaForm, kind: v, url: '' })}>
-                <SelectTrigger data-testid="media-tipo"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="photo">{txt.fotografia}</SelectItem>
-                  <SelectItem value="video_link">{txt.videoLink}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {mediaForm.kind === 'photo' ? (
-              <div>
-                <Label>{txt.fotografia} *</Label>
-                <div className="flex items-center gap-3 mt-1">
-                  {mediaForm.url && (
-                    <img src={enderecoDaImagem(mediaForm.url)} alt=""
-                         className="w-20 h-20 rounded-lg object-cover" />
-                  )}
-                  <input ref={ficheiroFoto} type="file" accept="image/*" className="hidden"
-                         onChange={(e) => escolherImagem(e, (url) =>
-                           setMediaForm((f) => ({ ...f, url })))}
-                         data-testid="media-foto-input" />
-                  <Button type="button" variant="outline" disabled={aEnviar}
-                          onClick={() => ficheiroFoto.current?.click()}
-                          data-testid="media-foto-btn">
-                    <Upload className="mr-2" size={14} />
-                    {aEnviar ? txt.aEnviar : txt.escolherFicheiro}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <Label htmlFor="m-link">{txt.linkDoVideo} *</Label>
-                <Input id="m-link" value={mediaForm.url} placeholder="https://instagram.com/p/..."
-                       onChange={(e) => setMediaForm({ ...mediaForm, url: e.target.value })}
-                       data-testid="media-link" />
-                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  {txt.linkAjuda}
-                </p>
-              </div>
-            )}
-
-            <div>
-              <Label htmlFor="m-legenda">{txt.legenda}</Label>
-              <Input id="m-legenda" value={mediaForm.caption} placeholder="Aula de Boxe de sábado"
-                     onChange={(e) => setMediaForm({ ...mediaForm, caption: e.target.value })}
-                     data-testid="media-legenda" />
-            </div>
-            <div>
-              <Label htmlFor="m-data">{txt.data}</Label>
-              <Input id="m-data" type="date" value={mediaForm.taken_on}
-                     onChange={(e) => setMediaForm({ ...mediaForm, taken_on: e.target.value })} />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setMediaAberta(false)}>
-                {txt.cancelar}
-              </Button>
-              <Button type="submit" disabled={aEnviar} data-testid="guardar-media">{txt.guardar}</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

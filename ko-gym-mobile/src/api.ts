@@ -300,8 +300,15 @@ export function carregarParceiros() {
   return pedir<Parceiro[]>('/mobile/partners');
 }
 
-export function carregarMultimedia() {
-  return pedir<ItemMultimedia[]>('/mobile/media');
+/**
+ * As fotografias que o ginasio partilhou **com este socio**.
+ *
+ * Era uma galeria igual para toda a gente (`/mobile/media`, sem socio). Hoje
+ * cada fotografia tem dono e esta rota nunca traz as de outro: o filho na
+ * aula de Kids e para os pais dele, e nao para os outros trezentos socios.
+ */
+export function carregarFotosDoSocio(memberId: string) {
+  return pedir<ItemMultimedia[]>(`/mobile/media/${encodeURIComponent(memberId)}`);
 }
 
 export function carregarFichaDoGinasio() {

@@ -27,7 +27,7 @@ import {
   sair,
   Socio,
 } from '../api';
-import FotosDoGinasio from '../componentes/FotosDoGinasio';
+import MinhasFotos from '../componentes/MinhasFotos';
 import MeusPagamentos from '../componentes/MeusPagamentos';
 import MeusPlanos from '../componentes/MeusPlanos';
 import Versao from '../componentes/Versao';
@@ -437,11 +437,11 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       {/* Os planos de treino e alimentar, e o botao de pedir um novo */}
       <MeusPlanos socioId={socio.id} />
 
-      {/* As fotografias do ginasio. Eram um separador inteiro e passaram
-          a esta faixa quando o lugar na barra foi para o Corpo: sao poucas e
-          chegam de longe a longe, e aqui continuam a vista sem pedirem um
-          ecra so. Nao aparece quando nao ha nenhuma. */}
-      <FotosDoGinasio />
+      {/* As fotografias que o ginasio partilhou com ELE, e so com ele.
+          Eram uma galeria igual para toda a gente; hoje cada uma tem dono e
+          carrega-se na ficha do socio, na gestao. Nao aparece quando nao ha
+          nenhuma -- que no principio e quase sempre. */}
+      <MinhasFotos socioId={socio.id} />
 
       {/* O que ele pagou ao ginasio. Vem depois dos planos, por pedido do
           dono: e consulta, nao e treino -- o Inicio e do esforco dele, e isto
