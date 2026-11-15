@@ -22,6 +22,7 @@ import {
   Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { euros } from '../lib/dinheiro';
 import { filtrarEOrdenar } from '../lib/pesquisa';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -701,7 +702,7 @@ const Inventory = ({ language, translations }) => {
                     {descreverArtigo(artigoFixo)}
                   </p>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    €{artigoFixo.price.toFixed(2)} · {artigoFixo.quantity} {t[language].inStock}
+                    {euros(artigoFixo.price)} · {artigoFixo.quantity} {t[language].inStock}
                   </p>
                   {reservaAEntregar && (
                     <p className="text-sm mt-1" style={{ color: 'var(--ko-primary-orange)' }}>
@@ -740,7 +741,7 @@ const Inventory = ({ language, translations }) => {
                 />
                 {artigoSelecionado() && Math.abs(precoCobrado() - artigoSelecionado().price) > 0.001 && (
                   <p className="text-xs mt-1" style={{ color: 'var(--ko-primary-orange)' }}>
-                    {t[language].listPrice}: €{artigoSelecionado().price.toFixed(2)} ·{' '}
+                    {t[language].listPrice}: {euros(artigoSelecionado().price)} ·{' '}
                     {precoCobrado() < artigoSelecionado().price ? t[language].discount : t[language].surcharge}
                   </p>
                 )}
@@ -749,10 +750,10 @@ const Inventory = ({ language, translations }) => {
               {artigoSelecionado() && (
                 <div className="p-3 rounded-lg" style={{ background: 'var(--background-elevated)' }}>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {artigoSelecionado().name} · €{artigoSelecionado().price.toFixed(2)} cada
+                    {artigoSelecionado().name} · {euros(artigoSelecionado().price)} cada
                   </p>
                   <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    {t[language].total}: €{totalVenda().toFixed(2)}
+                    {t[language].total}: {euros(totalVenda())}
                   </p>
                 </div>
               )}
@@ -802,7 +803,7 @@ const Inventory = ({ language, translations }) => {
                   {t[language].totalValue}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-                  €{stats.totalValue.toFixed(2)}
+                  {euros(stats.totalValue)}
                 </p>
               </div>
               <div className="p-3 rounded-full shrink-0 bg-green-500">
@@ -1032,7 +1033,7 @@ const Inventory = ({ language, translations }) => {
                         )}
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-600 dark:text-gray-300">{t[language].price}:</span>
-                          <span className="text-sm font-semibold">€{item.price.toFixed(2)}</span>
+                          <span className="text-sm font-semibold whitespace-nowrap">{euros(item.price)}</span>
                         </div>
                       </div>
                       

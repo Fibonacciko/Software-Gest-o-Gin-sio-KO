@@ -35,6 +35,7 @@ import {
   rotuloDoMes,
   SEMANA
 } from '../lib/estatisticas';
+import { euros } from '../lib/dinheiro';
 import { nomeDaCategoria } from '../lib/categorias';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -52,7 +53,6 @@ const PAYMENT_METHOD_LABELS = {
 
 const paymentMethodLabel = (id) => PAYMENT_METHOD_LABELS[id] || id;
 
-const euros = (valor) => `${valor < 0 ? '-' : ''}€${Math.abs(Number(valor) || 0).toFixed(2)}`;
 const numero = (valor, casas = 0) => (Number(valor) || 0).toFixed(casas);
 
 /** A data de hoje em componentes locais, sem passar pelo fuso horário. */

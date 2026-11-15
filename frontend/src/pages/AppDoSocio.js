@@ -25,6 +25,7 @@ import {
   GripVertical,
   Smartphone
 } from 'lucide-react';
+import { euros } from '../lib/dinheiro';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -819,7 +820,7 @@ const AppDoSocio = ({ language }) => {
                           </p>
                         </div>
                         <p className="font-bold shrink-0" style={{ color: 'var(--ko-primary-orange)' }}>
-                          {Number(g.price || 0).toFixed(2)} €
+                          {euros(g.price)}
                         </p>
                       </div>
 

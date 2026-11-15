@@ -1307,10 +1307,27 @@ de pagamentos do site — e os métodos dizem **Numerário**, **Cartão**,
 gestão: escrevia-se "ACTIVO" na aplicação e "Ativo" no site.
 
 **O dinheiro escreve-se `35,00 €`** — vírgula nos cêntimos e o símbolo depois,
-como em Portugal. Na aplicação vive num sítio só (`src/lib/dinheiro.ts`, com
-testes); **o site ainda escreve `€35.00`**, à inglesa, nas Finanças, nos
-Relatórios e no Painel. Está por arrumar, e é obra à parte: mexe em todos os
-números que o dono vê todos os dias.
+como em Portugal, e o sinal antes de tudo (`-35,00 €`). Vive num sítio só de
+cada lado, com testes: `frontend/src/lib/dinheiro.js` no site e
+`ko-gym-mobile/src/lib/dinheiro.ts` na aplicação. O site escrevia `€35.00`, à
+inglesa, com a fórmula copiada à mão em 21 sítios e um `euros()` próprio nos
+Relatórios — e o sócio lia `35,00 €` no telemóvel para o mesmo pagamento.
+
+**Só no site os milhares levam ponto** — `12.345,67 €`. Aparecem nas somas do
+ano e do mês, que é onde fazem falta: `12345.67` conta-se com o dedo no ecrã.
+Na aplicação não há separador porque lá nunca há milhares — um pagamento é uma
+mensalidade.
+
+**Três `toFixed(2)` ficaram como estavam, de propósito**: os do preço que
+preenche o formulário de venda, no Stock. Vão para dentro de um
+`<input type="number">`, e esse não aceita vírgula — trocar lá o ponto deixava
+o campo vazio sem dizer porquê. Os números do **CSV dos Relatórios** também
+ficam `35.00`, sem símbolo: são para uma folha de cálculo ler, não para uma
+pessoa.
+
+**Um valor nunca se parte ao meio** (`whitespace-nowrap`). Com o símbolo no
+fim o número ficou mais comprido, e na lista de pagamentos o `€` do
+`1.250,50 €` caiu sozinho para a linha de baixo.
 
 **O sócio vê a vermelho o que caducou.** As duas datas do cartão — quota e
 seguro — apareciam em branco estivessem válidas ou não, e quem tinha o seguro

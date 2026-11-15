@@ -29,6 +29,7 @@ import {
 import { toast } from 'sonner';
 import { seguroValido } from '../lib/estatisticas';
 import { diaLocal, diaSeguinte, hoje } from '../lib/datas';
+import { euros } from '../lib/dinheiro';
 import { useAuth } from '../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -261,7 +262,7 @@ const Dashboard = ({ language, translations }) => {
     try {
       setARegistarExperimental(true);
       await axios.post(`${API}/trials`, { activity_id: activity.id, amount: valor });
-      toast.success(`Aula experimental de ${activity.name} registada (€${valor.toFixed(2)})!`);
+      toast.success(`Aula experimental de ${activity.name} registada (${euros(valor)})!`);
       carregarExperimentaisHoje();
     } catch (error) {
       console.error('Error registering trial:', error);

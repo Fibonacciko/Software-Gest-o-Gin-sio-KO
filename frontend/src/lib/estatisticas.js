@@ -20,6 +20,8 @@
  *    medida com os mesmos dias imediatamente antes.
  */
 
+import { euros } from './dinheiro';
+
 /**
  * O dia em que as contas do ginásio passam a contar.
  *
@@ -703,14 +705,14 @@ export const destaquesDoAno = ({
   const melhorMes = maiorDe(faturacaoPorMes);
   if (melhorMes) {
     notas.push(frase('dinheiro', 'Melhor mês de faturação',
-      `${rotuloDoMes(melhorMes.chave)}, com ${melhorMes.valor.toFixed(2)} €.`));
+      `${rotuloDoMes(melhorMes.chave)}, com ${euros(melhorMes.valor)}.`));
   }
 
   const despesaPorMes = agrupar(despesasDoAno, (e) => chaveDoMes(e.expense_date), (e) => e.amount);
   const mesDeDespesa = maiorDe(despesaPorMes);
   if (mesDeDespesa) {
     notas.push(frase('dinheiro', 'Mês de maior despesa',
-      `${rotuloDoMes(mesDeDespesa.chave)}, com ${mesDeDespesa.valor.toFixed(2)} €.`));
+      `${rotuloDoMes(mesDeDespesa.chave)}, com ${euros(mesDeDespesa.valor)}.`));
   }
 
   const meses = mesesDoIntervalo(inicio, fim);
@@ -724,10 +726,10 @@ export const destaquesDoAno = ({
     const melhor = comValores.reduce((a, b) => (b[1] > a[1] ? b : a));
     const pior = comValores.reduce((a, b) => (b[1] < a[1] ? b : a));
     notas.push(frase('dinheiro', 'Melhor resultado líquido',
-      `${rotuloDoMes(melhor[0])}, com ${melhor[1].toFixed(2)} €.`));
+      `${rotuloDoMes(melhor[0])}, com ${euros(melhor[1])}.`));
     if (pior[0] !== melhor[0]) {
       notas.push(frase('dinheiro', 'Pior resultado líquido',
-        `${rotuloDoMes(pior[0])}, com ${pior[1].toFixed(2)} €.`));
+        `${rotuloDoMes(pior[0])}, com ${euros(pior[1])}.`));
     }
   }
 

@@ -29,6 +29,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { corresponde, filtrarEOrdenar } from '../lib/pesquisa';
 import { CATEGORIAS_DE_DESPESA, nomeDaCategoria } from '../lib/categorias';
 import { INICIO_DAS_CONTAS, dataDasContas } from '../lib/estatisticas';
+import { euros } from '../lib/dinheiro';
 import { dentroDoPeriodo, diaLocal, hoje, primeiroDiaDoMes, ultimoDiaDoMes } from '../lib/datas';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -1178,7 +1179,7 @@ const Payments = ({ language, translations }) => {
                         className="text-2xl font-bold truncate"
                         style={{ color: negativo ? '#dc2626' : 'var(--text-primary)' }}
                       >
-                        {c.valor < 0 ? '-' : ''}€{Math.abs(c.valor).toFixed(2)}
+                        {euros(c.valor)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{c.nota}</p>
                     </div>
@@ -1411,7 +1412,7 @@ const Payments = ({ language, translations }) => {
                         {isAdmin() ? (
                           <div className="flex items-center">
                             <DollarSign size={16} className="text-gray-400 dark:text-gray-500 mr-1" />
-                            <span className="font-semibold">€{payment.amount.toFixed(2)}</span>
+                            <span className="font-semibold whitespace-nowrap">{euros(payment.amount)}</span>
                           </div>
                         ) : (
                           <div className="flex flex-wrap gap-1">
@@ -1478,7 +1479,7 @@ const Payments = ({ language, translations }) => {
                           // O colaborador precisa do valor para conferir o que
                           // lançou; os totais do ginásio continuam escondidos
                           <div className="max-w-xs">
-                            <p className="font-semibold">€{payment.amount.toFixed(2)}</p>
+                            <p className="font-semibold whitespace-nowrap">{euros(payment.amount)}</p>
                             {payment.description && (
                               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                 {payment.description}
@@ -1627,8 +1628,8 @@ const Payments = ({ language, translations }) => {
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       {isAdmin() && (
-                        <p className="font-semibold" style={{ color: '#dc2626' }}>
-                          €{despesa.amount.toFixed(2)}
+                        <p className="font-semibold whitespace-nowrap" style={{ color: '#dc2626' }}>
+                          {euros(despesa.amount)}
                         </p>
                       )}
                       <Button
@@ -1664,7 +1665,7 @@ const Payments = ({ language, translations }) => {
                     {t[language].expensesTotal}
                   </span>
                   <span className="text-lg font-bold" style={{ color: '#dc2626' }}>
-                    €{despesasFiltradas.reduce((t, d) => t + d.amount, 0).toFixed(2)}
+                    {euros(despesasFiltradas.reduce((t, d) => t + d.amount, 0))}
                   </span>
                 </div>
               )}
@@ -1705,9 +1706,9 @@ const Payments = ({ language, translations }) => {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">€{sale.total.toFixed(2)}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      €{sale.unit_price.toFixed(2)} cada
+                    <p className="font-semibold whitespace-nowrap">{euros(sale.total)}</p>
+                    <p className="text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
+                      {euros(sale.unit_price)} cada
                     </p>
                   </div>
                 </div>
