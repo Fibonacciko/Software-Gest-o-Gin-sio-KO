@@ -11,6 +11,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { Aula, carregarAulas, desmarcarAula, marcarAula, Socio } from '../api';
 import { semEmoji } from '../lib/nomes';
+import { prazoParaDesmarcar } from '../lib/aulas';
 import Vidro from '../componentes/Vidro';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cores, degradeCheckin, espaco, raio } from '../theme';
@@ -219,7 +220,8 @@ export default function EcraAulas({ socio }: Props) {
       ))}
 
       <Text style={estilos.nota}>
-        Desmarca até 2 horas antes, para o lugar poder ir a quem está à espera.
+        Desmarca até {prazoParaDesmarcar()} antes, para o lugar poder ir a quem
+        está à espera.
       </Text>
     </ScrollView>
   );

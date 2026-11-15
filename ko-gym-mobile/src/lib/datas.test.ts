@@ -55,3 +55,15 @@ describe('jaPassou', () => {
     expect(jaPassou('2027-01-01', hoje)).toBe(false);
   });
 });
+
+describe('uma data que não se consegue ler', () => {
+  it('aparece como está, em vez de desaparecer', () => {
+    // Melhor uma data estranha à vista do que um "Sem registo" que é mentira
+    expect(dataPt('16 de novembro')).toBe('16 de novembro');
+    expect(dataPt('   ')).toBeNull();
+  });
+
+  it('lê a data mesmo sem a hora', () => {
+    expect(dataPt('2026-11-16')).toBe('16/11/2026');
+  });
+});
