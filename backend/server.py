@@ -327,6 +327,9 @@ class Member(BaseModel):
     membership_paid_date: Optional[date] = None     # Ultimo pagamento de quota
     membership_valid_until: Optional[date] = None   # Quota paga ate esta data
     membership_status: Optional[str] = None         # Calculado: active / inactive / suspended
+    # O porque da suspensao, escrito por quem a mandou. Fica a None quando ela
+    # e levantada -- um motivo velho numa ficha activa so confunde.
+    suspension_reason: Optional[str] = None
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -2418,6 +2421,77 @@ async def delete_member(
     BusinessCache.invalidate_member_cache()
     await log_audit(current_user, "delete", "member", entity_id=member_id, details=f"Eliminou membro {member_id}")
     return {"message": "Member deleted successfully"}
+
+class SuspensaoDoSocio(BaseModel):
+    """O porque da suspensao, para ficar escrito na ficha e na auditoria."""
+    motivo: Optional[str] = None
+
+
+@api_router.post("/members/{member_id}/suspender", response_model=Member)
+async def suspender_socio(
+    member_id: str,
+    dados: SuspensaoDoSocio,
+    current_user: User = Depends(require_admin),
+):
+    """Suspende um socio. **So o administrador.**
+
+    A suspensao manda sempre, mesmo com a quota paga -- e a unica coisa que
+    passa a frente do pagamento, e por isso nao e decisao de quem esta ao
+    balcao. Nao mexe na quota nem no seguro: as validades ficam onde estao
+    e voltam a valer assim que a suspensao for levantada.
+
+    O `status` da ficha e o unico sitio onde isto se grava; o estado que se
+    mostra em todo o lado (`membership_status`) sai dele.
+    """
+    member = await db.members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if member.get("status") == MemberStatus.SUSPENDED.value:
+        raise HTTPException(status_code=400, detail="O sócio já está suspenso")
+
+    nota = (dados.motivo or "").strip()
+    await db.members.update_one(
+        {"id": member_id},
+        {"$set": {"status": MemberStatus.SUSPENDED.value, "suspension_reason": nota or None}},
+    )
+    BusinessCache.invalidate_member_cache()
+    await log_audit(
+        current_user, "suspend", "member", entity_id=member_id,
+        details=f"Suspendeu o sócio{f' — {nota}' if nota else ''}",
+    )
+    actualizado = await db.members.find_one({"id": member_id})
+    return Member(**normalize_member_read(parse_from_mongo(actualizado)))
+
+
+@api_router.post("/members/{member_id}/levantar-suspensao", response_model=Member)
+async def levantar_suspensao(
+    member_id: str,
+    current_user: User = Depends(require_admin),
+):
+    """Levanta a suspensao. **So o administrador.**
+
+    O socio volta a ser o que a quota disser -- nao fica "activo" por decreto:
+    o estado e calculado, e se a quota estiver em atraso ele fica inactivo,
+    como qualquer outro. Por isso se grava `inactive` e nao `active`.
+    """
+    member = await db.members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if member.get("status") != MemberStatus.SUSPENDED.value:
+        raise HTTPException(status_code=400, detail="O sócio não está suspenso")
+
+    await db.members.update_one(
+        {"id": member_id},
+        {"$set": {"status": MemberStatus.INACTIVE.value, "suspension_reason": None}},
+    )
+    BusinessCache.invalidate_member_cache()
+    await log_audit(
+        current_user, "unsuspend", "member", entity_id=member_id,
+        details="Levantou a suspensão",
+    )
+    actualizado = await db.members.find_one({"id": member_id})
+    return Member(**normalize_member_read(parse_from_mongo(actualizado)))
+
 
 # Attendance Routes
 async def marcar_presenca_na_aula(member_id: str, activity_id: str, dia: date) -> bool:

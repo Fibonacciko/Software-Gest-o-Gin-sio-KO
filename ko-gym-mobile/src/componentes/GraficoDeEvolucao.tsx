@@ -60,7 +60,9 @@ export default function GraficoDeEvolucao({
                   estilos.barra,
                   {
                     height: Math.max(6, fracao * (altura - 34)),
-                    backgroundColor: ultimaBarra ? cores.laranjaClaro : 'rgba(232,132,42,0.35)',
+                    // A ultima medicao em ouro; as anteriores no mesmo ouro
+                    // apagado, para a linha se ler da esquerda para a direita
+                    backgroundColor: ultimaBarra ? cores.ouro : 'rgba(214,163,6,0.34)',
                   },
                 ]}
               />

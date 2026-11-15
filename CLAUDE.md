@@ -23,6 +23,27 @@ da validade**. Sem pagamento registado, fica Inativo.
 - O estado é **calculado** (`membership_status`), nunca gravado na ficha. O campo
   `status` da ficha guarda apenas a suspensão e o histórico antigo.
 
+#### Suspender um sócio
+
+**Só o administrador**, na ficha do sócio, por baixo do NFC. É a única coisa
+que passa à frente da quota paga, e por isso não é decisão de quem está ao
+balcão — esse cobra. Ao colaborador o cartão nem aparece.
+(`POST /api/members/{id}/suspender` e `.../levantar-suspensao`, com testes.)
+
+- **Não toca na quota nem no seguro.** As validades ficam onde estão e voltam
+  a valer quando a suspensão for levantada — suspender não é castigar o
+  dinheiro que já foi pago.
+- **Levantar não torna o sócio activo**: devolve-o ao que a quota disser.
+  Grava-se `inactive`, e o estado que se mostra volta a ser calculado como em
+  qualquer outra ficha. Se a quota estiver em dia, fica activo na mesma —
+  mas por a ter paga, não por decreto.
+- O **porquê** fica escrito na ficha (`suspension_reason`) e no registo de
+  alterações, e apaga-se quando a suspensão é levantada: um motivo velho numa
+  ficha activa só confunde.
+- Até novembro de 2026 **não havia por onde o fazer**: a regra era respeitada
+  em todo o lado e o campo só estava preenchido nas fichas vindas do sistema
+  anterior.
+
 ### Seguro
 
 - **Anual, 20 €.** Renova por 365 dias a partir da data de pagamento.
@@ -648,7 +669,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 306 testes e demoram 16 segundos.
+backend** — são 311 testes e demoram 18 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -1349,13 +1370,10 @@ a ser criado.
 **`PUT /api/members/{id}` substitui a ficha toda.** Quem chamar tem de reenviar
 todos os campos, ou perde-os.
 
-**Não há por onde suspender um sócio.** O `MemberCreate` (que é o corpo do
-`PUT /api/members/{id}`) não tem campo `status`, e não existe rota nenhuma que
-o mude. A regra "uma suspensão manual manda sempre" é respeitada em todo o
-lado — nos filtros, no painel, no check-in, na aplicação — mas o campo só lá
-está nas fichas antigas, vindas do sistema anterior. Nos Membros, "Suspenso"
-é uma opção do filtro, não uma ação. Falta decidir com o dono onde entraria o
-botão e quem o pode carregar.
+**O `PUT /api/members/{id}` não mexe no estado.** O `MemberCreate`, que é o
+corpo dele, não tem campo `status` — e é de propósito: corrigir um telefone
+não pode levantar uma suspensão sem ninguém reparar. Quem mexe no estado são
+as duas rotas próprias (ver **Suspender um sócio**, nas regras de negócio).
 
 **Apagar um sócio deixa o rasto dele para trás.** As presenças, as inscrições
 em aulas, as avaliações, os planos e os pagamentos continuam na base de dados

@@ -28,6 +28,7 @@ import { useAuth } from '../contexts/AuthContext';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
 import AvaliacoesDoSocio from '../components/AvaliacoesDoSocio';
 import PlanosDoSocio from '../components/PlanosDoSocio';
+import SuspenderSocio from '../components/SuspenderSocio';
 import MultiActivitySelector from '../components/MultiActivitySelector';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -807,6 +808,16 @@ const Members = ({ language, translations }) => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">Ainda sem NFC associado. E associado automaticamente no Painel Principal na primeira utilizacao (Check-in NFC).</p>
                 )}
               </div>
+              {/* Suspender e levantar. So o administrador ve este cartao:
+                  a suspensao e a unica coisa que passa a frente da quota
+                  paga, e por isso nao e decisao de quem esta ao balcao. */}
+              <SuspenderSocio
+                socio={selectedMember}
+                aoMudar={(ficha) => {
+                  setSelectedMember(ficha);
+                  fetchMembers();
+                }}
+              />
               </div>
 
               {/* Right Column - Attendance Calendar */}

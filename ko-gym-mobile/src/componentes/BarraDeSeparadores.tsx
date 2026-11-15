@@ -109,16 +109,18 @@ const estilos = StyleSheet.create({
     marginHorizontal: 0,
     paddingHorizontal: 1,
   },
+  // O halo do separador aceso, em ouro como o resto do que e para carregar.
+  // Era o laranja antigo (232,132,42), o ultimo que restava a vista.
   marca: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(232,132,42,0.16)',
+    backgroundColor: 'rgba(214,163,6,0.16)',
     borderRadius: raio.redondo,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(232,132,42,0.35)',
+    borderColor: 'rgba(214,163,6,0.38)',
   },
   icone: { color: cores.textoSecundario, fontSize: 16 },
-  icaneActivo: { color: cores.laranjaClaro },
+  icaneActivo: { color: cores.ouro },
   // Seis separadores: a etiqueta encolhe para caber sem cortar
   texto: { color: cores.textoSecundario, fontSize: 9.5 },
-  textoActivo: { color: cores.laranjaClaro, fontWeight: '700' },
+  textoActivo: { color: cores.ouro, fontWeight: '700' },
 });
