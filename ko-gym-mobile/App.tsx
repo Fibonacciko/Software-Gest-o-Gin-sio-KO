@@ -20,10 +20,10 @@ import Fundo from './src/componentes/Fundo';
 import { ContextoDaTira } from './src/componentes/Tira';
 import EcraAulas from './src/screens/EcraAulas';
 import EcraCartao from './src/screens/EcraCartao';
+import EcraCorpo from './src/screens/EcraCorpo';
 import EcraGinasio from './src/screens/EcraGinasio';
 import EcraLogin from './src/screens/EcraLogin';
 import EcraLoja from './src/screens/EcraLoja';
-import EcraMultimedia from './src/screens/EcraMultimedia';
 import EcraParceiros from './src/screens/EcraParceiros';
 import { cores } from './src/theme';
 
@@ -107,7 +107,7 @@ export default function App() {
     }
     if (id === 'aulas') return <EcraAulas socio={socio} />;
     if (id === 'parceiros') return <EcraParceiros />;
-    if (id === 'multimedia') return <EcraMultimedia />;
+    if (id === 'corpo') return <EcraCorpo socioId={socio.id} />;
     if (id === 'loja') return <EcraLoja socio={socio} />;
     return <EcraGinasio />;
   };

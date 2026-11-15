@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { comVirgula, diferenca } from '../lib/numeros';
 import { cores, espaco, raio } from '../theme';
 
 type Ponto = { valor: number; rotulo: string };
@@ -53,7 +54,7 @@ export default function GraficoDeEvolucao({
           return (
             <View key={`${p.rotulo}-${i}`} style={estilos.coluna}>
               <Text style={[estilos.valor, ultimaBarra && estilos.valorActual]}>
-                {p.valor}
+                {comVirgula(p.valor)}
               </Text>
               <View
                 style={[
@@ -78,7 +79,7 @@ export default function GraficoDeEvolucao({
         <Text style={[estilos.resumo, { color: melhorou ? cores.verde : cores.textoSecundario }]}>
           {delta === 0
             ? 'Na mesma desde a primeira medição'
-            : `${delta > 0 ? '+' : ''}${delta.toFixed(1)}${unidade} desde a primeira medição`}
+            : `${diferenca(delta)}${unidade} desde a primeira medição`}
         </Text>
       ) : null}
     </View>

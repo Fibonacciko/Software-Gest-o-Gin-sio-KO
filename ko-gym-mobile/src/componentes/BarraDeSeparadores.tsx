@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cores, espaco, raio, sombra } from '../theme';
 
-export type Separador = 'inicio' | 'aulas' | 'multimedia' | 'loja' | 'ginasio' | 'parceiros';
+export type Separador = 'inicio' | 'aulas' | 'corpo' | 'loja' | 'ginasio' | 'parceiros';
 
 type Props = {
   activo: Separador;
@@ -24,8 +24,8 @@ type Props = {
 const SEPARADORES: { id: Separador; icone: string; texto: string }[] = [
   { id: 'inicio', icone: '●', texto: 'Início' },
   { id: 'aulas', icone: '◷', texto: 'Aulas' },
+  { id: 'corpo', icone: '◍', texto: 'Corpo' },
   { id: 'loja', icone: '▲', texto: 'Loja' },
-  { id: 'multimedia', icone: '■', texto: 'Fotos' },
   { id: 'parceiros', icone: '◆', texto: 'Parceiros' },
   { id: 'ginasio', icone: '◉', texto: 'Ginásio' },
 ];

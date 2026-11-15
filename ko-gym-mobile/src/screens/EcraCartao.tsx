@@ -27,9 +27,9 @@ import {
   sair,
   Socio,
 } from '../api';
+import FotosDoGinasio from '../componentes/FotosDoGinasio';
 import MeusPagamentos from '../componentes/MeusPagamentos';
 import MeusPlanos from '../componentes/MeusPlanos';
-import MinhasMetricas from '../componentes/MinhasMetricas';
 import Versao from '../componentes/Versao';
 import Vidro from '../componentes/Vidro';
 import { dataPt, jaPassou } from '../lib/datas';
@@ -434,24 +434,25 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         </Vidro>
       ) : null}
 
-      {/* O que a balanca mediu. Vem a seguir aos treinos porque sao as duas
-          leituras do mesmo esforco. Nao aparece a quem nunca foi medido. */}
-      <MinhasMetricas socioId={socio.id} />
-
       {/* Os planos de treino e alimentar, e o botao de pedir um novo */}
       <MeusPlanos socioId={socio.id} />
+
+      {/* As fotografias do ginasio. Eram um separador inteiro e passaram
+          a esta faixa quando o lugar na barra foi para o Corpo: sao poucas e
+          chegam de longe a longe, e aqui continuam a vista sem pedirem um
+          ecra so. Nao aparece quando nao ha nenhuma. */}
+      <FotosDoGinasio />
 
       {/* O que ele pagou ao ginasio. Vem depois dos planos, por pedido do
           dono: e consulta, nao e treino -- o Inicio e do esforco dele, e isto
           fecha a pagina. So aparece a quem tem pagamentos registados. */}
       <MeusPagamentos socioId={socio.id} />
 
-      {/* O Início acaba aqui, nos planos. As fotografias do ginásio, a
-          montra e os parceiros estiveram neste lugar e saíram por decisão do
-          dono, depois de se passar a mudar de ecrã deslizando o dedo: com os
-          seis ecrãs à distância de um gesto, repeti-los no fim da página
-          inicial era dizer a mesma coisa duas vezes. O Início é do sócio —
-          o check-in, os treinos, a evolução e os planos. */}
+      {/* A montra e os parceiros estiveram no fim desta página, num rolo, e
+          saíram por decisão do dono depois de se passar a mudar de ecrã
+          deslizando o dedo: com eles à distância de um gesto, repeti-los
+          aqui era dizer a mesma coisa duas vezes. As fotografias voltaram,
+          acima, porque deixaram de ter separador. */}
 
       {/* Empurra o terminar sessao para o fim, mesmo quando ha pouco conteudo */}
       <View style={estilos.empurrao} />

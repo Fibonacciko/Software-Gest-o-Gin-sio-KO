@@ -488,7 +488,7 @@ falharam na primeira versão.
 
 O que a balança de bioimpedância mede, lançado à mão pelo colaborador na ficha
 do sócio (**Membros → ver a ficha → Avaliação física**) e mostrado na aplicação
-em **A tua evolução**. A balança não fala com nada: se um dia exportar um
+no separador **Corpo**. A balança não fala com nada: se um dia exportar um
 ficheiro, importa-se; não valia a pena esperar por isso para começar.
 
 - Guarda-se o que foi medido: **peso** (o único obrigatório), altura, massa
@@ -688,7 +688,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (100 testes, 10 segundos):
+A **aplicação do sócio** também tem os seus (110 testes, 10 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest
@@ -696,8 +696,9 @@ cd ko-gym-mobile && npx jest
 
 Protegem a lógica que vive só na aplicação: o **horário** lido do texto da
 ficha (`lerHorario`, `estadoDeHoje`), a **data à portuguesa**, o **nome no
-cartão**, a **tinta na parede** da capa, os **endereços das imagens** (miniaturas incluídas) e o **encaixe
-da porta** no ecrã de entrada. São testes de funções, não de ecrãs: o que se
+cartão**, a **tinta na parede** da capa, os **endereços das imagens**
+(miniaturas incluídas), o **dinheiro** e os **números com vírgula**, e o
+**encaixe da porta** no ecrã de entrada. São testes de funções, não de ecrãs: o que se
 vê continua a confirmar-se no navegador — tirando os feitios de ecrã que não
 se têm à mão, e esses só o teste alcança.
 
@@ -904,10 +905,30 @@ deslizava-se para a direita e ia-se parar ao separador da esquerda.
 |---|---|
 | **Início** | Cartão, check-in, treinos, evolução e planos |
 | **Aulas** | O horário dos próximos 14 dias, com marcação e lista de espera |
+| **Corpo** | O que a balança mediu, e como isso tem mudado |
 | **Loja** | A montra e as reservas do sócio |
-| **Fotos** | Fotografias dos treinos e vídeos por link |
 | **Parceiros** | Protocolos de parceria, com a vantagem em destaque |
 | **Ginásio** | Morada, horário, contactos, mapa e avaliações |
+
+**O separador das Fotos deu o lugar ao Corpo.** As fotografias eram um dos
+seis ecrãs e **estavam vazias**: o `GET /api/mobile/media` devolvia zero itens
+em produção — nunca nenhuma foi publicada. Um sexto da barra para um ecrã sem
+nada dentro, enquanto o peso e a massa gorda, que mudam todos os meses e são
+do próprio sócio, viviam espremidos num cartão a meio do Início. Decisão do
+dono, em novembro de 2026.
+
+- O **Corpo** (`EcraCorpo.tsx`) fica a seguir às Aulas: os três primeiros
+  separadores são do sócio, os três últimos são do ginásio.
+- As **fotografias passaram a uma faixa no Início** (`FotosDoGinasio.tsx`),
+  entre os planos e os pagamentos. **Não aparece quando não há nenhuma** — que
+  é hoje o caso —, e por isso deixou de haver um ecrã vazio à vista. Dois
+  quadrados e um bocadinho do terceiro, que é o que diz sem legenda que a
+  faixa anda para o lado.
+- O cartão **"A tua evolução"** e o `EcraMultimedia` foram apagados: o que
+  faziam passou para os dois novos.
+- **A balança ainda não chegou**, por isso o Corpo começa vazio para toda a
+  gente. O estado vazio diz o que a balança mede e que se fala com o
+  professor para marcar — e não "sem dados".
 
 **O Início é todo do sócio**: o cartão, o check-in, o QR, a quota e o seguro,
 os treinos, a evolução, os planos e, no fim, os pagamentos dele. Mais nada.
@@ -930,8 +951,9 @@ cada uma aparece, ao lado da linha.
 somas das Finanças e dos Relatórios; o historial do sócio é outra coisa. Quem
 pagou em 2025 pagou, e tem o direito de o ver.
 
-As **fotografias do ginásio**, a **montra** e os **protocolos dos parceiros**
-estiveram no fim desta página, num rolo (`RoloDoInicio`, apagado). Saíram por
+A **montra** e os **protocolos dos parceiros** estiveram no fim desta página,
+num rolo (`RoloDoInicio`, apagado) — e as fotografias com eles, até voltarem
+na faixa acima, por já não terem separador. Saíram por
 decisão do dono depois de se passar a mudar de ecrã deslizando o dedo: com os
 seis ecrãs à distância de um gesto, repeti-los aqui era dizer a mesma coisa
 duas vezes e dar à página inicial um fim que não acabava. Saíram com eles três
@@ -1328,6 +1350,18 @@ pessoa.
 **Um valor nunca se parte ao meio** (`whitespace-nowrap`). Com o símbolo no
 fim o número ficou mais comprido, e na lista de pagamentos o `€` do
 `1.250,50 €` caiu sozinho para a linha de baixo.
+
+**Os outros números também levam vírgula** — `79,8 kg`, `20,6%`. Vivem em
+`ko-gym-mobile/src/lib/numeros.ts` (`comVirgula`, `diferenca`), à parte do
+dinheiro, porque não são a mesma coisa: no dinheiro há sempre duas casas e
+um símbolo no fim, aqui o número aparece **como foi medido**. `79,8` tem uma
+casa, `7` não tem nenhuma, e acrescentar um `,0` ao sete era inventar
+precisão que a balança não deu.
+
+**Uma medida em falta não escreve nada, e nunca `0`.** `Number(null)` é zero
+em JavaScript, e uma balança que não mediu a água não mediu 0% de água —
+escrever o zero era pôr na ficha do sócio um número que ninguém mediu. Há
+um teste só para isto.
 
 **O sócio vê a vermelho o que caducou.** As duas datas do cartão — quota e
 seguro — apareciam em branco estivessem válidas ou não, e quem tinha o seguro
