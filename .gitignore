@@ -101,6 +101,10 @@ frontend/node_modules/.cache/default-development/0.pack
 # CODIGO, passou a "CÓDIGO APP.MOBILE", e a regra antiga deixou de a
 # apanhar sem ninguem dar por isso. Por isso vao os dois nomes e tudo o
 # que comece por eles.
+# Desenhos e fotografias de ecra para discutir ideias. Sao descartaveis:
+# cada um pode voltar a ser gerado.
+/IDEIAS/
+/_ver/
 /CÓPIAS DE SEGURANÇA/
 /COPIAS DE SEGURANCA/
 /CÓDIGO*/
