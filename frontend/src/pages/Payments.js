@@ -657,6 +657,35 @@ const Payments = ({ language, translations }) => {
     }
   };
 
+  /**
+   * Desfaz uma venda registada por engano.
+   *
+   * O stock volta: o artigo nao saiu do ginasio. Por isso a pergunta diz
+   * quantas unidades voltam a prateleira -- quem carrega tem de saber o que
+   * vai acontecer, e nao so o que vai desaparecer.
+   */
+  const apagarVenda = async (venda) => {
+    const quantas = venda.quantity === 1 ? '1 unidade' : `${venda.quantity} unidades`;
+    if (!window.confirm(
+      `Apagar a venda de ${venda.quantity}x ${venda.item_name}?
+
+` +
+      `${quantas} voltam ao stock. Esta ação não se desfaz.`
+    )) return;
+    try {
+      const r = await axios.delete(`${API}/sales/${venda.id}`);
+      toast.success(
+        r.data?.stock_devolvido
+          ? `Venda apagada · ${r.data.stock_devolvido} de volta ao stock`
+          : 'Venda apagada'
+      );
+      fetchSales();
+    } catch (error) {
+      console.error('Error deleting sale:', error);
+      toast.error(error?.response?.data?.detail || 'Erro ao eliminar a venda');
+    }
+  };
+
   const resetExpenseForm = () => {
     setExpenseFormData({
       description: '',
@@ -1705,11 +1734,26 @@ const Payments = ({ language, translations }) => {
                       {sale.sold_by ? ` · vendido por ${sale.sold_by}` : ''}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold whitespace-nowrap">{euros(sale.total)}</p>
-                    <p className="text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
-                      {euros(sale.unit_price)} cada
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="font-semibold whitespace-nowrap">{euros(sale.total)}</p>
+                      <p className="text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
+                        {euros(sale.unit_price)} cada
+                      </p>
+                    </div>
+                    {/* Quem vende ao balcao tem de poder emendar, como nas
+                        despesas. Apagar devolve o stock. */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-600 hover:text-red-700 shrink-0"
+                      title="Apagar a venda e devolver o stock"
+                      onClick={() => apagarVenda(sale)}
+                      data-testid={`delete-sale-${sale.id}`}
+                    >
+                      <Trash2 size={15} />
+                    </Button>
                   </div>
                 </div>
               ))}

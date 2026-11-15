@@ -3261,6 +3261,59 @@ async def get_sales(
     return [Sale(**parse_from_mongo(sale)) for sale in sales]
 
 
+@api_router.delete("/sales/{sale_id}")
+async def apagar_venda(
+    sale_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Desfaz uma venda registada por engano, e **devolve o stock**.
+
+    As despesas e os pagamentos sempre se corrigiram e apagaram; as vendas
+    nao tinham por onde. Um artigo cobrado a mais, ou a cor errada marcada ao
+    balcao, so se emendava por fora da aplicacao -- e ate la ficava a contar
+    na faturacao do mes.
+
+    **O stock volta.** O artigo que foi vendido por engano nao saiu do
+    ginasio, e por isso tem de voltar a contar: sem isto, corrigir um erro
+    deixava um segundo erro atras, desta vez na prateleira. Se o artigo tiver
+    sido apagado do Stock entretanto, apaga-se a venda na mesma e nao ha onde
+    devolver nada.
+
+    **Nao reabre a reserva** que lhe deu origem, quando a houve. O balcao
+    marca "Entregue", a venda confirma-se e a reserva fecha; apagar a venda
+    depois disso nao volta a por o socio a espera -- e ele ja levou ou ja la
+    esteve. Se for preciso, faz-se uma reserva nova.
+
+    Quem vende tem de poder emendar, por isso o colaborador tambem apaga --
+    como ja acontece nas despesas.
+    """
+    venda = await db.sales.find_one({"id": sale_id})
+    if not venda:
+        raise HTTPException(status_code=404, detail="Venda nao encontrada")
+
+    quantidade = int(venda.get("quantity", 0) or 0)
+    artigo = await db.inventory.find_one({"id": venda.get("item_id")})
+    if artigo and quantidade > 0:
+        await db.inventory.update_one(
+            {"id": artigo["id"]},
+            {"$inc": {"quantity": quantidade}}
+        )
+
+    await db.sales.delete_one({"id": sale_id})
+    await log_audit(
+        current_user, "delete", "sale", entity_id=sale_id,
+        details=(
+            f"Apagou a venda de {quantidade}x {venda.get('item_name')} "
+            f"por {venda.get('total')} EUR"
+            + ("" if artigo else " (o artigo ja nao esta no Stock)")
+        )
+    )
+    return {
+        "message": "Venda eliminada",
+        "stock_devolvido": quantidade if artigo else 0,
+    }
+
+
 @api_router.get("/dashboard/alerts")
 @api_rate_limit()
 async def get_dashboard_alerts(request: Request, current_user: User = Depends(require_admin_or_staff)):
@@ -4597,6 +4650,49 @@ PASTA_MINIATURAS = PASTA_UPLOADS / ".miniaturas"
 LARGURA_MAXIMA_MINIATURA = 1600
 
 
+def apagar_do_disco(endereco: Optional[str]) -> bool:
+    """Apaga um ficheiro nosso e as miniaturas que dele se fizeram.
+
+    Estava escrito a mao em quatro sitios -- a fotografia do socio, ao
+    trocar e ao tirar, e o plano -- e nenhum deles limpava as miniaturas.
+    Uma fotografia apagada deixava atras uma copia encolhida por cada
+    largura que alguem tivesse pedido.
+
+    So apaga **ficheiros nossos** (`/api/uploads/...`): um endereco de fora
+    nao e nosso para apagar. Devolve se chegou a apagar alguma coisa.
+
+    Nao se queixa quando o ficheiro ja la nao esta: apagar o que ja foi
+    apagado nao e um erro, e rebentar aqui deixava o registo na base de
+    dados sem o conseguir tirar.
+    """
+    if not endereco or not endereco.startswith("/api/uploads/"):
+        return False
+    nome = endereco.rsplit("/", 1)[-1]
+    if not nome or "/" in nome or "\\" in nome or nome.startswith("."):
+        return False
+
+    apagou = False
+    caminho = PASTA_UPLOADS / nome
+    try:
+        if caminho.exists():
+            caminho.unlink()
+            apagou = True
+    except OSError:
+        pass
+
+    # As copias encolhidas, uma pasta por largura
+    if PASTA_MINIATURAS.exists():
+        for pasta in PASTA_MINIATURAS.iterdir():
+            copia = pasta / nome
+            try:
+                if copia.exists():
+                    copia.unlink()
+            except OSError:
+                pass
+
+    return apagou
+
+
 @api_router.get("/miniaturas/{nome}")
 async def miniatura_da_fotografia(nome: str, w: int = 720):
     """A mesma fotografia, encolhida, para a aplicacao a poder mostrar.
@@ -4839,13 +4935,33 @@ async def corrigir_media(
 
 @api_router.delete("/media/{media_id}")
 async def apagar_media(media_id: str, current_user: User = Depends(require_admin_or_staff)):
+    """Tira uma fotografia da Multimedia, **e o ficheiro com ela**.
+
+    So apagava o registo: o ficheiro ficava no volume do Docker para sempre,
+    sem nada na base de dados a apontar-lhe. Uma pasta que so crescia, e que
+    entra nas copias de seguranca das fotografias.
+
+    Como nos planos, **o ficheiro so se apaga se mais nenhum item o usar**:
+    cada carregamento sorteia um nome novo, por isso e raro -- mas se um dia
+    a mesma fotografia for publicada duas vezes, apagar uma nao pode deixar a
+    outra sem imagem.
+
+    Um **video e um link** para as redes do ginasio: nao ha ficheiro nosso
+    para apagar, e o `apagar_do_disco` so mexe no que esta em
+    `/api/uploads/`.
+    """
     item = await db.media.find_one({"id": media_id})
     if not item:
         raise HTTPException(status_code=404, detail="Item nao encontrado")
+
+    endereco = item.get("url") or ""
+    outros = await db.media.count_documents({"url": endereco, "id": {"$ne": media_id}})
+    apagou_ficheiro = apagar_do_disco(endereco) if outros == 0 else False
+
     await db.media.delete_one({"id": media_id})
     await log_audit(current_user, "delete", "media", entity_id=media_id,
                     details="Eliminou um item de multimedia")
-    return {"message": "Item eliminado"}
+    return {"message": "Item eliminado", "ficheiro_apagado": apagou_ficheiro}
 
 
 # ============================================================================
@@ -5124,11 +5240,7 @@ async def guardar_foto_do_socio(member_id: str, ficheiro: UploadFile = File(...)
     url = f"/api/uploads/{nome}"
 
     # A fotografia anterior do socio deixa de ser precisa
-    antiga = socio.get("photo_url") or ""
-    if antiga.startswith("/api/uploads/"):
-        anterior = PASTA_UPLOADS / antiga.rsplit("/", 1)[-1]
-        if anterior.exists():
-            anterior.unlink()
+    apagar_do_disco(socio.get("photo_url"))
 
     await db.members.update_one({"id": member_id}, {"$set": {"photo_url": url}})
     BusinessCache.invalidate_member_cache()
@@ -5142,11 +5254,7 @@ async def tirar_foto_do_socio(member_id: str):
     if not socio:
         raise HTTPException(status_code=404, detail="Socio nao encontrado")
 
-    antiga = socio.get("photo_url") or ""
-    if antiga.startswith("/api/uploads/"):
-        caminho = PASTA_UPLOADS / antiga.rsplit("/", 1)[-1]
-        if caminho.exists():
-            caminho.unlink()
+    apagar_do_disco(socio.get("photo_url"))
 
     await db.members.update_one({"id": member_id}, {"$set": {"photo_url": None}})
     BusinessCache.invalidate_member_cache()
@@ -5645,9 +5753,7 @@ async def apagar_plano(
             {"file_url": endereco, "id": {"$ne": plan_id}}
         )
         if outros == 0:
-            caminho = PASTA_UPLOADS / endereco.rsplit("/", 1)[-1]
-            if caminho.exists():
-                caminho.unlink()
+            apagar_do_disco(endereco)
 
     await db.plans.delete_one({"id": plan_id})
     await log_audit(current_user, "delete", "plan", entity_id=plan_id,

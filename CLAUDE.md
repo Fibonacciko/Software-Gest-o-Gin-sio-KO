@@ -226,6 +226,26 @@ campo só atrasava quem estava a cobrar. O servidor continua a aceitar
 `member_id` e as vendas antigas que o tenham continuam a mostrar o nome nas
 Finanças — só deixou de se perguntar.
 
+**Uma venda apaga-se, e o stock volta.** O caixote fica na linha da venda,
+nas Finanças, ao lado do valor (`DELETE /api/sales/{id}`). Até novembro de
+2026 **não havia por onde**: as despesas e os pagamentos corrigiam-se e
+apagavam-se, as vendas não — um artigo cobrado a mais, ou a cor errada
+marcada ao balcão, só se emendava por fora da aplicação, e até lá ficava a
+contar na facturação do mês.
+
+- **O stock volta** porque o artigo não saiu do ginásio. Sem isso, corrigir
+  um erro deixava um segundo erro atrás — desta vez na prateleira, que é
+  onde ninguém repara até faltar um artigo na contagem. A pergunta diz
+  quantas unidades voltam, para quem carrega saber o que vai acontecer e não
+  só o que vai desaparecer.
+- Se o **artigo já tiver sido apagado** do Stock, a venda apaga-se na mesma e
+  não há onde devolver nada. Rebentar aqui deixava a venda presa nas contas
+  do ginásio para sempre.
+- **Não reabre a reserva** que lhe deu origem, quando a houve: o sócio já
+  levou ou já lá esteve. Se for preciso, faz-se uma reserva nova.
+- **O colaborador também apaga** — quem vende ao balcão tem de poder emendar,
+  como já acontecia nas despesas.
+
 ### Aplicação do sócio: parceiros, multimédia e montra
 
 O conteúdo que o sócio vê no telemóvel carrega-se na gestão, em **App do
@@ -429,6 +449,21 @@ e meia dúzia de fotografias punham um ficheiro de 15 MB a pesar centenas.
 Limites: **8 MB** por imagem (jpg, png, webp, gif), **30 MB** por vídeo
 (mp4, mov, m4v, webm) e **10 MB** por documento (pdf, para os planos).
 `POST /api/uploads` devolve também o `kind` — `photo`, `video` ou `document`.
+
+**Apagar um registo apaga o ficheiro** (`apagar_do_disco`). A fotografia do
+sócio, ao trocar e ao tirar, o plano e a Multimédia passam todos pela mesma
+função — estava escrita à mão em três sítios, **a Multimédia não a tinha de
+todo** (o ficheiro ficava no volume para sempre, sem nada a apontar-lhe), e
+nenhum dos três limpava as miniaturas: uma fotografia apagada deixava atrás
+uma cópia encolhida por cada largura que alguém tivesse pedido.
+
+- Só apaga **ficheiros nossos** (`/api/uploads/...`): um vídeo da Multimédia
+  é um link para as redes do ginásio, e não há nada nosso para apagar.
+- **Não se queixa** quando o ficheiro já lá não está: rebentar aqui deixava o
+  registo na base de dados sem o conseguir tirar.
+- Como nos planos, **só apaga se mais nenhum registo o usar**. Cada
+  carregamento sorteia um nome novo, por isso é raro — mas dar o mesmo plano
+  a dois sócios não pode deixar um deles sem nada.
 
 Em desenvolvimento a pasta é a de `UPLOADS_DIR` no `backend/.env`; nos testes é
 `tests/_uploads`. Ambas fora do Git.
@@ -669,7 +704,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 311 testes e demoram 18 segundos.
+backend** — são 323 testes e demoram 18 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -677,8 +712,8 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios e a pesquisa têm testes próprios, no site (139 testes,
-4 segundos):
+As contas dos Relatórios, a pesquisa e o dinheiro têm testes próprios, no site
+(147 testes, 4 segundos):
 
 ```bash
 cd frontend && yarn test --watchAll=false
