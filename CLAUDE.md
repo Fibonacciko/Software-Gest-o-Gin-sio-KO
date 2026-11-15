@@ -480,8 +480,11 @@ da primeira vez. Como os nomes dos ficheiros são sorteados, um nome nunca
 muda de conteúdo e a cópia nunca fica velha — a pasta pode ser apagada sem
 medo. Vive fora de `/api/uploads/...` de propósito: aquele caminho é servido
 pelo `StaticFiles` e não passa por código nenhum. Fica **aberta**, como as
-fotografias que encolhe: é a aplicação do sócio que as pede, e ela não leva
-senha.
+fotografias que encolhe — e continua aberta mesmo depois de as rotas da
+aplicação passarem a exigir token: quem pede estas imagens é a `<Image>` do
+telemóvel, que não leva cabeçalhos nenhuns. Pôr-lhes senha obrigava a
+descarregar cada fotografia à mão e a guardá-la em memória, que é
+exactamente o que as miniaturas existem para evitar.
 
 **Não vão para a base de dados.** As cópias de segurança são despejos da base,
 e meia dúzia de fotografias punham um ficheiro de 15 MB a pesar centenas.
@@ -781,12 +784,54 @@ prendia o servidor inteiro enquanto o Gmail não respondesse.
   número uma vez; daqui a dois meses custava 140 pessoas a perguntar na
   receção porque é que a aplicação lhes pediu os dados outra vez.
 
-**O que fica por fazer, e é obra à parte.** Depois de entrar, a aplicação
-identifica-se em cada pedido **só pelo `id` do sócio**, que vai no endereço:
-as 27 rotas `/mobile/` não exigem nada. O `id` é um UUID, que não se adivinha,
-mas **fica escrito no registo do nginx** em texto simples, e **não se pode
-cancelar** — se um escapar, escapou para sempre. O `access_token` **já é
-devolvido** pelo login e guardado pela aplicação; falta exigi-lo nas rotas.
+#### Depois de entrar: cada pedido leva o token
+
+Até novembro de 2026 a aplicação identificava-se **só pelo `id` do sócio**,
+que ia no endereço. O `id` é um UUID, que não se adivinha — mas **fica
+escrito no registo do nginx** em texto simples, e **não se pode cancelar**:
+se um escapar, escapou para sempre. Quem o tivesse via os pagamentos, as
+avaliações e os planos daquela pessoa, trocava-lhe a fotografia,
+desmarcava-lhe as aulas e mudava-lhe o email na ficha.
+
+Hoje **o token é que diz quem é**. O `id` continua no endereço, porque é por
+ele que as rotas procuram, mas tem de **bater com o do token** — senão é
+403. Fez-se antes de os sócios instalarem a aplicação, como o PIN.
+
+- **Fica de fora o que é a entrada** (login, escolher, trocar e recuperar o
+  PIN) **e o que é igual para toda a gente**: as modalidades, a ficha do
+  ginásio, os parceiros, a montra e a galeria antiga. Pedir token para
+  entrar era um nó, e o resto não é de ninguém.
+- **Há um teste que percorre as rotas `/mobile/` todas** e exige que cada
+  uma esteja protegida ou escrita na lista das públicas, com a razão. Sem
+  ele, uma rota nova entrava sem token e ninguém dava por isso até alguém
+  de fora dar.
+- O token do sócio **dura 90 dias** (`MINUTOS_DO_TOKEN_DO_SOCIO`), e não as
+  oito horas do da gestão: a aplicação abre-se para um check-in de dois
+  segundos, e pedir o PIN todos os dias a quem treina cinco vezes por
+  semana era pedi-lo cinco vezes por semana. A gestão é outra coisa — é um
+  computador ao balcão, muitas vezes partilhado.
+- **Um JWT não se desfaz**, e por isso a ficha tem um `token_version`: ele
+  anda para a frente ao **apagar o PIN ao balcão**, ao **trocar** e ao
+  **recuperar**, e os tokens de antes deixam de bater. Sem isto, apagar o
+  PIN a quem perdeu o telemóvel era mudar a fechadura deixando a janela
+  aberta.
+- **A suspensão continua a mandar**: suspenso não entra, nem com o token
+  válido. A quota em atraso não impede nada.
+- Na aplicação, **um 401 devolve o sócio ao ecrã de entrada** sozinho
+  (`aoPerderASessao`). E só conta como sessão perdida **se tinha token**: o
+  ecrã de entrada também recebe 401 quando o PIN não confere, e aí não há
+  sessão nenhuma para perder.
+
+**A chave que assina os tokens estava escrita no código.** Enquanto esteve,
+bastava ter o repositório para fabricar um token de **administrador** e
+entrar na gestão toda — exigir token nas rotas da aplicação sem corrigir
+isto era pôr uma fechadura com a chave colada à porta. Vem agora do
+`backend/.env` (`JWT_SECRET`), e **em falta o servidor não arranca**,
+excepto quando o `ENVIRONMENT` diz que é uma máquina de desenvolvimento ou
+de testes. A excepção é assim, e não ao contrário, porque o `.env` de
+produção **não tem linha `ENVIRONMENT` nenhuma**: uma regra do género "se
+não for produção, vai pela chave de sempre" deixava a produção a assinar
+com a chave de brincar, em silêncio.
 
 ### Perfis de acesso
 
@@ -850,13 +895,13 @@ cd frontend && yarn start     # http://localhost:3000
 ```
 
 Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
-(`ko_gym_dev`), `CORS_ORIGINS`, `ENVIRONMENT`; `frontend/.env` com
+(`ko_gym_dev`), `CORS_ORIGINS`, `ENVIRONMENT`, `JWT_SECRET`; `frontend/.env` com
 `REACT_APP_BACKEND_URL=http://localhost:8001`.
 
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 381 testes e demoram 55 segundos (o bcrypt dos PIN é lento
+backend** — são 411 testes e demoram 58 segundos (o bcrypt dos PIN é lento
 de propósito).
 
 ```bash
@@ -876,7 +921,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (110 testes, 10 segundos):
+A **aplicação do sócio** também tem os seus (127 testes, 10 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest

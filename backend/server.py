@@ -77,9 +77,54 @@ app.add_middleware(RateLimitMiddleware)
 app.state.limiter = gym_rate_limiter.limiter
 
 # Security
-SECRET_KEY = "your-secret-key-change-in-production-2024-gym-management"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours
+
+# O token do socio dura muito mais do que o da gestao: a aplicacao abre-se
+# para um check-in de dois segundos, e pedir o PIN a cada oito horas punha
+# quem treina cinco vezes por semana a escrever seis digitos cinco vezes. A
+# gestao e outra coisa -- e um computador ao balcao, muitas vezes partilhado.
+MINUTOS_DO_TOKEN_DO_SOCIO = 60 * 24 * 90   # 90 dias
+
+CHAVE_DE_DESENVOLVIMENTO = "chave-so-de-desenvolvimento-nao-serve-em-producao"
+
+
+def _chave_dos_tokens() -> str:
+    """A chave que assina os tokens, lida do `.env` (`JWT_SECRET`).
+
+    **Esteve escrita aqui no codigo**, e enquanto esteve bastava ter o
+    repositorio para fabricar um token de administrador e entrar na gestao
+    toda. Um token nao e mais seguro do que a chave que o assina, e uma
+    chave publica nao assina nada.
+
+    **Em falta, o servidor nao arranca** -- excepto quando alguem diz, pelo
+    `ENVIRONMENT`, que aquilo e uma maquina de desenvolvimento ou de testes.
+    E de proposito que a excepcao e assim, e nao ao contrario: o `.env` de
+    producao nao tem linha `ENVIRONMENT` nenhuma, e por isso uma regra do
+    genero "se nao for producao, vai pela chave de sempre" deixava a
+    producao a assinar com a chave de brincar, em silencio. Assim, o que
+    falta rebenta a arrancar, que e onde se ve.
+    """
+    chave = (os.environ.get("JWT_SECRET") or "").strip()
+    if chave:
+        return chave
+
+    onde = (os.environ.get("ENVIRONMENT") or "").strip().lower()
+    if onde in ("development", "dev", "test", "testing"):
+        logging.getLogger(__name__).warning(
+            "JWT_SECRET em falta; vou pela chave de desenvolvimento"
+        )
+        return CHAVE_DE_DESENVOLVIMENTO
+
+    raise RuntimeError(
+        "JWT_SECRET em falta no backend/.env. O servidor nao arranca sem ela: "
+        "assinar os tokens com uma chave que esta no codigo e o mesmo que nao "
+        "os assinar. Gere uma com: python -c "
+        "'import secrets; print(secrets.token_urlsafe(48))'"
+    )
+
+
+SECRET_KEY = _chave_dos_tokens()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
@@ -1078,6 +1123,103 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+# ------------------------------------------------------------------------
+# Quem esta do outro lado da aplicacao do socio
+# ------------------------------------------------------------------------
+#
+# **As rotas `/mobile/` identificavam o socio so pelo `id` no endereco.** O
+# `id` e um UUID, que nao se adivinha -- mas fica escrito no registo do
+# nginx em texto simples, e **nao se pode cancelar**: se um escapar,
+# escapou para sempre, e quem o tivesse via os pagamentos, as avaliacoes e
+# os planos daquela pessoa, trocava-lhe a fotografia, desmarcava-lhe as
+# aulas e mudava-lhe o email na ficha.
+#
+# Agora cada pedido leva o token que o login devolve, e **o token e que diz
+# quem e**. O `id` no endereco continua la, porque e por ele que as rotas
+# procuram, mas tem de **bater com o do token** -- senao e 403.
+#
+# Isto fez-se antes de os socios instalarem a aplicacao, como o PIN: hoje
+# so o dono a tem, e por isso nao ha nenhuma versao instalada por ai a
+# chamar estas rotas sem token.
+
+seguranca_do_socio = HTTPBearer(auto_error=False)
+
+
+def _sem_entrada() -> HTTPException:
+    """Uma frase so, para nao dizer a ninguem onde e que falhou.
+
+    Token em falta, mal assinado, fora de prazo, de um socio apagado ou de
+    uma sessao que ja foi cortada ao balcao -- tudo isto responde o mesmo.
+    Distinguir dizia a quem esta a tentar o que e que ja acertou.
+    """
+    return HTTPException(
+        status_code=401,
+        detail="A tua sessão terminou. Entra outra vez com o PIN.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+async def socio_do_token(
+    credenciais: Optional[HTTPAuthorizationCredentials] = Depends(seguranca_do_socio),
+) -> dict:
+    """A ficha do socio que mandou o pedido, pelo token da aplicacao.
+
+    **A suspensao continua a mandar**: suspenso nao entra, nem com o token
+    valido na mao -- e a mesma regra do `abrir_sessao`. A **quota em atraso
+    nao impede nada**, que e precisamente quem mais precisa de ver o aviso.
+    """
+    if credenciais is None or not (credenciais.credentials or "").strip():
+        raise _sem_entrada()
+    try:
+        dados = jwt.decode(credenciais.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise _sem_entrada()
+
+    # Um token da gestao nao serve aqui, nem o desta aplicacao serve la
+    if dados.get("role") != "member":
+        raise _sem_entrada()
+
+    socio_id = dados.get("sub")
+    if not socio_id:
+        raise _sem_entrada()
+    socio = await db.members.find_one({"id": socio_id})
+    if not socio:
+        raise _sem_entrada()
+
+    # O balcao corta a sessao ao apagar o PIN, e o socio corta-a ao trocar
+    # ou recuperar o PIN. Um JWT nao se desfaz; o que se faz e andar com
+    # este numero para a frente, e os tokens antigos deixam de bater.
+    if int(dados.get("tv") or 0) != int(socio.get("token_version") or 0):
+        raise _sem_entrada()
+
+    if socio.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Inscrição suspensa. Fala com a receção.")
+
+    return socio
+
+
+def confirmar_que_e_dele(socio: dict, pedido: Optional[str]) -> None:
+    """O `member_id` que vem no pedido tem de ser o do token."""
+    if pedido and pedido != socio.get("id"):
+        raise HTTPException(status_code=403, detail="Esses dados não são teus.")
+
+
+async def socio_da_aplicacao(
+    request: Request, socio: dict = Depends(socio_do_token)
+) -> dict:
+    """Como o `socio_do_token`, mas confere tambem o `member_id` do endereco.
+
+    Le-o do caminho (`/mobile/plans/{member_id}`) e da pergunta
+    (`/mobile/classes?member_id=...`), que sao as duas maneiras como as
+    rotas o recebem. **Quem o recebe no corpo** -- as marcacoes, as
+    reservas, o check-in -- chama o `confirmar_que_e_dele` a mao, que o
+    corpo nao se le de uma dependencia.
+    """
+    pedido = request.path_params.get("member_id") or request.query_params.get("member_id")
+    confirmar_que_e_dele(socio, pedido)
+    return socio
+
 
 def require_admin(current_user: User = Depends(get_current_active_user)):
     if current_user.role != UserRole.ADMIN:
@@ -2527,7 +2669,12 @@ async def limpar_o_pin(
         {"id": member_id},
         {"$set": {"pin_hash": None, "pin_tentativas": 0, "pin_bloqueado_ate": None,
                   "pin_reset_hash": None, "pin_reset_expira": None,
-                  "pin_reset_tentativas": 0, "pin_reset_enviado": None}},
+                  "pin_reset_tentativas": 0, "pin_reset_enviado": None},
+         # Apagar o PIN tem de **cortar a aplicacao** a quem a tiver aberta:
+         # quem vem ao balcao dizer que nao entra pode ter perdido o
+         # telemovel, e deixar la a sessao de pe era apagar a chave da porta
+         # sem fechar a janela.
+         "$inc": {"token_version": 1}},
     )
     await log_audit(
         current_user, "update", "member", entity_id=member_id,
@@ -3950,11 +4097,26 @@ async def socios_com_o_numero(numero: str) -> List[dict]:
 
 
 async def abrir_sessao(socio: dict) -> dict:
-    """O que a aplicacao recebe quando a entrada corre bem."""
+    """O que a aplicacao recebe quando a entrada corre bem.
+
+    **Rele a ficha antes de assinar o token.** Quem chama acabou muitas
+    vezes de lhe mexer -- a escolher o PIN, a recuperar o PIN -- e o `tv`
+    que vai dentro do token tem de ser o que ficou gravado, nao o que
+    estava em memoria antes. Com o numero velho, o socio entrava e o
+    primeiro pedido a seguir dizia-lhe que a sessao tinha terminado.
+    """
+    socio = await db.members.find_one({"id": socio["id"]}) or socio
     if socio.get("status") == "suspended":
         raise HTTPException(status_code=403, detail="Inscrição suspensa. Fala com a receção.")
     await acertou_o_pin(socio)
-    access_token = create_access_token(data={"sub": socio["id"], "role": "member"})
+    access_token = create_access_token(
+        data={
+            "sub": socio["id"],
+            "role": "member",
+            "tv": int(socio.get("token_version") or 0),
+        },
+        expires_delta=timedelta(minutes=MINUTOS_DO_TOKEN_DO_SOCIO),
+    )
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -4075,7 +4237,10 @@ async def trocar_o_pin(request: Request, dados: TrocarPin):
             await db.members.update_one(
                 {"id": socio["id"]},
                 {"$set": {"pin_hash": guardar_pin(dados.pin_novo), "pin_tentativas": 0,
-                          "pin_bloqueado_ate": None}},
+                          "pin_bloqueado_ate": None},
+                 # Trocar o PIN fecha as outras sessoes: quem o troca costuma
+                 # troca-lo por desconfiar de quem o sabia.
+                 "$inc": {"token_version": 1}},
             )
             return {"message": "PIN trocado"}
 
@@ -4331,14 +4496,16 @@ async def recuperar_o_pin(request: Request, dados: RecuperarOPin):
         {"$set": {"pin_hash": guardar_pin(dados.pin),
                   "pin_tentativas": 0, "pin_bloqueado_ate": None,
                   "pin_reset_hash": None, "pin_reset_expira": None,
-                  "pin_reset_tentativas": 0, "pin_reset_enviado": None}},
+                  "pin_reset_tentativas": 0, "pin_reset_enviado": None},
+         # Recuperar fecha as sessoes anteriores, pela mesma razao
+         "$inc": {"token_version": 1}},
     )
     await _registar_recuperacao(socio)
     socio = await db.members.find_one({"id": socio["id"]})
     return await abrir_sessao(socio)
 
 @api_router.get("/mobile/profile", response_model=MobileMember)
-async def get_mobile_profile(member_id: str):
+async def get_mobile_profile(member_id: str, socio: dict = Depends(socio_da_aplicacao)):
     """Get mobile member profile with workout count and motivational note"""
     member = await db.members.find_one({"id": member_id})
     if not member:
@@ -4347,7 +4514,7 @@ async def get_mobile_profile(member_id: str):
     return await build_mobile_member(member)
 
 @api_router.put("/mobile/profile/{member_id}")
-async def update_mobile_profile(member_id: str, profile_data: dict):
+async def update_mobile_profile(member_id: str, profile_data: dict, socio: dict = Depends(socio_da_aplicacao)):
     """Update mobile member profile (limited fields)"""
     # Only allow updating certain fields from mobile
     allowed_fields = ["email", "phone", "address", "photo_url"]
@@ -4367,7 +4534,7 @@ async def update_mobile_profile(member_id: str, profile_data: dict):
     return {"message": "Profile updated successfully"}
 
 @api_router.post("/mobile/fcm-token/{member_id}")
-async def update_fcm_token(member_id: str, token_data: FCMTokenUpdate):
+async def update_fcm_token(member_id: str, token_data: FCMTokenUpdate, socio: dict = Depends(socio_da_aplicacao)):
     """Update FCM token for push notifications"""
     result = await db.members.update_one(
         {"id": member_id},
@@ -4391,8 +4558,9 @@ class MobileCheckin(BaseModel):
     method: str = "mobile_qr"           # mobile_qr ou mobile_nfc
 
 @api_router.post("/mobile/checkin/app")
-async def mobile_app_checkin(dados: MobileCheckin):
+async def mobile_app_checkin(dados: MobileCheckin, socio: dict = Depends(socio_do_token)):
     """Check-in feito pela aplicacao do socio (QR na parede ou autocolante NFC)."""
+    confirmar_que_e_dele(socio, dados.member_id)
     member = await db.members.find_one({"id": dados.member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Socio nao encontrado")
@@ -4458,7 +4626,7 @@ async def mobile_app_checkin(dados: MobileCheckin):
     }
 
 @api_router.post("/mobile/checkin")
-async def mobile_qr_checkin(member_id: str, activity_id: str):
+async def mobile_qr_checkin(member_id: str, activity_id: str, socio: dict = Depends(socio_da_aplicacao)):
     """Mobile QR check-in"""
     # Verify member exists and is active
     member = await db.members.find_one({"id": member_id, "status": "active"})
@@ -4496,7 +4664,8 @@ async def mobile_qr_checkin(member_id: str, activity_id: str):
 async def get_mobile_attendance_history(
     member_id: str,
     limit: int = 20,
-    offset: int = 0
+    offset: int = 0,
+    socio: dict = Depends(socio_da_aplicacao),
 ):
     """Get member attendance history for mobile"""
     # Get attendance with activity details
@@ -4520,7 +4689,7 @@ async def get_mobile_attendance_history(
     return detailed_records
 
 @api_router.get("/mobile/messages/{member_id}")
-async def get_mobile_messages(member_id: str, unread_only: bool = False):
+async def get_mobile_messages(member_id: str, unread_only: bool = False, socio: dict = Depends(socio_da_aplicacao)):
     """Get messages for member"""
     filter_dict = {
         "$or": [
@@ -4552,7 +4721,7 @@ async def get_mobile_messages(member_id: str, unread_only: bool = False):
     return detailed_messages
 
 @api_router.post("/mobile/messages/{message_id}/read/{member_id}")
-async def mark_message_as_read(message_id: str, member_id: str):
+async def mark_message_as_read(message_id: str, member_id: str, socio: dict = Depends(socio_da_aplicacao)):
     """Mark message as read"""
     # Update or create notification log
     await db.notification_logs.update_one(
@@ -4569,7 +4738,7 @@ async def mark_message_as_read(message_id: str, member_id: str):
     return {"message": "Message marked as read"}
 
 @api_router.post("/mobile/payments/mock")
-async def mock_mobile_payment(member_id: str, payment_data: MobilePaymentRequest):
+async def mock_mobile_payment(member_id: str, payment_data: MobilePaymentRequest, socio: dict = Depends(socio_da_aplicacao)):
     """Mock payment endpoint for mobile app (not operational)"""
     # Verify member exists
     member = await db.members.find_one({"id": member_id})
@@ -5594,7 +5763,7 @@ async def parceiros_para_a_app():
 
 
 @api_router.get("/mobile/media/{member_id}", response_model=List[MediaItem])
-async def fotografias_do_socio(member_id: str):
+async def fotografias_do_socio(member_id: str, socio: dict = Depends(socio_da_aplicacao)):
     """As fotografias **daquele socio**, e so dele.
 
     Era uma galeria igual para toda a gente. Hoje cada fotografia tem dono
@@ -5777,7 +5946,7 @@ async def montra_para_a_app():
 
 
 @api_router.post("/mobile/reservations", response_model=Reservation)
-async def reservar_pela_app(dados: ReservationCreate):
+async def reservar_pela_app(dados: ReservationCreate, socio: dict = Depends(socio_do_token)):
     """O socio reserva; o balcao prepara. Nao mexe no stock nem no dinheiro.
 
     E uma **encomenda**, nao um levantamento: aceita-se mesmo sem stock, e e
@@ -5786,16 +5955,14 @@ async def reservar_pela_app(dados: ReservationCreate):
     if dados.quantity < 1:
         raise HTTPException(status_code=400, detail="A quantidade tem de ser pelo menos 1.")
 
+    confirmar_que_e_dele(socio, dados.member_id)
+
     artigo = await db.inventory.find_one({"id": dados.item_id})
     if not artigo:
         raise HTTPException(status_code=404, detail="Artigo nao encontrado")
     # **Nao se olha ao stock.** Uma reserva e uma encomenda: o balcao diz ao
     # socio se tem ou se tem de esperar. Por decisao do dono. Antes recusava
     # com "so restam N unidades", e um artigo esgotado nao se podia pedir.
-
-    socio = await db.members.find_one({"id": dados.member_id})
-    if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
 
     detalhes = " - ".join(x for x in [artigo.get("size"), artigo.get("color")] if x)
     reserva = Reservation(
@@ -5813,7 +5980,9 @@ async def reservar_pela_app(dados: ReservationCreate):
 
 
 @api_router.post("/mobile/members/{member_id}/photo")
-async def guardar_foto_do_socio(member_id: str, ficheiro: UploadFile = File(...)):
+async def guardar_foto_do_socio(
+    member_id: str, ficheiro: UploadFile = File(...), socio: dict = Depends(socio_da_aplicacao)
+):
     """O socio escolhe uma fotografia no telemovel e ela fica na ficha dele.
 
     E a mesma fotografia que a gestao mostra: fica no campo `photo_url` da
@@ -5848,7 +6017,7 @@ async def guardar_foto_do_socio(member_id: str, ficheiro: UploadFile = File(...)
 
 
 @api_router.delete("/mobile/members/{member_id}/photo")
-async def tirar_foto_do_socio(member_id: str):
+async def tirar_foto_do_socio(member_id: str, socio: dict = Depends(socio_da_aplicacao)):
     """Volta ao logotipo do ginasio."""
     socio = await db.members.find_one({"id": member_id})
     if not socio:
@@ -6176,7 +6345,7 @@ async def inscritos_na_aula(
 # ----------------------------------------------------- As aulas, na aplicacao
 
 @api_router.get("/mobile/classes", response_model=List[ClassOccurrence])
-async def aulas_para_a_app(member_id: str, dias: int = 7):
+async def aulas_para_a_app(member_id: str, dias: int = 7, socio: dict = Depends(socio_da_aplicacao)):
     """As aulas dos proximos dias, com o estado da inscricao do socio."""
     hoje = date.today()
     dias = max(1, min(dias, 30))
@@ -6184,11 +6353,9 @@ async def aulas_para_a_app(member_id: str, dias: int = 7):
 
 
 @api_router.post("/mobile/bookings", response_model=ClassBooking)
-async def marcar_aula(dados: ClassBookingCreate):
+async def marcar_aula(dados: ClassBookingCreate, socio: dict = Depends(socio_do_token)):
     """O socio marca uma aula. Cheia, entra em lista de espera."""
-    socio = await db.members.find_one({"id": dados.member_id})
-    if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+    confirmar_que_e_dele(socio, dados.member_id)
 
     slot = await db.class_slots.find_one({"id": dados.slot_id, "is_active": True})
     if not slot:
@@ -6234,11 +6401,17 @@ async def marcar_aula(dados: ClassBookingCreate):
 
 
 @api_router.delete("/mobile/bookings/{booking_id}")
-async def desmarcar_aula(booking_id: str):
-    """O socio desiste. O lugar passa a quem espera ha mais tempo."""
+async def desmarcar_aula(booking_id: str, socio: dict = Depends(socio_do_token)):
+    """O socio desiste. O lugar passa a quem espera ha mais tempo.
+
+    **A inscricao tem de ser dele.** O endereco leva o `id` da inscricao e
+    nao o do socio, e por isso a dependencia nao tem nada para conferir --
+    quem soubesse um `id` destes desmarcava a aula de outra pessoa.
+    """
     inscricao = await db.class_bookings.find_one({"id": booking_id})
     if not inscricao:
         raise HTTPException(status_code=404, detail="Inscricao nao encontrada")
+    confirmar_que_e_dele(socio, inscricao.get("member_id"))
 
     slot = await db.class_slots.find_one({"id": inscricao["slot_id"]})
     dia = inscricao["class_date"]
@@ -6385,7 +6558,7 @@ async def marcar_pedido_tratado(
 
 
 @api_router.get("/mobile/plans/{member_id}", response_model=List[Plan])
-async def planos_para_a_app(member_id: str):
+async def planos_para_a_app(member_id: str, socio: dict = Depends(socio_da_aplicacao)):
     """Os planos do socio, do mais recente para tras."""
     planos = await db.plans.find({"member_id": member_id}).to_list(200)
     planos = [parse_from_mongo(p) for p in planos]
@@ -6394,11 +6567,9 @@ async def planos_para_a_app(member_id: str):
 
 
 @api_router.post("/mobile/plan-requests", response_model=PlanRequest)
-async def pedir_plano(dados: PlanRequestCreate):
+async def pedir_plano(dados: PlanRequestCreate, socio: dict = Depends(socio_do_token)):
     """O socio pede um plano novo. Nao se repete um pedido ja feito."""
-    socio = await db.members.find_one({"id": dados.member_id})
-    if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+    confirmar_que_e_dele(socio, dados.member_id)
 
     # Carregar duas vezes no botao nao pode encher o Painel de pedidos iguais
     ja = await db.plan_requests.find_one(
@@ -6419,7 +6590,7 @@ async def pedir_plano(dados: PlanRequestCreate):
 
 
 @api_router.get("/mobile/assessments/{member_id}", response_model=List[Assessment])
-async def avaliacoes_para_a_app(member_id: str):
+async def avaliacoes_para_a_app(member_id: str, socio: dict = Depends(socio_da_aplicacao)):
     """A evolucao do socio, da mais antiga para a mais recente.
 
     Ao contrario da lista da gestao, esta vem por ordem crescente: e assim
@@ -6432,7 +6603,7 @@ async def avaliacoes_para_a_app(member_id: str):
 
 
 @api_router.get("/mobile/payments/{member_id}", response_model=List[Payment])
-async def pagamentos_do_socio(member_id: str):
+async def pagamentos_do_socio(member_id: str, socio: dict = Depends(socio_da_aplicacao)):
     """O que este socio pagou ao ginasio, do mais recente para tras.
 
     E o historial dele, nao as contas do ginasio: por isso **nao** se aplica
@@ -6452,7 +6623,7 @@ async def pagamentos_do_socio(member_id: str):
 
 
 @api_router.get("/mobile/reservations/{member_id}", response_model=List[Reservation])
-async def reservas_do_socio(member_id: str):
+async def reservas_do_socio(member_id: str, socio: dict = Depends(socio_da_aplicacao)):
     reservas = await db.reservations.find({"member_id": member_id}).sort("created_at", -1).to_list(200)
     return [Reservation(**parse_from_mongo(r)) for r in reservas]
 

@@ -6,6 +6,8 @@ a mentir sem ninguém dar por isso.
 """
 from datetime import date, timedelta
 
+from conftest import cabecalho_do_socio as como_socio
+
 
 def _avaliacao(cliente, admin, socio_id, **campos):
     corpo = {"weight_kg": 80.0}
@@ -99,7 +101,8 @@ def test_a_app_ve_da_mais_antiga_para_a_frente(cliente, admin, criar_socio):
         )
 
     pesos = [a["weight_kg"] for a in
-             cliente.get(f"/api/mobile/assessments/{socio['id']}").json()]
+             cliente.get(f"/api/mobile/assessments/{socio['id']}",
+                         headers=como_socio(socio)).json()]
     assert pesos == [86.0, 84.0, 82.0]
 
 
@@ -108,8 +111,14 @@ def test_as_avaliacoes_sao_de_cada_socio(cliente, admin, criar_socio):
     outro = criar_socio(nome="Outro", telefone="914000009")
     _avaliacao(cliente, admin, um["id"], weight_kg=70.0)
 
-    assert len(cliente.get(f"/api/mobile/assessments/{um['id']}").json()) == 1
-    assert cliente.get(f"/api/mobile/assessments/{outro['id']}").json() == []
+    assert len(cliente.get(f"/api/mobile/assessments/{um['id']}",
+                           headers=como_socio(um)).json()) == 1
+    assert cliente.get(f"/api/mobile/assessments/{outro['id']}",
+                       headers=como_socio(outro)).json() == []
+
+    # E nenhum deles consegue sequer pedir as do outro: o token diz quem e
+    assert cliente.get(f"/api/mobile/assessments/{um['id']}",
+                       headers=como_socio(outro)).status_code == 403
 
 
 def test_apagar_uma_avaliacao(cliente, admin, criar_socio):
@@ -141,4 +150,5 @@ def test_a_app_nao_pede_senha_para_ver_a_evolucao(cliente, admin, criar_socio):
     """Como o resto da aplicação do sócio, que entra pelo número e telefone."""
     socio = criar_socio(telefone="914000012")
     _avaliacao(cliente, admin, socio["id"])
-    assert cliente.get(f"/api/mobile/assessments/{socio['id']}").status_code == 200
+    assert cliente.get(f"/api/mobile/assessments/{socio['id']}",
+                       headers=como_socio(socio)).status_code == 200

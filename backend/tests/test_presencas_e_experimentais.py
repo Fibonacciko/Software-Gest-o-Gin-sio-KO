@@ -1,6 +1,8 @@
 """Presenças de sócios e aulas experimentais, que são coisas distintas."""
 from datetime import date
 
+from conftest import cabecalho_do_socio as como_socio
+
 
 def test_experimental_fica_registada_com_a_modalidade(cliente, admin, modalidades):
     boxe = modalidades[0]
@@ -68,6 +70,7 @@ def test_check_in_da_app_nao_duplica_no_mesmo_dia(cliente, admin, criar_socio, m
 
     primeiro = cliente.post(
         "/api/mobile/checkin/app",
+        headers=como_socio(socio),
         json={"member_id": socio["id"], "activity_id": modalidades[0]["id"]},
     ).json()
     assert primeiro["already_checked_in"] is False
@@ -75,6 +78,7 @@ def test_check_in_da_app_nao_duplica_no_mesmo_dia(cliente, admin, criar_socio, m
 
     segundo = cliente.post(
         "/api/mobile/checkin/app",
+        headers=como_socio(socio),
         json={"member_id": socio["id"], "activity_id": modalidades[0]["id"]},
     ).json()
     assert segundo["already_checked_in"] is True
@@ -84,5 +88,6 @@ def test_check_in_da_app_nao_duplica_no_mesmo_dia(cliente, admin, criar_socio, m
 def test_check_in_sem_modalidade_usa_a_principal(cliente, admin, criar_socio, modalidades):
     socio = criar_socio(activity_ids=[modalidades[1]["id"], modalidades[0]["id"]])
 
-    r = cliente.post("/api/mobile/checkin/app", json={"member_id": socio["id"]}).json()
+    r = cliente.post("/api/mobile/checkin/app", headers=como_socio(socio),
+                     json={"member_id": socio["id"]}).json()
     assert r["activity_name"] == modalidades[1]["name"]

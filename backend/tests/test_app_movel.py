@@ -1,6 +1,8 @@
 """Login e cartão do sócio na aplicação móvel."""
 from datetime import date, timedelta
 
+from conftest import cabecalho_do_socio as como_socio
+
 
 def entrar(cliente, numero, telefone):
     return cliente.post(
@@ -74,14 +76,14 @@ def test_sequencia_de_semanas_conta_a_partir_dos_treinos(
     socio = criar_socio(telefone="912345678", activity_ids=[modalidades[0]["id"]])
 
     cartao = cliente.get(
-        "/api/mobile/profile", params={"member_id": socio["id"]}
+        "/api/mobile/profile", headers=como_socio(socio), params={"member_id": socio["id"]}
     ).json()
     assert cartao["streak_weeks"] == 0
 
-    cliente.post("/api/mobile/checkin/app", json={"member_id": socio["id"]})
+    cliente.post("/api/mobile/checkin/app", headers=como_socio(socio), json={"member_id": socio["id"]})
 
     cartao = cliente.get(
-        "/api/mobile/profile", params={"member_id": socio["id"]}
+        "/api/mobile/profile", headers=como_socio(socio), params={"member_id": socio["id"]}
     ).json()
     assert cartao["streak_weeks"] == 1
     assert cartao["checked_in_today"] is True
@@ -112,14 +114,14 @@ def test_o_cartao_conta_os_treinos_do_mes(cliente, admin, criar_socio, modalidad
         )
         assert r.status_code == 200, r.text
 
-    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    cartao = cliente.get("/api/mobile/profile", headers=como_socio(socio), params={"member_id": socio["id"]}).json()
     assert cartao["workout_count"] == 3
     assert cartao["workout_count_month"] == 2
 
 
 def test_sem_treinos_o_mes_fica_a_zero(cliente, criar_socio):
     socio = criar_socio(telefone="912345678")
-    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    cartao = cliente.get("/api/mobile/profile", headers=como_socio(socio), params={"member_id": socio["id"]}).json()
     assert cartao["workout_count"] == 0
     assert cartao["workout_count_month"] == 0
 
@@ -150,7 +152,7 @@ def test_dois_treinos_no_mesmo_dia_sao_um_dia_so(cliente, admin, criar_socio, mo
         )
         assert r.status_code == 200, r.text
 
-    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    cartao = cliente.get("/api/mobile/profile", headers=como_socio(socio), params={"member_id": socio["id"]}).json()
     assert cartao["workout_count"] == 3       # tres treinos
     assert cartao["training_days"] == 2       # em dois dias
     assert cartao["workout_count_month"] == 2
@@ -158,7 +160,7 @@ def test_dois_treinos_no_mesmo_dia_sao_um_dia_so(cliente, admin, criar_socio, mo
 
 def test_sem_treinos_nao_ha_dias(cliente, criar_socio):
     socio = criar_socio(telefone="912345678")
-    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    cartao = cliente.get("/api/mobile/profile", headers=como_socio(socio), params={"member_id": socio["id"]}).json()
     assert cartao["training_days"] == 0
 
 
@@ -177,7 +179,7 @@ def test_o_socio_ve_os_pagamentos_dele(cliente, admin, criar_socio, pagar):
     pagar(socio["id"], valor=35.0, tipo="quota", quando=hoje)
     pagar(outro["id"], valor=35.0, tipo="quota", quando=hoje)
 
-    r = cliente.get(f"/api/mobile/payments/{socio['id']}")
+    r = cliente.get(f"/api/mobile/payments/{socio['id']}", headers=como_socio(socio))
     assert r.status_code == 200, r.text
     lista = r.json()
 
@@ -197,6 +199,6 @@ def test_o_socio_ve_os_pagamentos_dele(cliente, admin, criar_socio, pagar):
 
 def test_socio_sem_pagamentos_traz_lista_vazia(cliente, criar_socio):
     socio = criar_socio(telefone="912345678")
-    r = cliente.get(f"/api/mobile/payments/{socio['id']}")
+    r = cliente.get(f"/api/mobile/payments/{socio['id']}", headers=como_socio(socio))
     assert r.status_code == 200
     assert r.json() == []

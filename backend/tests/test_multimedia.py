@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import cabecalho_do_socio as como_socio
+
 
 def pasta():
     return Path(os.environ["UPLOADS_DIR"])
@@ -52,7 +54,8 @@ def publicar(cliente, admin, socio_id, url, legenda="Treino de quinta"):
 
 def test_a_fotografia_chega_ao_socio_dela(cliente, admin, socio, fotografia):
     item = publicar(cliente, admin, socio["id"], fotografia)
-    vistas = cliente.get(f"/api/mobile/media/{socio['id']}").json()
+    vistas = cliente.get(f"/api/mobile/media/{socio['id']}",
+                         headers=como_socio(socio)).json()
     assert [m["id"] for m in vistas] == [item["id"]]
 
 
@@ -63,8 +66,14 @@ def test_um_socio_nao_ve_as_fotografias_de_outro(cliente, admin, criar_socio, fo
 
     publicar(cliente, admin, filho["id"], fotografia, "Na aula de Kids")
 
-    assert len(cliente.get(f"/api/mobile/media/{filho['id']}").json()) == 1
-    assert cliente.get(f"/api/mobile/media/{estranho['id']}").json() == []
+    assert len(cliente.get(f"/api/mobile/media/{filho['id']}",
+                           headers=como_socio(filho)).json()) == 1
+    assert cliente.get(f"/api/mobile/media/{estranho['id']}",
+                       headers=como_socio(estranho)).json() == []
+
+    # E o estranho nao consegue pedir as do filho, nem sabendo-lhe o id
+    assert cliente.get(f"/api/mobile/media/{filho['id']}",
+                       headers=como_socio(estranho)).status_code == 403
 
 
 def test_uma_fotografia_sem_dono_e_recusada(cliente, admin, fotografia):
@@ -114,7 +123,8 @@ def test_a_aplicacao_so_ve_as_activas(cliente, admin, socio, fotografia):
         },
     ).json()
 
-    vistas = {m["id"] for m in cliente.get(f"/api/mobile/media/{socio['id']}").json()}
+    vistas = {m["id"] for m in cliente.get(f"/api/mobile/media/{socio['id']}",
+                                           headers=como_socio(socio)).json()}
     assert activa["id"] in vistas
     assert escondida["id"] not in vistas
 

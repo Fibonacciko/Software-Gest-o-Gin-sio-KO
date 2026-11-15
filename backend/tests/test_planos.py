@@ -7,6 +7,8 @@ permite dizer ao sócio o que mudou desde a última vez.
 import io
 from datetime import date, timedelta
 
+from conftest import cabecalho_do_socio as como_socio
+
 
 def _plano(cliente, admin, socio_id, **campos):
     corpo = {"kind": "training", "title": "Plano de treino", "content": "3x por semana"}
@@ -62,7 +64,7 @@ def test_os_dois_tipos_convivem(cliente, admin, criar_socio):
     _plano(cliente, admin, socio["id"], kind="training", title="Treino")
     _plano(cliente, admin, socio["id"], kind="nutrition", title="Alimentação")
 
-    planos = cliente.get(f"/api/mobile/plans/{socio['id']}").json()
+    planos = cliente.get(f"/api/mobile/plans/{socio['id']}", headers=como_socio(socio)).json()
     assert sorted(p["kind"] for p in planos) == ["nutrition", "training"]
 
 
@@ -71,15 +73,15 @@ def test_os_planos_sao_de_cada_socio(cliente, admin, criar_socio):
     outro = criar_socio(nome="Outro", telefone="915000007")
     _plano(cliente, admin, um["id"])
 
-    assert len(cliente.get(f"/api/mobile/plans/{um['id']}").json()) == 1
-    assert cliente.get(f"/api/mobile/plans/{outro['id']}").json() == []
+    assert len(cliente.get(f"/api/mobile/plans/{um['id']}", headers=como_socio(um)).json()) == 1
+    assert cliente.get(f"/api/mobile/plans/{outro['id']}", headers=como_socio(outro)).json() == []
 
 
 def test_apagar_um_plano(cliente, admin, criar_socio):
     socio = criar_socio(telefone="915000008")
     p = _plano(cliente, admin, socio["id"]).json()
     assert cliente.delete(f"/api/plans/{p['id']}", headers=admin).status_code == 200
-    assert cliente.get(f"/api/mobile/plans/{socio['id']}").json() == []
+    assert cliente.get(f"/api/mobile/plans/{socio['id']}", headers=como_socio(socio)).json() == []
 
 
 def test_apagar_um_plano_apaga_o_pdf_que_mais_ninguem_usa(cliente, admin, criar_socio):
@@ -124,7 +126,7 @@ def test_o_mesmo_pdf_em_dois_planos_so_se_apaga_no_fim(cliente, admin, criar_soc
 
 def test_o_socio_pede_um_plano_novo(cliente, admin, criar_socio):
     socio = criar_socio(nome="Ana Pede", telefone="915000012")
-    r = cliente.post("/api/mobile/plan-requests",
+    r = cliente.post("/api/mobile/plan-requests", headers=como_socio(socio),
                      json={"member_id": socio["id"], "kind": "training"})
     assert r.status_code == 200, r.text
     assert r.json()["member_name"] == "Ana Pede"
@@ -138,23 +140,25 @@ def test_carregar_duas_vezes_no_botao_nao_faz_dois_pedidos(cliente, admin, criar
     """Senão o Painel enchia-se de pedidos iguais."""
     socio = criar_socio(telefone="915000013")
     corpo = {"member_id": socio["id"], "kind": "training"}
-    um = cliente.post("/api/mobile/plan-requests", json=corpo).json()
-    outro = cliente.post("/api/mobile/plan-requests", json=corpo).json()
+    um = cliente.post("/api/mobile/plan-requests", headers=como_socio(socio),
+                      json=corpo).json()
+    outro = cliente.post("/api/mobile/plan-requests", headers=como_socio(socio),
+                         json=corpo).json()
     assert um["id"] == outro["id"]
     assert len(cliente.get("/api/plan-requests", headers=admin).json()) == 1
 
 
 def test_pedir_treino_e_nutricao_sao_dois_pedidos(cliente, admin, criar_socio):
     socio = criar_socio(telefone="915000014")
-    cliente.post("/api/mobile/plan-requests", json={"member_id": socio["id"], "kind": "training"})
-    cliente.post("/api/mobile/plan-requests", json={"member_id": socio["id"], "kind": "nutrition"})
+    cliente.post("/api/mobile/plan-requests", headers=como_socio(socio), json={"member_id": socio["id"], "kind": "training"})
+    cliente.post("/api/mobile/plan-requests", headers=como_socio(socio), json={"member_id": socio["id"], "kind": "nutrition"})
     assert len(cliente.get("/api/plan-requests", headers=admin).json()) == 2
 
 
 def test_guardar_o_plano_fecha_o_pedido(cliente, admin, criar_socio):
     """Quem já recebeu o plano deixa de estar à espera, sem ninguém se lembrar."""
     socio = criar_socio(telefone="915000015")
-    cliente.post("/api/mobile/plan-requests", json={"member_id": socio["id"], "kind": "training"})
+    cliente.post("/api/mobile/plan-requests", headers=como_socio(socio), json={"member_id": socio["id"], "kind": "training"})
     assert len(cliente.get("/api/plan-requests", headers=admin).json()) == 1
 
     _plano(cliente, admin, socio["id"], kind="training")
@@ -163,7 +167,7 @@ def test_guardar_o_plano_fecha_o_pedido(cliente, admin, criar_socio):
 
 def test_um_plano_de_treino_nao_fecha_o_pedido_de_nutricao(cliente, admin, criar_socio):
     socio = criar_socio(telefone="915000016")
-    cliente.post("/api/mobile/plan-requests", json={"member_id": socio["id"], "kind": "nutrition"})
+    cliente.post("/api/mobile/plan-requests", headers=como_socio(socio), json={"member_id": socio["id"], "kind": "nutrition"})
     _plano(cliente, admin, socio["id"], kind="training")
 
     pedidos = cliente.get("/api/plan-requests", headers=admin).json()
@@ -172,7 +176,7 @@ def test_um_plano_de_treino_nao_fecha_o_pedido_de_nutricao(cliente, admin, criar
 
 def test_marcar_o_pedido_como_tratado(cliente, admin, criar_socio):
     socio = criar_socio(telefone="915000017")
-    pedido = cliente.post("/api/mobile/plan-requests",
+    pedido = cliente.post("/api/mobile/plan-requests", headers=como_socio(socio),
                           json={"member_id": socio["id"], "kind": "training"}).json()
 
     r = cliente.put(f"/api/plan-requests/{pedido['id']}/done", headers=admin)
@@ -181,10 +185,22 @@ def test_marcar_o_pedido_como_tratado(cliente, admin, criar_socio):
     assert cliente.get("/api/plan-requests", headers=admin).json() == []
 
 
-def test_nao_se_pede_plano_para_um_socio_que_nao_existe(cliente):
-    r = cliente.post("/api/mobile/plan-requests",
-                     json={"member_id": "nao-existe", "kind": "training"})
-    assert r.status_code == 404
+def test_nao_se_pede_plano_em_nome_de_outro(cliente, criar_socio):
+    """Era um 404 por o `member_id` nao existir. Agora nem se chega la.
+
+    As rotas da aplicacao exigem o token do socio, e o `member_id` do corpo
+    tem de bater com o dele: um socio com sessao aberta nao pede um plano em
+    nome de outro, nem sabendo-lhe o id.
+    """
+    socio = criar_socio(telefone="915000019")
+    corpo = {"member_id": "nao-existe", "kind": "training"}
+
+    # Sem token, nao se sabe quem esta a pedir
+    assert cliente.post("/api/mobile/plan-requests", json=corpo).status_code == 401
+
+    # Com o token dele, mas em nome de outro
+    r = cliente.post("/api/mobile/plan-requests", headers=como_socio(socio), json=corpo)
+    assert r.status_code == 403
 
 
 def test_o_colaborador_tambem_carrega_planos(cliente, colaborador, criar_socio):

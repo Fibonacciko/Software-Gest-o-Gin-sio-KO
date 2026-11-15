@@ -21,6 +21,9 @@ sys.path.insert(0, str(RAIZ))
 os.environ["DB_NAME"] = "ko_gym_test"
 os.environ.setdefault("MONGO_URL", "mongodb://localhost:27017")
 os.environ["RATE_LIMITS_ENABLED"] = "false"  # os testes fazem muitos pedidos seguidos
+# Sem isto, numa maquina sem `backend/.env` o servidor recusa arrancar por
+# nao ter `JWT_SECRET` -- e esse e o comportamento certo em producao.
+os.environ.setdefault("ENVIRONMENT", "test")
 # As imagens dos testes nao vao parar a pasta de producao
 os.environ["UPLOADS_DIR"] = str(RAIZ / "tests" / "_uploads")
 
@@ -150,6 +153,32 @@ def pagar(cliente, admin):
         return r.json()
 
     return _pagar
+
+
+def cabecalho_do_socio(socio: dict) -> dict:
+    """O cabeçalho que a aplicação do sócio manda em cada pedido.
+
+    **As rotas `/mobile/` exigem o token do sócio.** Antes identificavam-no
+    só pelo `id` no endereço, e quem o soubesse via e mexia no que era dele.
+
+    O token assina-se aqui em vez de se fazer o login verdadeiro porque o
+    bcrypt do PIN é lento de propósito: escolher um PIN e entrar em cada um
+    destes testes acrescentava mais de um minuto à suite. O caminho da
+    entrada tem os testes dele (`test_pin_do_socio.py`,
+    `test_recuperar_o_pin.py`), e há um que confirma que o token que o login
+    devolve serve mesmo nestas rotas.
+    """
+    from datetime import timedelta as _td
+
+    token = server.create_access_token(
+        data={
+            "sub": socio["id"],
+            "role": "member",
+            "tv": int(socio.get("token_version") or 0),
+        },
+        expires_delta=_td(minutes=server.MINUTOS_DO_TOKEN_DO_SOCIO),
+    )
+    return {"Authorization": f"Bearer {token}"}
 
 
 def ficha(cliente, admin, socio_id):

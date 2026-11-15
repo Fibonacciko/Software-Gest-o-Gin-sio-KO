@@ -11,7 +11,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ComicNeue_400Regular, ComicNeue_700Bold, useFonts } from '@expo-google-fonts/comic-neue';
-import { carregarCartao, sessaoGuardada, Socio } from './src/api';
+import { aoPerderASessao, carregarCartao, sessaoGuardada, Socio } from './src/api';
 import BarraDeSeparadores, {
   ORDEM_DOS_SEPARADORES,
   Separador,
@@ -123,6 +123,19 @@ export default function App() {
     ComicNeue_700Bold,
     Anton: require('./assets/Anton-Regular.ttf'),
   });
+
+  /**
+   * O servidor diz que a sessao acabou -> volta-se ao ecra de entrada.
+   *
+   * Acontece quando o token passa dos 90 dias, ou quando alguem apaga o PIN
+   * ao balcao a quem perdeu o telemovel. Sem isto, o socio ficava a olhar
+   * para um cartao com uma mensagem de erro, sem perceber que o que tinha
+   * de fazer era entrar outra vez.
+   */
+  useEffect(() => {
+    aoPerderASessao(() => setSocio(null));
+    return () => aoPerderASessao(null);
+  }, []);
 
   // O socio fica com sessao iniciada; a app abre logo no cartao
   useEffect(() => {

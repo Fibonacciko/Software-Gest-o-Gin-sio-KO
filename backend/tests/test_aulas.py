@@ -9,6 +9,8 @@ As regras que estes testes protegem, decididas pelo dono:
 """
 from datetime import date, datetime, time, timedelta, timezone
 
+from conftest import cabecalho_do_socio as como_socio
+
 
 def dia_guardado(d: date) -> str:
     """A forma como o servidor grava uma data: meia-noite em UTC."""
@@ -41,7 +43,8 @@ def criar_grelha(cliente, admin, modalidades, **campos):
 
 
 def marcar(cliente, socio_id, slot_id, dia):
-    return cliente.post("/api/mobile/bookings", json={
+    # O ajudante recebe o id e nao a ficha; ao `como_socio` basta-lhe o id
+    return cliente.post("/api/mobile/bookings", headers=como_socio({"id": socio_id}), json={
         "member_id": socio_id, "slot_id": slot_id, "class_date": dia.isoformat(),
     })
 
@@ -211,7 +214,7 @@ def test_quem_desiste_da_o_lugar_a_quem_espera_ha_mais_tempo(
     marcar(cliente, segundo["id"], slot["id"], segunda)
     marcar(cliente, terceiro["id"], slot["id"], segunda)
 
-    cliente.delete(f"/api/mobile/bookings/{com_lugar['id']}")
+    cliente.delete(f"/api/mobile/bookings/{com_lugar['id']}", headers=como_socio(primeiro))
 
     inscritos = cliente.get(
         f"/api/classes/{slot['id']}/{segunda.isoformat()}/bookings", headers=admin
@@ -239,7 +242,7 @@ def test_nao_se_desmarca_em_cima_da_hora(cliente, admin, modalidades, criar_soci
         {"id": inscricao["id"]}, {"$set": {"class_date": dia_guardado(date.today())}}
     )
 
-    r = cliente.delete(f"/api/mobile/bookings/{inscricao['id']}")
+    r = cliente.delete(f"/api/mobile/bookings/{inscricao['id']}", headers=como_socio(socio))
     assert r.status_code == 400
     assert "2 horas" in r.json()["detail"]
 
@@ -269,7 +272,7 @@ def test_a_app_diz_ao_socio_o_que_ele_tem_marcado(cliente, admin, modalidades, c
     segunda = proxima(0)
     marcar(cliente, socio["id"], slot["id"], segunda)
 
-    aulas = cliente.get("/api/mobile/classes",
+    aulas = cliente.get("/api/mobile/classes", headers=como_socio(socio),
                         params={"member_id": socio["id"], "dias": 14}).json()
     minha = next(a for a in aulas if a["class_date"] == segunda.isoformat())
     assert minha["my_status"] == "booked"
@@ -283,7 +286,7 @@ def test_a_app_nao_mostra_as_inscricoes_dos_outros(cliente, admin, modalidades, 
     outro = criar_socio(nome="Outro", telefone="917000010")
     marcar(cliente, um["id"], slot["id"], proxima(0))
 
-    aulas = cliente.get("/api/mobile/classes", params={"member_id": outro["id"], "dias": 14}).json()
+    aulas = cliente.get("/api/mobile/classes", headers=como_socio(outro), params={"member_id": outro["id"], "dias": 14}).json()
     assert all(a["my_status"] is None for a in aulas)
     # Mas ve que ha um lugar ocupado
     assert any(a["booked"] == 1 for a in aulas)
@@ -346,7 +349,7 @@ def test_quem_marcou_e_nao_veio_fica_como_falta(cliente, admin, modalidades, cri
         "status": "booked", "created_at": datetime.now().isoformat(),
     })
 
-    aulas = cliente.get("/api/mobile/classes",
+    aulas = cliente.get("/api/mobile/classes", headers=como_socio(socio),
                         params={"member_id": socio["id"], "dias": 1}).json()
     minha = next(a for a in aulas if a["slot_id"] == slot["id"])
     if datetime.now().time() > time(1, 2):

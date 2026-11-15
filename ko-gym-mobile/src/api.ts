@@ -7,6 +7,46 @@ export const API_BASE =
 
 const CHAVE_SESSAO = 'ko-gym-sessao';
 
+/**
+ * O token da sessao, em memoria.
+ *
+ * **Cada pedido as rotas `/mobile/` leva-o.** Antes nao levava nada: a
+ * aplicacao dizia quem era pelo `id` do socio no proprio endereco, e quem
+ * soubesse um `id` -- um UUID, mas que fica escrito no registo do servidor
+ * e nao se pode cancelar -- via os pagamentos, as avaliacoes e os planos
+ * daquela pessoa.
+ *
+ * Fica em memoria porque o `AsyncStorage` e assincrono e e lido em cada
+ * pedido: ir ao disco dezenas de vezes por ecra nao se justifica quando o
+ * valor nunca muda enquanto a sessao durar.
+ */
+let tokenDaSessao: string | null = null;
+
+/** Quem avisar quando o servidor disser que a sessao acabou. */
+let avisarQuePerdeuASessao: (() => void) | null = null;
+
+/**
+ * O `App` registra-se aqui para voltar ao ecra de entrada sozinho.
+ *
+ * Sem isto, um token fora de prazo -- ou cortado ao balcao, ao apagar o PIN
+ * -- deixava o socio a olhar para um cartao com uma mensagem de erro, sem
+ * perceber que o que tinha de fazer era entrar outra vez.
+ */
+export function aoPerderASessao(fn: (() => void) | null) {
+  avisarQuePerdeuASessao = fn;
+}
+
+async function lerToken(): Promise<string | null> {
+  if (tokenDaSessao) return tokenDaSessao;
+  try {
+    const bruto = await AsyncStorage.getItem(CHAVE_SESSAO);
+    tokenDaSessao = bruto ? JSON.parse(bruto).token ?? null : null;
+  } catch {
+    tokenDaSessao = null;
+  }
+  return tokenDaSessao;
+}
+
 export type Socio = {
   id: string;
   member_number: string;
@@ -191,15 +231,24 @@ export type ResultadoCheckin = {
 };
 
 async function pedir<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
+  const token = await lerToken();
   const resposta = await fetch(`${API_BASE}${caminho}`, {
     ...opcoes,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(opcoes.headers || {}),
     },
   });
 
   if (!resposta.ok) {
+    // **So e perda de sessao se tinhamos token.** O ecra de entrada tambem
+    // recebe 401 -- quando o PIN nao confere --, e ai nao ha sessao nenhuma
+    // para perder: e um erro para ler, nao um motivo para sair.
+    if (resposta.status === 401 && token) {
+      await sair();
+      avisarQuePerdeuASessao?.();
+    }
     let detalhe = 'Não foi possível falar com o ginásio.';
     try {
       const corpo = await resposta.json();
@@ -222,6 +271,7 @@ type Entrada = {
 };
 
 async function guardarSessao(dados: Entrada) {
+  tokenDaSessao = dados.access_token;
   await AsyncStorage.setItem(
     CHAVE_SESSAO,
     JSON.stringify({ token: dados.access_token, memberId: dados.member.id })
@@ -329,13 +379,18 @@ export async function sessaoGuardada(): Promise<string | null> {
   try {
     const bruto = await AsyncStorage.getItem(CHAVE_SESSAO);
     if (!bruto) return null;
-    return JSON.parse(bruto).memberId ?? null;
+    const guardado = JSON.parse(bruto);
+    // Aproveita-se a leitura para trazer o token ja para a memoria: e aqui
+    // que a aplicacao arranca, e o primeiro pedido vem logo a seguir.
+    tokenDaSessao = guardado.token ?? null;
+    return guardado.memberId ?? null;
   } catch {
     return null;
   }
 }
 
 export async function sair() {
+  tokenDaSessao = null;
   await AsyncStorage.removeItem(CHAVE_SESSAO);
 }
 
@@ -445,9 +500,15 @@ export async function guardarFotoDoSocio(
     type: nome.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg',
   } as any);
 
+  // Vai como ficheiro, mas o token e igual ao dos outros pedidos
+  const token = await lerToken();
   const resposta = await fetch(
     `${API_BASE}/mobile/members/${encodeURIComponent(memberId)}/photo`,
-    { method: 'POST', body: formulario }
+    {
+      method: 'POST',
+      body: formulario,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }
   );
 
   if (!resposta.ok) {

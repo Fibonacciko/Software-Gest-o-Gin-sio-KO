@@ -10,6 +10,8 @@ import pytest
 
 # ------------------------------------------------------------------ fotografias
 
+from conftest import cabecalho_do_socio as como_socio
+
 def imagem_falsa(nome="foto.jpg"):
     # Um PNG mínimo serve: o servidor olha para a extensão e o tamanho
     return {"ficheiro": (nome, io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"0" * 200), "image/jpeg")}
@@ -287,7 +289,7 @@ def test_reservar_um_artigo_sem_stock_e_aceite(cliente, admin, criar_socio):
     }).json()
     socio = criar_socio(telefone="913700077")
 
-    r = cliente.post("/api/mobile/reservations", json={
+    r = cliente.post("/api/mobile/reservations", headers=como_socio(socio), json={
         "item_id": artigo["id"], "member_id": socio["id"], "quantity": 2,
     })
     assert r.status_code == 200, r.text
@@ -490,7 +492,7 @@ def test_reservar_continua_a_ser_de_um_tamanho_certo(cliente, admin, criar_socio
     artigo = cliente.get("/api/mobile/shop").json()[0]
     medio = next(t for t in artigo["sizes"] if t["size"] == "M")
 
-    r = cliente.post("/api/mobile/reservations", json={
+    r = cliente.post("/api/mobile/reservations", headers=como_socio(socio), json={
         "item_id": medio["item_id"], "member_id": socio["id"], "quantity": 1,
     })
     assert r.status_code == 200, r.text
@@ -501,7 +503,7 @@ def test_reservar_continua_a_ser_de_um_tamanho_certo(cliente, admin, criar_socio
 
 def test_reservar_pela_app(cliente, admin, criar_socio, artigo_com_foto):
     socio = criar_socio(telefone="913000001")
-    r = cliente.post("/api/mobile/reservations", json={
+    r = cliente.post("/api/mobile/reservations", headers=como_socio(socio), json={
         "item_id": artigo_com_foto["id"], "member_id": socio["id"], "quantity": 2,
     })
     assert r.status_code == 200, r.text
@@ -515,7 +517,7 @@ def test_reservar_pela_app(cliente, admin, criar_socio, artigo_com_foto):
 def test_a_reserva_nao_mexe_no_stock(cliente, admin, criar_socio, artigo_com_foto):
     """Reservar não é vender: o stock só desce quando o sócio levanta."""
     socio = criar_socio(telefone="913000002")
-    cliente.post("/api/mobile/reservations", json={
+    cliente.post("/api/mobile/reservations", headers=como_socio(socio), json={
         "item_id": artigo_com_foto["id"], "member_id": socio["id"], "quantity": 2,
     })
     artigos = cliente.get("/api/inventory", headers=admin).json()
@@ -529,23 +531,32 @@ def test_reserva_se_mais_do_que_existe(cliente, criar_socio, artigo_com_foto):
     la que isso se resolve. Recusar aqui so lhe tirava a vontade de pedir.
     """
     socio = criar_socio(telefone="913000003")
-    r = cliente.post("/api/mobile/reservations", json={
+    r = cliente.post("/api/mobile/reservations", headers=como_socio(socio), json={
         "item_id": artigo_com_foto["id"], "member_id": socio["id"], "quantity": 99,
     })
     assert r.status_code == 200, r.text
     assert r.json()["quantity"] == 99
 
 
-def test_nao_se_reserva_para_um_socio_que_nao_existe(cliente, artigo_com_foto):
-    r = cliente.post("/api/mobile/reservations", json={
-        "item_id": artigo_com_foto["id"], "member_id": "nao-existe", "quantity": 1,
-    })
-    assert r.status_code == 404
+def test_nao_se_reserva_em_nome_de_outro(cliente, criar_socio, artigo_com_foto):
+    """Era um 404 por o `member_id` nao existir. Agora nem se chega la.
+
+    Uma reserva e um pedido ao balcao com o nome de quem o fez. Sem token,
+    qualquer pessoa punha uma reserva em nome de outro socio, e era esse que
+    aparecia no cartao das reservas por tratar, no topo do Stock.
+    """
+    socio = criar_socio(telefone="913000099")
+    corpo = {"item_id": artigo_com_foto["id"], "member_id": "nao-existe", "quantity": 1}
+
+    assert cliente.post("/api/mobile/reservations", json=corpo).status_code == 401
+
+    r = cliente.post("/api/mobile/reservations", headers=como_socio(socio), json=corpo)
+    assert r.status_code == 403
 
 
 def test_o_ginasio_ve_as_reservas_e_muda_o_estado(cliente, admin, criar_socio, artigo_com_foto):
     socio = criar_socio(telefone="913000004")
-    reserva = cliente.post("/api/mobile/reservations", json={
+    reserva = cliente.post("/api/mobile/reservations", headers=como_socio(socio), json={
         "item_id": artigo_com_foto["id"], "member_id": socio["id"],
     }).json()
 
@@ -561,12 +572,12 @@ def test_o_ginasio_ve_as_reservas_e_muda_o_estado(cliente, admin, criar_socio, a
 def test_o_socio_ve_as_suas_reservas(cliente, criar_socio, artigo_com_foto):
     socio = criar_socio(telefone="913000005")
     outro = criar_socio(nome="Outro Sócio", telefone="913000006")
-    cliente.post("/api/mobile/reservations",
+    cliente.post("/api/mobile/reservations", headers=como_socio(socio),
                  json={"item_id": artigo_com_foto["id"], "member_id": socio["id"]})
-    cliente.post("/api/mobile/reservations",
+    cliente.post("/api/mobile/reservations", headers=como_socio(socio),
                  json={"item_id": artigo_com_foto["id"], "member_id": outro["id"]})
 
-    minhas = cliente.get(f"/api/mobile/reservations/{socio['id']}").json()
+    minhas = cliente.get(f"/api/mobile/reservations/{socio['id']}", headers=como_socio(socio)).json()
     assert len(minhas) == 1
     assert minhas[0]["member_id"] == socio["id"]
 
@@ -574,7 +585,7 @@ def test_o_socio_ve_as_suas_reservas(cliente, criar_socio, artigo_com_foto):
 def test_o_colaborador_trata_das_reservas(cliente, admin, colaborador, criar_socio, artigo_com_foto):
     """É quem está ao balcão a preparar o artigo."""
     socio = criar_socio(telefone="913000007")
-    reserva = cliente.post("/api/mobile/reservations", json={
+    reserva = cliente.post("/api/mobile/reservations", headers=como_socio(socio), json={
         "item_id": artigo_com_foto["id"], "member_id": socio["id"],
     }).json()
     r = cliente.put(f"/api/reservations/{reserva['id']}", headers=colaborador,
@@ -630,7 +641,7 @@ def test_o_colaborador_ve_mas_nao_altera_a_ficha(cliente, colaborador):
 
 def test_o_socio_carrega_a_sua_fotografia(cliente, admin, criar_socio):
     socio = criar_socio(telefone="913500001")
-    r = cliente.post(f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa("eu.jpg"))
+    r = cliente.post(f"/api/mobile/members/{socio['id']}/photo", headers=como_socio(socio), files=imagem_falsa("eu.jpg"))
     assert r.status_code == 200, r.text
     assert r.json()["photo_url"].startswith("/api/uploads/")
 
@@ -642,10 +653,10 @@ def test_o_socio_carrega_a_sua_fotografia(cliente, admin, criar_socio):
 def test_a_fotografia_aparece_no_cartao_da_app(cliente, criar_socio):
     socio = criar_socio(telefone="913500002")
     url = cliente.post(
-        f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa()
+        f"/api/mobile/members/{socio['id']}/photo", headers=como_socio(socio), files=imagem_falsa()
     ).json()["photo_url"]
 
-    cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
+    cartao = cliente.get("/api/mobile/profile", headers=como_socio(socio), params={"member_id": socio["id"]}).json()
     assert cartao["photo_url"] == url
 
 
@@ -656,14 +667,14 @@ def test_trocar_a_fotografia_apaga_a_anterior(cliente, criar_socio):
 
     socio = criar_socio(telefone="913500003")
     primeira = cliente.post(
-        f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa("a.jpg")
+        f"/api/mobile/members/{socio['id']}/photo", headers=como_socio(socio), files=imagem_falsa("a.jpg")
     ).json()["photo_url"]
 
     pasta = Path(os.environ["UPLOADS_DIR"])
     assert (pasta / primeira.rsplit("/", 1)[-1]).exists()
 
     segunda = cliente.post(
-        f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa("b.jpg")
+        f"/api/mobile/members/{socio['id']}/photo", headers=como_socio(socio), files=imagem_falsa("b.jpg")
     ).json()["photo_url"]
 
     assert not (pasta / primeira.rsplit("/", 1)[-1]).exists()
@@ -672,9 +683,9 @@ def test_trocar_a_fotografia_apaga_a_anterior(cliente, criar_socio):
 
 def test_tirar_a_fotografia_volta_ao_logotipo(cliente, admin, criar_socio):
     socio = criar_socio(telefone="913500004")
-    cliente.post(f"/api/mobile/members/{socio['id']}/photo", files=imagem_falsa())
+    cliente.post(f"/api/mobile/members/{socio['id']}/photo", headers=como_socio(socio), files=imagem_falsa())
 
-    r = cliente.delete(f"/api/mobile/members/{socio['id']}/photo")
+    r = cliente.delete(f"/api/mobile/members/{socio['id']}/photo", headers=como_socio(socio))
     assert r.status_code == 200
 
     ficha = cliente.get(f"/api/members/{socio['id']}", headers=admin).json()
@@ -684,15 +695,32 @@ def test_tirar_a_fotografia_volta_ao_logotipo(cliente, admin, criar_socio):
 def test_a_fotografia_so_aceita_imagens(cliente, criar_socio):
     socio = criar_socio(telefone="913500005")
     r = cliente.post(
-        f"/api/mobile/members/{socio['id']}/photo",
+        f"/api/mobile/members/{socio['id']}/photo", headers=como_socio(socio),
         files={"ficheiro": ("video.mp4", io.BytesIO(b"nao e imagem"), "video/mp4")},
     )
     assert r.status_code == 400
 
 
-def test_nao_se_poe_fotografia_num_socio_que_nao_existe(cliente):
-    r = cliente.post("/api/mobile/members/nao-existe/photo", files=imagem_falsa())
-    assert r.status_code == 404
+def test_nao_se_poe_fotografia_na_ficha_de_outro(cliente, criar_socio):
+    """Era um 404 por o id nao existir. Agora nem se chega la.
+
+    A fotografia do socio e a mesma dos dois lados -- a que ele escolhe no
+    telemovel aparece na ficha dele na gestao. Sem token, qualquer pessoa que
+    soubesse um `id` trocava a fotografia daquela ficha.
+    """
+    socio = criar_socio(telefone="914000091")
+
+    # Sem token
+    assert cliente.post(
+        "/api/mobile/members/nao-existe/photo", files=imagem_falsa()
+    ).status_code == 401
+
+    # Com o token dele, mas noutra ficha
+    assert cliente.post(
+        "/api/mobile/members/nao-existe/photo",
+        headers=como_socio(socio),
+        files=imagem_falsa(),
+    ).status_code == 403
 
 
 
