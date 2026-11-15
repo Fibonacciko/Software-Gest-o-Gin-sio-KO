@@ -21,7 +21,12 @@ import './App.css';
 
 function App() {
   const [language, setLanguage] = useState('pt');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Aberta no computador, fechada no telemovel. Num ecra estreito a barra e
+  // uma folha por cima da pagina: aberta de origem, a primeira coisa que se
+  // via depois de entrar era o menu, e nao a pagina que se pediu.
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window === 'undefined' || window.innerWidth >= 1024
+  );
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Premium dark mode
@@ -151,7 +156,14 @@ function App() {
           )}
           
         <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} language={language} setLanguage={setLanguage} translations={translations[language]} />
-          <div className="lg:ml-64" style={{ paddingTop: !isOnline ? '40px' : '0' }}>
+          {/* `pt-14` so no telemovel: e o espaco do botao de abrir o menu, que
+              ali flutua por cima da pagina. Sem ele o botao ficava em cima do
+              titulo de cada ecra. Num computador a barra esta numa coluna sua
+              (`lg:ml-64`) e nao ha botao nenhum a flutuar.
+              O aviso de "sem ligacao" esta fixo no topo, e por isso empurra o
+              conteudo com uma margem -- somando-se ao espaco do botao em vez
+              de o substituir. */}
+          <div className={`lg:ml-64 pt-14 lg:pt-0 ${!isOnline ? 'mt-10' : ''}`}>
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/" element={

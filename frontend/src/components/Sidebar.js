@@ -29,6 +29,15 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
   // Dark mode premium
   const { darkMode, toggleDarkMode } = useDarkMode();
 
+  // Quem ainda nao entrou nao tem menu nenhum para ver.
+  //
+  // Num computador isto nao se notava: a barra fica numa coluna sua e o ecra
+  // de entrada ao lado. Num telemovel ela e uma folha por cima da pagina, e
+  // **tapava o ecra de entrada** -- quem abria o site no telefone via o menu
+  // e tinha de descobrir o X para chegar aos campos. Ainda por cima mostrava
+  // "Staff" e um menu de colaborador a quem nao tinha sessao nenhuma.
+  if (!user) return null;
+
   const menuItems = [
     { path: '/', icon: Home, label: translations.dashboard },
     { path: '/members', icon: Users, label: translations.members },
@@ -50,9 +59,33 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
         />
       )}
       
-      {/* Sidebar */}
+      {/* O botao de abrir, so no telemovel e so com a barra fechada.
+          Fechada, ela sai inteira do ecra (ver abaixo), e sem isto nao havia
+          por onde a voltar a abrir. */}
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="fixed top-3 left-3 z-40 p-2 rounded-lg shadow-lg lg:hidden"
+          style={{
+            background: 'var(--background-sidebar)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-light)'
+          }}
+          aria-label="Abrir o menu"
+          data-testid="abrir-menu"
+        >
+          <Menu size={20} />
+        </button>
+      )}
+
+      {/* Sidebar
+          Num computador, fechada, encolhe para uma tira de icones (`w-16`) e
+          o conteudo tem `lg:ml-64` a compensa-la. Num telemovel nao ha
+          margem nenhuma: essa tira ficava **por cima** dos primeiros 64
+          pixeis de cada pagina. Por isso ali ela sai inteira do ecra. */}
       <div className={`fixed left-0 top-0 h-full shadow-xl transition-all duration-300 z-50 ${
-        isOpen ? 'w-64' : 'w-16'
+        isOpen ? 'w-64' : 'w-16 -translate-x-full lg:translate-x-0'
       }`} style={{ background: 'var(--background-sidebar)', boxShadow: 'var(--shadow-lg)' }}>
         {/* Header */}
         <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
