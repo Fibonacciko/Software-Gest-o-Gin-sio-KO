@@ -162,7 +162,8 @@ const estilos = StyleSheet.create({
   medidaValor: { color: cores.texto, fontSize: 18, fontWeight: '800' },
   delta: { fontSize: 11, fontWeight: '700' },
   igual: { color: cores.textoSecundario, fontSize: 11 },
-  abrir: { color: cores.laranjaClaro, fontSize: 13, fontWeight: '700', marginTop: espaco.s },
+  // Em ouro, como as letras de tudo o que e para carregar
+  abrir: { color: cores.ouro, fontSize: 13, fontWeight: '700', marginTop: espaco.s },
 
   fundoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
   janela: {

@@ -5651,6 +5651,26 @@ async def avaliacoes_para_a_app(member_id: str):
     return [Assessment(**a) for a in avaliacoes]
 
 
+@api_router.get("/mobile/payments/{member_id}", response_model=List[Payment])
+async def pagamentos_do_socio(member_id: str):
+    """O que este socio pagou ao ginasio, do mais recente para tras.
+
+    E o historial dele, nao as contas do ginasio: por isso **nao** se aplica
+    aqui o INICIO_DAS_CONTAS, que so manda no que entra nas somas das
+    Financas e dos Relatorios. O socio que pagou em 2025 pagou, e tem o
+    direito de o ver.
+
+    Vem tudo: sao dezenas de linhas por socio, nao milhares, e a app mostra
+    as ultimas e abre o resto numa janela.
+    """
+    pagamentos = await db.payments.find({"member_id": member_id}).to_list(1000)
+    pagamentos = [parse_from_mongo(p) for p in pagamentos]
+    # Pela data do pagamento -- a que o socio reconhece, que e o dia em que
+    # ele pagou. A accounting_date e assunto das contas do ginasio.
+    pagamentos.sort(key=lambda p: str(p.get("payment_date") or ""), reverse=True)
+    return [Payment(**p) for p in pagamentos]
+
+
 @api_router.get("/mobile/reservations/{member_id}", response_model=List[Reservation])
 async def reservas_do_socio(member_id: str):
     reservas = await db.reservations.find({"member_id": member_id}).sort("created_at", -1).to_list(200)

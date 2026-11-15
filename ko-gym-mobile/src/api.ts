@@ -124,6 +124,16 @@ export type Avaliacao = {
   notes?: string | null;
 };
 
+/** O que o socio pagou ao ginasio. */
+export type Pagamento = {
+  id: string;
+  amount: number;
+  payment_date: string;
+  payment_type: 'quota' | 'seguro' | 'quota_seguro' | string;
+  payment_method: 'cash' | 'card' | 'transfer' | 'mbway' | string;
+  description?: string | null;
+};
+
 export type TipoDePlano = 'training' | 'nutrition';
 
 /**
@@ -242,6 +252,11 @@ export function carregarCartao(memberId: string) {
 /** A evolucao do socio, da medicao mais antiga para a mais recente. */
 export function carregarAvaliacoes(memberId: string) {
   return pedir<Avaliacao[]>(`/mobile/assessments/${encodeURIComponent(memberId)}`);
+}
+
+/** O que o socio pagou, do mais recente para tras. */
+export function carregarPagamentos(memberId: string) {
+  return pedir<Pagamento[]>(`/mobile/payments/${encodeURIComponent(memberId)}`);
 }
 
 /** Os planos do socio, do mais recente para tras. */

@@ -151,7 +151,7 @@ const estilos = StyleSheet.create({
     paddingVertical: espaco.s,
     borderRadius: raio.redondo,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: cores.laranjaClaro,
+    borderColor: cores.dourado,
     backgroundColor: 'rgba(232,132,42,0.14)',
   },
   premido: { opacity: 0.7 },

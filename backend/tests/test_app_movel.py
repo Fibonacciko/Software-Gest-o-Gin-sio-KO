@@ -160,3 +160,43 @@ def test_sem_treinos_nao_ha_dias(cliente, criar_socio):
     socio = criar_socio(telefone="912345678")
     cartao = cliente.get("/api/mobile/profile", params={"member_id": socio["id"]}).json()
     assert cartao["training_days"] == 0
+
+
+def test_o_socio_ve_os_pagamentos_dele(cliente, admin, criar_socio, pagar):
+    """O historial do socio, do mais recente para tras.
+
+    Nao e as contas do ginasio: um pagamento anterior ao INICIO_DAS_CONTAS
+    nao entra nas somas das Financas, mas entra aqui -- quem pagou, pagou.
+    """
+    socio = criar_socio(telefone="912345678")
+    outro = criar_socio(nome="Outro Sócio", telefone="912999999")
+
+    hoje = date.today()
+    pagar(socio["id"], valor=35.0, tipo="quota", quando=hoje - timedelta(days=60))
+    pagar(socio["id"], valor=20.0, tipo="seguro", quando=hoje - timedelta(days=30))
+    pagar(socio["id"], valor=35.0, tipo="quota", quando=hoje)
+    pagar(outro["id"], valor=35.0, tipo="quota", quando=hoje)
+
+    r = cliente.get(f"/api/mobile/payments/{socio['id']}")
+    assert r.status_code == 200, r.text
+    lista = r.json()
+
+    # So os dele
+    assert len(lista) == 3
+    assert {p["member_id"] for p in lista} == {socio["id"]}
+
+    # Do mais recente para tras
+    datas = [p["payment_date"] for p in lista]
+    assert datas == sorted(datas, reverse=True)
+
+    # Com o que a app precisa de mostrar
+    assert lista[0]["amount"] == 35.0
+    assert lista[0]["payment_type"] == "quota"
+    assert lista[0]["payment_method"] == "cash"
+
+
+def test_socio_sem_pagamentos_traz_lista_vazia(cliente, criar_socio):
+    socio = criar_socio(telefone="912345678")
+    r = cliente.get(f"/api/mobile/payments/{socio['id']}")
+    assert r.status_code == 200
+    assert r.json() == []

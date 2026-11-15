@@ -62,6 +62,32 @@ Três tipos: **Quota**, **Seguro** (20 € automáticos) e **Mensalidade + Segur
 Nas contas, um pagamento combinado é repartido: 20 € contam como seguro, o resto
 como quota.
 
+### Faturação
+
+**Este software não emite faturas, e não vai emitir.** Decisão tomada em
+novembro de 2026, com o dono.
+
+Em Portugal (DL 28/2019) é obrigado a usar **programa certificado pela AT**
+quem tiver volume de negócios acima de 50 000 €, contabilidade organizada,
+**ou quem emita faturas por computador** — seja qual for o programa. Não há
+meio-termo: ou o programa está certificado, ou as faturas são à mão em papel.
+
+Certificar o KO Gym seria possível — o pedido faz-se à AT, pelo produtor do
+software — mas obrigaria a séries sem furos, ATCUD, código QR, assinatura
+encadeada com chave registada, exportação SAF-T PT, impossibilidade de apagar
+documentos, auditoria, e a manter tudo isso a cada mudança de regras. E, o
+que mais pesa: **um erro nosso passaria a ser uma coima do dono**. Hoje, um
+número trocado corrige-se; ali, não.
+
+**O desenho escolhido**: o KO Gym continua a ser onde o pagamento se regista,
+e a fatura sai de um programa certificado por trás (InvoiceXpress, Vendus,
+Moloni — todos com API). O nosso software avisa-o, recebe de volta o PDF com
+ATCUD e QR, guarda o endereço e mostra-o ao sócio na aplicação, ao lado do
+pagamento.
+
+O ginásio começa a emitir faturas em **janeiro de 2027**. Até lá a aplicação
+mostra o historial de pagamentos e diz, por palavras, que não é uma fatura.
+
 ### Início das contas
 
 **As contas do ginásio começam a 1 de outubro de 2026** (`INICIO_DAS_CONTAS`,
@@ -622,7 +648,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 304 testes e demoram 16 segundos.
+backend** — são 306 testes e demoram 16 segundos.
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -630,7 +656,7 @@ cd backend && ./venv/Scripts/python.exe -m pytest tests -q
 
 Ou, no Windows, dois cliques em `TESTAR.bat`.
 
-As contas dos Relatórios e a pesquisa têm testes próprios, no site (133 testes,
+As contas dos Relatórios e a pesquisa têm testes próprios, no site (139 testes,
 4 segundos):
 
 ```bash
@@ -862,8 +888,26 @@ deslizava-se para a direita e ia-se parar ao separador da esquerda.
 | **Parceiros** | Protocolos de parceria, com a vantagem em destaque |
 | **Ginásio** | Morada, horário, contactos, mapa e avaliações |
 
-**O Início acaba nos planos, e é todo do sócio**: o cartão, o check-in, o QR,
-a quota e o seguro, os treinos, a evolução e os planos. Mais nada.
+**O Início é todo do sócio**: o cartão, o check-in, o QR, a quota e o seguro,
+os treinos, a evolução, os planos e, no fim, os pagamentos dele. Mais nada.
+
+**Os pagamentos fecham a página**, depois dos planos, e só aparecem a quem
+tem algum registado — a quem acabou de se inscrever, uma caixa vazia não diz
+nada. Mostram-se os três últimos e o resto abre numa janela, com o total.
+É a pergunta que mais se ouve ao balcão — *"já paguei este mês?"* — e a
+resposta estava só na gestão. (`MeusPagamentos.tsx`,
+`GET /api/mobile/payments/{member_id}`, com testes.)
+
+**Não é uma fatura, e diz isso.** Em Portugal uma fatura tem de sair de
+programa certificado pela AT, e este não é — ver **Faturação**, mais abaixo.
+Por isso a lista não traz número de documento nem se parece com um documento
+fiscal, e a janela acaba com uma linha a dizê-lo. Quando o ginásio passar a
+emitir faturas por um programa certificado, é nesta mesma lista que o PDF de
+cada uma aparece, ao lado da linha.
+
+**O INICIO_DAS_CONTAS não se aplica aqui.** Essa data manda no que entra nas
+somas das Finanças e dos Relatórios; o historial do sócio é outra coisa. Quem
+pagou em 2025 pagou, e tem o direito de o ver.
 
 As **fotografias do ginásio**, a **montra** e os **protocolos dos parceiros**
 estiveram no fim desta página, num rolo (`RoloDoInicio`, apagado). Saíram por

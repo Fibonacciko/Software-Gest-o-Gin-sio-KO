@@ -27,6 +27,7 @@ import {
   sair,
   Socio,
 } from '../api';
+import MeusPagamentos from '../componentes/MeusPagamentos';
 import MeusPlanos from '../componentes/MeusPlanos';
 import MinhasMetricas from '../componentes/MinhasMetricas';
 import Versao from '../componentes/Versao';
@@ -428,6 +429,11 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
 
       {/* Os planos de treino e alimentar, e o botao de pedir um novo */}
       <MeusPlanos socioId={socio.id} />
+
+      {/* O que ele pagou ao ginasio. Vem depois dos planos, por pedido do
+          dono: e consulta, nao e treino -- o Inicio e do esforco dele, e isto
+          fecha a pagina. So aparece a quem tem pagamentos registados. */}
+      <MeusPagamentos socioId={socio.id} />
 
       {/* O Início acaba aqui, nos planos. As fotografias do ginásio, a
           montra e os parceiros estiveram neste lugar e saíram por decisão do
