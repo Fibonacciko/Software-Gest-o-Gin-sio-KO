@@ -32,7 +32,7 @@ import MeusPlanos from '../componentes/MeusPlanos';
 import MinhasMetricas from '../componentes/MinhasMetricas';
 import Versao from '../componentes/Versao';
 import Vidro from '../componentes/Vidro';
-import { dataPt } from '../lib/datas';
+import { dataPt, jaPassou } from '../lib/datas';
 import { ESTICA, MEIO_DA_TINTA, nomeDoDia, tamanhoDaTinta } from '../lib/dia';
 import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
@@ -206,13 +206,16 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
       : estado === 'active'
         ? cores.verde
         : cores.textoSecundario;
+  // As mesmas palavras da gestao: quem atende ao balcao olha para o ecra
+  // dele e tem de ler o mesmo que o socio tem no telemovel. Escritas como
+  // la: "Ativo", "Inativo" -- e nao "activo", que era o que estava aqui.
   const textoEstado =
     estado === 'suspended'
       ? 'SUSPENSO'
       : estado === 'inactive'
-        ? 'INACTIVO'
+        ? 'INATIVO'
         : estado === 'active'
-          ? 'ACTIVO'
+          ? 'ATIVO'
           : 'SÓCIO';
 
   return (
@@ -387,12 +390,20 @@ export default function EcraCartao({ socio: inicial, aoSair }: Props) {
         <View style={estilos.separadorVertical} />
         <View style={estilos.colunaEstado}>
           <Text style={estilos.validadeEtiqueta}>Quota até</Text>
-          <Text style={estilos.validadeValor}>{dataPt(socio.membership_valid_until) ?? '—'}</Text>
+          <Text style={[estilos.validadeValor, jaPassou(socio.membership_valid_until) && estilos.caducado]}>
+            {dataPt(socio.membership_valid_until) ?? 'Sem registo'}
+          </Text>
         </View>
         <View style={estilos.separadorVertical} />
         <View style={estilos.colunaEstado}>
           <Text style={estilos.validadeEtiqueta}>Seguro até</Text>
-          <Text style={estilos.validadeValor}>{dataPt(socio.insurance_valid_until) ?? '—'}</Text>
+          {/* A vermelho quando já passou. Antes as duas datas apareciam em
+              branco estivessem válidas ou caducadas, e o sócio não tinha
+              como saber que o seguro tinha acabado em março -- lia a data e
+              ficava na mesma. É o que o ginásio mais precisa de lhe pedir. */}
+          <Text style={[estilos.validadeValor, jaPassou(socio.insurance_valid_until) && estilos.caducado]}>
+            {dataPt(socio.insurance_valid_until) ?? 'Sem registo'}
+          </Text>
         </View>
       </Vidro>
 
@@ -676,6 +687,7 @@ const estilos = StyleSheet.create({
   },
   validadeEtiqueta: { color: cores.textoSecundario, fontSize: 11 },
   validadeValor: { color: cores.texto, fontSize: 15, fontWeight: '700', marginTop: 3 },
+  caducado: { color: cores.vermelho },
   estadoValor: { fontSize: 15, fontWeight: '800', marginTop: 3, letterSpacing: 0.5 },
 
   numeros: { flexDirection: 'row', gap: espaco.m, marginTop: espaco.m },

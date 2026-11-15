@@ -2,28 +2,33 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { carregarPagamentos, Pagamento } from '../api';
 import { dataPt } from '../lib/datas';
+import { euros } from '../lib/dinheiro';
 import Vidro from './Vidro';
 import { cores, espaco, raio } from '../theme';
 
-/** O que cada tipo de pagamento é, por palavras do ginásio. */
+/**
+ * O que cada tipo de pagamento é. **São as palavras exactas da gestão** —
+ * os mesmos selos que aparecem na lista de pagamentos do site. Quando o
+ * sócio pergunta ao balcão o que é uma linha, quem atende olha para o ecrã
+ * dele e tem de ler a mesma coisa.
+ */
 const TIPOS: Record<string, string> = {
-  quota: 'Quota mensal',
-  seguro: 'Seguro anual',
+  quota: 'Quota',
+  seguro: 'Seguro',
   quota_seguro: 'Quota + Seguro',
 };
 
-/** Como foi pago. O servidor guarda em inglês, de origem. */
+/** Como foi pago, também nas palavras da gestão. O servidor guarda em
+ *  inglês, de origem. */
 const METODOS: Record<string, string> = {
   cash: 'Numerário',
-  card: 'Multibanco',
+  card: 'Cartão',
   transfer: 'Transferência',
-  mbway: 'MB Way',
+  mbway: 'MBWay',
 };
 
 /** Quantos se veem sem abrir a janela. */
 const NO_CARTAO = 3;
-
-const euros = (v: number) => `${v.toFixed(2).replace('.', ',')} €`;
 
 /**
  * O que o sócio pagou ao ginásio.

@@ -22,6 +22,7 @@ import {
   Socio,
 } from '../api';
 import CartaoDeDestaque from '../componentes/CartaoDeDestaque';
+import { euros } from '../lib/dinheiro';
 import GaleriaDoArtigo from '../componentes/GaleriaDoArtigo';
 import { cores, espaco, raio, superficie } from '../theme';
 
@@ -210,7 +211,7 @@ export default function EcraLoja({ socio }: Props) {
                 aoTocar={() => abrir(a)}
               />
               <View style={estilos.rodape}>
-                <Text style={estilos.preco}>{a.price.toFixed(2)} €</Text>
+                <Text style={estilos.preco}>{euros(a.price)}</Text>
                 <Text style={estilos.reservar}>Reservar</Text>
               </View>
             </View>
@@ -294,7 +295,7 @@ export default function EcraLoja({ socio }: Props) {
                 </View>
 
                 <Text style={estilos.total}>
-                  Total a pagar no ginásio: {(escolhido.price * quantidade).toFixed(2)} €
+                  Total a pagar no ginásio: {euros(escolhido.price * quantidade)}
                 </Text>
 
                 {erro ? <Text style={estilos.erro}>{erro}</Text> : null}

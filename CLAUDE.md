@@ -688,7 +688,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (91 testes, 10 segundos):
+A **aplicação do sócio** também tem os seus (100 testes, 10 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest
@@ -1297,6 +1297,27 @@ arranque de novo — não confie no `--reload`.
 **Datas e fusos horários.** As datas são guardadas com hora
 (`2026-09-25T00:00:00+00:00`). Em Portugal, `toISOString()` sobre uma data local
 **recua um dia**.
+
+**As palavras são as mesmas dos dois lados.** Quando o sócio pergunta ao
+balcão o que é uma linha do telemóvel dele, quem atende olha para o ecrã da
+gestão e tem de ler o mesmo. Por isso os tipos de pagamento na aplicação
+dizem **Quota**, **Seguro** e **Quota + Seguro** — os selos exactos da lista
+de pagamentos do site — e os métodos dizem **Numerário**, **Cartão**,
+**Transferência** e **MBWay**. O estado diz **ATIVO** e **INATIVO**, como na
+gestão: escrevia-se "ACTIVO" na aplicação e "Ativo" no site.
+
+**O dinheiro escreve-se `35,00 €`** — vírgula nos cêntimos e o símbolo depois,
+como em Portugal. Na aplicação vive num sítio só (`src/lib/dinheiro.ts`, com
+testes); **o site ainda escreve `€35.00`**, à inglesa, nas Finanças, nos
+Relatórios e no Painel. Está por arrumar, e é obra à parte: mexe em todos os
+números que o dono vê todos os dias.
+
+**O sócio vê a vermelho o que caducou.** As duas datas do cartão — quota e
+seguro — apareciam em branco estivessem válidas ou não, e quem tinha o seguro
+acabado em março lia a data e ficava na mesma. A comparação é por texto
+(`jaPassou()`, em `src/lib/datas.ts`, com testes), nunca por
+`new Date(texto)`: em Portugal isso recua um dia no horário de verão e daria
+um seguro válido marcado como caducado.
 
 **Todas as datas do site passam por `frontend/src/lib/datas.js`** —
 `diaLocal()`, `hoje()`, `diaSeguinte()`, `primeiroDiaDoMes()`,
