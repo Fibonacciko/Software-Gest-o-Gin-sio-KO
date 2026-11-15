@@ -28,6 +28,7 @@ import { useAuth } from '../contexts/AuthContext';
 import MemberAttendanceCalendar from '../components/MemberAttendanceCalendar';
 import AvaliacoesDoSocio from '../components/AvaliacoesDoSocio';
 import FotosDoSocio from '../components/FotosDoSocio';
+import PinDoSocio from '../components/PinDoSocio';
 import PlanosDoSocio from '../components/PlanosDoSocio';
 import SuspenderSocio from '../components/SuspenderSocio';
 import MultiActivitySelector from '../components/MultiActivitySelector';
@@ -809,6 +810,12 @@ const Members = ({ language, translations }) => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">Ainda sem NFC associado. E associado automaticamente no Painel Principal na primeira utilizacao (Check-in NFC).</p>
                 )}
               </div>
+              {/* Com que PIN e que ele entra na aplicacao. Fica ao lado do
+                  NFC porque sao as duas maneiras de ele se identificar. O
+                  colaborador tambem o apaga: e ele que esta ao balcao quando
+                  a pessoa chega a dizer que nao entra. */}
+              <PinDoSocio socio={selectedMember} />
+
               {/* Suspender e levantar. So o administrador ve este cartao:
                   a suspensao e a unica coisa que passa a frente da quota
                   paga, e por isso nao e decisao de quem esta ao balcao. */}

@@ -240,8 +240,30 @@ class MobileMember(BaseModel):
 
 # Mobile Login Model
 class MobileMemberLogin(BaseModel):
+    """Como o socio entra na aplicacao.
+
+    **Com PIN**, a partir do momento em que ele o escolhe. O telefone so
+    serve a primeira vez, para a aplicacao saber quem ele e antes de haver
+    PIN nenhum -- e deixa de servir assim que o PIN existe (ver
+    `entrar_na_aplicacao`).
+    """
     member_number: str
-    phone: str  # Using phone as password for simplicity
+    phone: Optional[str] = None
+    pin: Optional[str] = None
+
+
+class EscolherPin(BaseModel):
+    """O socio escolhe o PIN dele, da primeira vez. Prova-se pelo telefone."""
+    member_number: str
+    phone: str
+    pin: str
+
+
+class TrocarPin(BaseModel):
+    """Trocar o PIN, sabendo o actual. Esquecido, vai-se ao balcao."""
+    member_number: str
+    pin_actual: str
+    pin_novo: str
 
 # FCM Token Update Model  
 class FCMTokenUpdate(BaseModel):
@@ -2442,6 +2464,61 @@ class SuspensaoDoSocio(BaseModel):
     motivo: Optional[str] = None
 
 
+@api_router.get("/members/{member_id}/pin")
+async def estado_do_pin(
+    member_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Se este socio ja escolheu PIN, e se esta travado.
+
+    **Nunca devolve o PIN nem o resumo dele.** O que o balcao precisa de
+    saber e se ele ja tem um -- para perceber se a pessoa a frente se
+    esqueceu ou se ainda nem chegou a escolher.
+    """
+    socio = await db.members.find_one({"id": member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+    ate = bloqueado_ate(socio)
+    return {
+        "definido": bool(socio.get("pin_hash")),
+        "bloqueado_ate": ate.isoformat() if ate else None,
+    }
+
+
+@api_router.post("/members/{member_id}/limpar-pin")
+async def limpar_o_pin(
+    member_id: str,
+    current_user: User = Depends(require_admin_or_staff)
+):
+    """Apaga o PIN do socio, para ele poder escolher outro.
+
+    **E a unica maneira de recuperar um PIN esquecido**, e e de proposito
+    que passa pelo balcao: se a aplicacao deixasse voltar ao telemovel para
+    recuperar, bastava dizer "esqueci-me" para entrar na conta de qualquer
+    pessoa sabendo-lhe o numero -- que e o buraco que o PIN tapa.
+
+    Depois disto o socio entra uma vez com o telemovel, como da primeira, e
+    escolhe um PIN novo. **O colaborador tambem pode**: e ele que esta ao
+    balcao quando a pessoa chega a dizer que nao entra.
+
+    Limpa tambem o travao das tentativas: quem se esqueceu costuma ter
+    tentado varias vezes antes de pedir ajuda.
+    """
+    socio = await db.members.find_one({"id": member_id})
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+
+    await db.members.update_one(
+        {"id": member_id},
+        {"$set": {"pin_hash": None, "pin_tentativas": 0, "pin_bloqueado_ate": None}},
+    )
+    await log_audit(
+        current_user, "update", "member", entity_id=member_id,
+        details=f"Limpou o PIN de {socio.get('name')}"
+    )
+    return {"message": "PIN limpo. O sócio escolhe um novo ao entrar com o telemóvel."}
+
+
 @api_router.post("/members/{member_id}/suspender", response_model=Member)
 async def suspender_socio(
     member_id: str,
@@ -3748,51 +3825,246 @@ def telefones_coincidem(escrito: str, guardado: str) -> bool:
     # 351912345678 vale tanto como 912345678
     return a.lstrip("0").endswith(b[-9:]) or b.lstrip("0").endswith(a[-9:])
 
-@api_router.post("/mobile/auth/login")
-async def mobile_login(credentials: MobileMemberLogin):
-    """Login do socio na app, pelo numero de socio e telefone.
+# ------------------------------------------------- O PIN do socio
+#
+# Ate novembro de 2026 entrava-se com o **numero de socio e o telemovel**.
+# Os numeros vao de 001 a 340 e o telemovel sabe-o qualquer colega de treino,
+# qualquer familiar, qualquer ex-companheiro: **entrar na conta de outra
+# pessoa nao exigia saber nada que nao se soubesse ja**. Foi o dono que deu
+# por isso.
+#
+# Hoje a entrada e **numero de socio + PIN**. O telemovel so serve uma vez,
+# para o socio dizer quem e antes de haver PIN nenhum; a partir do momento
+# em que o escolhe, **deixa de servir** -- senao bastava dizer "esqueci-me"
+# para o buraco reabrir. Esquecido, limpa-se ao balcao.
+#
+# Seis digitos, como no Multibanco: no telemovel abre o teclado numerico, que
+# e grande e facil, e ninguem estranha. Sao um milhao de combinacoes.
 
-    O numero pode ser escrito com ou sem zeros a frente, e o telefone com
-    espacos ou indicativo. Socios com a quota em atraso entram na mesma:
-    e precisamente quem mais precisa de ver o aviso no cartao.
+TAMANHO_DO_PIN = 6
+TENTATIVAS_ATE_BLOQUEAR = 5
+MINUTOS_BLOQUEADO = 15
+
+
+def pin_fraco(pin: str) -> Optional[str]:
+    """Diz porque e que o PIN nao serve, ou None se servir.
+
+    Dez por minuto por IP (o `auth_rate_limit`) nao chega sozinho para um
+    numero de seis digitos: e por isso que ha tambem trava por socio, e que
+    os obvios saem da frente. `123456` e `000000` sao as duas primeiras
+    coisas que alguem experimenta.
     """
-    escrito = (credentials.member_number or "").strip()
-    variantes = {escrito, escrito.lstrip("0"), escrito.zfill(3)}
-    variantes = {v for v in variantes if v}
+    if not pin or not pin.isdigit() or len(pin) != TAMANHO_DO_PIN:
+        return f"O PIN tem de ser {TAMANHO_DO_PIN} dígitos."
+    if len(set(pin)) == 1:
+        return "Esse PIN é todo o mesmo número. Escolhe outro."
+    seguidos = "0123456789"
+    if pin in seguidos or pin in seguidos[::-1]:
+        return "Esse PIN são números seguidos. Escolhe outro."
+    return None
 
-    candidatos = await db.members.find({"member_number": {"$in": list(variantes)}}).to_list(20)
 
-    member = next(
-        (m for m in candidatos if telefones_coincidem(credentials.phone, m.get("phone", ""))),
-        None
+def guardar_pin(pin: str) -> str:
+    return pwd_context.hash(pin)
+
+
+def pin_confere(pin: str, guardado: Optional[str]) -> bool:
+    if not guardado or not pin:
+        return False
+    try:
+        return pwd_context.verify(pin, guardado)
+    except Exception:
+        return False
+
+
+def bloqueado_ate(socio: dict) -> Optional[datetime]:
+    """Ate quando e que este socio esta travado, se estiver."""
+    valor = socio.get("pin_bloqueado_ate")
+    if not valor:
+        return None
+    quando = valor if isinstance(valor, datetime) else datetime.fromisoformat(str(valor))
+    if quando.tzinfo is None:
+        quando = quando.replace(tzinfo=timezone.utc)
+    return quando if quando > datetime.now(timezone.utc) else None
+
+
+async def falhou_o_pin(socio: dict) -> None:
+    """Conta mais uma falha e trava ao fim de cinco.
+
+    O travao e **por socio** e nao por IP: quem quisesse experimentar um
+    milhao de PINs mudava de rede e o limite por IP nao dava por nada.
+    """
+    falhas = int(socio.get("pin_tentativas") or 0) + 1
+    mudar = {"pin_tentativas": falhas}
+    if falhas >= TENTATIVAS_ATE_BLOQUEAR:
+        mudar = {
+            "pin_tentativas": 0,
+            "pin_bloqueado_ate": (
+                datetime.now(timezone.utc) + timedelta(minutes=MINUTOS_BLOQUEADO)
+            ).isoformat(),
+        }
+    await db.members.update_one({"id": socio["id"]}, {"$set": mudar})
+
+
+async def acertou_o_pin(socio: dict) -> None:
+    await db.members.update_one(
+        {"id": socio["id"]},
+        {"$set": {"pin_tentativas": 0, "pin_bloqueado_ate": None}},
     )
 
-    if not member:
-        raise HTTPException(
-            status_code=401,
-            detail="Numero de socio ou telefone nao conferem. Confirma na rececao."
-        )
 
-    if member.get("status") == "suspended":
-        raise HTTPException(
-            status_code=403,
-            detail="Inscricao suspensa. Fala com a rececao."
-        )
-    
-    # Get workout count for motivational note
-    workout_count = await db.attendance.count_documents({"member_id": member["id"]})
-    
-    # Generate token for member (using member role)
-    token_data = {"sub": member["id"], "role": "member"}
-    access_token = create_access_token(data=token_data)
-    
-    mobile_member = await build_mobile_member(member)
+def recusar_por_bloqueio(ate: datetime) -> None:
+    faltam = max(1, int((ate - datetime.now(timezone.utc)).total_seconds() // 60) + 1)
+    raise HTTPException(
+        status_code=429,
+        detail=f"Demasiadas tentativas. Tenta daqui a {faltam} minutos, "
+               f"ou passa pela receção.",
+    )
 
+
+async def socios_com_o_numero(numero: str) -> List[dict]:
+    """As fichas com aquele numero, escrito com ou sem zeros a frente."""
+    escrito = (numero or "").strip()
+    variantes = {escrito, escrito.lstrip("0"), escrito.zfill(3)}
+    variantes = {v for v in variantes if v}
+    if not variantes:
+        return []
+    return await db.members.find({"member_number": {"$in": list(variantes)}}).to_list(20)
+
+
+async def abrir_sessao(socio: dict) -> dict:
+    """O que a aplicacao recebe quando a entrada corre bem."""
+    if socio.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Inscrição suspensa. Fala com a receção.")
+    await acertou_o_pin(socio)
+    access_token = create_access_token(data={"sub": socio["id"], "role": "member"})
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "member": mobile_member
+        "member": await build_mobile_member(socio),
     }
+
+
+@api_router.post("/mobile/auth/login")
+@auth_rate_limit()
+async def entrar_na_aplicacao(request: Request, credentials: MobileMemberLogin):
+    """O socio entra: **numero de socio e PIN**.
+
+    O numero pode ser escrito com ou sem zeros a frente.
+
+    **O telemovel so serve enquanto nao houver PIN.** E a primeira vez, para
+    ele dizer quem e; a resposta vem com `precisa_de_pin`, e a aplicacao
+    manda-o escolher um. A partir dai o telemovel **deixa de servir** --
+    senao bastava dizer "esqueci-me" para voltar a entrar na conta de
+    qualquer pessoa sabendo-lhe o numero, que e o buraco que isto tapa.
+    Esquecido, limpa-se ao balcao.
+
+    **Socios com a quota em atraso entram na mesma**: e precisamente quem
+    mais precisa de ver o aviso no cartao.
+    """
+    candidatos = await socios_com_o_numero(credentials.member_number)
+    com_pin = [m for m in candidatos if m.get("pin_hash")]
+
+    # --- com PIN
+    if credentials.pin:
+        for socio in com_pin:
+            ate = bloqueado_ate(socio)
+            if ate:
+                recusar_por_bloqueio(ate)
+            if pin_confere(credentials.pin, socio.get("pin_hash")):
+                return await abrir_sessao(socio)
+        for socio in com_pin:
+            await falhou_o_pin(socio)
+        raise HTTPException(
+            status_code=401,
+            detail="Número de sócio ou PIN não conferem. Se te esqueceste, passa pela receção.",
+        )
+
+    # --- ainda sem PIN: o telemovel
+    if credentials.phone:
+        socio = next(
+            (m for m in candidatos if telefones_coincidem(credentials.phone, m.get("phone", ""))),
+            None,
+        )
+        if socio and socio.get("pin_hash"):
+            raise HTTPException(
+                status_code=409,
+                detail="Esta conta já tem PIN. Entra com ele, ou passa pela receção.",
+            )
+        if socio:
+            resposta = await abrir_sessao(socio)
+            resposta["precisa_de_pin"] = True
+            return resposta
+
+    raise HTTPException(
+        status_code=401,
+        detail="Número de sócio ou telemóvel não conferem. Confirma na receção.",
+    )
+
+
+@api_router.post("/mobile/auth/pin")
+@auth_rate_limit()
+async def escolher_o_pin(request: Request, dados: EscolherPin):
+    """O socio escolhe o PIN dele, da primeira vez.
+
+    Prova quem e pelo telemovel, que e o que ja fazia. **So funciona
+    enquanto nao houver PIN**: depois disso troca-se sabendo o actual, ou
+    limpa-se ao balcao.
+    """
+    queixa = pin_fraco(dados.pin)
+    if queixa:
+        raise HTTPException(status_code=400, detail=queixa)
+
+    candidatos = await socios_com_o_numero(dados.member_number)
+    socio = next(
+        (m for m in candidatos if telefones_coincidem(dados.phone, m.get("phone", ""))),
+        None,
+    )
+    if not socio:
+        raise HTTPException(
+            status_code=401,
+            detail="Número de sócio ou telemóvel não conferem. Confirma na receção.",
+        )
+    if socio.get("pin_hash"):
+        raise HTTPException(
+            status_code=409,
+            detail="Esta conta já tem PIN. Para trocar precisas do actual, ou da receção.",
+        )
+
+    await db.members.update_one(
+        {"id": socio["id"]},
+        {"$set": {"pin_hash": guardar_pin(dados.pin), "pin_tentativas": 0,
+                  "pin_bloqueado_ate": None}},
+    )
+    socio = await db.members.find_one({"id": socio["id"]})
+    return await abrir_sessao(socio)
+
+
+@api_router.post("/mobile/auth/pin/trocar")
+@auth_rate_limit()
+async def trocar_o_pin(request: Request, dados: TrocarPin):
+    """Trocar o PIN sabendo o actual. Esquecido, vai-se ao balcao."""
+    queixa = pin_fraco(dados.pin_novo)
+    if queixa:
+        raise HTTPException(status_code=400, detail=queixa)
+
+    candidatos = await socios_com_o_numero(dados.member_number)
+    for socio in candidatos:
+        ate = bloqueado_ate(socio)
+        if ate:
+            recusar_por_bloqueio(ate)
+        if pin_confere(dados.pin_actual, socio.get("pin_hash")):
+            await db.members.update_one(
+                {"id": socio["id"]},
+                {"$set": {"pin_hash": guardar_pin(dados.pin_novo), "pin_tentativas": 0,
+                          "pin_bloqueado_ate": None}},
+            )
+            return {"message": "PIN trocado"}
+
+    for socio in candidatos:
+        if socio.get("pin_hash"):
+            await falhou_o_pin(socio)
+    raise HTTPException(status_code=401, detail="O PIN actual não confere.")
 
 @api_router.get("/mobile/profile", response_model=MobileMember)
 async def get_mobile_profile(member_id: str):
@@ -3854,7 +4126,7 @@ async def mobile_app_checkin(dados: MobileCheckin):
     if not member:
         raise HTTPException(status_code=404, detail="Socio nao encontrado")
     if member.get("status") == "suspended":
-        raise HTTPException(status_code=403, detail="Inscricao suspensa. Fala com a rececao.")
+        raise HTTPException(status_code=403, detail="Inscrição suspensa. Fala com a receção.")
 
     # Modalidade: a escolhida, ou a principal da ficha
     activity_id = dados.activity_id or member.get("activity_id")

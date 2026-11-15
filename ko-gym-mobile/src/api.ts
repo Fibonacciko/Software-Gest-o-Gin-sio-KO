@@ -213,22 +213,65 @@ async function pedir<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
   return resposta.json() as Promise<T>;
 }
 
-export async function entrar(numeroSocio: string, telefone: string) {
-  const dados = await pedir<{ access_token: string; member: Socio }>(
-    '/mobile/auth/login',
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        member_number: numeroSocio.trim(),
-        phone: telefone.trim(),
-      }),
-    }
-  );
+/** O que o servidor devolve quando a entrada corre bem. */
+type Entrada = {
+  access_token: string;
+  member: Socio;
+  /** Verdadeiro so da primeira vez: o socio ainda nao escolheu PIN. */
+  precisa_de_pin?: boolean;
+};
+
+async function guardarSessao(dados: Entrada) {
   await AsyncStorage.setItem(
     CHAVE_SESSAO,
     JSON.stringify({ token: dados.access_token, memberId: dados.member.id })
   );
-  return dados.member;
+  return { socio: dados.member, precisaDePin: dados.precisa_de_pin === true };
+}
+
+/**
+ * Entrar com o **numero de socio e o PIN**.
+ *
+ * Ate novembro de 2026 entrava-se com o numero e o telemovel. Os numeros vao
+ * de 001 a 340 e o telemovel sabe-o qualquer colega de treino: entrar na
+ * conta de outra pessoa nao exigia saber nada que nao se soubesse ja.
+ */
+export async function entrarComPin(numeroSocio: string, pin: string) {
+  return guardarSessao(
+    await pedir<Entrada>('/mobile/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ member_number: numeroSocio.trim(), pin: pin.trim() }),
+    })
+  );
+}
+
+/**
+ * Entrar com o **telemovel**, da primeira vez.
+ *
+ * So funciona enquanto nao houver PIN. A resposta traz `precisaDePin`, e o
+ * ecra manda-o escolher um; dali em diante o telemovel deixa de servir.
+ */
+export async function entrarPelaPrimeiraVez(numeroSocio: string, telefone: string) {
+  return guardarSessao(
+    await pedir<Entrada>('/mobile/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ member_number: numeroSocio.trim(), phone: telefone.trim() }),
+    })
+  );
+}
+
+/** O socio escolhe o PIN dele. Prova quem e pelo telemovel. */
+export async function escolherPin(numeroSocio: string, telefone: string, pin: string) {
+  return guardarSessao(
+    await pedir<Entrada>('/mobile/auth/pin', {
+      method: 'POST',
+      body: JSON.stringify({
+        member_number: numeroSocio.trim(),
+        phone: telefone.trim(),
+        pin: pin.trim(),
+      }),
+    })
+  );
 }
 
 export async function sessaoGuardada(): Promise<string | null> {

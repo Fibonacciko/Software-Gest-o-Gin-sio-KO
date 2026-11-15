@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { entrar, Socio } from '../api';
+import { entrarComPin, entrarPelaPrimeiraVez, escolherPin, Socio } from '../api';
 import { alturaDaPorta, desvioDoNome, topoDaPorta } from '../lib/porta';
 import { cores, espaco, raio, superficie } from '../theme';
 
@@ -21,30 +21,89 @@ type Props = {
   aoEntrar: (socio: Socio) => void;
 };
 
+/**
+ * Em que passo da entrada estamos.
+ *
+ * - `pin` — o normal: número de sócio e PIN.
+ * - `primeira` — quem ainda não tem PIN: número e telemóvel.
+ * - `escolher` — escolher o PIN, logo a seguir.
+ */
+type Passo = 'pin' | 'primeira' | 'escolher';
+
 export default function EcraLogin({ aoEntrar }: Props) {
+  const [passo, setPasso] = useState<Passo>('pin');
   const [numero, setNumero] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [pin, setPin] = useState('');
+  const [pinOutraVez, setPinOutraVez] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [aCarregar, setACarregar] = useState(false);
 
-  const tentarEntrar = async () => {
-    if (!numero.trim() || !telefone.trim()) {
-      setErro('Preenche o número de sócio e o telefone.');
+  const irPara = (p: Passo) => {
+    setErro(null);
+    setPin('');
+    setPinOutraVez('');
+    setPasso(p);
+  };
+
+  /** A queixa do servidor, que já vem em português. */
+  const dizer = (e: any, emFalta: string) => {
+    const bruto = String(e?.message ?? '').trim();
+    setErro(bruto && !/^\d+$/.test(bruto) ? bruto : emFalta);
+  };
+
+  const comPin = async () => {
+    if (!numero.trim() || !pin.trim()) {
+      setErro('Preenche o número de sócio e o PIN.');
       return;
     }
     setErro(null);
     setACarregar(true);
     try {
-      const socio = await entrar(numero, telefone);
+      const { socio } = await entrarComPin(numero, pin);
       aoEntrar(socio);
     } catch (e: any) {
-      // O servidor responde em ingles neste ponto; traduzimos para o socio
-      const bruto = String(e?.message ?? '');
-      setErro(
-        /invalid|inactive/i.test(bruto)
-          ? 'Número de sócio ou telefone não conferem. Confirma na receção.'
-          : bruto
-      );
+      dizer(e, 'Número de sócio ou PIN não conferem.');
+    } finally {
+      setACarregar(false);
+    }
+  };
+
+  const comTelemovel = async () => {
+    if (!numero.trim() || !telefone.trim()) {
+      setErro('Preenche o número de sócio e o telemóvel.');
+      return;
+    }
+    setErro(null);
+    setACarregar(true);
+    try {
+      const { socio, precisaDePin } = await entrarPelaPrimeiraVez(numero, telefone);
+      // Quem já tem PIN nunca chega aqui: o servidor recusa o telemóvel.
+      if (precisaDePin) irPara('escolher');
+      else aoEntrar(socio);
+    } catch (e: any) {
+      dizer(e, 'Número de sócio ou telemóvel não conferem.');
+    } finally {
+      setACarregar(false);
+    }
+  };
+
+  const guardarPin = async () => {
+    if (pin.trim().length !== 6) {
+      setErro('O PIN tem de ser 6 dígitos.');
+      return;
+    }
+    if (pin.trim() !== pinOutraVez.trim()) {
+      setErro('Os dois PIN não são iguais.');
+      return;
+    }
+    setErro(null);
+    setACarregar(true);
+    try {
+      const { socio } = await escolherPin(numero, telefone, pin);
+      aoEntrar(socio);
+    } catch (e: any) {
+      dizer(e, 'Não consegui guardar o PIN.');
     } finally {
       setACarregar(false);
     }
@@ -84,6 +143,7 @@ export default function EcraLogin({ aoEntrar }: Props) {
         />
         <Text style={estilos.titulo}>Ginásio KO</Text>
 
+        {/* O número de sócio está em todos os passos: é ele que diz quem é. */}
         <View style={estilos.campo}>
           <Text style={estilos.etiqueta}>Número de sócio</Text>
           <TextInput
@@ -94,38 +154,118 @@ export default function EcraLogin({ aoEntrar }: Props) {
             placeholderTextColor={cores.textoSecundario}
             keyboardType="number-pad"
             autoCapitalize="none"
+            editable={passo !== 'escolher'}
           />
         </View>
 
-        <View style={estilos.campo}>
-          <Text style={estilos.etiqueta}>Telefone</Text>
-          <TextInput
-            style={estilos.entrada}
-            value={telefone}
-            onChangeText={setTelefone}
-            placeholder="912345678"
-            placeholderTextColor={cores.textoSecundario}
-            keyboardType="phone-pad"
-          />
-        </View>
+        {passo === 'pin' ? (
+          <View style={estilos.campo}>
+            <Text style={estilos.etiqueta}>PIN</Text>
+            <TextInput
+              style={estilos.entrada}
+              value={pin}
+              onChangeText={setPin}
+              placeholder="••••••"
+              placeholderTextColor={cores.textoSecundario}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={6}
+            />
+          </View>
+        ) : null}
+
+        {passo === 'primeira' ? (
+          <View style={estilos.campo}>
+            <Text style={estilos.etiqueta}>Telemóvel</Text>
+            <TextInput
+              style={estilos.entrada}
+              value={telefone}
+              onChangeText={setTelefone}
+              placeholder="912345678"
+              placeholderTextColor={cores.textoSecundario}
+              keyboardType="phone-pad"
+            />
+          </View>
+        ) : null}
+
+        {passo === 'escolher' ? (
+          <>
+            <View style={estilos.campo}>
+              <Text style={estilos.etiqueta}>Escolhe um PIN de 6 dígitos</Text>
+              <TextInput
+                style={estilos.entrada}
+                value={pin}
+                onChangeText={setPin}
+                placeholder="••••••"
+                placeholderTextColor={cores.textoSecundario}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={6}
+              />
+            </View>
+            <View style={estilos.campo}>
+              <Text style={estilos.etiqueta}>Outra vez, para confirmar</Text>
+              <TextInput
+                style={estilos.entrada}
+                value={pinOutraVez}
+                onChangeText={setPinOutraVez}
+                placeholder="••••••"
+                placeholderTextColor={cores.textoSecundario}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={6}
+              />
+            </View>
+          </>
+        ) : null}
 
         {erro && <Text style={estilos.erro}>{erro}</Text>}
 
         <Pressable
           style={({ pressed }) => [estilos.botao, pressed && estilos.botaoPressionado]}
-          onPress={tentarEntrar}
+          onPress={passo === 'pin' ? comPin : passo === 'primeira' ? comTelemovel : guardarPin}
           disabled={aCarregar}
         >
           {aCarregar ? (
             <ActivityIndicator color={cores.texto} />
           ) : (
-            <Text style={estilos.botaoTexto}>ENTRAR</Text>
+            <Text style={estilos.botaoTexto}>
+              {passo === 'escolher' ? 'GUARDAR O PIN' : 'ENTRAR'}
+            </Text>
           )}
         </Pressable>
 
-        <Text style={estilos.ajuda}>
-          Entras com o teu número de sócio e o telefone que deste na inscrição.
-        </Text>
+        {/* O caminho da primeira vez, e o de volta. Não há "esqueci-me do
+            PIN" que o resolva sozinho de propósito: se a aplicação deixasse
+            voltar ao telemóvel para recuperar, bastava dizer que se esqueceu
+            para entrar na conta de qualquer pessoa sabendo-lhe o número —
+            que é o buraco que o PIN tapa. */}
+        {passo === 'pin' ? (
+          <>
+            <Pressable onPress={() => irPara('primeira')}>
+              <Text style={estilos.ligacao}>É a minha primeira vez aqui</Text>
+            </Pressable>
+            <Text style={estilos.ajuda}>
+              Esqueceste-te do PIN? Passa pela receção — apagam-no ali e escolhes
+              outro.
+            </Text>
+          </>
+        ) : passo === 'primeira' ? (
+          <>
+            <Pressable onPress={() => irPara('pin')}>
+              <Text style={estilos.ligacao}>Já tenho PIN</Text>
+            </Pressable>
+            <Text style={estilos.ajuda}>
+              Da primeira vez entras com o telemóvel que deste na inscrição, e
+              escolhes a seguir um PIN só teu.
+            </Text>
+          </>
+        ) : (
+          <Text style={estilos.ajuda}>
+            Guarda-o bem: é com ele que passas a entrar. Se o esqueceres,
+            apagam-no na receção e escolhes outro.
+          </Text>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -193,6 +333,14 @@ const estilos = StyleSheet.create({
     fontSize: 17,
   },
   erro: { color: cores.vermelho, fontSize: 14 },
+  // Em ouro, como as letras de tudo o que e para carregar
+  ligacao: {
+    color: cores.ouro,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingVertical: espaco.s,
+  },
   botao: {
     // Sem o laranja, por decisão do dono: o ecrã fica mais calmo e a
     // fotografia ganha. A palavra em laranja é o que sobra a dizer que é

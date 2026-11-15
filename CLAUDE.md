@@ -675,6 +675,66 @@ Na aplicação, as modalidades do sócio aparecem **debaixo do número de
 sócio**, junto ao nome: é o que ele é no ginásio. Estavam no fim da
 página, a seguir aos planos, onde não diziam nada a ninguém.
 
+### Como o sócio entra na aplicação
+
+**Número de sócio e um PIN de seis dígitos.**
+
+Até novembro de 2026 entrava-se com o **número de sócio e o telemóvel**. Os
+números vão de 001 a 340 e o telemóvel sabe-o qualquer colega de treino,
+qualquer familiar, qualquer ex-companheiro: **entrar na conta de outra pessoa
+não exigia saber nada que não se soubesse já**. Foi o dono que deu por isso.
+
+**Seis dígitos, como no Multibanco.** No telemóvel abre o teclado numérico,
+que é grande e fácil, e ninguém estranha — ao contrário de uma senha com
+letras, que num teclado pequeno se erra e se esquece, e cada esquecimento é
+uma pergunta ao balcão. São um milhão de combinações.
+
+**O PIN escolhe-o o próprio**, decisão do dono. Da primeira vez entra com o
+número e o telemóvel, como sempre fez, e escolhe o PIN ali
+(`POST /api/mobile/auth/pin`).
+
+**A partir daí o telemóvel deixa de servir** (`409`), e é isto que tapa o
+buraco: se continuasse a valer, saber o número e o telemóvel de alguém
+continuava a dar entrada na conta dele, e o PIN não tapava nada. Há um teste
+só para isto.
+
+- **Não há "esqueci-me do PIN" na aplicação**, e é de propósito: se ela
+  deixasse voltar ao telemóvel para recuperar, bastava dizer que se esqueceu.
+  **Limpa-se ao balcão** (`POST /api/members/{id}/limpar-pin`), na ficha do
+  sócio, e depois disso ele escolhe outro como da primeira vez. **O
+  colaborador também pode** — é ele que está ao balcão quando a pessoa chega
+  a dizer que não entra.
+- **O balcão nunca vê o PIN**, nem o resumo dele. Só vê **se ele existe**
+  (`GET /api/members/{id}/pin`), que é o que precisa para perceber se a pessoa
+  à frente se esqueceu ou se ainda nem instalou a aplicação. Guarda-se com
+  bcrypt, como as senhas da gestão.
+- **Trava ao fim de cinco tentativas, por 15 minutos** — e o travão é **por
+  sócio**, não por IP. O limite por IP (10 por minuto) existe e continua, mas
+  quem quisesse experimentar um milhão de PINs mudava de rede e ele não dava
+  por nada. Acertar limpa as tentativas; limpar o PIN ao balcão tira também o
+  travão, que quem se esqueceu costuma ter tentado várias vezes antes de pedir
+  ajuda.
+- **Os PIN óbvios são recusados**: todo o mesmo dígito (`000000`) e números
+  seguidos (`123456`, `987654`). São as primeiras coisas que alguém
+  experimenta.
+- **Trocar o PIN sabendo o actual** faz-se sem ir ao balcão
+  (`POST /api/mobile/auth/pin/trocar`).
+- A **suspensão continua a mandar**: suspenso não entra, nem com o PIN certo.
+  E a **quota em atraso não impede a entrada** — é precisamente quem mais
+  precisa de ver o aviso no cartão.
+- Os **340 sócios que já cá estavam não têm PIN nenhum**, e por isso nada
+  muda para eles até instalarem a aplicação. Isto fez-se **antes de eles a
+  instalarem**, de propósito: mudar a entrada hoje custa ao dono escrever o
+  número uma vez; daqui a dois meses custava 140 pessoas a perguntar na
+  receção porque é que a aplicação lhes pediu os dados outra vez.
+
+**O que fica por fazer, e é obra à parte.** Depois de entrar, a aplicação
+identifica-se em cada pedido **só pelo `id` do sócio**, que vai no endereço:
+as 27 rotas `/mobile/` não exigem nada. O `id` é um UUID, que não se adivinha,
+mas **fica escrito no registo do nginx** em texto simples, e **não se pode
+cancelar** — se um escapar, escapou para sempre. O `access_token` **já é
+devolvido** pelo login e guardado pela aplicação; falta exigi-lo nas rotas.
+
 ### Perfis de acesso
 
 - **admin** — tudo.
@@ -743,7 +803,8 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 325 testes e demoram 17 segundos.
+backend** — são 352 testes e demoram 32 segundos (o bcrypt dos PIN é lento
+de propósito).
 
 ```bash
 cd backend && ./venv/Scripts/python.exe -m pytest tests -q
@@ -1466,6 +1527,14 @@ criadas. Em Linux passa, por isso só se vê na máquina do dono. Nas mensagens
 não ponha nada acima do codepoint 255; quando o texto vem de fora (os nomes
 das modalidades em produção têm emoji), reconfigure o `stdout` para utf-8 com
 `errors="replace"`.
+
+**Isto é do `print()` e do registo, não do que se responde.** O `detail` de um
+`HTTPException` **nunca passa pela consola**: o `LoggingMiddleware` regista o
+caminho, o IP e o estado, e nada do corpo. Por isso as mensagens que o sócio
+lê no telemóvel — as do PIN e as da entrada — **levam acentos**, como manda a
+regra de escrever tudo em português. Confirmado a correr no Windows: chegam
+intactas e o servidor não se queixa. O resto do `server.py` escreve sem eles
+por história, não por necessidade.
 
 **As notas da semana só contam dias úteis.** O ginásio fecha ao fim de semana,
 e dizer que o domingo é o "dia mais calmo" não informa ninguém. As notas do
