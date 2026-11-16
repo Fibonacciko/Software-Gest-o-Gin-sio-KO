@@ -42,8 +42,8 @@ const Login = () => {
               <span className="text-white font-bold text-2xl">KO</span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Gestão Fitness</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Sistema de Gestão de Membership</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Ginásio KO</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Sistema de Gestão</p>
         </div>
 
         <Card className="border-0" style={{ boxShadow: 'var(--shadow-xl)', backgroundColor: 'var(--background-elevated)' }}>
@@ -74,7 +74,7 @@ const Login = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Palavra-passe</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <Input
@@ -120,7 +120,7 @@ const Login = () => {
         </Card>
         
         <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-          <p>&copy; 2025 Gestão Fitness. Sistema de gestão profissional.</p>
+          <p>&copy; {new Date().getFullYear()} Ginásio KO</p>
         </div>
       </div>
     </div>
