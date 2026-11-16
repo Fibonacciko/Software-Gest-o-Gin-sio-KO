@@ -744,13 +744,30 @@ vez, e a linha só ocupava o ecrã e convidava a enganos.
   e não ao contrário: uma linha que pisca no arranque e desaparece a seguir
   é pior do que uma que nunca esteve lá.
 
-**O "Esqueci-me do PIN" é mais calado do que as outras linhas.** Por decisão
-do dono: é o caminho de quem se enganou, não o que se oferece a quem chega.
-Em ouro e a negrito puxava o olho tanto como o ENTRAR que está logo por
-cima, e num ecrã que é a porta do ginásio o que deve puxar o olho é a
-entrada. **Não é o ouro com transparência** — por cima daquela fotografia o
-dourado a meia opacidade vira azeitona, que é a mesma razão por que o botão
-de check-in não se apagou assim. É a cor do texto secundário.
+**O "Esqueci-me do PIN" é a linha mais calada do ecrã, e vive no fundo
+dele.** Por decisão do dono: é o caminho de quem se enganou, não o que se
+oferece a quem chega. Em ouro, a negrito e encostado ao ENTRAR puxava o olho
+tanto como ele, e num ecrã que é a porta do ginásio o que deve puxar o olho
+é a entrada.
+
+- A cor é a do **texto secundário**, e não o ouro com transparência — por
+  cima daquela fotografia o dourado a meia opacidade vira azeitona, que é a
+  mesma razão por que o botão de check-in não se apagou assim.
+- O tamanho é **12**, dois abaixo das outras ligações. Foi lá ter em dois
+  passos, vistos os dois em fotografia.
+- Desce ao fundo com `marginTop: 'auto'`, e é o `flexGrow: 1` do conteúdo
+  que faz esse espaço existir: sem ele a coluna acaba onde acabam os campos,
+  e "o fundo" era logo a seguir a eles. Com o teclado aberto o espaço
+  desaparece e a linha encosta ao que está por cima — ninguém a procura
+  enquanto está a escrever o PIN.
+- O que ganhou com isto não foi a linha: foi a **fotografia**. Entre o
+  ENTRAR e o fundo ficou o miúdo à porta inteiro, que antes tinha duas
+  linhas de texto por cima.
+- Num ecrã **pequeno (360x640) e por estrear** — as duas linhas ao mesmo
+  tempo, porque ainda não há PIN — o conteúdo fica três pixeis mais alto do
+  que o ecrã e a linha pede um raspanço. Fica assim de propósito: o que
+  tiraria esses três pixeis era subir o logótipo, e ele está preso ao
+  candeeiro da fotografia.
 
 **O endereço vai-se buscar à ficha, nunca se recebe**: senão bastava
 escrever o número de outra pessoa e um email nosso para receber o código

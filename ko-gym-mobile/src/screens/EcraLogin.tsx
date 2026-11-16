@@ -401,16 +401,11 @@ export default function EcraLogin({ aoEntrar }: Props) {
             que o PIN tapa. Vai ao email da ficha, que só o próprio abre, ou
             ao balcão, que só a ele vê a cara. */}
         {passo === 'pin' ? (
-          <>
-            <Pressable onPress={() => irPara('esqueci')}>
-              <Text style={estilos.ligacaoCalada}>Esqueci-me do PIN</Text>
+          mostrarPrimeiraVez ? (
+            <Pressable onPress={() => irPara('primeira')}>
+              <Text style={estilos.ligacao}>É a minha primeira vez aqui</Text>
             </Pressable>
-            {mostrarPrimeiraVez ? (
-              <Pressable onPress={() => irPara('primeira')}>
-                <Text style={estilos.ligacao}>É a minha primeira vez aqui</Text>
-              </Pressable>
-            ) : null}
-          </>
+          ) : null
         ) : passo === 'primeira' ? (
           <>
             <Pressable onPress={() => irPara('pin')}>
@@ -447,6 +442,26 @@ export default function EcraLogin({ aoEntrar }: Props) {
             um código por email ou passas pela receção.
           </Text>
         )}
+
+        {/* O "Esqueci-me do PIN" **no fundo do ecrã**, por decisão do dono.
+
+            É o caminho de quem se enganou, e estava encostado ao ENTRAR, que
+            é para onde toda a gente olha. Em baixo continua à mão de quem
+            precisa dele e deixa de disputar o olho com a entrada — e o que
+            fica entre os dois é a fotografia, que é o que aquele ecrã tem
+            para dar.
+
+            O `marginTop: 'auto'` empurra-o até ao fim do espaço que sobra, e
+            é o `flexGrow: 1` do conteúdo que faz esse espaço existir: sem
+            ele, a coluna é do tamanho do que lá está e "o fundo" era logo a
+            seguir aos campos. Com o teclado aberto o espaço desaparece e ele
+            encosta ao que está por cima, que é o que se quer — ninguém o
+            procura enquanto está a escrever o PIN. */}
+        {passo === 'pin' ? (
+          <Pressable onPress={() => irPara('esqueci')} style={estilos.rodape}>
+            <Text style={estilos.ligacaoCalada}>Esqueci-me do PIN</Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -475,7 +490,10 @@ const estilos = StyleSheet.create({
     width: LARGURA,
     height: alturaDaPorta(LARGURA, ALTURA),
   },
-  conteudo: { padding: espaco.g, paddingTop: 80, gap: espaco.m },
+  // O `flexGrow` e o que da fundo ao ecra: sem ele a coluna acaba onde
+  // acabam os campos, e o "Esqueci-me do PIN" ficava logo por baixo deles.
+  conteudo: { padding: espaco.g, paddingTop: 80, gap: espaco.m, flexGrow: 1 },
+  rodape: { marginTop: 'auto' },
   // O logotipo ja traz o circulo e o fundo: nao leva caixa nenhuma por baixo
   logo: {
     width: 132,
@@ -539,7 +557,9 @@ const estilos = StyleSheet.create({
    */
   ligacaoCalada: {
     color: cores.textoSecundario,
-    fontSize: 14,
+    // Dois tamanhos abaixo das outras ligações, por decisão do dono: é a
+    // linha mais calada do ecrã e está no fundo dele.
+    fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
     paddingVertical: espaco.s,
