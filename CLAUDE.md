@@ -924,6 +924,7 @@ da quota. Fichas antigas podem ter o campo gravado — é ignorado.
 | `backend/` | API em FastAPI (Python 3.11) + MongoDB. Tudo num ficheiro: `server.py` |
 | `frontend/` | Aplicação web em React 19 (Create React App + craco, Tailwind, shadcn/ui) |
 | `ko-gym-mobile/` | Aplicação do sócio, em Expo / React Native |
+| `site-publico/` | O site público do ginásio, para quem ainda não é sócio. HTML, CSS e um ficheiro de JavaScript, sem compilação. **Ainda não está publicado** — ver `site-publico/LEIA-ME.md` |
 | `mobile-app/` | Apenas documentação antiga e um ficheiro de tema. **Não tem código** |
 | `tests/` | Scripts de teste antigos, contra a API |
 

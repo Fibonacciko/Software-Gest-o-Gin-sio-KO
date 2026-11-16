@@ -1,0 +1,662 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Ginásio KO — site público
+
+   Escuro de propósito. As fotografias do ginásio são claras, saturadas e
+   cheias de coisas: paredes vermelhas, tapetes cor-de-rosa, o punho amarelo.
+   Em cima de branco competiam umas com as outras; em cima de preto, cada
+   uma fica sozinha no ecrã, que é como se vê uma fotografia.
+
+   As cores são as da marca, as mesmas da gestão e da aplicação:
+   laranja #B8651B, âmbar #F5A623, escuro #1A1A1A.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Anton';
+  src: url('tipos/Anton-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --preto: #0d0d0d;
+  --escuro: #1a1a1a;
+  --papel: #f2efe9;          /* branco quente, nunca #fff: arde menos no escuro */
+  --papel-fraco: #a8a29b;
+  --ambar: #f5a623;
+  --laranja: #b8651b;
+  --risco: rgba(242, 239, 233, 0.14);
+
+  --margem: clamp(20px, 5vw, 80px);
+  --letra: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+body {
+  margin: 0;
+  background: var(--preto);
+  color: var(--papel);
+  font-family: var(--letra);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img { display: block; max-width: 100%; }
+a { color: inherit; }
+
+/* ─────────────────────────────── barra ──────────────────────────────── */
+
+.barra {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px var(--margem);
+  /* nasce transparente por cima da capa; ganha fundo ao rolar (.barra--pousada) */
+  background: transparent;
+  transition: background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.barra--pousada {
+  background: rgba(13, 13, 13, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom-color: var(--risco);
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.marca img { width: 34px; height: 34px; }
+
+/* O menu é uma linha de palavras separadas por vírgulas, não uma fila de
+   botões: dá uma barra que se lê como uma frase e ocupa menos ecrã. */
+.menu {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--papel-fraco);
+}
+
+.menu a {
+  text-decoration: none;
+  padding: 4px 2px;
+  transition: color 0.2s ease;
+}
+
+.menu a:hover { color: var(--ambar); }
+
+@media (max-width: 900px) {
+  .menu { display: none; }
+  .barra .botao--pequeno { margin-left: auto; }
+}
+
+/* ─────────────────────────────── botões ─────────────────────────────── */
+
+.botao {
+  display: inline-block;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #d6a306 0%, #a85a12 100%);
+  color: #fff;
+  padding: 14px 26px;
+  border-radius: 2px;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.botao:hover { filter: brightness(1.12); }
+.botao:active { transform: translateY(1px); }
+
+.botao--pequeno { padding: 9px 16px; font-size: 14px; }
+.botao--grande { padding: 18px 38px; font-size: 18px; }
+
+/* ─────────────────────────────── capa ───────────────────────────────── */
+
+.capa {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.capa__foto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* o ringue está ao centro-baixo da fotografia */
+  object-position: 50% 60%;
+}
+
+/* Escurecimento por cima: forte em baixo, onde está o texto, e leve em cima,
+   para a fotografia não desaparecer. O segundo gradiente escurece a esquerda,
+   onde fica o título — sem ele a fotografia do ringue, que é clara, come as
+   letras brancas. */
+.capa::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(100deg, rgba(13,13,13,0.86) 0%, rgba(13,13,13,0.45) 42%,
+                            rgba(13,13,13,0.05) 72%),
+    linear-gradient(180deg, rgba(13,13,13,0.78) 0%, rgba(13,13,13,0.20) 26%,
+                            rgba(13,13,13,0.55) 70%, rgba(13,13,13,0.96) 100%);
+}
+
+.capa__texto {
+  position: relative;
+  z-index: 2;
+  /* o espaço em cima é a barra: sem ele, num ecrã baixo o título passa-lhe
+     por trás em vez de parar antes dela */
+  padding: 90px var(--margem) clamp(56px, 10vh, 110px);
+  max-width: 900px;
+}
+
+.sobretitulo {
+  margin: 0 0 18px;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ambar);
+}
+
+.capa h1 {
+  margin: 0 0 22px;
+  font-family: 'Anton', 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  /* 9,5vw dava 137px num ecrã de 1440 e as três linhas não cabiam: o
+     "levantar-te" partia-se ao meio e o título subia por cima da barra. */
+  font-size: clamp(38px, 6.2vw, 94px);
+  line-height: 0.94;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.capa__linha {
+  margin: 0 0 34px;
+  font-size: clamp(16px, 2vw, 20px);
+  color: var(--papel);
+  max-width: 34em;
+}
+
+/* o selo de aberto/fechado, no canto de cima da capa */
+.capa__estado {
+  position: absolute;
+  z-index: 2;
+  right: var(--margem);
+  bottom: clamp(56px, 10vh, 110px);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  background: rgba(13, 13, 13, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--risco);
+  border-radius: 999px;
+  padding: 9px 16px;
+}
+
+.capa__estado::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--papel-fraco);
+}
+
+.capa__estado--aberto::before {
+  background: #4ade80;
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.18);
+}
+
+@media (max-width: 760px) {
+  .capa__estado { bottom: auto; top: 76px; right: var(--margem); }
+}
+
+/* ─────────────────────────── blocos de texto ────────────────────────── */
+
+.seccao {
+  padding: clamp(58px, 8vw, 112px) var(--margem);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.declaracao {
+  padding: clamp(70px, 10vw, 140px) var(--margem);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.declaracao p {
+  margin: 0;
+  font-size: clamp(22px, 3.4vw, 42px);
+  line-height: 1.32;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.declaracao em {
+  font-style: normal;
+  color: var(--ambar);
+}
+
+.titulo-seccao {
+  margin: 0 0 clamp(34px, 5vw, 64px);
+  font-family: 'Anton', 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  font-size: clamp(30px, 5vw, 62px);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.subtexto {
+  max-width: 44em;
+  color: var(--papel-fraco);
+  font-size: clamp(16px, 1.8vw, 19px);
+}
+
+/* ─────────────────────────── fotografia larga ───────────────────────── */
+
+.larga { margin: 0; }
+
+.larga img {
+  width: 100%;
+  height: clamp(300px, 72vh, 760px);
+  object-fit: cover;
+}
+
+.larga figcaption {
+  padding: 14px var(--margem) 0;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--papel-fraco);
+}
+
+/* ─────────────────────────── modalidades ────────────────────────────── */
+
+/* As linhas da grelha são a sombra de cada cartão, e não um fundo cinzento
+   por baixo de tudo: com nove modalidades a última fila sobra, e um fundo
+   deixava três rectângulos cinzentos vazios ao lado do último cartão. */
+.modalidades {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1px;
+  background: var(--preto);
+}
+
+.modalidade {
+  background: var(--preto);
+  box-shadow: 0 0 0 1px var(--risco);
+  padding: 28px 26px 30px;
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: background 0.25s ease;
+}
+
+.modalidade:hover { background: var(--escuro); }
+
+/* A cor é o que distingue cada modalidade em todo o lado — na gestão, na
+   aplicação e aqui. Vem da ficha da modalidade, não está escrita aqui. */
+.modalidade__risco {
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--papel-fraco);
+}
+
+.modalidade h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.modalidade p {
+  margin: 0;
+  color: var(--papel-fraco);
+  font-size: 15px;
+}
+
+/* ─────────────────────────── capítulos ──────────────────────────────── */
+
+.capitulo {
+  display: grid;
+  grid-template-columns: 90px 1fr 42%;
+  align-items: center;
+  gap: clamp(20px, 4vw, 56px);
+  padding: clamp(28px, 4vw, 48px) 0;
+  border-top: 1px solid var(--risco);
+}
+
+.capitulo:last-of-type { border-bottom: 1px solid var(--risco); }
+
+.capitulo__numero {
+  font-family: 'Anton', 'Arial Narrow', sans-serif;
+  font-size: clamp(34px, 5vw, 64px);
+  line-height: 1;
+  color: var(--ambar);
+}
+
+.capitulo h3 {
+  margin: 0 0 10px;
+  font-size: clamp(20px, 2.6vw, 30px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.capitulo p {
+  margin: 0;
+  color: var(--papel-fraco);
+  max-width: 34em;
+}
+
+.capitulo img {
+  width: 100%;
+  height: clamp(180px, 26vw, 300px);
+  object-fit: cover;
+}
+
+@media (max-width: 860px) {
+  .capitulo {
+    grid-template-columns: 64px 1fr;
+  }
+  .capitulo picture { grid-column: 1 / -1; }
+  .capitulo img { height: 240px; }
+}
+
+.chamada {
+  margin-top: clamp(50px, 8vw, 90px);
+  text-align: center;
+}
+
+.chamada > p:first-child {
+  margin: 0 0 22px;
+  font-size: clamp(20px, 2.6vw, 28px);
+  font-weight: 300;
+}
+
+.chamada__nota {
+  margin: 20px 0 0;
+  font-size: 15px;
+  color: var(--papel-fraco);
+}
+
+.chamada__nota a { color: var(--ambar); text-decoration: none; }
+.chamada__nota a:hover { text-decoration: underline; }
+
+/* ─────────────────────────── faixa de fotografias ───────────────────── */
+
+/* Rola para o lado com o dedo ou com a roda. O terceiro cartão fica cortado
+   de propósito: sem isso ninguém descobre que a faixa anda. */
+.faixa {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 0 var(--margem) 10px;
+  scrollbar-width: none;
+}
+
+.faixa::-webkit-scrollbar { display: none; }
+
+.faixa figure {
+  margin: 0;
+  flex: 0 0 clamp(230px, 30vw, 420px);
+  scroll-snap-align: start;
+}
+
+.faixa img {
+  width: 100%;
+  height: clamp(300px, 42vw, 520px);
+  object-fit: cover;
+}
+
+/* ─────────────────────────── duas colunas ───────────────────────────── */
+
+.duas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: clamp(26px, 5vw, 80px);
+  padding: clamp(58px, 8vw, 112px) var(--margem);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.duas img {
+  width: 100%;
+  height: clamp(260px, 44vw, 580px);
+  object-fit: cover;
+}
+
+.duas h2 {
+  margin: 0 0 18px;
+  font-family: 'Anton', 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  font-size: clamp(26px, 3.8vw, 48px);
+  line-height: 1.04;
+  text-transform: uppercase;
+}
+
+.duas p {
+  margin: 0 0 16px;
+  color: var(--papel-fraco);
+  max-width: 34em;
+}
+
+@media (max-width: 800px) {
+  .duas { grid-template-columns: 1fr; }
+}
+
+/* ─────────────────────────── horário ────────────────────────────────── */
+
+.horario {
+  border-top: 1px solid var(--risco);
+  margin-bottom: 34px;
+}
+
+.horario__linha {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) 2fr auto;
+  gap: 16px;
+  align-items: baseline;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--risco);
+}
+
+.horario__dias {
+  font-weight: 600;
+  font-size: clamp(16px, 2vw, 20px);
+}
+
+.horario__horas {
+  color: var(--papel-fraco);
+  font-variant-numeric: tabular-nums;
+}
+
+.horario__linha--hoje .horario__dias,
+.horario__linha--hoje .horario__horas { color: var(--papel); }
+
+.horario__hoje {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--preto);
+  background: var(--ambar);
+  padding: 3px 9px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .horario__linha { grid-template-columns: 1fr auto; }
+  .horario__horas { grid-column: 1 / -1; }
+}
+
+/* ─────────────────────────── contactos ──────────────────────────────── */
+
+.contactos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(28px, 4vw, 60px);
+  border-top: 1px solid var(--risco);
+  padding-top: 40px;
+}
+
+.contactos h3 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  font-weight: 700;
+}
+
+.contactos p { margin: 0 0 14px; color: var(--papel-fraco); }
+
+.ligacao {
+  color: var(--papel);
+  text-decoration: none;
+  border-bottom: 1px solid var(--risco);
+  padding-bottom: 2px;
+  line-height: 2.1;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.ligacao:hover { color: var(--ambar); border-bottom-color: var(--ambar); }
+
+/* ─────────────────────────── fecho ──────────────────────────────────── */
+
+.fecho {
+  position: relative;
+  min-height: 72svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.fecho img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fecho::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13,13,13,0.9) 0%, rgba(13,13,13,0.66) 50%, rgba(13,13,13,0.95) 100%);
+}
+
+.fecho__texto {
+  position: relative;
+  z-index: 2;
+  padding: 0 var(--margem);
+}
+
+.fecho h2 {
+  margin: 0 0 28px;
+  font-family: 'Anton', 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  font-size: clamp(52px, 13vw, 170px);
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+/* ─────────────────────────── rodapé ─────────────────────────────────── */
+
+.rodape {
+  padding: clamp(44px, 6vw, 80px) var(--margem);
+  border-top: 1px solid var(--risco);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 30px;
+  align-items: start;
+}
+
+.rodape > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rodape p { margin: 0; font-size: 14px; color: var(--papel-fraco); line-height: 1.5; }
+
+.rodape nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  text-align: right;
+}
+
+.rodape nav a { text-decoration: none; color: var(--papel-fraco); }
+.rodape nav a:hover { color: var(--ambar); }
+
+.rodape__fino {
+  grid-column: 1 / -1;
+  margin-top: 14px !important;
+  padding-top: 20px;
+  border-top: 1px solid var(--risco);
+  font-size: 13px !important;
+}
+
+.rodape__fino a { color: var(--papel-fraco); }
+
+@media (max-width: 620px) {
+  .rodape { grid-template-columns: 1fr; }
+  .rodape nav { text-align: left; flex-direction: row; flex-wrap: wrap; gap: 16px; }
+}
+
+/* ─────────────────────────── a revelação ────────────────────────────── */
+
+/* Sobe e aparece quando entra no ecrã. Só opacidade e deslocação, que são
+   as duas coisas que o navegador anima sem repintar a página. */
+.revela {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.revela--visivel {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revela { opacity: 1; transform: none; transition: none; }
+}
