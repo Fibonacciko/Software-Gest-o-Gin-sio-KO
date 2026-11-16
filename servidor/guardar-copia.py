@@ -74,6 +74,20 @@ SO_EXISTEM_AQUI = [
     "ko-gym-mobile/.env",
 ]
 
+# **O `.env` do servidor não é o mesmo que o daqui**, e tem coisas que não
+# existem em mais lado nenhum: a palavra-passe de aplicação do Gmail, com que
+# o sócio recebe o código para recuperar o PIN, e a chave que assina os
+# tokens da aplicação.
+#
+# Nenhuma das duas é insubstituível — faz-se outra palavra-passe no Gmail, e
+# uma chave nova só obriga toda a gente a entrar outra vez. Mas é trabalho a
+# mais num dia que já vai ser mau, e custa um ficheiro de duas linhas trazê-lo.
+#
+# Fica numa pasta à parte, com o nome do que é: um `.env` ao lado do outro,
+# com o mesmo nome, trocava-se por ele a repor.
+ENV_DO_SERVIDOR = "/root/ko-gym/backend/.env"
+PASTA_DO_SERVIDOR = "do servidor"
+
 LEIA_ME = """CÓPIA DE SEGURANÇA DO KO GYM
 {data}
 
@@ -100,8 +114,14 @@ trabalhar, mesmo que o servidor e o GitHub desapareçam os dois.
    estão no Git.
 
 {fora}
-   Os ficheiros com as senhas da base de dados e os atalhos desta
-   máquina. São os únicos que não existem em mais lado nenhum.
+   Os ficheiros com as senhas e os atalhos desta máquina. São os únicos
+   que não existem em mais lado nenhum.
+
+   Lá dentro, a pasta "do servidor" tem o .env da máquina de produção,
+   que NÃO é o mesmo que o deste computador: leva a palavra-passe de
+   aplicação do Gmail e a chave que assina os tokens da aplicação do
+   sócio. A repor, é esse que vai para o servidor -- o outro é o de
+   trabalhar aqui.
 
 {repo}
    Tudo outra vez, num só ficheiro, com a história completa do projeto
@@ -124,6 +144,12 @@ Fica uma pasta "ko-gym" igual ao projeto, com a história toda. Falta-lhe
 só o que nunca esteve no Git: copie para lá os ficheiros da pasta
 "{fora}" (as senhas) e, se precisar, reponha a base de dados e as
 fotografias das pastas 3 e 4.
+
+ATENÇÃO aos dois .env: o que está em "{fora}/backend/.env" é o deste
+computador, para trabalhar; o que está em "{fora}/do servidor/
+backend.env" é o da máquina de produção, e é esse que leva a
+palavra-passe do Gmail e a chave dos tokens. Trocá-los deixa o servidor
+sem conseguir mandar email e põe toda a gente fora da aplicação.
 
 Para conferir que o ficheiro está bom, sem o abrir:
 
@@ -241,6 +267,32 @@ def o_que_so_existe_aqui(pasta: Path, a_serio: bool) -> None:
             destino = pasta / FORA_DO_GIT / relativo
             destino.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(origem, destino)
+
+    o_env_do_servidor(pasta, a_serio)
+
+
+def o_env_do_servidor(pasta: Path, a_serio: bool) -> None:
+    """O `.env` de produção, que só existe na máquina do servidor."""
+    destino = pasta / FORA_DO_GIT / PASTA_DO_SERVIDOR / "backend.env"
+
+    if not a_serio:
+        # Na simulação mostram-se **os nomes das chaves e não os valores**:
+        # diz o que lá está sem o escrever no ecrã de quem possa estar a ver.
+        r = correr(["ssh", SERVIDOR,
+                    f"grep -oE '^[A-Z_]+' {ENV_DO_SERVIDOR} | tr '\n' ' '"])
+        chaves = " ".join(r.stdout.split()) or "não consegui ler"
+        print(f"   -> {PASTA_DO_SERVIDOR}/backend.env  ({chaves})")
+        return
+
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    r = correr(["scp", "-q", f"{SERVIDOR}:{ENV_DO_SERVIDOR}", str(destino)])
+    if r.returncode != 0 or not destino.exists():
+        # Não deita a cópia abaixo: o resto dela vale na mesma, e o servidor
+        # pode estar simplesmente desligado.
+        print("   FALHOU o .env do servidor:", (r.stderr or "").strip()[:160])
+        return
+    linhas = sum(1 for _ in io.open(destino, encoding="utf-8", errors="replace"))
+    print(f"   -> {PASTA_DO_SERVIDOR}/backend.env ({linhas} linhas)")
 
 
 def o_repositorio(pasta: Path, a_serio: bool) -> None:
