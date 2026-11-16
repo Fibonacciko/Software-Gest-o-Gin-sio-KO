@@ -34,7 +34,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--gradient-warm)' }}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--background-primary)' }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
@@ -81,7 +81,7 @@ const Login = () => {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Inserir password"
+                    placeholder="Inserir palavra-passe"
                     value={formData.password}
                     onChange={handleChange}
                     className="pl-10 pr-10"
