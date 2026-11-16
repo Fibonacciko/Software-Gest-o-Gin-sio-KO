@@ -727,6 +727,31 @@ toda.
   código de pé por mais quinze minutos era uma segunda porta aberta sem
   ninguém saber.
 
+**Depois de se registar um PIN, o "É a minha primeira vez aqui"
+desaparece.** Decisão do dono: quem já tem PIN não volta a ter uma primeira
+vez, e a linha só ocupava o ecrã e convidava a enganos.
+
+- A marca é **deste telemóvel** (`ko-gym-tem-pin`) e não da conta: a
+  pergunta faz-se **antes** de alguém dizer quem é, e nessa altura o
+  servidor não tem a quem perguntar.
+- Põe-se ao **escolher** o PIN, ao **entrar** com ele e ao **recuperar**
+  pelo email — qualquer um dos três prova que há PIN.
+- **Tira-se quando o servidor disser que a conta não tem PIN** (o `sem_pin`
+  do "Esqueci-me do PIN"), que é o que acontece depois de o balcão lho
+  apagar. Sem isto, quem perdesse o PIN ficava com a linha escondida no
+  próprio ecrã onde precisava dela — e é por aí que ele volta a entrar.
+- A linha começa **escondida** e aparece quando a resposta chega do disco,
+  e não ao contrário: uma linha que pisca no arranque e desaparece a seguir
+  é pior do que uma que nunca esteve lá.
+
+**O "Esqueci-me do PIN" é mais calado do que as outras linhas.** Por decisão
+do dono: é o caminho de quem se enganou, não o que se oferece a quem chega.
+Em ouro e a negrito puxava o olho tanto como o ENTRAR que está logo por
+cima, e num ecrã que é a porta do ginásio o que deve puxar o olho é a
+entrada. **Não é o ouro com transparência** — por cima daquela fotografia o
+dourado a meia opacidade vira azeitona, que é a mesma razão por que o botão
+de check-in não se apagou assim. É a cor do texto secundário.
+
 **O endereço vai-se buscar à ficha, nunca se recebe**: senão bastava
 escrever o número de outra pessoa e um email nosso para receber o código
 dela. E a resposta **esconde-o** (`s***@exemplo.pt`) — o sócio precisa de
@@ -921,7 +946,7 @@ Correm contra uma base de dados só deles (`ko_gym_test`), limpa antes de cada
 teste, sem precisar do servidor a correr: a aplicação é carregada em memória.
 Nunca tocam nos dados de desenvolvimento nem nos de produção.
 
-A **aplicação do sócio** também tem os seus (127 testes, 10 segundos):
+A **aplicação do sócio** também tem os seus (135 testes, 10 segundos):
 
 ```bash
 cd ko-gym-mobile && npx jest
@@ -1300,10 +1325,19 @@ em fotografia:
 
 - O **Marcar** das aulas leva o **degradê do check-in** na caixa, com as
   letras brancas como estavam.
-- O **Deixar uma avaliação** do Ginásio **fica como está**, no dourado
-  chapado. É o botão mais visível daquele ecrã de propósito — é o que mais
-  ajuda o ginásio e é o que as pessoas se esquecem de fazer —, e apagá-lo
-  desfazia essa decisão.
+- O **Deixar uma avaliação** do Ginásio é hoje **exactamente o botão de
+  check-in** — as mesmas cores, o mesmo degradê, o mesmo canto, a mesma
+  altura e a mesma letra. Decisão do dono, em novembro de 2026, e é uma
+  mudança de ideias sobre a anterior: esteve no dourado chapado com letras
+  escuras, para ser o botão mais visível daquele ecrã. São os dois o botão
+  principal do seu ecrã — um porque é para isso que a aplicação existe, o
+  outro porque é o que mais ajuda o ginásio e é o que as pessoas se esquecem
+  de fazer —, e por isso são o mesmo botão.
+
+  Vive **num sítio só** (`botaoPrincipal` e `botaoPrincipalTexto`, no
+  `theme.ts`), e não copiado nos dois ecrãs: "igual" escrito duas vezes dura
+  até alguém mexer num dos dois, e o que se perde não dá erro nenhum — só
+  deixa de ser igual.
 - O **Ligar** e o **Visitar o site** dos Parceiros levam esse dourado
   **só no aro**, com as letras em ouro e nada por dentro. Chegaram a estar
   cheios, como o do Ginásio, e o dono preferiu-os de contorno: ali são duas

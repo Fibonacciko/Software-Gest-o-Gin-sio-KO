@@ -13,7 +13,15 @@ import {
 import { carregarFichaDoGinasio, enderecoDaImagem, FichaDoGinasio } from '../api';
 import { estadoDeHoje, lerHorario, NOME_DO_DIA } from '../lib/horario';
 import Vidro from '../componentes/Vidro';
-import { cores, espaco, raio } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  botaoPrincipal,
+  botaoPrincipalTexto,
+  cores,
+  degradeCheckin,
+  espaco,
+  raio,
+} from '../theme';
 
 const GOOGLE = require('../../assets/google.png');
 
@@ -132,6 +140,17 @@ export default function EcraGinasio() {
       ]}
       onPress={aoTocar}
     >
+      {/* O mesmo degradê do check-in, de cima para baixo. Por decisão do
+          dono: são os dois o botão principal do seu ecrã, e são iguais. */}
+      {destaque ? (
+        <LinearGradient
+          colors={degradeCheckin}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      ) : null}
       <Text style={[estilos.botaoTexto, destaque && estilos.botaoTextoDestaque]}>{texto}</Text>
     </Pressable>
   );
@@ -366,7 +385,11 @@ const estilos = StyleSheet.create({
     backgroundColor: 'rgba(58,58,58,0.6)',
   },
   botaoCheio: { flexGrow: 0, flexBasis: 'auto', alignSelf: 'stretch' },
-  botaoDestaque: { backgroundColor: cores.dourado, borderColor: cores.dourado },
+  // Exactamente o botão do check-in, do `theme.ts`: as mesmas cores, o
+  // mesmo degradê, o mesmo canto, a mesma altura e a mesma letra. O
+  // `borderWidth` do botão normal fica em zero, que o do check-in não tem
+  // aro nenhum e um aro de um pixel dava um botão um pixel mais alto.
+  botaoDestaque: { ...botaoPrincipal, borderWidth: 0 },
   botaoTexto: { color: cores.texto, fontSize: 15, fontWeight: '600' },
-  botaoTextoDestaque: { color: '#1A1A1A', fontWeight: '800', letterSpacing: 0.5 },
+  botaoTextoDestaque: botaoPrincipalTexto,
 });

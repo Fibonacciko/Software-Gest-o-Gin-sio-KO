@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -17,6 +17,7 @@ import {
   entrarComPin,
   entrarPelaPrimeiraVez,
   escolherPin,
+  jaTemPin,
   pedirCodigoDoPin,
   recuperarOPin,
   Socio,
@@ -51,6 +52,32 @@ export default function EcraLogin({ aoEntrar }: Props) {
   // À parte do erro porque não é um erro, e lê-se de outra maneira.
   const [aviso, setAviso] = useState<string | null>(null);
   const [aCarregar, setACarregar] = useState(false);
+
+  /**
+   * Mostrar o "É a minha primeira vez aqui"?
+   *
+   * **Depois de se registar um PIN, nunca mais** — decisão do dono. Quem já
+   * tem PIN não volta a ter uma primeira vez, e a linha só ocupava o ecrã e
+   * convidava a enganos.
+   *
+   * Começa escondida e aparece quando a resposta chegar, e não ao contrário:
+   * uma linha que pisca no arranque e desaparece a seguir é pior do que uma
+   * que nunca esteve lá. Quem precisa dela é quem abre a aplicação pela
+   * primeira vez, e esse espera o instante que ela demora a vir do disco.
+   *
+   * Volta se o balcão lhe apagar o PIN (ver `esquecerQueTemPin`, no `api`).
+   */
+  const [mostrarPrimeiraVez, setMostrarPrimeiraVez] = useState(false);
+
+  useEffect(() => {
+    let vivo = true;
+    jaTemPin().then((tem) => {
+      if (vivo) setMostrarPrimeiraVez(!tem);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [passo]);
 
   const irPara = (p: Passo) => {
     setErro(null);
@@ -376,11 +403,13 @@ export default function EcraLogin({ aoEntrar }: Props) {
         {passo === 'pin' ? (
           <>
             <Pressable onPress={() => irPara('esqueci')}>
-              <Text style={estilos.ligacao}>Esqueci-me do PIN</Text>
+              <Text style={estilos.ligacaoCalada}>Esqueci-me do PIN</Text>
             </Pressable>
-            <Pressable onPress={() => irPara('primeira')}>
-              <Text style={estilos.ligacao}>É a minha primeira vez aqui</Text>
-            </Pressable>
+            {mostrarPrimeiraVez ? (
+              <Pressable onPress={() => irPara('primeira')}>
+                <Text style={estilos.ligacao}>É a minha primeira vez aqui</Text>
+              </Pressable>
+            ) : null}
           </>
         ) : passo === 'primeira' ? (
           <>
@@ -492,6 +521,26 @@ const estilos = StyleSheet.create({
     color: cores.ouro,
     fontSize: 14,
     fontWeight: '700',
+    textAlign: 'center',
+    paddingVertical: espaco.s,
+  },
+  /**
+   * O "Esqueci-me do PIN" é mais calado do que os outros.
+   *
+   * Por decisão do dono. É o caminho de quem se enganou, não o que se
+   * oferece a quem chega: em ouro e a negrito puxava o olho tanto como o
+   * ENTRAR que está logo por cima, e num ecrã que é a porta do ginásio o
+   * que deve puxar o olho é a entrada.
+   *
+   * **Não é o ouro com transparência**: por cima desta fotografia o dourado
+   * a meia opacidade vira azeitona — é a mesma razão por que o botão de
+   * check-in não se apagou assim. É a cor do texto secundário, que já é a
+   * dos restantes textos calados da aplicação.
+   */
+  ligacaoCalada: {
+    color: cores.textoSecundario,
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
     paddingVertical: espaco.s,
   },

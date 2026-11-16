@@ -56,6 +56,46 @@ export const cores = {
  */
 export const degradeCheckin = ['#D6A306', '#A85A12'] as const;
 
+/**
+ * **O botao de accao principal**, que e o mesmo em dois ecras: o check-in,
+ * no Inicio, e o "Deixar uma avaliacao", no Ginasio.
+ *
+ * Sao os dois o que o dono mais quer que se carregue -- um porque e para
+ * isso que a aplicacao existe, o outro porque e o que mais ajuda o ginasio
+ * e e o que as pessoas se esquecem de fazer. Por decisao dele, de novembro
+ * de 2026, sao **exactamente iguais**: as mesmas cores, o mesmo degrade, o
+ * mesmo canto, a mesma altura e a mesma letra.
+ *
+ * Esteve em dois sitios: o do Ginasio era o dourado chapado, com letras
+ * escuras, e o do check-in o degrade. Agora e **uma definicao so**, porque
+ * "igual" escrito duas vezes dura ate alguem mexer num dos dois -- e o que
+ * se perde nao da erro nenhum, so deixa de ser igual.
+ *
+ * Quem o usa poe por cima o `degradeCheckin`, de cima para baixo, num
+ * `LinearGradient` em `StyleSheet.absoluteFill`. O `backgroundColor` fica
+ * por baixo, e e o que se ve se o degrade nao chegar a pintar.
+ */
+export const botaoPrincipal = {
+  backgroundColor: '#B8651B',
+  borderRadius: 24,          // raio.g
+  // Sem isto o degrade saia pelos cantos arredondados fora
+  overflow: 'hidden' as const,
+  paddingVertical: 16,       // espaco.m
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+  flexDirection: 'row' as const,
+  gap: 8,                    // espaco.s
+  // Sem sombra: o halo alaranjado que aqui estava puxava o olho de qualquer
+  // ponto do ecra, e era metade da presenca de que o dono se queixava.
+};
+
+export const botaoPrincipalTexto = {
+  color: '#FFFFFF',
+  fontSize: 16,
+  fontWeight: '800' as const,
+  letterSpacing: 1,
+};
+
 export const espaco = {
   xs: 4,
   s: 8,

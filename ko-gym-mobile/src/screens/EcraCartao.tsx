@@ -36,7 +36,15 @@ import { dataPt, jaPassou } from '../lib/datas';
 import { ESTICA, MEIO_DA_TINTA, nomeDoDia, tamanhoDaTinta } from '../lib/dia';
 import { nomeCurto, semEmoji } from '../lib/nomes';
 import { lerEtiqueta, nfcDisponivel, pararLeitura } from '../nfc';
-import { cores, degradeCheckin, espaco, raio, sombra } from '../theme';
+import {
+  botaoPrincipal,
+  botaoPrincipalTexto,
+  cores,
+  degradeCheckin,
+  espaco,
+  raio,
+  sombra,
+} from '../theme';
 
 /**
  * Quanto o nome do sócio desce para fora da fotografia, em pixeis.
@@ -649,27 +657,12 @@ const estilos = StyleSheet.create({
   numeroPorBaixo: { marginTop: 6 },
   retratoNaCapa: { position: 'absolute', right: espaco.m },
 
-  botaoCheckin: {
-    // Fica por baixo do degradê, e é o que se vê se ele não chegar a pintar
-    backgroundColor: cores.laranja,
-    borderRadius: raio.g,
-    // Sem isto o degradê saía pelos cantos arredondados fora
-    overflow: 'hidden',
-    // A altura do botão do QR, e não a de antes: por decisão do dono, que
-    // quis o check-in com menos presença.
-    paddingVertical: espaco.m,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: espaco.s,
-    // Encostado ao nome: o espaço que a capa deixa por baixo já chega
-    marginTop: 0,
-    // Sem sombra. O halo alaranjado que aqui estava puxava o olho de
-    // qualquer ponto do ecrã, e era metade da presença de que o dono se
-    // queixava.
-  },
+  // O botão de acção principal vive no `theme.ts`, e é o mesmo do
+  // "Deixar uma avaliação", no Ginásio. Aqui só se acrescenta o que é deste
+  // ecrã: encostado ao nome, que o espaço deixado pela capa já chega.
+  botaoCheckin: { ...botaoPrincipal, marginTop: 0 },
   botaoFeito: { backgroundColor: cores.verde },
-  botaoCheckinTexto: { color: cores.texto, fontSize: 16, fontWeight: '800', letterSpacing: 1 },
+  botaoCheckinTexto: botaoPrincipalTexto,
   dica: { color: cores.textoSecundario, fontSize: 13, textAlign: 'center', marginTop: espaco.s },
   erro: { color: cores.vermelho, textAlign: 'center', marginTop: espaco.s },
 

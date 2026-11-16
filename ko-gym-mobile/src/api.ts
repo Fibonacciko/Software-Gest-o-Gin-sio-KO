@@ -8,6 +8,52 @@ export const API_BASE =
 const CHAVE_SESSAO = 'ko-gym-sessao';
 
 /**
+ * **Este telemovel ja teve um PIN escolhido.**
+ *
+ * Serve para o ecra de entrada deixar de oferecer o "E a minha primeira vez
+ * aqui": por decisao do dono, depois de se registar um PIN essa linha
+ * desaparece. Quem ja tem PIN nunca mais tem uma primeira vez, e a linha so
+ * ocupava o ecra e convidava a enganos.
+ *
+ * E deste telemovel e nao da conta, de proposito: vive no proprio aparelho,
+ * que e onde a pergunta se faz -- antes de alguem dizer quem e, o servidor
+ * nao tem a quem perguntar.
+ */
+const CHAVE_TEM_PIN = 'ko-gym-tem-pin';
+
+export async function jaTemPin(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(CHAVE_TEM_PIN)) === 'sim';
+  } catch {
+    // Sem conseguir ler, mostra-se a linha: e o estado em que ela faz falta
+    return false;
+  }
+}
+
+async function marcarQueTemPin() {
+  try {
+    await AsyncStorage.setItem(CHAVE_TEM_PIN, 'sim');
+  } catch {
+    // Nao vale a pena rebentar uma entrada que correu bem por causa disto
+  }
+}
+
+/**
+ * Esquecer que tem PIN. **So quando o servidor disser que a conta nao tem.**
+ *
+ * Acontece quando o balcao lho apagou -- e ai a primeira vez volta mesmo a
+ * ser a primeira. Sem isto, quem perdesse o PIN ficava com a linha escondida
+ * no proprio ecra onde precisava dela.
+ */
+async function esquecerQueTemPin() {
+  try {
+    await AsyncStorage.removeItem(CHAVE_TEM_PIN);
+  } catch {
+    // idem
+  }
+}
+
+/**
  * O token da sessao, em memoria.
  *
  * **Cada pedido as rotas `/mobile/` leva-o.** Antes nao levava nada: a
@@ -287,12 +333,15 @@ async function guardarSessao(dados: Entrada) {
  * conta de outra pessoa nao exigia saber nada que nao se soubesse ja.
  */
 export async function entrarComPin(numeroSocio: string, pin: string) {
-  return guardarSessao(
+  const entrada = await guardarSessao(
     await pedir<Entrada>('/mobile/auth/login', {
       method: 'POST',
       body: JSON.stringify({ member_number: numeroSocio.trim(), pin: pin.trim() }),
     })
   );
+  // Entrou com um PIN: ha PIN, e a primeira vez ja foi
+  await marcarQueTemPin();
+  return entrada;
 }
 
 /**
@@ -312,7 +361,7 @@ export async function entrarPelaPrimeiraVez(numeroSocio: string, telefone: strin
 
 /** O socio escolhe o PIN dele. Prova quem e pelo telemovel. */
 export async function escolherPin(numeroSocio: string, telefone: string, pin: string) {
-  return guardarSessao(
+  const entrada = await guardarSessao(
     await pedir<Entrada>('/mobile/auth/pin', {
       method: 'POST',
       body: JSON.stringify({
@@ -322,6 +371,8 @@ export async function escolherPin(numeroSocio: string, telefone: string, pin: st
       }),
     })
   );
+  await marcarQueTemPin();
+  return entrada;
 }
 
 /**
@@ -352,10 +403,14 @@ export type PedidoDeCodigo = {
  * o numero de outra pessoa e um email nosso para receber o codigo dela.
  */
 export async function pedirCodigoDoPin(numeroSocio: string) {
-  return pedir<PedidoDeCodigo>('/mobile/auth/pin/esqueci', {
+  const resposta = await pedir<PedidoDeCodigo>('/mobile/auth/pin/esqueci', {
     method: 'POST',
     body: JSON.stringify({ member_number: numeroSocio.trim() }),
   });
+  // "Essa conta ainda nao tem PIN" -- o balcao apagou-o. A primeira vez volta
+  // a fazer sentido, e sem isto ficava escondida no ecra onde faz falta.
+  if (resposta.motivo === 'sem_pin') await esquecerQueTemPin();
+  return resposta;
 }
 
 /**
@@ -363,7 +418,7 @@ export async function pedirCodigoDoPin(numeroSocio: string) {
  * ecra de entrada a escrever o PIN que se acabou de escolher.
  */
 export async function recuperarOPin(numeroSocio: string, codigo: string, pin: string) {
-  return guardarSessao(
+  const entrada = await guardarSessao(
     await pedir<Entrada>('/mobile/auth/pin/recuperar', {
       method: 'POST',
       body: JSON.stringify({
@@ -373,6 +428,8 @@ export async function recuperarOPin(numeroSocio: string, codigo: string, pin: st
       }),
     })
   );
+  await marcarQueTemPin();
+  return entrada;
 }
 
 export async function sessaoGuardada(): Promise<string | null> {
