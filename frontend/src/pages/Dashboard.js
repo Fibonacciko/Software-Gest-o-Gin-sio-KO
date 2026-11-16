@@ -13,7 +13,6 @@ import {
   Users, 
   UserCheck, 
   Calendar, 
-  DollarSign, 
   TrendingUp,
   Plus,
   Search,
@@ -370,7 +369,7 @@ const Dashboard = ({ language, translations }) => {
 
   const handleNfcScan = async () => {
     if (!('NDEFReader' in window)) {
-      toast.error('Leitura NFC nao suportada neste dispositivo/navegador. Usa um telemovel Android com Chrome, ou aguarda a App Movel.');
+      toast.error('Leitura NFC não suportada neste dispositivo/navegador. Usa um telemóvel Android com Chrome, ou aguarda a App Movel.');
       return;
     }
     try {
@@ -383,12 +382,12 @@ const Dashboard = ({ language, translations }) => {
         handleCardCheckin(tagId);
       };
       ndef.onreadingerror = () => {
-        toast.error('Erro ao ler o cartao NFC. Tenta novamente.');
+        toast.error('Erro ao ler o cartão NFC. Tenta novamente.');
         setNfcScanning(false);
       };
     } catch (error) {
       console.error('Error starting NFC scan:', error);
-      toast.error('Nao foi possivel iniciar a leitura NFC');
+      toast.error('Não foi possível iniciar a leitura NFC');
       setNfcScanning(false);
     }
   };
@@ -398,7 +397,7 @@ const Dashboard = ({ language, translations }) => {
     if (!cleanTagId) return;
     try {
       const response = await axios.post(`${API}/checkin/nfc`, { tag_id: cleanTagId });
-      toast.success('Check-in por cartao realizado com sucesso!');
+      toast.success('Check-in por cartão realizado com sucesso!');
       setUnrecognizedTag('');
 
       if (response.data?.member?.id) {
@@ -410,9 +409,9 @@ const Dashboard = ({ language, translations }) => {
       console.error('Error on card checkin:', error);
       if (error.response?.status === 404) {
         setUnrecognizedTag(cleanTagId);
-        toast.error('Cartao nao reconhecido. Associa-o a um membro abaixo.');
+        toast.error('Cartão não reconhecido. Associa-o a um membro abaixo.');
       } else {
-        toast.error(error.response?.data?.detail || 'Erro no check-in por cartao');
+        toast.error(error.response?.data?.detail || 'Erro no check-in por cartão');
       }
     } finally {
       setCardReaderValue('');
@@ -434,7 +433,7 @@ const Dashboard = ({ language, translations }) => {
     try {
       await axios.put(`${API}/members/${memberId}/nfc`, { nfc_tag_id: unrecognizedTag });
       const response = await axios.post(`${API}/checkin/nfc`, { tag_id: unrecognizedTag });
-      toast.success('Cartao associado e check-in realizado com sucesso!');
+      toast.success('Cartão associado e check-in realizado com sucesso!');
       if (response.data?.member?.id) {
         await loadMemberProfile(response.data.member.id);
       }
@@ -444,7 +443,7 @@ const Dashboard = ({ language, translations }) => {
       fetchDashboardData();
     } catch (error) {
       console.error('Error assigning tag:', error);
-      toast.error(error.response?.data?.detail || 'Erro ao associar cartao');
+      toast.error(error.response?.data?.detail || 'Erro ao associar cartão');
     }
   };
 
@@ -497,7 +496,7 @@ const Dashboard = ({ language, translations }) => {
     const memberActivities = getMemberActivityIds(member);
 
     if (!member || memberActivities.length === 0) {
-      toast.error('Este membro nao tem modalidade definida. Edita a ficha do membro em Membros.');
+      toast.error('Este membro não tem modalidade definida. Edita a ficha do membro em Membros.');
       return;
     }
 
@@ -882,7 +881,7 @@ const Dashboard = ({ language, translations }) => {
           <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg space-y-3">
             <Activity className="mx-auto text-gray-400 dark:text-gray-500 mb-2" size={48} />
             <p style={{ color: 'var(--text-secondary)' }}>
-              {nfcScanning ? 'A aguardar leitura do cartao NFC...' : 'Aproxime o cartao/pulseira NFC do membro'}
+              {nfcScanning ? 'A aguardar leitura do cartão NFC...' : 'Aproxime o cartão/pulseira NFC do membro'}
             </p>
             <div className="max-w-xs mx-auto text-left">
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
@@ -895,7 +894,7 @@ const Dashboard = ({ language, translations }) => {
                 value={cardReaderValue}
                 onChange={(e) => setCardReaderValue(e.target.value)}
                 onKeyDown={handleCardReaderKeyDown}
-                placeholder="Clique aqui e aproxime o cartao"
+                placeholder="Clique aqui e aproxime o cartão"
                 style={{
                   background: 'var(--gradient-input)',
                   borderColor: 'var(--border-medium)',
@@ -908,7 +907,7 @@ const Dashboard = ({ language, translations }) => {
             </div>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>ou</p>
             <Button onClick={handleNfcScan} disabled={nfcScanning}>
-              {nfcScanning ? 'A ler...' : 'Usar NFC do telemovel (Android + Chrome)'}
+              {nfcScanning ? 'A ler...' : 'Usar NFC do telemóvel (Android + Chrome)'}
             </Button>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Requer telemovel/tablet Android com NFC e Chrome, ou leitor USB compativel. Funcionalidade completa chegara com a App Movel.
@@ -922,7 +921,7 @@ const Dashboard = ({ language, translations }) => {
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4" style={{ color: 'var(--text-muted)' }} />
                   <Input
-                    placeholder="Procurar por nome, telefone ou numero de socio..."
+                    placeholder="Procurar por nome, telefone ou número de sócio..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"

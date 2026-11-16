@@ -179,7 +179,23 @@ const AppDoSocio = ({ language }) => {
       ginasio: 'The Gym',
       ginasioAjuda: 'Contacts, hours and location.',
       sobre: 'About the gym',
-      fotoDoGinasio: 'Gym photo'
+      fotoDoGinasio: 'Gym photo',
+      lojaAjuda: 'The shop as the member sees it: one item per colour, in the same order. Sizes live in Stock and are asked for when reserving. Stock hides nothing — an item with none left still shows and can be reserved, because a reservation is an order and it is at the counter that the member is told. What keeps an item out of the app is having no photo.',
+      semArtigos: 'No items yet. Press New Item to start: t-shirts, hoodies, gloves, shin guards, helmets, wraps…',
+      naApp: 'In the app',
+      faltaFoto: 'Photo missing',
+      semStock: 'Out of stock',
+      tamanhos: 'Sizes',
+      cor: 'Colour',
+      preco: 'Price',
+      quantidade: 'Quantity',
+      fotografiaDoArtigo: 'Item photo',
+      galeria: 'Photos and videos',
+      principal: 'Main',
+      tornarPrincipal: 'Make it the main one',
+      video: 'Video',
+      acrescentarFicheiros: 'Add photos or videos',
+      galeriaAjuda: 'You can choose several at once. The first photo is the one that shows in the shop list; the others and the videos are seen when the item is opened. With no photo at all the item does not appear in the app. The gallery is the same for every size of this colour.'
     }
   };
   const txt = t[language] || t.pt;

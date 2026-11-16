@@ -14,7 +14,7 @@ import {
   Plus, 
   Search, 
   Filter,
-  DollarSign,
+  Euro,
   TrendingUp,
   TrendingDown,
   Calendar,
@@ -101,7 +101,7 @@ const Payments = ({ language, translations }) => {
       addPayment: 'Registar Pagamento',
       addExpense: 'Registar Despesa',
       searchPayments: 'Procurar pagamentos...',
-      allStatuses: 'Todos os Status',
+      allStatuses: 'Todos os estados',
       paid: 'Pago',
       pending: 'Pendente',
       overdue: 'Em Atraso',
@@ -147,7 +147,7 @@ const Payments = ({ language, translations }) => {
     noExpenses: 'Nenhuma despesa para este filtro.',
     expensesTotal: 'Total do filtro',
     noCategory: 'Sem categoria',
-      status: 'Status',
+      status: 'Estado',
       save: 'Guardar',
       cancel: 'Cancelar',
       view: 'Ver',
@@ -813,7 +813,7 @@ const Payments = ({ language, translations }) => {
 
   const exportPayments = () => {
     const csvContent = [
-      ['Data', 'Membro', 'Valor', 'Método', 'Status', 'Descrição'],
+      ['Data', 'Membro', 'Valor', 'Método', 'Estado', 'Descrição'],
       ...payments.map(payment => [
         payment.payment_date,
         payment.member.name,
@@ -892,7 +892,7 @@ const Payments = ({ language, translations }) => {
                     id="member_search"
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
-                    placeholder="Procurar por nome ou numero do aluno..."
+                    placeholder="Procurar por nome ou número do aluno..."
                     className="pl-9"
                     autoComplete="off"
                     data-testid="payment-member-search"
@@ -1183,15 +1183,15 @@ const Payments = ({ language, translations }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { titulo: t[language].billingYear, valor: stats.faturacaoAnual, nota: String(stats.ano), cor: 'bg-green-600', icone: DollarSign },
+            { titulo: t[language].billingYear, valor: stats.faturacaoAnual, nota: String(stats.ano), cor: 'bg-green-600', icone: Euro },
             { titulo: t[language].billingMonth, valor: stats.faturacaoMensal, nota: nomeDoMes(), cor: 'bg-green-500', icone: TrendingUp },
             { titulo: t[language].billingDay, valor: stats.faturacaoDiaria, nota: rotuloDoDia(), cor: 'bg-emerald-500', icone: Calendar },
             { titulo: t[language].expenseYear, valor: stats.despesaAnual, nota: String(stats.ano), cor: 'bg-red-600', icone: TrendingDown },
             { titulo: t[language].expenseMonth, valor: stats.despesaMensal, nota: nomeDoMes(), cor: 'bg-red-500', icone: TrendingDown },
             { titulo: t[language].expenseDay, valor: stats.despesaDiaria, nota: rotuloDoDia(), cor: 'bg-orange-500', icone: CreditCard },
-            { titulo: t[language].netYear, valor: stats.liquidoAnual, nota: String(stats.ano), liquido: true, icone: DollarSign },
-            { titulo: t[language].netMonth, valor: stats.liquidoMensal, nota: nomeDoMes(), liquido: true, icone: DollarSign },
-            { titulo: t[language].netDay, valor: stats.liquidoDiario, nota: rotuloDoDia(), liquido: true, icone: DollarSign }
+            { titulo: t[language].netYear, valor: stats.liquidoAnual, nota: String(stats.ano), liquido: true, icone: Euro },
+            { titulo: t[language].netMonth, valor: stats.liquidoMensal, nota: nomeDoMes(), liquido: true, icone: Euro },
+            { titulo: t[language].netDay, valor: stats.liquidoDiario, nota: rotuloDoDia(), liquido: true, icone: Euro }
           ].map((c) => {
             const Icone = c.icone;
             const negativo = c.liquido && c.valor < 0;
@@ -1257,7 +1257,7 @@ const Payments = ({ language, translations }) => {
                 {t[language].billing}
               </p>
               <div className="p-2.5 rounded-full bg-green-600 shrink-0">
-                <DollarSign size={20} className="text-white" />
+                <Euro size={20} className="text-white" />
               </div>
             </CardContent>
           </Card>
@@ -1440,7 +1440,7 @@ const Payments = ({ language, translations }) => {
                       <td className="p-4">
                         {isAdmin() ? (
                           <div className="flex items-center">
-                            <DollarSign size={16} className="text-gray-400 dark:text-gray-500 mr-1" />
+                            <Euro size={16} className="text-gray-400 dark:text-gray-500 mr-1" />
                             <span className="font-semibold whitespace-nowrap">{euros(payment.amount)}</span>
                           </div>
                         ) : (

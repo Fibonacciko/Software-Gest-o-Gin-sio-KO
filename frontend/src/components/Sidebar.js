@@ -97,7 +97,7 @@ const Sidebar = ({ isOpen, toggleSidebar, language, setLanguage, translations })
                 className="w-9 h-9 rounded-full object-contain"
               />
               <h1 className="text-xl font-bold ko-text-primary">
-                Gym Manager
+                Ginásio KO
               </h1>
             </div>
           )}

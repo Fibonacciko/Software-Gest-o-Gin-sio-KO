@@ -83,6 +83,23 @@ Três tipos: **Quota**, **Seguro** (20 € automáticos) e **Mensalidade + Segur
 Nas contas, um pagamento combinado é repartido: 20 € contam como seguro, o resto
 como quota.
 
+**A validade vem sempre do pagamento mais recente, não do último lançado.**
+As três operações — registar, corrigir e apagar — passam todas pelo
+`recalcular_validades`, que refaz a quota e o seguro a partir dos pagamentos
+que existem na ficha.
+
+Até novembro de 2026 o **registar** fazia contas por sua conta: escrevia a
+validade daquele pagamento por cima do que lá estivesse. Bastava lançar a
+seguir uma mensalidade atrasada — a de setembro, que alguém se esqueceu de
+registar — para a validade **andar para trás**, e o sócio com a quota em dia
+aparecer **inativo** ao balcão, sem nada no ecrã a dizer porquê. O corrigir e
+o apagar já faziam bem; era só esta.
+
+O recálculo **só mexe no seguro quando o pagamento envolve seguro**: há
+sócios com o seguro escrito na ficha e sem pagamento associado, vindos do
+sistema anterior, e recalcular apagava-lho só por se ter lançado uma
+mensalidade. Há testes para os três casos.
+
 ### Faturação
 
 **Este software não emite faturas, e não vai emitir.** Decisão tomada em
@@ -943,7 +960,7 @@ Configuração local (fora do Git): `backend/.env` com `MONGO_URL`, `DB_NAME`
 ### Testes automáticos
 
 Cobrem as regras de negócio acima. **Corra-os antes e depois de mexer no
-backend** — são 411 testes e demoram 58 segundos (o bcrypt dos PIN é lento
+backend** — são 414 testes e demoram 60 segundos (o bcrypt dos PIN é lento
 de propósito).
 
 ```bash

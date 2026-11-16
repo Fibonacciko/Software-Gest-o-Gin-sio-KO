@@ -311,7 +311,7 @@ Ninguém a está a usar. Pode voltar a ligá-la aqui.`;
   const ligarModalidade = async (m) => {
     try {
       await axios.post(`${API}/activities/${m.id}/ligar`);
-      toast.success(`${m.name} voltou ao activo.`);
+      toast.success(`${m.name} voltou ao ativo.`);
       carregar();
     } catch {
       toast.error('Não consegui ligar.');

@@ -70,7 +70,9 @@ const Inventory = ({ language, translations }) => {
       discount: 'com desconto',
       surcharge: 'acima da tabela',
       sellTitle: 'Vender Artigo',
-      inStock: 'em stock',
+      // A seguir a um número, em minúsculas: "5 em stock". O selo do cartão
+      // do artigo é o `inStock`, mais abaixo, e vai em maiúsculas.
+      emStock: 'em stock',
       total: 'Total',
       confirmSale: 'Confirmar Venda',
       saleDone: 'Venda registada e stock atualizado!',
@@ -142,7 +144,7 @@ const Inventory = ({ language, translations }) => {
       discount: 'discounted',
       surcharge: 'above list',
       sellTitle: 'Sell Item',
-      inStock: 'in stock',
+      emStock: 'in stock',
       total: 'Total',
       confirmSale: 'Confirm Sale',
       saleDone: 'Sale recorded and stock updated!',
@@ -702,7 +704,7 @@ const Inventory = ({ language, translations }) => {
                     {descreverArtigo(artigoFixo)}
                   </p>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {euros(artigoFixo.price)} · {artigoFixo.quantity} {t[language].inStock}
+                    {euros(artigoFixo.price)} · {artigoFixo.quantity} {t[language].emStock}
                   </p>
                   {reservaAEntregar && (
                     <p className="text-sm mt-1" style={{ color: 'var(--ko-primary-orange)' }}>

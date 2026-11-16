@@ -12,7 +12,7 @@ import {
   TrendingDown,
   Users,
   UserPlus,
-  DollarSign,
+  Euro,
   Package,
   Activity,
   Printer,
@@ -407,9 +407,9 @@ const Reports = ({ language }) => {
 
     if (reportType === 'resumo') {
       tabela('Notas do ano', resumo.notas.map((n) => [n.titulo, n.texto]));
-      tabela('Presencas por mes', Object.entries(resumo.presencasPorMes).sort()
+      tabela('Presenças por mês', Object.entries(resumo.presencasPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v]));
-      tabela('Presencas por dia da semana (ano inteiro)', SEMANA
+      tabela('Presenças por dia da semana (ano inteiro)', SEMANA
         .filter((d) => resumo.presencasPorDiaDaSemana[d])
         .map((d) => [d, resumo.presencasPorDiaDaSemana[d]]));
       // Mes a mes, para o historico ficar todo no ficheiro
@@ -418,72 +418,72 @@ const Reports = ({ language }) => {
           .filter((d) => resumo.presencasPorDiaDaSemanaEMes[mes][d])
           .map((d) => [d, resumo.presencasPorDiaDaSemanaEMes[mes][d]]));
       });
-      tabela('Presencas por modalidade', porOrdemDeValor(resumo.presencasPorModalidade)
+      tabela('Presenças por modalidade', porOrdemDeValor(resumo.presencasPorModalidade)
         .map((x) => [x.chave, x.valor]));
-      tabela('Inscricoes por mes (quantas e quanto renderam de seguro)',
+      tabela('Inscrições por mês (quantas e quanto renderam de seguro)',
         Object.entries(resumo.inscricoesPorMes).sort()
           .map(([m, v]) => [rotuloDoMes(m), `${v} | ${(resumo.segurosPorMes[m] || 0).toFixed(2)} EUR`]));
-      tabela('Aulas experimentais por mes (quantas e quanto renderam)',
+      tabela('Aulas experimentais por mês (quantas e quanto renderam)',
         Object.entries(resumo.experimentaisPorMes).sort()
           .map(([m, v]) => [rotuloDoMes(m), `${v} | ${(resumo.receitaExperimentaisPorMes[m] || 0).toFixed(2)} EUR`]));
-      tabela('Socios por modalidade (ativos)', porOrdemDeValor(resumo.sociosAtivosPorModalidade)
+      tabela('Sócios por modalidade (ativos)', porOrdemDeValor(resumo.sociosAtivosPorModalidade)
         .map((x) => [x.chave, x.valor]));
-      tabela('Socios por modalidade (todos)', porOrdemDeValor(resumo.sociosPorModalidade)
+      tabela('Sócios por modalidade (todos)', porOrdemDeValor(resumo.sociosPorModalidade)
         .map((x) => [x.chave, x.valor]));
-      tabela('Resultado liquido por modalidade (so a receita que gerou)',
+      tabela('Resultado líquido por modalidade (só a receita que gerou)',
         porOrdemDeValor(resumo.porModalidade.receita).map((x) => [x.chave, x.valor.toFixed(2)]));
-      tabela('Faturacao por mes', Object.entries(resumo.faturacaoPorMes).sort()
+      tabela('Faturação por mês', Object.entries(resumo.faturacaoPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
-      tabela('Despesa por mes', Object.entries(resumo.despesaPorMes).sort()
+      tabela('Despesa por mês', Object.entries(resumo.despesaPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
-      tabela('Resultado liquido por mes', Object.entries(resumo.liquidoPorMes).sort()
+      tabela('Resultado líquido por mês', Object.entries(resumo.liquidoPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
     } else if (reportType === 'attendance') {
       tabela('Totais', [
-        ['Total de presencas', presencas.total],
-        ['Socios diferentes', presencas.unicos],
-        ['Media diaria', numero(presencas.mediaDiaria, 1)],
+        ['Total de presenças', presencas.total],
+        ['Sócios diferentes', presencas.unicos],
+        ['Média diária', numero(presencas.mediaDiaria, 1)],
         ['Aulas experimentais', presencas.experimentais],
-        ['Total no periodo anterior', presencas.comparacao.total.anterior]
+        ['Total no período anterior', presencas.comparacao.total.anterior]
       ]);
       tabela('Por mes', Object.entries(presencas.porMes).sort().map(([m, v]) => [rotuloDoMes(m), v]));
       tabela('Por dia da semana', SEMANA.filter((d) => presencas.porDiaDaSemana[d])
         .map((d) => [d, presencas.porDiaDaSemana[d]]));
       tabela('Por modalidade', porOrdemDeValor(presencas.porModalidade).map((x) => [x.chave, x.valor]));
-      tabela('Socios mais assiduos', presencas.maisAssiduos.map((m) => [m.nome, m.valor]));
+      tabela('Sócios mais assíduos', presencas.maisAssiduos.map((m) => [m.nome, m.valor]));
       tabela('Experimentais por modalidade',
         porOrdemDeValor(presencas.experimentaisPorModalidade).map((x) => [x.chave, x.valor]));
     } else if (reportType === 'payment') {
       tabela('Totais', [
-        ['Faturacao (quotas + seguros + merchandise + experimentais)', financas.faturacao.toFixed(2)],
+        ['Faturação (quotas + seguros + merchandise + experimentais)', financas.faturacao.toFixed(2)],
         ['  dos quais quotas e seguros', financas.receitaQuotas.toFixed(2)],
         ['  dos quais seguros', financas.seguros.toFixed(2)],
         ['  dos quais merchandise', financas.merchandise.toFixed(2)],
         ['  dos quais aulas experimentais', financas.experimentais.toFixed(2)],
         ['Aulas experimentais (quantas)', financas.nExperimentais],
         ['Despesa', financas.despesa.toFixed(2)],
-        ['Resultado liquido', financas.liquido.toFixed(2)],
+        ['Resultado líquido', financas.liquido.toFixed(2)],
         ['Margem (%)', financas.margem === null ? '-' : financas.margem.toFixed(1)],
         ['Pagamentos registados', financas.nPagamentos],
         ['Pagamento medio', financas.pagamentoMedio.toFixed(2)],
         ['Pagamentos pendentes', financas.pendentes],
         ...(financas.comparacao.faturacao ? [
-          ['Faturacao no periodo anterior', financas.comparacao.faturacao.anterior.toFixed(2)],
-          ['Despesa no periodo anterior', financas.comparacao.despesa.anterior.toFixed(2)],
-          ['Resultado liquido no periodo anterior', financas.comparacao.liquido.anterior.toFixed(2)]
-        ] : [['Periodo anterior', 'sem contas: e anterior a 1 de outubro de 2026']])
+          ['Faturação no período anterior', financas.comparacao.faturacao.anterior.toFixed(2)],
+          ['Despesa no período anterior', financas.comparacao.despesa.anterior.toFixed(2)],
+          ['Resultado líquido no período anterior', financas.comparacao.liquido.anterior.toFixed(2)]
+        ] : [['Período anterior', 'sem contas: e anterior a 1 de outubro de 2026']])
       ]);
-      tabela('Faturacao por mes', Object.entries(financas.faturacaoPorMes).sort()
+      tabela('Faturação por mês', Object.entries(financas.faturacaoPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
-      tabela('Despesa por mes', Object.entries(financas.despesaPorMes).sort()
+      tabela('Despesa por mês', Object.entries(financas.despesaPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
       tabela('Despesa por categoria', porOrdemDeValor(financas.despesaPorCategoria)
         .map((x) => [nomeDaCategoria(x.chave), x.valor.toFixed(2)]));
       tabela('Merchandise por artigo', porOrdemDeValor(financas.merchandisePorArtigo)
         .map((x) => [x.chave, x.valor.toFixed(2)]));
-      tabela('Aulas experimentais por mes (quantas)',
+      tabela('Aulas experimentais por mês (quantas)',
         Object.entries(financas.experimentaisPorMes).sort().map(([m, v]) => [rotuloDoMes(m), v]));
-      tabela('Aulas experimentais por mes (quanto renderam)',
+      tabela('Aulas experimentais por mês (quanto renderam)',
         Object.entries(financas.receitaExperimentaisPorMes).sort()
           .map(([m, v]) => [rotuloDoMes(m), v.toFixed(2)]));
       tabela('Aulas experimentais por modalidade (quanto renderam)',
@@ -491,18 +491,18 @@ const Reports = ({ language }) => {
           .map((x) => [x.chave, x.valor.toFixed(2)]));
     } else if (reportType === 'member') {
       tabela('Totais', [
-        ['Total de socios', socios.total],
+        ['Total de sócios', socios.total],
         ['Com quota em dia', socios.ativos],
         ['Sem quota em dia', socios.inativos],
-        ['Novas inscricoes no periodo', socios.novos],
-        ['Inscricoes no periodo anterior', socios.comparacao.novos.anterior],
-        ['Idade media', socios.idadeMedia === null ? '-' : socios.idadeMedia.toFixed(0)],
-        ['Sem modalidade atribuida', socios.semModalidade]
+        ['Novas inscrições no período', socios.novos],
+        ['Inscrições no período anterior', socios.comparacao.novos.anterior],
+        ['Idade média', socios.idadeMedia === null ? '-' : socios.idadeMedia.toFixed(0)],
+        ['Sem modalidade atribuída', socios.semModalidade]
       ]);
-      tabela('Inscricoes por mes', Object.entries(socios.inscricoesPorMes).sort()
+      tabela('Inscrições por mês', Object.entries(socios.inscricoesPorMes).sort()
         .map(([m, v]) => [rotuloDoMes(m), v]));
-      tabela('Socios por modalidade', porOrdemDeValor(socios.porModalidade).map((x) => [x.chave, x.valor]));
-      tabela('Socios por escalao etario', porOrdemDeValor(socios.porEscalao).map((x) => [x.chave, x.valor]));
+      tabela('Sócios por modalidade', porOrdemDeValor(socios.porModalidade).map((x) => [x.chave, x.valor]));
+      tabela('Sócios por escalão etário', porOrdemDeValor(socios.porEscalao).map((x) => [x.chave, x.valor]));
     } else if (reportType === 'inventory') {
       tabela('Totais', [
         ['Total de artigos', stock.totalItems],
@@ -971,7 +971,7 @@ const Reports = ({ language }) => {
                   comparacao={financas.comparacao.merchandise} formatarComparacao={euros} />
                 <StatCard title={txt.totalPayments} value={numero(financas.nPagamentos)}
                   hint={`${txt.averagePayment}: ${euros(financas.pagamentoMedio)}`}
-                  icon={DollarSign} color="bg-blue-600"
+                  icon={Euro} color="bg-blue-600"
                   comparacao={financas.comparacao.nPagamentos} />
                 <StatCard title={txt.trialRevenue} value={euros(financas.experimentais)}
                   hint={`${numero(financas.nExperimentais)} ${txt.trialClasses.toLowerCase()}`}
@@ -1061,7 +1061,7 @@ const Reports = ({ language }) => {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard title={txt.totalItems} value={numero(stock.totalItems)} icon={Package} color="bg-blue-600" />
-                <StatCard title={txt.totalValue} value={euros(stock.totalValue)} icon={DollarSign} color="bg-green-600" />
+                <StatCard title={txt.totalValue} value={euros(stock.totalValue)} icon={Euro} color="bg-green-600" />
                 <StatCard title={txt.lowStockItems} value={numero(stock.lowStockItems)} icon={Activity} color="bg-orange-500" />
               </div>
 

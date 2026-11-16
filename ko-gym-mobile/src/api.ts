@@ -569,7 +569,7 @@ export async function guardarFotoDoSocio(
   );
 
   if (!resposta.ok) {
-    let detalhe = 'Nao consegui guardar a fotografia.';
+    let detalhe = 'Não consegui guardar a fotografia.';
     try {
       const corpo = await resposta.json();
       if (corpo?.detail) detalhe = String(corpo.detail);

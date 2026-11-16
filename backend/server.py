@@ -1101,7 +1101,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="A tua sessão terminou. Entra outra vez.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -1121,7 +1121,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail="Esta conta está desligada.")
     return current_user
 
 # ------------------------------------------------------------------------
@@ -1225,7 +1225,7 @@ def require_admin(current_user: User = Depends(get_current_active_user)):
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            detail="Isto é só do administrador."
         )
     return current_user
 
@@ -1233,7 +1233,7 @@ def require_admin_or_staff(current_user: User = Depends(get_current_active_user)
     if current_user.role not in [UserRole.ADMIN, UserRole.STAFF]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Staff or Admin access required"
+            detail="Precisas de ser colaborador ou administrador."
         )
     return current_user
 
@@ -1702,7 +1702,7 @@ async def generate_fiscal_report(report_type: str, period_start: date, period_en
     
     except Exception as e:
         print(f"Error generating fiscal report: {e}")
-        raise HTTPException(status_code=500, detail="Error generating fiscal report")
+        raise HTTPException(status_code=500, detail="Não foi possível fazer o relatório.")
 
 # API Routes
 @api_router.get("/")
@@ -1786,7 +1786,7 @@ async def update_activity(
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Activity not found")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada")
     
     updated_activity = await db.activities.find_one({"id": activity_id})
     return Activity(**parse_from_mongo(updated_activity))
@@ -1803,7 +1803,7 @@ async def delete_activity(
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Activity not found")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada")
     
     return {"message": "Activity deactivated successfully"}
 
@@ -1819,12 +1819,12 @@ async def login(user_credentials: UserLogin):
     if not user or not verify_password(user_credentials.password, user["password_hash"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="O utilizador ou a palavra-passe não conferem.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
     if not user["is_active"]:
-        raise HTTPException(status_code=400, detail="User account is disabled")
+        raise HTTPException(status_code=400, detail="Esta conta está desligada. Fala com o administrador.")
     
     access_token = create_access_token(data={"sub": user["username"]})
     user_obj = User(**parse_from_mongo(user))
@@ -1848,13 +1848,13 @@ async def create_user(
     # Check if username already exists
     existing_user = await db.users.find_one({"username": user_data.username})
     if existing_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail="Já existe um utilizador com esse nome.")
     
     # Check if email already exists (only if email provided)
     if user_data.email:
         existing_email = await db.users.find_one({"email": user_data.email})
         if existing_email:
-            raise HTTPException(status_code=400, detail="Email already registered")
+            raise HTTPException(status_code=400, detail="Já existe um utilizador com esse email.")
     
     user = User(
         username=user_data.username,
@@ -1894,7 +1894,7 @@ async def update_user(
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
     
     updated_user = await db.users.find_one({"id": user_id})
     await log_audit(current_user, "update", "user", entity_id=user_id, details=f"Atualizou utilizador {user_id}")
@@ -1907,11 +1907,11 @@ async def toggle_user_status(
 ):
     user = await db.users.find_one({"id": user_id})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
     
     # Prevent admin from deactivating themselves
     if user["id"] == current_user.id:
-        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
+        raise HTTPException(status_code=400, detail="Não podes desligar a tua própria conta.")
     
     new_status = not user["is_active"]
     await db.users.update_one(
@@ -1929,19 +1929,19 @@ async def delete_user(
 ):
     user = await db.users.find_one({"id": user_id})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
     
     # Prevent admin from deleting themselves
     if user["id"] == current_user.id:
-        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+        raise HTTPException(status_code=400, detail="Não podes apagar a tua própria conta.")
     
     # Prevent deleting other admins
     if user["role"] == "admin":
-        raise HTTPException(status_code=400, detail="Cannot delete admin accounts")
+        raise HTTPException(status_code=400, detail="Não se apagam contas de administrador.")
     
     result = await db.users.delete_one({"id": user_id})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
     
     await log_audit(current_user, "delete", "user", entity_id=user_id, details=f"Eliminou utilizador {user.get('username', user_id)}")
     return {"message": "User deleted successfully"}
@@ -2493,7 +2493,7 @@ async def create_member(
     except Exception as e:
         gym_logger.error("Member creation failed", error=e, 
                         user_id=current_user.id, member_name=member_data.name)
-        raise HTTPException(status_code=500, detail="Failed to create member")
+        raise HTTPException(status_code=500, detail="Não foi possível criar a ficha do sócio.")
 
 @api_router.get("/members", response_model=List[Member])
 @api_rate_limit()
@@ -2561,7 +2561,7 @@ async def get_member(
 ):
     member = await db.members.find_one({"id": member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     return Member(**normalize_member_read(parse_from_mongo(member)))
 
 @api_router.get("/members/number/{member_number}", response_model=Member)
@@ -2572,7 +2572,7 @@ async def get_member_by_number(
     """Get member by member number"""
     member = await db.members.find_one({"member_number": member_number})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     return Member(**normalize_member_read(parse_from_mongo(member)))
 
 @api_router.put("/members/{member_id}", response_model=Member)
@@ -2596,7 +2596,7 @@ async def update_member(
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     updated_member = await db.members.find_one({"id": member_id})
     BusinessCache.invalidate_member_cache()
@@ -2610,7 +2610,7 @@ async def delete_member(
 ):
     result = await db.members.delete_one({"id": member_id})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     BusinessCache.invalidate_member_cache()
     await log_audit(current_user, "delete", "member", entity_id=member_id, details=f"Eliminou membro {member_id}")
     return {"message": "Member deleted successfully"}
@@ -2633,7 +2633,7 @@ async def estado_do_pin(
     """
     socio = await db.members.find_one({"id": member_id})
     if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     ate = bloqueado_ate(socio)
     return {
         "definido": bool(socio.get("pin_hash")),
@@ -2663,7 +2663,7 @@ async def limpar_o_pin(
     """
     socio = await db.members.find_one({"id": member_id})
     if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
 
     await db.members.update_one(
         {"id": member_id},
@@ -2701,7 +2701,7 @@ async def suspender_socio(
     """
     member = await db.members.find_one({"id": member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     if member.get("status") == MemberStatus.SUSPENDED.value:
         raise HTTPException(status_code=400, detail="O sócio já está suspenso")
 
@@ -2732,7 +2732,7 @@ async def levantar_suspensao(
     """
     member = await db.members.find_one({"id": member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     if member.get("status") != MemberStatus.SUSPENDED.value:
         raise HTTPException(status_code=400, detail="O sócio não está suspenso")
 
@@ -2807,12 +2807,12 @@ async def create_attendance(
     # Check if member exists
     member = await db.members.find_one({"id": attendance_data.member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     # Check if activity exists
     activity = await db.activities.find_one({"id": attendance_data.activity_id, "is_active": True})
     if not activity:
-        raise HTTPException(status_code=404, detail="Activity not found")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada")
     
     # Set check_in_date to today if not provided
     if not attendance_data.check_in_date:
@@ -2840,11 +2840,11 @@ async def update_attendance(
     """Corrige a modalidade de um check-in feito na modalidade errada."""
     registo = await db.attendance.find_one({"id": attendance_id})
     if not registo:
-        raise HTTPException(status_code=404, detail="Presenca nao encontrada")
+        raise HTTPException(status_code=404, detail="Presença não encontrada")
 
     activity = await db.activities.find_one({"id": dados.activity_id, "is_active": True})
     if not activity:
-        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada")
 
     await db.attendance.update_one(
         {"id": attendance_id}, {"$set": {"activity_id": dados.activity_id}}
@@ -2869,7 +2869,7 @@ async def delete_attendance(
     """
     registo = await db.attendance.find_one({"id": attendance_id})
     if not registo:
-        raise HTTPException(status_code=404, detail="Presenca nao encontrada")
+        raise HTTPException(status_code=404, detail="Presença não encontrada")
 
     await db.attendance.delete_one({"id": attendance_id})
     BusinessCache.invalidate_member_cache()
@@ -2985,7 +2985,7 @@ async def create_payment(
     # Check if member exists
     member = await db.members.find_one({"id": payment_data.member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     payment_dict_in = payment_data.dict()
     # An empty date must not override the model default of today
@@ -2996,27 +2996,23 @@ async def create_payment(
     payment_dict = prepare_for_mongo(payment.dict())
     await db.payments.insert_one(payment_dict)
 
-    # Cada pagamento renova o que lhe corresponde na ficha do socio
-    renovacao = {}
-
-    if payment.payment_type in (PaymentType.QUOTA, PaymentType.QUOTA_INSURANCE):
-        # Quota: cobre ate ao mesmo dia do mes seguinte
-        renovacao["membership_paid_date"] = payment.payment_date
-        renovacao["membership_valid_until"] = add_one_month(payment.payment_date)
-
-    if payment.payment_type in (PaymentType.INSURANCE, PaymentType.QUOTA_INSURANCE):
-        seguro_ate = payment.payment_date + timedelta(days=INSURANCE_VALIDITY_DAYS)
-        renovacao["insurance_paid_date"] = payment.payment_date
-        renovacao["insurance_valid_until"] = seguro_ate
-        # A validade da inscricao acompanha o seguro
-        renovacao["expiry_date"] = seguro_ate
-
-    if renovacao:
-        await db.members.update_one(
-            {"id": payment.member_id},
-            {"$set": prepare_for_mongo(renovacao)}
-        )
-        BusinessCache.invalidate_member_cache()
+    # As validades **refazem-se a partir dos pagamentos todos**, e nao a
+    # partir deste. Escrevia-se aqui a validade deste pagamento por cima do
+    # que la estivesse, e por isso **lancar um pagamento com data antiga
+    # puxava a validade para tras**: o socio que pagou no dia 16 e a quem se
+    # lancasse a seguir a mensalidade atrasada de setembro ficava **inativo**,
+    # com a quota em dia e sem nada no ecra a dizer porque.
+    #
+    # E a mesma funcao que o corrigir e o apagar ja usavam -- era so o
+    # registar que fazia contas por sua conta.
+    #
+    # **`mexer_no_seguro` so quando o pagamento envolve seguro**: ha socios
+    # com o seguro posto a mao na ficha, sem pagamento nenhum associado, e
+    # recalcular apagava-lho por se ter lancado uma mensalidade.
+    envolve_seguro = payment.payment_type in (
+        PaymentType.INSURANCE, PaymentType.QUOTA_INSURANCE
+    )
+    await recalcular_validades(payment.member_id, mexer_no_seguro=envolve_seguro)
 
     detalhe = {
         PaymentType.INSURANCE: "seguro",
@@ -3035,11 +3031,11 @@ async def update_payment(
     """Corrige um pagamento mal lancado e refaz as validades do socio."""
     existente = await db.payments.find_one({"id": payment_id})
     if not existente:
-        raise HTTPException(status_code=404, detail="Pagamento nao encontrado")
+        raise HTTPException(status_code=404, detail="Pagamento não encontrado")
 
     membro = await db.members.find_one({"id": dados.member_id})
     if not membro:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
 
     novos = dados.dict()
     if novos.get("payment_date") is None:
@@ -3075,7 +3071,7 @@ async def delete_payment(
     """
     pagamento = await db.payments.find_one({"id": payment_id})
     if not pagamento:
-        raise HTTPException(status_code=404, detail="Pagamento nao encontrado")
+        raise HTTPException(status_code=404, detail="Pagamento não encontrado")
 
     await db.payments.delete_one({"id": payment_id})
     await recalcular_validades(
@@ -3142,7 +3138,7 @@ async def update_expense(
     """
     antiga = await db.expenses.find_one({"id": expense_id})
     if not antiga:
-        raise HTTPException(status_code=404, detail="Despesa nao encontrada")
+        raise HTTPException(status_code=404, detail="Despesa não encontrada")
 
     campos = expense_data.dict()
     if not campos.get("expense_date"):
@@ -3162,7 +3158,7 @@ async def delete_expense(
 ):
     despesa = await db.expenses.find_one({"id": expense_id})
     if not despesa:
-        raise HTTPException(status_code=404, detail="Despesa nao encontrada")
+        raise HTTPException(status_code=404, detail="Despesa não encontrada")
 
     await db.expenses.delete_one({"id": expense_id})
     await log_audit(current_user, "delete", "expense", entity_id=expense_id,
@@ -3228,7 +3224,7 @@ async def update_inventory_item(
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Artigo não encontrado")
     
     updated_item = await db.inventory.find_one({"id": item_id})
     await log_audit(current_user, "update", "inventory", entity_id=item_id, details=f"Atualizou artigo de stock {item_id}")
@@ -3241,7 +3237,7 @@ async def delete_inventory_item(
 ):
     result = await db.inventory.delete_one({"id": item_id})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Artigo não encontrado")
     await log_audit(current_user, "delete", "inventory", entity_id=item_id, details=f"Eliminou artigo de stock {item_id}")
     return {"message": "Item deleted successfully"}
 
@@ -3348,7 +3344,7 @@ async def get_dashboard_stats(current_user: User = Depends(require_admin_or_staf
             
     except Exception as e:
         gym_logger.error("Dashboard stats generation failed", error=e, user_id=current_user.id)
-        raise HTTPException(status_code=500, detail="Failed to generate dashboard statistics")
+        raise HTTPException(status_code=500, detail="Não foi possível calcular os números do painel.")
 
 
 # Trial Class Routes (aulas experimentais)
@@ -3359,11 +3355,11 @@ async def create_trial(
 ):
     activity = await db.activities.find_one({"id": dados.activity_id, "is_active": True})
     if not activity:
-        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada")
 
     valor = TRIAL_DEFAULT_AMOUNT if dados.amount is None else dados.amount
     if valor < 0:
-        raise HTTPException(status_code=400, detail="O valor nao pode ser negativo")
+        raise HTTPException(status_code=400, detail="O valor não pode ser negativo")
 
     trial = TrialClass(
         activity_id=activity["id"],
@@ -3404,15 +3400,15 @@ async def update_trial(
 ):
     antiga = await db.trial_classes.find_one({"id": trial_id})
     if not antiga:
-        raise HTTPException(status_code=404, detail="Aula experimental nao encontrada")
+        raise HTTPException(status_code=404, detail="Aula experimental não encontrada")
 
     activity = await db.activities.find_one({"id": dados.activity_id, "is_active": True})
     if not activity:
-        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada")
 
     valor = antiga.get("amount", TRIAL_DEFAULT_AMOUNT) if dados.amount is None else dados.amount
     if valor < 0:
-        raise HTTPException(status_code=400, detail="O valor nao pode ser negativo")
+        raise HTTPException(status_code=400, detail="O valor não pode ser negativo")
 
     nova = TrialClass(
         id=trial_id,
@@ -3433,7 +3429,7 @@ async def update_trial(
 async def delete_trial(trial_id: str, current_user: User = Depends(require_admin_or_staff)):
     resultado = await db.trial_classes.delete_one({"id": trial_id})
     if resultado.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Aula experimental nao encontrada")
+        raise HTTPException(status_code=404, detail="Aula experimental não encontrada")
     await log_audit(current_user, "delete", "trial", entity_id=trial_id,
                     details="Eliminou uma aula experimental")
     return {"message": "Aula experimental eliminada"}
@@ -3449,7 +3445,7 @@ async def create_sale(
 
     item = await db.inventory.find_one({"id": sale_data.item_id})
     if not item:
-        raise HTTPException(status_code=404, detail="Artigo nao encontrado")
+        raise HTTPException(status_code=404, detail="Artigo não encontrado")
 
     disponivel = item.get("quantity", 0)
     if sale_data.quantity > disponivel:
@@ -3463,7 +3459,7 @@ async def create_sale(
     if sale_data.member_id:
         member = await db.members.find_one({"id": sale_data.member_id})
         if not member:
-            raise HTTPException(status_code=404, detail="Socio nao encontrado")
+            raise HTTPException(status_code=404, detail="Sócio não encontrado")
 
     preco_tabela = float(item.get("price", 0))
     # O valor cobrado pode diferir do preco de tabela (descontos, promocoes)
@@ -3472,7 +3468,7 @@ async def create_sale(
     else:
         preco = float(sale_data.unit_price)
         if preco < 0:
-            raise HTTPException(status_code=400, detail="O preco nao pode ser negativo")
+            raise HTTPException(status_code=400, detail="O preço não pode ser negativo")
 
     sale = Sale(
         item_id=item["id"],
@@ -3545,7 +3541,7 @@ async def apagar_venda(
     """
     venda = await db.sales.find_one({"id": sale_id})
     if not venda:
-        raise HTTPException(status_code=404, detail="Venda nao encontrada")
+        raise HTTPException(status_code=404, detail="Venda não encontrada")
 
     quantidade = int(venda.get("quantity", 0) or 0)
     artigo = await db.inventory.find_one({"id": venda.get("item_id")})
@@ -3666,7 +3662,7 @@ async def get_dashboard_alerts(request: Request, current_user: User = Depends(re
         }
     except Exception as e:
         gym_logger.error("Dashboard alerts generation failed", error=e, user_id=current_user.id)
-        raise HTTPException(status_code=500, detail="Failed to generate dashboard alerts")
+        raise HTTPException(status_code=500, detail="Não foi possível calcular os avisos do painel.")
 
 @api_router.get("/reports/attendance")
 async def get_attendance_report(
@@ -3828,14 +3824,14 @@ async def qr_checkin(
 ):
     # Extract member number and ID from QR code
     if not qr_data or "-" not in qr_data:
-        raise HTTPException(status_code=400, detail="Invalid QR code")
+        raise HTTPException(status_code=400, detail="QR não reconhecido.")
     
     try:
         parts = qr_data.split("-")
         member_number = parts[0]
         member_id = parts[1]
     except (ValueError, IndexError):
-        raise HTTPException(status_code=400, detail="Invalid QR code format")
+        raise HTTPException(status_code=400, detail="Esse QR não é do ginásio.")
     
     # Check if member exists (try both member number and ID)
     member = await db.members.find_one({
@@ -3845,7 +3841,7 @@ async def qr_checkin(
         ]
     })
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     # Create attendance record
     attendance_data = AttendanceCreate(
@@ -3872,15 +3868,15 @@ async def assign_member_nfc_tag(
     """Associar ou atualizar o cartao/pulseira NFC de um membro"""
     nfc_tag_id = (payload.get("nfc_tag_id") or "").strip()
     if not nfc_tag_id:
-        raise HTTPException(status_code=400, detail="nfc_tag_id e obrigatorio")
+        raise HTTPException(status_code=400, detail="nfc_tag_id é obrigatório")
 
     member = await db.members.find_one({"id": member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
 
     existing = await db.members.find_one({"nfc_tag_id": nfc_tag_id, "id": {"$ne": member_id}})
     if existing:
-        raise HTTPException(status_code=400, detail="Este cartao NFC ja esta associado a outro membro")
+        raise HTTPException(status_code=400, detail="Este cartão NFC já está associado a outro membro")
 
     await db.members.update_one({"id": member_id}, {"$set": {"nfc_tag_id": nfc_tag_id}})
     updated_member = await db.members.find_one({"id": member_id})
@@ -3895,15 +3891,15 @@ async def nfc_checkin(
     """Check-in atraves de cartao/pulseira NFC"""
     tag_id = (payload.get("tag_id") or "").strip()
     if not tag_id:
-        raise HTTPException(status_code=400, detail="tag_id e obrigatorio")
+        raise HTTPException(status_code=400, detail="tag_id é obrigatório")
 
     member = await db.members.find_one({"nfc_tag_id": tag_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Cartao NFC nao reconhecido")
+        raise HTTPException(status_code=404, detail="Cartão NFC não reconhecido")
 
     activity_id = payload.get("activity_id") or member.get("activity_id")
     if not activity_id:
-        raise HTTPException(status_code=400, detail="Este membro nao tem modalidade definida. Edite a ficha do membro.")
+        raise HTTPException(status_code=400, detail="Este membro não tem modalidade definida. Edite a ficha do membro.")
 
     attendance_data = AttendanceCreate(
         member_id=member["id"],
@@ -4208,7 +4204,7 @@ async def escolher_o_pin(request: Request, dados: EscolherPin):
     if socio.get("pin_hash"):
         raise HTTPException(
             status_code=409,
-            detail="Esta conta já tem PIN. Para trocar precisas do actual, ou da receção.",
+            detail="Esta conta já tem PIN. Para trocar precisas do atual, ou da receção.",
         )
 
     await db.members.update_one(
@@ -4247,7 +4243,7 @@ async def trocar_o_pin(request: Request, dados: TrocarPin):
     for socio in candidatos:
         if socio.get("pin_hash"):
             await falhou_o_pin(socio)
-    raise HTTPException(status_code=401, detail="O PIN actual não confere.")
+    raise HTTPException(status_code=401, detail="O PIN atual não confere.")
 
 
 # ------------------------------------------------------------------------
@@ -4509,7 +4505,7 @@ async def get_mobile_profile(member_id: str, socio: dict = Depends(socio_da_apli
     """Get mobile member profile with workout count and motivational note"""
     member = await db.members.find_one({"id": member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     return await build_mobile_member(member)
 
@@ -4521,7 +4517,7 @@ async def update_mobile_profile(member_id: str, profile_data: dict, socio: dict 
     update_data = {k: v for k, v in profile_data.items() if k in allowed_fields}
     
     if not update_data:
-        raise HTTPException(status_code=400, detail="No valid fields to update")
+        raise HTTPException(status_code=400, detail="Não há nada para alterar.")
     
     result = await db.members.update_one(
         {"id": member_id},
@@ -4529,7 +4525,7 @@ async def update_mobile_profile(member_id: str, profile_data: dict, socio: dict 
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     return {"message": "Profile updated successfully"}
 
@@ -4542,7 +4538,7 @@ async def update_fcm_token(member_id: str, token_data: FCMTokenUpdate, socio: di
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     return {"message": "FCM token updated successfully"}
 
@@ -4563,7 +4559,7 @@ async def mobile_app_checkin(dados: MobileCheckin, socio: dict = Depends(socio_d
     confirmar_que_e_dele(socio, dados.member_id)
     member = await db.members.find_one({"id": dados.member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     if member.get("status") == "suspended":
         raise HTTPException(status_code=403, detail="Inscrição suspensa. Fala com a receção.")
 
@@ -4573,11 +4569,11 @@ async def mobile_app_checkin(dados: MobileCheckin, socio: dict = Depends(socio_d
         ids = member.get("activity_ids") or []
         activity_id = ids[0] if ids else None
     if not activity_id:
-        raise HTTPException(status_code=400, detail="Sem modalidade definida. Fala com a rececao.")
+        raise HTTPException(status_code=400, detail="Sem modalidade definida. Fala com a receção.")
 
     activity = await db.activities.find_one({"id": activity_id, "is_active": True})
     if not activity:
-        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada")
 
     hoje = date.today()
 
@@ -4631,12 +4627,12 @@ async def mobile_qr_checkin(member_id: str, activity_id: str, socio: dict = Depe
     # Verify member exists and is active
     member = await db.members.find_one({"id": member_id, "status": "active"})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found or inactive")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado, ou com a ficha desligada")
     
     # Verify activity exists and is active
     activity = await db.activities.find_one({"id": activity_id, "is_active": True})
     if not activity:
-        raise HTTPException(status_code=404, detail="Activity not found or inactive")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada, ou desligada")
     
     # Create attendance record
     attendance_data = AttendanceCreate(
@@ -4743,7 +4739,7 @@ async def mock_mobile_payment(member_id: str, payment_data: MobilePaymentRequest
     # Verify member exists
     member = await db.members.find_one({"id": member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     # Return mock response
     return {
@@ -4870,7 +4866,7 @@ async def get_member_analytics(
     except Exception as e:
         gym_logger.error("Member analytics generation failed", error=e, 
                         user_id=current_user.id, member_id=member_id)
-        raise HTTPException(status_code=500, detail="Failed to generate member analytics")
+        raise HTTPException(status_code=500, detail="Não foi possível calcular os números do sócio.")
 
 @api_router.get("/analytics/churn")
 @dashboard_rate_limit()
@@ -4888,7 +4884,7 @@ async def get_churn_analysis(current_user: User = Depends(require_admin), reques
         
     except Exception as e:
         gym_logger.error("Churn analysis generation failed", error=e, user_id=current_user.id)
-        raise HTTPException(status_code=500, detail="Failed to generate churn analysis")
+        raise HTTPException(status_code=500, detail="Não foi possível calcular a análise de desistências.")
 
 @api_router.get("/system/status")
 @api_rate_limit()
@@ -4964,7 +4960,7 @@ async def clear_cache(
         
     except Exception as e:
         gym_logger.error("Cache clear failed", error=e, user_id=current_user.id)
-        raise HTTPException(status_code=500, detail="Failed to clear cache")
+        raise HTTPException(status_code=500, detail="Não foi possível limpar a cache.")
 
 # Authentication helper function
 async def authenticate_user(username: str, password: str) -> Optional[User]:
@@ -4979,42 +4975,6 @@ async def authenticate_user(username: str, password: str) -> Optional[User]:
     return User(**parse_from_mongo(user))
 
 # Enhanced login endpoint with rate limiting
-@api_router.post("/auth/login-premium")
-@auth_rate_limit()
-async def login_with_premium_features(request: Request, user_data: UserLogin):
-    """Premium login with advanced security and logging"""
-    
-    # Log login attempt
-    gym_logger.security_event("login_attempt", user_id=user_data.username)
-    
-    try:
-        user = await authenticate_user(user_data.username, user_data.password)
-        if not user:
-            # Record failed attempt
-            gym_logger.security_event("login_failed", user_id=user_data.username)
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        
-        # Success
-        gym_logger.security_event("login_success", user_id=user.id)
-        
-        # Generate token
-        access_token = create_access_token(data={"sub": user.id, "role": user.role})
-        
-        # Log business metric
-        gym_logger.business_metric("user_login", 1, user_id=user.id, user_role=user.role)
-        
-        return {
-            "access_token": access_token,
-            "token_type": "bearer",
-            "user": user,
-            "features": ["premium_analytics", "advanced_security", "enhanced_logging"]
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        gym_logger.error("Login system error", error=e, user_id=user_data.username)
-        raise HTTPException(status_code=500, detail="Authentication system error")
 
 # Automated Messaging Routes (Admin only)
 @api_router.post("/automated-messages", response_model=AutomatedMessage)
@@ -5052,7 +5012,7 @@ async def update_automated_message(
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Automated message not found")
+        raise HTTPException(status_code=404, detail="Mensagem automática não encontrada")
     
     updated_message = await db.automated_messages.find_one({"id": message_id})
     return AutomatedMessage(**parse_from_mongo(updated_message))
@@ -5067,13 +5027,13 @@ async def trigger_automated_message_endpoint(
     member_id = trigger_data.get("member_id")
     
     if not trigger or not member_id:
-        raise HTTPException(status_code=400, detail="trigger and member_id required")
+        raise HTTPException(status_code=400, detail="Faltam o trigger e o member_id.")
     
     message_id = await trigger_automated_message(trigger, member_id)
     if message_id:
         return {"message": "Automated message triggered successfully", "message_id": message_id}
     else:
-        raise HTTPException(status_code=500, detail="Failed to trigger automated message")
+        raise HTTPException(status_code=500, detail="Não foi possível enviar a mensagem.")
 
 # Financial Management Routes
 @api_router.post("/invoices", response_model=Invoice)
@@ -5085,7 +5045,7 @@ async def create_invoice(
     # Get member info
     member = await db.members.find_one({"id": invoice_data.member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     # Calculate amounts
     tax_amount = invoice_data.amount * invoice_data.tax_rate
@@ -5172,7 +5132,7 @@ async def mark_invoice_as_paid(
     )
     
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+        raise HTTPException(status_code=404, detail="Fatura não encontrada")
     
     # Create payment record
     invoice = await db.invoices.find_one({"id": invoice_id})
@@ -5221,7 +5181,7 @@ async def get_fiscal_report(
         period_start = date(year, 1, 1)
         period_end = date(year, 12, 31)
     else:
-        raise HTTPException(status_code=400, detail="Invalid report type or missing parameters")
+        raise HTTPException(status_code=400, detail="Tipo de relatório desconhecido, ou faltam dados.")
     
     report = await generate_fiscal_report(report_type, period_start, period_end)
     
@@ -5259,7 +5219,7 @@ async def toggle_smart_discount(
     """Toggle smart discount active status"""
     discount = await db.smart_discounts.find_one({"id": discount_id})
     if not discount:
-        raise HTTPException(status_code=404, detail="Smart discount not found")
+        raise HTTPException(status_code=404, detail="Desconto não encontrado")
     
     new_status = not discount.get("is_active", True)
     
@@ -5279,7 +5239,7 @@ async def check_member_triggers(
     """Check and trigger automated messages for member based on their current state"""
     member = await db.members.find_one({"id": member_id})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     
     triggered_messages = []
     
@@ -5482,19 +5442,19 @@ async def guardar_imagem(
     else:
         raise HTTPException(
             status_code=400,
-            detail=("So aceito imagens (jpg, png, webp, gif), videos (mp4, mov, webm) "
+            detail=("Só aceito imagens (jpg, png, webp, gif), vídeos (mp4, mov, webm) "
                     "ou documentos PDF.")
         )
 
     conteudo = await ficheiro.read()
     if not conteudo:
-        raise HTTPException(status_code=400, detail="O ficheiro esta vazio.")
+        raise HTTPException(status_code=400, detail="O ficheiro está vazio.")
 
     if len(conteudo) > limite:
         raise HTTPException(
             status_code=400,
-            detail=(f"{nome_do_tipo} e demasiado grande ({len(conteudo) // (1024 * 1024)} MB). "
-                    f"O limite sao {limite // (1024 * 1024)} MB.")
+            detail=(f"{nome_do_tipo} é demasiado grande ({len(conteudo) // (1024 * 1024)} MB). "
+                    f"O limite são {limite // (1024 * 1024)} MB.")
         )
 
     PASTA_UPLOADS.mkdir(parents=True, exist_ok=True)
@@ -5510,7 +5470,7 @@ async def guardar_imagem(
 async def apagar_imagem(nome: str, current_user: User = Depends(require_admin_or_staff)):
     # So o proprio nome do ficheiro, para ninguem sair da pasta das imagens
     if "/" in nome or chr(92) in nome or ".." in nome:
-        raise HTTPException(status_code=400, detail="Nome invalido.")
+        raise HTTPException(status_code=400, detail="Nome inválido.")
     caminho = PASTA_UPLOADS / nome
     if caminho.exists():
         caminho.unlink()
@@ -5606,7 +5566,7 @@ async def corrigir_parceiro(
 ):
     antigo = await db.partners.find_one({"id": partner_id})
     if not antigo:
-        raise HTTPException(status_code=404, detail="Parceiro nao encontrado")
+        raise HTTPException(status_code=404, detail="Parceiro não encontrado")
     # O lugar na lista guarda-se como a data de criacao: o PUT substitui a
     # ficha toda, e sem isto corrigir o telefone mandava o parceiro para o
     # inicio -- e com ele mudava o que o socio ve na pagina inicial da app.
@@ -5622,7 +5582,7 @@ async def corrigir_parceiro(
 async def apagar_parceiro(partner_id: str, current_user: User = Depends(require_admin)):
     parceiro = await db.partners.find_one({"id": partner_id})
     if not parceiro:
-        raise HTTPException(status_code=404, detail="Parceiro nao encontrado")
+        raise HTTPException(status_code=404, detail="Parceiro não encontrado")
     await db.partners.delete_one({"id": partner_id})
     await log_audit(current_user, "delete", "partner", entity_id=partner_id,
                     details=f"Eliminou o parceiro {parceiro.get('name')}")
@@ -5643,7 +5603,7 @@ async def criar_media(dados: MediaItemCreate, current_user: User = Depends(requi
     """
     socio = await db.members.find_one({"id": dados.member_id})
     if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
 
     item = MediaItem(**dados.dict())
     await db.media.insert_one(prepare_for_mongo(item.dict()))
@@ -5673,7 +5633,7 @@ async def corrigir_media(
 ):
     antigo = await db.media.find_one({"id": media_id})
     if not antigo:
-        raise HTTPException(status_code=404, detail="Item nao encontrado")
+        raise HTTPException(status_code=404, detail="Item não encontrado")
     novo = MediaItem(**dados.dict(), id=media_id, created_at=antigo.get("created_at"))
     await db.media.replace_one({"id": media_id}, prepare_for_mongo(novo.dict()))
     return novo
@@ -5698,7 +5658,7 @@ async def apagar_media(media_id: str, current_user: User = Depends(require_admin
     """
     item = await db.media.find_one({"id": media_id})
     if not item:
-        raise HTTPException(status_code=404, detail="Item nao encontrado")
+        raise HTTPException(status_code=404, detail="Item não encontrado")
 
     endereco = item.get("url") or ""
     outros = await db.media.count_documents({"url": endereco, "id": {"$ne": media_id}})
@@ -5732,7 +5692,7 @@ async def mudar_estado_da_reserva(
 ):
     reserva = await db.reservations.find_one({"id": reservation_id})
     if not reserva:
-        raise HTTPException(status_code=404, detail="Reserva nao encontrada")
+        raise HTTPException(status_code=404, detail="Reserva não encontrada")
     await db.reservations.update_one(
         {"id": reservation_id}, {"$set": {"status": novo_estado.value}}
     )
@@ -5745,7 +5705,7 @@ async def mudar_estado_da_reserva(
 @api_router.delete("/reservations/{reservation_id}")
 async def apagar_reserva(reservation_id: str, current_user: User = Depends(require_admin_or_staff)):
     if (await db.reservations.delete_one({"id": reservation_id})).deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Reserva nao encontrada")
+        raise HTTPException(status_code=404, detail="Reserva não encontrada")
     return {"message": "Reserva eliminada"}
 
 
@@ -5959,7 +5919,7 @@ async def reservar_pela_app(dados: ReservationCreate, socio: dict = Depends(soci
 
     artigo = await db.inventory.find_one({"id": dados.item_id})
     if not artigo:
-        raise HTTPException(status_code=404, detail="Artigo nao encontrado")
+        raise HTTPException(status_code=404, detail="Artigo não encontrado")
     # **Nao se olha ao stock.** Uma reserva e uma encomenda: o balcao diz ao
     # socio se tem ou se tem de esperar. Por decisao do dono. Antes recusava
     # com "so restam N unidades", e um artigo esgotado nao se podia pedir.
@@ -5991,17 +5951,17 @@ async def guardar_foto_do_socio(
     """
     socio = await db.members.find_one({"id": member_id})
     if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
 
     extensao = Path(ficheiro.filename or "").suffix.lower()
     if extensao not in EXTENSOES_DE_IMAGEM:
-        raise HTTPException(status_code=400, detail="So aceito imagens.")
+        raise HTTPException(status_code=400, detail="Só aceito imagens.")
 
     conteudo = await ficheiro.read()
     if not conteudo:
-        raise HTTPException(status_code=400, detail="O ficheiro esta vazio.")
+        raise HTTPException(status_code=400, detail="O ficheiro está vazio.")
     if len(conteudo) > TAMANHO_MAXIMO:
-        raise HTTPException(status_code=400, detail="A imagem e demasiado grande. O limite sao 8 MB.")
+        raise HTTPException(status_code=400, detail="A imagem é demasiado grande. O limite são 8 MB.")
 
     PASTA_UPLOADS.mkdir(parents=True, exist_ok=True)
     nome = f"{uuid.uuid4().hex}{extensao}"
@@ -6021,7 +5981,7 @@ async def tirar_foto_do_socio(member_id: str, socio: dict = Depends(socio_da_apl
     """Volta ao logotipo do ginasio."""
     socio = await db.members.find_one({"id": member_id})
     if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
 
     apagar_do_disco(socio.get("photo_url"))
 
@@ -6053,7 +6013,7 @@ async def registar_avaliacao(
     """Regista uma medicao. O colaborador lanca o que a balanca deu."""
     socio = await db.members.find_one({"id": member_id})
     if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     if dados.weight_kg <= 0:
         raise HTTPException(status_code=400, detail="O peso tem de ser maior do que zero.")
 
@@ -6076,7 +6036,7 @@ async def corrigir_avaliacao(
     """Quem lanca tem de poder emendar: um numero trocado estraga o grafico."""
     antiga = await db.assessments.find_one({"id": assessment_id})
     if not antiga:
-        raise HTTPException(status_code=404, detail="Avaliacao nao encontrada")
+        raise HTTPException(status_code=404, detail="Avaliação não encontrada")
     if dados.weight_kg <= 0:
         raise HTTPException(status_code=400, detail="O peso tem de ser maior do que zero.")
 
@@ -6097,7 +6057,7 @@ async def apagar_avaliacao(
 ):
     r = await db.assessments.delete_one({"id": assessment_id})
     if r.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Avaliacao nao encontrada")
+        raise HTTPException(status_code=404, detail="Avaliação não encontrada")
     await log_audit(current_user, "delete", "assessment", entity_id=assessment_id,
                     details="Apagou uma avaliacao fisica")
     return {"message": "Avaliacao eliminada"}
@@ -6236,7 +6196,7 @@ async def criar_aula_da_grelha(
     if dados.capacity < 1:
         raise HTTPException(status_code=400, detail="A aula tem de ter pelo menos um lugar.")
     if not await db.activities.find_one({"id": dados.activity_id}):
-        raise HTTPException(status_code=404, detail="Modalidade nao encontrada")
+        raise HTTPException(status_code=404, detail="Modalidade não encontrada")
 
     aula = ClassSlot(**dados.dict())
     await db.class_slots.insert_one(prepare_for_mongo(aula.dict()))
@@ -6252,7 +6212,7 @@ async def corrigir_aula_da_grelha(
     current_user: User = Depends(require_admin)
 ):
     if not await db.class_slots.find_one({"id": slot_id}):
-        raise HTTPException(status_code=404, detail="Aula nao encontrada")
+        raise HTTPException(status_code=404, detail="Aula não encontrada")
     if dados.capacity < 1:
         raise HTTPException(status_code=400, detail="A aula tem de ter pelo menos um lugar.")
 
@@ -6269,7 +6229,7 @@ async def apagar_aula_da_grelha(
     current_user: User = Depends(require_admin)
 ):
     if not await db.class_slots.find_one({"id": slot_id}):
-        raise HTTPException(status_code=404, detail="Aula nao encontrada")
+        raise HTTPException(status_code=404, detail="Aula não encontrada")
 
     # As inscricoes e as excepcoes daquela aula deixam de fazer sentido
     await db.class_bookings.delete_many({"slot_id": slot_id})
@@ -6287,7 +6247,7 @@ async def aulas_do_periodo(
     current_user: User = Depends(require_admin_or_staff)
 ):
     if (end_date - start_date).days > 62:
-        raise HTTPException(status_code=400, detail="O intervalo maximo sao dois meses.")
+        raise HTTPException(status_code=400, detail="O intervalo máximo são dois meses.")
     return await _expandir_grelha(start_date, end_date)
 
 
@@ -6299,7 +6259,7 @@ async def excepcao_da_aula(
 ):
     """Cancelar ou mudar uma aula num dia certo, sem mexer na grelha."""
     if not await db.class_slots.find_one({"id": slot_id}):
-        raise HTTPException(status_code=404, detail="Aula nao encontrada")
+        raise HTTPException(status_code=404, detail="Aula não encontrada")
 
     excepcao = ClassException(slot_id=slot_id, **dados.dict())
     await db.class_exceptions.update_one(
@@ -6359,19 +6319,19 @@ async def marcar_aula(dados: ClassBookingCreate, socio: dict = Depends(socio_do_
 
     slot = await db.class_slots.find_one({"id": dados.slot_id, "is_active": True})
     if not slot:
-        raise HTTPException(status_code=404, detail="Aula nao encontrada")
+        raise HTTPException(status_code=404, detail="Aula não encontrada")
     if slot.get("weekday") != dados.class_date.weekday():
-        raise HTTPException(status_code=400, detail="Essa aula nao e nesse dia da semana.")
+        raise HTTPException(status_code=400, detail="Essa aula não é nesse dia da semana.")
 
     excepcao = await db.class_exceptions.find_one(
         {"slot_id": dados.slot_id, "class_date": dia_guardado(dados.class_date)}
     )
     if excepcao and excepcao.get("cancelled"):
-        raise HTTPException(status_code=400, detail="Essa aula esta cancelada.")
+        raise HTTPException(status_code=400, detail="Essa aula está cancelada.")
 
     hora = (excepcao or {}).get("start_time") or slot["start_time"]
     if momento_da_aula(dados.class_date, hora) < datetime.now():
-        raise HTTPException(status_code=400, detail="Essa aula ja comecou.")
+        raise HTTPException(status_code=400, detail="Essa aula já começou.")
 
     # Marcar duas vezes nao faz duas inscricoes
     ja = await db.class_bookings.find_one({
@@ -6410,7 +6370,7 @@ async def desmarcar_aula(booking_id: str, socio: dict = Depends(socio_do_token))
     """
     inscricao = await db.class_bookings.find_one({"id": booking_id})
     if not inscricao:
-        raise HTTPException(status_code=404, detail="Inscricao nao encontrada")
+        raise HTTPException(status_code=404, detail="Inscrição não encontrada")
     confirmar_que_e_dele(socio, inscricao.get("member_id"))
 
     slot = await db.class_slots.find_one({"id": inscricao["slot_id"]})
@@ -6427,8 +6387,8 @@ async def desmarcar_aula(booking_id: str, socio: dict = Depends(socio_do_token))
         if datetime.now() > limite:
             raise HTTPException(
                 status_code=400,
-                detail=(f"So se desmarca ate {MINUTOS_PARA_DESMARCAR // 60} horas antes. "
-                        "Avisa o ginasio se nao puderes vir."),
+                detail=(f"Só se desmarca até {MINUTOS_PARA_DESMARCAR // 60} horas antes. "
+                        "Avisa o ginásio se não puderes vir."),
             )
 
     await db.class_bookings.update_one(
@@ -6461,7 +6421,7 @@ async def guardar_plano(
     """Um plano novo nao apaga o anterior: guarda-se o historico."""
     socio = await db.members.find_one({"id": member_id})
     if not socio:
-        raise HTTPException(status_code=404, detail="Socio nao encontrado")
+        raise HTTPException(status_code=404, detail="Sócio não encontrado")
     if not (dados.file_url or (dados.content or "").strip()):
         raise HTTPException(
             status_code=400,
@@ -6493,7 +6453,7 @@ async def corrigir_plano(
 ):
     antigo = await db.plans.find_one({"id": plan_id})
     if not antigo:
-        raise HTTPException(status_code=404, detail="Plano nao encontrado")
+        raise HTTPException(status_code=404, detail="Plano não encontrado")
     if not (dados.file_url or (dados.content or "").strip()):
         raise HTTPException(
             status_code=400,
@@ -6517,7 +6477,7 @@ async def apagar_plano(
 ):
     plano = await db.plans.find_one({"id": plan_id})
     if not plano:
-        raise HTTPException(status_code=404, detail="Plano nao encontrado")
+        raise HTTPException(status_code=404, detail="Plano não encontrado")
 
     # O ficheiro so se apaga se for nosso e se mais nenhum plano o usar
     endereco = plano.get("file_url") or ""
@@ -6552,7 +6512,7 @@ async def marcar_pedido_tratado(
 ):
     r = await db.plan_requests.update_one({"id": request_id}, {"$set": {"done": True}})
     if r.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Pedido nao encontrado")
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
     pedido = await db.plan_requests.find_one({"id": request_id})
     return PlanRequest(**parse_from_mongo(pedido))
 
