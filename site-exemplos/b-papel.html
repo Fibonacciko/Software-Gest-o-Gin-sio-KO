@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ginásio KO — Exemplo B · Papel</title>
+<meta name="description" content="Ginásio de bairro nos Olivais, em Lisboa. Boxe, kickboxing e jiu-jitsu para todas as idades. A primeira aula é experimental.">
+<meta name="theme-color" content="#f4f1ea">
+<link rel="icon" href="fotos/logo-ko.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="b-papel.css">
+</head>
+
+<body>
+
+<!-- ── o índice: barra em cima no telemóvel, coluna fixa no computador ── -->
+<header class="indice" id="indice">
+  <a class="indice__marca" href="#topo">
+    <img src="fotos/logo-ko.png" alt="" width="30" height="30">
+    <span>Ginásio KO</span>
+  </a>
+
+  <nav class="indice__lista">
+    <a href="#treina"><i>01</i><span>O que se treina</span></a>
+    <a href="#primeira"><i>02</i><span>A primeira aula</span></a>
+    <a href="#quem"><i>03</i><span>Quem treina aqui</span></a>
+    <a href="#horario"><i>04</i><span>Horário</span></a>
+    <a href="#onde"><i>05</i><span>Onde é</span></a>
+  </nav>
+
+  <p class="indice__estado" id="estadoAgora"></p>
+</header>
+
+<main class="folha">
+
+  <!-- ─────────────────────────── a abertura ─────────────────────────── -->
+  <section class="abre" id="topo">
+    <p class="rotulo">Olivais, Lisboa</p>
+
+    <h1 class="abre__titulo">
+      <span class="linha"><b>Aprende a lutar,</b></span>
+      <span class="linha"><b>a cair e a</b></span>
+      <span class="linha"><b><em>levantar-te</em>.</b></span>
+    </h1>
+
+    <div class="abre__fundo">
+      <p class="abre__texto">
+        Um ginásio de bairro com boxe, kickboxing e jiu-jitsu.
+        Dos oito aos sessenta e muitos, na mesma sala, à mesma hora.
+      </p>
+      <a class="ligacao-forte" id="botaoWhatsapp" href="#onde">
+        Marcar a primeira aula<span class="seta">↗</span>
+      </a>
+    </div>
+
+    <figure class="abre__foto">
+      <picture>
+        <source media="(max-width: 760px)" srcset="fotos/veterano-900.jpg">
+        <img src="fotos/veterano.jpg" width="1800" height="2397"
+             alt="Um atleta mais velho a trabalhar o balão de velocidade, com o punho amarelo do KO pintado na parede." fetchpriority="high">
+      </picture>
+      <figcaption>O balão de velocidade, ao fim da tarde.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ─────────────────────── 01 o que se treina ─────────────────────── -->
+  <section class="capitulo" id="treina">
+    <header class="capitulo__cabeca">
+      <p class="rotulo">01 — O que se treina</p>
+      <h2>Nove maneiras de<br>passar uma hora.</h2>
+    </header>
+
+    <div class="treina">
+      <ol class="treina__lista" id="listaModalidades"></ol>
+      <div class="treina__painel" aria-hidden="true">
+        <img id="fotoDaModalidade" src="fotos/ringue-900.jpg" alt="">
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────── 02 a primeira aula ─────────────────────── -->
+  <section class="capitulo" id="primeira">
+    <header class="capitulo__cabeca">
+      <p class="rotulo">02 — A primeira aula</p>
+      <h2>Ninguém aqui<br>chegou a saber.</h2>
+    </header>
+
+    <article class="passo revela">
+      <span class="passo__numero">I</span>
+      <div class="passo__texto">
+        <h3>Dizes que vens</h3>
+        <p>Uma mensagem no WhatsApp chega. Dizes o que queres experimentar e
+           em que dia podes — nós dizemos-te a que horas há turma.</p>
+      </div>
+      <figure class="passo__foto">
+        <picture>
+          <source media="(max-width: 760px)" srcset="fotos/porta-900.jpg">
+          <img src="fotos/porta.jpg" loading="lazy" alt="A fachada do ginásio, com a palavra KNOCKOUT pintada na parede.">
+        </picture>
+      </figure>
+    </article>
+
+    <article class="passo revela">
+      <span class="passo__numero">II</span>
+      <div class="passo__texto">
+        <h3>Apareces</h3>
+        <p>Roupa de treino e uma garrafa de água. Não precisas de trazer
+           material nem de saber nada.</p>
+      </div>
+      <figure class="passo__foto">
+        <picture>
+          <source media="(max-width: 760px)" srcset="fotos/treinador-ensina-900.jpg">
+          <img src="fotos/treinador-ensina.jpg" loading="lazy" alt="O treinador a explicar um movimento a um aluno.">
+        </picture>
+      </figure>
+    </article>
+
+    <article class="passo revela">
+      <span class="passo__numero">III</span>
+      <div class="passo__texto">
+        <h3>Treinas com a turma</h3>
+        <p>Aquecimento, técnica, trabalho de saco. Ao teu ritmo, no meio dos
+           outros. No fim decides se voltas.</p>
+      </div>
+      <figure class="passo__foto">
+        <picture>
+          <source media="(max-width: 760px)" srcset="fotos/turma-flexoes-900.jpg">
+          <img src="fotos/turma-flexoes.jpg" loading="lazy" alt="A turma a fazer flexões no tapete, com o treinador a acompanhar.">
+        </picture>
+      </figure>
+    </article>
+
+    <p class="nota revela">A primeira aula é experimental.</p>
+  </section>
+
+  <!-- ─────────────────────── 03 quem treina aqui ────────────────────── -->
+  <section class="capitulo capitulo--largo" id="quem">
+    <header class="capitulo__cabeca">
+      <p class="rotulo">03 — Quem treina aqui</p>
+      <h2>Miúdos de oito anos e<br>gente a chegar dos cinquenta.</h2>
+    </header>
+
+    <div class="rail" id="rail">
+      <figure><img src="fotos/grupo-900.jpg" loading="lazy" alt="Fotografia de grupo no fim de um treino."><figcaption>A turma toda, no fim do treino.</figcaption></figure>
+      <figure><img src="fotos/jiujitsu-criancas-900.jpg" loading="lazy" alt="A turma de jiu-jitsu de crianças no tapete."><figcaption>Jiu-jitsu, turma de crianças.</figcaption></figure>
+      <figure><img src="fotos/nariz-900.jpg" loading="lazy" alt="Duas atletas a rir depois do treino."><figcaption>Depois do treino.</figcaption></figure>
+      <figure><img src="fotos/kickboxing-900.jpg" loading="lazy" alt="Treino de kickboxing com escudo de pontapés."><figcaption>Kickboxing, trabalho de escudo.</figcaption></figure>
+      <figure><img src="fotos/sparring-900.jpg" loading="lazy" alt="Dois atletas em sparring, vistos por entre as cordas do ringue."><figcaption>Sparring, por entre as cordas.</figcaption></figure>
+      <figure><img src="fotos/alongamentos-900.jpg" loading="lazy" alt="A turma sentada em círculo no fim do treino."><figcaption>O círculo do fim.</figcaption></figure>
+      <figure><img src="fotos/a-rir-no-ringue-900.jpg" loading="lazy" alt="Dois atletas deitados no ringue a rir no fim do treino."><figcaption>Acabou.</figcaption></figure>
+      <figure><img src="fotos/jiujitsu-900.jpg" loading="lazy" alt="Trabalho de solo no jiu-jitsu."><figcaption>Trabalho de solo.</figcaption></figure>
+    </div>
+    <p class="rail__dica">Arrasta para o lado</p>
+
+    <blockquote class="citacao revela">
+      <p>O boxe não se aprende sozinho em frente a um espelho. Aprende-se com
+         alguém que corrige a guarda, que segura o saco e que sabe quando é
+         para carregar e quando é para parar.</p>
+    </blockquote>
+
+    <figure class="retrato revela">
+      <picture>
+        <source media="(max-width: 760px)" srcset="fotos/retrato-antigo-900.jpg">
+        <img src="fotos/retrato-antigo.jpg" loading="lazy" alt="Fotografia antiga de um boxeador em guarda, com uma camisola do KO.">
+      </picture>
+      <figcaption>Uma fotografia antiga, da parede do ginásio.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ───────────────────────────── 04 horário ───────────────────────── -->
+  <section class="capitulo" id="horario">
+    <header class="capitulo__cabeca">
+      <p class="rotulo">04 — Horário</p>
+      <h2>A porta está aberta<br>assim.</h2>
+    </header>
+
+    <div class="tabela" id="listaHorario"></div>
+
+    <p class="miudinho">
+      As aulas têm hora marcada dentro deste horário. Diz-nos o dia e dizemos-te
+      a que horas há turma da modalidade que queres.
+    </p>
+  </section>
+
+  <!-- ────────────────────────────── 05 onde é ───────────────────────── -->
+  <section class="capitulo" id="onde">
+    <header class="capitulo__cabeca">
+      <p class="rotulo">05 — Onde é</p>
+      <h2>Ao lado do campo,<br>nos Olivais.</h2>
+    </header>
+
+    <div class="contactos">
+      <div>
+        <p class="rotulo">Morada</p>
+        <p id="morada">Rua Almada Negreiros<br>Campo Branca Lucas<br>Sport Lisboa e Olivais<br>1800-070 Lisboa</p>
+        <a class="ligacao" id="ligacaoMapa" href="#" target="_blank" rel="noopener">Abrir no Google Maps<span class="seta">↗</span></a>
+      </div>
+      <div>
+        <p class="rotulo">Falar connosco</p>
+        <p>
+          <a class="ligacao" id="ligacaoWhatsapp" href="#" target="_blank" rel="noopener">WhatsApp<span class="seta">↗</span></a><br>
+          <a class="ligacao" id="ligacaoTelefone" href="#">926 372 441</a><br>
+          <a class="ligacao" id="ligacaoEmail" href="#">Email</a>
+        </p>
+      </div>
+      <div>
+        <p class="rotulo">Seguir</p>
+        <p>
+          <a class="ligacao" id="ligacaoInstagram" href="#" target="_blank" rel="noopener">Instagram<span class="seta">↗</span></a><br>
+          <a class="ligacao" id="ligacaoAvaliar" href="#" target="_blank" rel="noopener">Deixar uma avaliação<span class="seta">↗</span></a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── o fecho ──────────────────────────── -->
+  <section class="fecho">
+    <p class="rotulo">E então</p>
+    <h2 class="fecho__titulo">Aparece.<br><em>Traz água.</em></h2>
+    <a class="ligacao-forte ligacao-forte--grande" id="botaoWhatsappFim" href="#onde">
+      Marcar a primeira aula<span class="seta">↗</span>
+    </a>
+  </section>
+
+</main>
+
+<footer class="rodape">
+  <p class="rodape__marca">Ginásio KO</p>
+  <div class="rodape__fino">
+    <p>Boxe, Kickboxing e Jiu-Jitsu · Olivais, Lisboa</p>
+    <p>© <span id="ano"></span> Ginásio KO · <a href="https://ginasioko.site/app">Aplicação do sócio</a></p>
+  </div>
+</footer>
+
+<script src="comum.js"></script>
+<script src="b-papel.js"></script>
+</body>
+</html>

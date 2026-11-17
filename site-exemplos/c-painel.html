@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ginásio KO — Exemplo C · Painel</title>
+<meta name="description" content="Ginásio de bairro nos Olivais, em Lisboa. Boxe, kickboxing e jiu-jitsu para todas as idades. A primeira aula é experimental.">
+<meta name="theme-color" content="#0b0d0e">
+<link rel="icon" href="fotos/logo-ko.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="c-painel.css">
+</head>
+
+<body>
+
+<!-- ───────────────────────────── a barra ──────────────────────────────── -->
+<header class="barra">
+  <a class="barra__marca" href="#topo">
+    <img src="fotos/logo-ko.png" alt="" width="26" height="26">
+    <span>GINÁSIO KO</span>
+  </a>
+  <p class="barra__estado mono" id="estadoAgora">—</p>
+  <nav class="barra__menu mono">
+    <a href="#modalidades">01</a>
+    <a href="#protocolo">02</a>
+    <a href="#horario">03</a>
+    <a href="#sala">04</a>
+    <a href="#onde">05</a>
+  </nav>
+  <a class="botao" id="botaoWhatsapp" href="#onde">Marcar<span class="botao__seta">→</span></a>
+</header>
+
+<main id="topo">
+
+  <!-- ──────────────────────────── a abertura ─────────────────────────── -->
+  <section class="abre">
+    <div class="abre__texto">
+      <p class="mono rotulo">Olivais · Lisboa · <span id="ticker">Boxe</span></p>
+      <h1>Tudo o que precisas<br>de saber antes da<br><span class="luz">primeira aula</span>.</h1>
+      <p class="abre__linha">
+        Um ginásio de bairro com boxe, kickboxing e jiu-jitsu. Esta página
+        explica como funciona, a que horas abre e o que trazer. Depois é só
+        aparecer.
+      </p>
+      <a class="botao botao--grande" id="botaoWhatsapp2" href="#onde">
+        Marcar a primeira aula<span class="botao__seta">→</span>
+      </a>
+    </div>
+
+    <figure class="moldura abre__foto">
+      <picture>
+        <source media="(max-width: 860px)" srcset="fotos/ringue-900.jpg">
+        <img src="fotos/ringue.jpg" alt="O ringue do Ginásio KO, com as paredes a dizer BOXE e PORTUGAL." fetchpriority="high">
+      </picture>
+      <figcaption class="mono"><span>Fig. 01</span><span>A sala principal</span></figcaption>
+    </figure>
+  </section>
+
+  <!-- ──────────────────────────── as medidas ─────────────────────────── -->
+  <section class="medidas">
+    <div class="medida"><p class="mono rotulo">Modalidades</p><p class="medida__valor" id="contaModalidades">—</p></div>
+    <div class="medida"><p class="mono rotulo">Idades</p><p class="medida__valor">8 — 60<span class="luz">+</span></p></div>
+    <div class="medida"><p class="mono rotulo">Primeira aula</p><p class="medida__valor">Experimental</p></div>
+    <div class="medida"><p class="mono rotulo">Material</p><p class="medida__valor">Não é preciso</p></div>
+  </section>
+
+  <!-- ──────────────────────── 01 as modalidades ──────────────────────── -->
+  <section class="seccao" id="modalidades">
+    <header class="cabeca">
+      <p class="mono rotulo">[01] Modalidades</p>
+      <h2>Escolhe uma e vê<br>o que é.</h2>
+    </header>
+
+    <div class="selector">
+      <ol class="selector__lista mono" id="listaModalidades"></ol>
+
+      <div class="selector__ver">
+        <figure class="moldura">
+          <img id="fotoDaModalidade" src="fotos/ringue-900.jpg" alt="">
+          <figcaption class="mono"><span id="fotoRotulo">—</span><span id="fotoIndice">—</span></figcaption>
+        </figure>
+        <div class="ficha">
+          <h3 id="fichaNome">—</h3>
+          <p id="fichaDizer">—</p>
+          <dl class="ficha__linhas mono" id="fichaLinhas"></dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 02 o protocolo ────────────────────────── -->
+  <section class="seccao" id="protocolo">
+    <header class="cabeca">
+      <p class="mono rotulo">[02] A primeira aula</p>
+      <h2>Três passos, e<br>nenhum é difícil.</h2>
+    </header>
+
+    <div class="protocolo">
+      <aside class="protocolo__barra" aria-hidden="true">
+        <span class="protocolo__linha"><i id="protocoloCheio"></i></span>
+        <p class="mono" id="protocoloConta">01 / 03</p>
+      </aside>
+
+      <div class="protocolo__passos">
+        <article class="passo" data-passo="1">
+          <p class="mono rotulo">Passo 01</p>
+          <h3>Dizes que vens</h3>
+          <p>Uma mensagem no WhatsApp chega. Dizes o que queres experimentar e
+             em que dia podes — nós dizemos-te a que horas há turma.</p>
+          <figure class="moldura">
+            <picture>
+              <source media="(max-width: 860px)" srcset="fotos/porta-900.jpg">
+              <img src="fotos/porta.jpg" loading="lazy" alt="A fachada do ginásio, com a palavra KNOCKOUT pintada na parede.">
+            </picture>
+            <figcaption class="mono"><span>Fig. 02</span><span>A entrada</span></figcaption>
+          </figure>
+        </article>
+
+        <article class="passo" data-passo="2">
+          <p class="mono rotulo">Passo 02</p>
+          <h3>Apareces</h3>
+          <p>Roupa de treino e uma garrafa de água. Não precisas de trazer
+             material nem de saber nada — ninguém aqui chegou a saber.</p>
+          <figure class="moldura">
+            <picture>
+              <source media="(max-width: 860px)" srcset="fotos/treinador-ensina-900.jpg">
+              <img src="fotos/treinador-ensina.jpg" loading="lazy" alt="O treinador a explicar um movimento a um aluno.">
+            </picture>
+            <figcaption class="mono"><span>Fig. 03</span><span>A explicação</span></figcaption>
+          </figure>
+        </article>
+
+        <article class="passo" data-passo="3">
+          <p class="mono rotulo">Passo 03</p>
+          <h3>Treinas com a turma</h3>
+          <p>Aquecimento, técnica, trabalho de saco. Ao teu ritmo, no meio dos
+             outros. No fim decides se voltas.</p>
+          <figure class="moldura">
+            <picture>
+              <source media="(max-width: 860px)" srcset="fotos/turma-flexoes-900.jpg">
+              <img src="fotos/turma-flexoes.jpg" loading="lazy" alt="A turma a fazer flexões no tapete, com o treinador a acompanhar.">
+            </picture>
+            <figcaption class="mono"><span>Fig. 04</span><span>A turma</span></figcaption>
+          </figure>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────── 03 o horário ────────────────────────── -->
+  <section class="seccao" id="horario">
+    <header class="cabeca">
+      <p class="mono rotulo">[03] Horário</p>
+      <h2>A semana,<br>vista de lado.</h2>
+    </header>
+
+    <div class="grelha" id="grelhaHorario"></div>
+
+    <p class="miudinho">
+      As aulas têm hora marcada dentro deste horário. Diz-nos o dia e dizemos-te
+      a que horas há turma da modalidade que queres.
+    </p>
+  </section>
+
+  <!-- ────────────────────────────── 04 a sala ────────────────────────── -->
+  <section class="seccao" id="sala">
+    <header class="cabeca">
+      <p class="mono rotulo">[04] A sala</p>
+      <h2>Um ringue, sacos<br>e tapete.</h2>
+    </header>
+
+    <div class="tiras">
+      <figure class="moldura">
+        <picture>
+          <source media="(max-width: 860px)" srcset="fotos/sala-vazia-900.jpg">
+          <img src="fotos/sala-vazia.jpg" loading="lazy" alt="Os sacos pendurados na sala vazia, com a luz da manhã a entrar.">
+        </picture>
+        <figcaption class="mono"><span>Fig. 05</span><span>Antes de abrir</span></figcaption>
+      </figure>
+      <figure class="moldura">
+        <picture>
+          <source media="(max-width: 860px)" srcset="fotos/sala-cheia-900.jpg">
+          <img src="fotos/sala-cheia.jpg" loading="lazy" alt="A sala a trabalhar: sparring no ringue e treino em redor.">
+        </picture>
+        <figcaption class="mono"><span>Fig. 06</span><span>Às sete da tarde</span></figcaption>
+      </figure>
+    </div>
+
+    <div class="duas">
+      <p class="grande">Miúdos de oito anos, gente a chegar dos cinquenta, quem
+         compete e quem só quer descarregar o dia. Treinam todos na mesma sala.</p>
+      <p>O boxe não se aprende sozinho em frente a um espelho. Aprende-se com
+         alguém que corrige a guarda, que segura o saco e que sabe quando é para
+         carregar e quando é para parar. É isso que aqui há — e é a razão por que
+         um ginásio de bairro continua a fazer sentido.</p>
+    </div>
+  </section>
+
+  <!-- ────────────────────────────── 05 onde é ────────────────────────── -->
+  <section class="seccao" id="onde">
+    <header class="cabeca">
+      <p class="mono rotulo">[05] Onde é</p>
+      <h2>Ao lado do campo,<br>nos Olivais.</h2>
+    </header>
+
+    <div class="celulas">
+      <div class="celula">
+        <p class="mono rotulo">Morada</p>
+        <p id="morada">Rua Almada Negreiros<br>Campo Branca Lucas<br>Sport Lisboa e Olivais<br>1800-070 Lisboa</p>
+        <a class="ligacao mono" id="ligacaoMapa" href="#" target="_blank" rel="noopener">Google Maps →</a>
+      </div>
+      <div class="celula">
+        <p class="mono rotulo">Falar connosco</p>
+        <p>
+          <a class="ligacao mono" id="ligacaoWhatsapp" href="#" target="_blank" rel="noopener">WhatsApp →</a><br>
+          <a class="ligacao mono" id="ligacaoTelefone" href="#">926 372 441</a><br>
+          <a class="ligacao mono" id="ligacaoEmail" href="#">Email →</a>
+        </p>
+      </div>
+      <div class="celula">
+        <p class="mono rotulo">Seguir</p>
+        <p>
+          <a class="ligacao mono" id="ligacaoInstagram" href="#" target="_blank" rel="noopener">Instagram →</a><br>
+          <a class="ligacao mono" id="ligacaoAvaliar" href="#" target="_blank" rel="noopener">Deixar avaliação →</a>
+        </p>
+      </div>
+      <div class="celula celula--chamada">
+        <p class="mono rotulo">Primeira aula</p>
+        <p class="grande">Aparece.<br>Traz água.</p>
+        <a class="botao" id="botaoWhatsappFim" href="#">Marcar no WhatsApp<span class="botao__seta">→</span></a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="rodape mono">
+  <p>Ginásio KO · Boxe, Kickboxing e Jiu-Jitsu · Olivais, Lisboa</p>
+  <p>© <span id="ano"></span> · <a href="https://ginasioko.site/app">Aplicação do sócio</a></p>
+</footer>
+
+<script src="comum.js"></script>
+<script src="c-painel.js"></script>
+</body>
+</html>

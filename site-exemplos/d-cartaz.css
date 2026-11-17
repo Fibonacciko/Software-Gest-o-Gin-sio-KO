@@ -1,0 +1,385 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Exemplo D — "Cartaz"
+
+   O terceiro caminho, e o mais arriscado: um cartaz de combate. Letra enorme,
+   blocos de cor inteira, tarjas a correr, fotografias de bordo duro. A letra
+   é a Anton — a mesma que está pintada na parede do cartão de sócio, na
+   aplicação.
+
+   Vive de contrastes: preto, papel e o laranja da marca, e nada pelo meio.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Anton';
+  src: url('tipos/Anton-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --preto:   #0a0a0a;
+  --papel:   #f2efe9;
+  --laranja: #b8651b;
+  --ambar:   #f5a623;
+  --cinza:   #9a948c;
+
+  --margem: clamp(18px, 4.5vw, 70px);
+  --cartaz: 'Anton', 'Arial Narrow', Impact, sans-serif;
+  --texto: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--preto);
+  color: var(--papel);
+  font-family: var(--texto);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+
+.etiqueta {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cinza);
+  margin: 0;
+}
+.etiqueta--sozinha { margin-bottom: clamp(16px, 2.5vh, 28px); }
+.cor { color: var(--laranja); }
+
+.botao {
+  display: inline-block;
+  padding: 15px 26px;
+  background: var(--laranja);
+  color: var(--papel);
+  text-decoration: none;
+  font-family: var(--cartaz);
+  font-size: clamp(16px, 1.5vw, 20px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: transform 0.15s, background 0.2s;
+}
+.botao:hover { background: var(--ambar); color: var(--preto); transform: translateY(-2px); }
+.botao--preto { background: var(--preto); color: var(--papel); }
+.botao--preto:hover { background: var(--papel); color: var(--preto); }
+
+.ligacao { text-decoration: none; box-shadow: inset 0 -1px 0 currentColor; transition: color 0.2s; }
+.ligacao:hover { color: var(--ambar); }
+
+/* ──────────────────────────────── o cartaz ───────────────────────────── */
+
+.cartaz {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(16px, 3vh, 34px) var(--margem) clamp(24px, 4vh, 48px);
+  overflow: hidden;
+}
+
+.cartaz__foto { position: absolute; inset: 0; z-index: 0; }
+.cartaz__foto img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; }
+
+/* O duotone: a fotografia perde a cor e recebe a da marca. É o que faz o
+   cartaz parecer impresso, e é por isso que só o cartaz o leva — as outras
+   fotografias do site ficam como são. */
+/* Duotone a sério: a fotografia perde a cor e ganha contraste, e a cor
+   entra por cima a multiplicar. A multiplicar e não a tingir, porque
+   tingir deixava tudo castanho e já não se via quem estava no ringue. */
+.duotone img { filter: grayscale(1) contrast(1.18) brightness(1.06); }
+.duotone::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(165deg, var(--laranja) 0%, #3a1c06 62%, var(--preto) 100%);
+  mix-blend-mode: multiply;
+}
+.cartaz::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg, rgba(10,10,10,0.72) 0%, rgba(10,10,10,0.18) 38%, rgba(10,10,10,0.9) 100%);
+}
+
+.cartaz__cima,
+.cartaz__titulo,
+.cartaz__baixo { position: relative; z-index: 2; }
+
+.cartaz__cima { display: flex; justify-content: space-between; gap: 16px; }
+
+.cartaz__titulo {
+  margin: clamp(20px, 4vh, 40px) 0;
+  font-family: var(--cartaz);
+  font-weight: 400;
+  font-size: clamp(50px, 13vw, 170px);
+  line-height: 0.84;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+.cartaz__titulo span { display: block; overflow: hidden; }
+/* Em cima da fotografia tingida de laranja, o laranja da marca some-se
+   nela. A linha acesa é a âmbar, que é a mesma cor dois tons acima. */
+.cartaz__titulo .cor { color: var(--ambar); }
+.cartaz__titulo span > i { font-style: normal; display: block; }
+
+.cartaz__baixo {
+  display: flex; flex-wrap: wrap; gap: clamp(16px, 3vw, 40px);
+  align-items: flex-end; justify-content: space-between;
+}
+.cartaz__baixo p {
+  margin: 0;
+  font-size: clamp(17px, 2vw, 26px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  max-width: 24ch;
+}
+
+/* ───────────────────────────────── a tarja ───────────────────────────── */
+
+.tarja {
+  overflow: hidden;
+  border-top: 2px solid var(--papel);
+  border-bottom: 2px solid var(--papel);
+  background: var(--preto);
+  padding: 9px 0;
+}
+.tarja--cor { background: var(--laranja); border-color: var(--preto); }
+
+.tarja__tira {
+  display: flex;
+  gap: 0;
+  width: max-content;
+  animation: correr 34s linear infinite;
+  font-family: var(--cartaz);
+  font-size: clamp(16px, 1.9vw, 24px);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tarja--cor .tarja__tira { color: var(--preto); animation-duration: 42s; animation-direction: reverse; }
+.tarja__tira span { padding: 0 18px; }
+.tarja__tira .estrela { color: var(--laranja); }
+.tarja--cor .tarja__tira .estrela { color: var(--papel); }
+
+@keyframes correr { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .tarja__tira { animation: none; } }
+
+/* ───────────────────────────────── blocos ───────────────────────────── */
+
+.bloco { padding: clamp(50px, 9vh, 120px) var(--margem); }
+.bloco--preto { background: var(--preto); color: var(--papel); }
+.bloco--papel { background: var(--papel); color: var(--preto); }
+.bloco--papel .etiqueta { color: #6b665f; }
+
+.titulao {
+  margin: 0 0 clamp(28px, 5vh, 56px);
+  font-family: var(--cartaz);
+  font-weight: 400;
+  font-size: clamp(42px, 8.5vw, 130px);
+  line-height: 0.86;
+  letter-spacing: 0.004em;
+  text-transform: uppercase;
+}
+
+/* ─────────────────────────── a lista grande ─────────────────────────── */
+
+.listao { list-style: none; margin: 0; padding: 0; border-top: 2px solid rgba(242,239,233,0.2); }
+.modalidade {
+  display: flex; align-items: baseline; gap: clamp(12px, 2vw, 26px);
+  padding: clamp(10px, 1.6vw, 18px) clamp(10px, 2vw, 22px);
+  border-bottom: 2px solid rgba(242,239,233,0.2);
+  font-family: var(--cartaz);
+  font-size: clamp(27px, 5.2vw, 76px);
+  line-height: 1.02;
+  text-transform: uppercase;
+  transition: background 0.18s, color 0.18s, padding-left 0.18s;
+}
+.modalidade:hover { background: var(--laranja); color: var(--papel); padding-left: clamp(18px, 3vw, 44px); }
+.modalidade__numero {
+  font-family: var(--texto);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--cinza);
+  flex: none;
+  width: 2.2em;
+}
+.modalidade:hover .modalidade__numero { color: var(--papel); }
+.modalidade__nome { flex: 1 1 auto; }
+.modalidade__palavra {
+  font-family: var(--texto);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cinza);
+  text-align: right;
+  flex: none;
+}
+.modalidade:hover .modalidade__palavra { color: var(--papel); }
+
+/* ───────────────────────────── os três passos ────────────────────────── */
+
+.passos { display: grid; gap: clamp(26px, 4vh, 50px); }
+.passo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding-top: clamp(20px, 3vh, 34px);
+  border-top: 2px solid rgba(10,10,10,0.18);
+}
+@media (min-width: 760px) {
+  .passo {
+    grid-template-columns: clamp(90px, 10vw, 150px) minmax(0, 1fr) clamp(200px, 26vw, 360px);
+    gap: clamp(20px, 3vw, 46px);
+    align-items: start;
+  }
+}
+.passo__numero {
+  font-family: var(--cartaz);
+  font-size: clamp(40px, 6vw, 92px);
+  line-height: 0.85;
+  color: var(--laranja);
+}
+.passo h3 {
+  margin: 0 0 8px;
+  font-family: var(--cartaz);
+  font-weight: 400;
+  font-size: clamp(22px, 2.6vw, 38px);
+  line-height: 1;
+  text-transform: uppercase;
+}
+.passo p { margin: 0; max-width: 46ch; color: #4a443d; }
+.passo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #ddd8cf; }
+
+/* ──────────────────────────────── a colagem ──────────────────────────── */
+
+.colagem {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: clamp(8px, 1.4vw, 18px);
+}
+.colagem figure { margin: 0; }
+.colagem img { width: 100%; height: 100%; object-fit: cover; background: #1a1a1a; }
+.colagem__um    { grid-column: span 4; aspect-ratio: 16 / 10; }
+.colagem__dois  { grid-column: span 2; aspect-ratio: 4 / 5; }
+.colagem__tres  { grid-column: span 2; aspect-ratio: 1; }
+.colagem__quatro{ grid-column: span 2; aspect-ratio: 1; }
+.colagem__cinco { grid-column: span 2; aspect-ratio: 1; }
+@media (max-width: 700px) {
+  .colagem { grid-template-columns: repeat(2, 1fr); }
+  .colagem__um { grid-column: span 2; }
+  .colagem__dois, .colagem__tres, .colagem__quatro, .colagem__cinco { grid-column: span 1; aspect-ratio: 1; }
+}
+
+.frase {
+  margin: clamp(30px, 5vh, 60px) 0 0;
+  max-width: 30ch;
+  font-family: var(--cartaz);
+  font-weight: 400;
+  font-size: clamp(21px, 2.6vw, 38px);
+  line-height: 1.12;
+  text-transform: uppercase;
+}
+
+/* ───────────────────────────────── o horário ─────────────────────────── */
+
+.horas { border-top: 2px solid rgba(10,10,10,0.18); }
+.horario__linha {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px clamp(14px, 2vw, 30px);
+  padding: clamp(12px, 1.8vw, 20px) 0;
+  border-bottom: 2px solid rgba(10,10,10,0.18);
+}
+.horario__dias {
+  font-family: var(--cartaz);
+  font-size: clamp(22px, 3.4vw, 50px);
+  line-height: 1;
+  text-transform: uppercase;
+  flex: 1 1 auto;
+}
+.horario__horas {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(14px, 1.3vw, 18px);
+}
+.horario__linha--hoje { color: var(--laranja); }
+.horario__hoje {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  background: var(--laranja); color: var(--papel);
+  padding: 3px 8px; flex: none;
+}
+.miudinho { margin: 24px 0 0; max-width: 56ch; font-size: 14px; color: #6b665f; }
+
+/* ──────────────────────────────── contactos ──────────────────────────── */
+
+.contactos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: clamp(24px, 4vw, 56px);
+}
+.contactos p { margin: 0 0 12px; }
+
+/* ──────────────────────────────── o fecho ────────────────────────────── */
+
+.fecho {
+  background: var(--laranja);
+  color: var(--papel);
+  padding: clamp(60px, 11vh, 150px) var(--margem);
+  text-align: center;
+}
+.fecho__titulo {
+  margin: 0 0 14px;
+  font-family: var(--cartaz);
+  font-weight: 400;
+  font-size: clamp(56px, 15vw, 210px);
+  line-height: 0.82;
+  text-transform: uppercase;
+}
+.fecho p { margin: 0 auto 28px; max-width: 40ch; font-size: clamp(15px, 1.4vw, 19px); }
+
+/* ──────────────────────────────── o rodapé ───────────────────────────── */
+
+.rodape {
+  background: var(--preto);
+  padding: clamp(34px, 5vh, 60px) var(--margem) clamp(80px, 10vh, 60px);
+  display: grid; gap: 10px;
+}
+.rodape__marca {
+  margin: 0;
+  font-family: var(--cartaz);
+  font-size: clamp(42px, 11vw, 150px);
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: var(--papel);
+}
+.rodape a { color: var(--cinza); }
+.rodape a:hover { color: var(--ambar); }
+
+/* ──────────────────── a barra do fundo, no telemóvel ─────────────────── */
+
+.bilhete { display: none; }
+@media (max-width: 760px) {
+  .bilhete {
+    position: fixed; inset: auto 0 0 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 12px var(--margem) calc(12px + env(safe-area-inset-bottom));
+    background: var(--laranja);
+    color: var(--papel);
+    text-decoration: none;
+    border-top: 2px solid var(--papel);
+  }
+  .bilhete span { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .bilhete strong {
+    font-family: var(--cartaz); font-weight: 400; font-size: 17px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+}

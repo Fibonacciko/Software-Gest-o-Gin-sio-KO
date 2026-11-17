@@ -1,0 +1,316 @@
+<meta charset="utf-8">
+<title>Quatro caminhos para o site</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap">
+
+<style>
+/* Uma coluna só: a introdução, quatro fichas grandes com a capa de cada
+   caminho, e no fim o que é igual nos quatro. Página de trabalho — o que
+   tem de saltar à vista são as fotografias, não ela. */
+:root {
+  --fundo:   #f7f5f1;
+  --caixa:   #ffffff;
+  --letra:   #17150f;
+  --fraca:   #6b655c;
+  --risco:   rgba(23, 21, 15, 0.14);
+  --marca:   #b8651b;
+  --realce:  #a1540f;
+
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --texto:   'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fundo:  #101110;
+    --caixa:  #191a18;
+    --letra:  #eceae4;
+    --fraca:  #9b968d;
+    --risco:  rgba(236, 234, 228, 0.15);
+    --marca:  #f5a623;
+    --realce: #f5a623;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fundo:  #101110;
+  --caixa:  #191a18;
+  --letra:  #eceae4;
+  --fraca:  #9b968d;
+  --risco:  rgba(236, 234, 228, 0.15);
+  --marca:  #f5a623;
+  --realce: #f5a623;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--letra);
+  font-family: var(--texto);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.folha {
+  max-width: 920px;
+  margin: 0 auto;
+  padding-block: clamp(32px, 7vw, 72px) clamp(48px, 9vw, 96px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 5vw, 48px);
+}
+
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+
+.rotulo {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fraca);
+}
+
+/* ── a entrada ─────────────────────────────────────────────────────── */
+
+.entrada { display: flex; flex-direction: column; gap: 14px; }
+.entrada h1 { font-size: clamp(27px, 5vw, 42px); line-height: 1.06; }
+.entrada p { color: var(--fraca); max-width: 62ch; }
+
+/* ── as fichas ─────────────────────────────────────────────────────── */
+
+.fichas { display: flex; flex-direction: column; gap: clamp(20px, 3vw, 32px); }
+
+.ficha {
+  background: var(--caixa);
+  border: 1px solid var(--risco);
+  border-radius: 3px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 720px) {
+  .ficha { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+}
+
+.ficha__capa { display: block; position: relative; min-width: 0; height: 100%; }
+/* A capa acompanha a altura da ficha e corta por baixo. Deixada só com o
+   feitio 3:2, sobrava escuro por baixo dela sempre que o texto era mais
+   alto do que a imagem. */
+.ficha__capa img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  object-position: 50% 0;
+  background: var(--fundo);
+}
+.ficha__letra {
+  position: absolute;
+  top: 10px; left: 10px;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  background: var(--letra);
+  color: var(--fundo);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.ficha__corpo {
+  min-width: 0;
+  padding: clamp(18px, 2.6vw, 28px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ficha__corpo h2 { font-size: clamp(21px, 2.6vw, 28px); line-height: 1.1; }
+.ficha__diz { color: var(--letra); }
+
+.linhas { display: flex; flex-direction: column; gap: 10px; }
+.linha { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.linha .rotulo { letter-spacing: 0.12em; }
+.linha p { font-size: 14px; color: var(--fraca); }
+.linha .rotulo { padding-top: 2px; }
+
+.abrir {
+  margin-top: auto;
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--risco);
+  border-radius: 2px;
+  text-decoration: none;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.abrir:hover { background: var(--letra); color: var(--fundo); border-color: var(--letra); }
+.abrir:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
+
+.ficha--vista .ficha__corpo { border-top: 2px solid var(--marca); }
+@media (min-width: 720px) {
+  .ficha--vista .ficha__corpo { border-top: 0; border-left: 2px solid var(--marca); }
+}
+
+/* ── o fim ─────────────────────────────────────────────────────────── */
+
+.notas { display: flex; flex-direction: column; gap: clamp(20px, 3vw, 30px); }
+.nota {
+  border-top: 1px solid var(--risco);
+  padding-top: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.nota h3 { font-size: 17px; }
+.nota p, .nota li { color: var(--fraca); font-size: 15px; }
+.nota ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.nota b { color: var(--letra); font-weight: 500; }
+</style>
+
+<div class="folha">
+
+  <header class="entrada">
+    <p class="rotulo">Ginásio KO · site público</p>
+    <h1>Quatro caminhos para o mesmo site.</h1>
+    <p>
+      O mesmo ginásio, as mesmas fotografias, as mesmas palavras — desenhados
+      de quatro maneiras. Nenhum está publicado. Abre-os, anda por eles no
+      telemóvel, e depois decidimos: pode ser um deles, ou pedaços de vários.
+    </p>
+  </header>
+
+  <section class="fichas">
+
+    <article class="ficha ficha--vista">
+      <a class="ficha__capa" href="https://claude.ai/artifact/Rk1pDaSNvFP6xxgc72dZqu">
+        <img src="miniaturas/a.jpg" alt="A capa do caminho A: o ringue a toda a largura, com a frase Aprende a lutar.">
+        <span class="ficha__letra">A</span>
+      </a>
+      <div class="ficha__corpo">
+        <p class="rotulo">Foi este que viste</p>
+        <h2>Cinema</h2>
+        <p class="ficha__diz">
+          Escuro, fotografia a toda a largura, uma frase e um botão. A página
+          desce como um filme curto.
+        </p>
+        <div class="linhas">
+          <div class="linha"><p class="rotulo">Vem de</p><p>capricorn, Arc’teryx, Primal Instinct</p></div>
+          <div class="linha"><p class="rotulo">Ganha em</p><p>As fotografias mandam, e o “primeira aula em três passos” é o maior pedaço da página.</p></div>
+          <div class="linha"><p class="rotulo">Custa</p><p>É o mais seguro dos quatro. Faz bem o trabalho e não surpreende ninguém.</p></div>
+        </div>
+        <a class="abrir" href="https://claude.ai/artifact/Rk1pDaSNvFP6xxgc72dZqu">Abrir o A →</a>
+      </div>
+    </article>
+
+    <article class="ficha">
+      <a class="ficha__capa" href="https://claude.ai/artifact/Rp2RwarovaADtDbok9MZAC">
+        <img src="miniaturas/b.jpg" alt="A capa do caminho B: fundo de papel, título em serifa e uma fotografia estreita ao lado.">
+        <span class="ficha__letra">B</span>
+      </a>
+      <div class="ficha__corpo">
+        <p class="rotulo">Novo</p>
+        <h2>Papel</h2>
+        <p class="ficha__diz">
+          Claro, com muito ar e letra grande. Um índice fixo à esquerda, e as
+          modalidades numa lista em que cada linha acende a sua fotografia.
+        </p>
+        <div class="linhas">
+          <div class="linha"><p class="rotulo">Vem de</p><p>Heatherwick, Charles, Jakobsen, Mara</p></div>
+          <div class="linha"><p class="rotulo">Ganha em</p><p>Parece caro e lê-se com calma. Poucas fotografias, e cada uma pesa mais por estar sozinha.</p></div>
+          <div class="linha"><p class="rotulo">Custa</p><p>É sereno — talvez sereno de mais para um ginásio de combate. E obriga a escolher muito bem cada fotografia.</p></div>
+        </div>
+        <a class="abrir" href="https://claude.ai/artifact/Rp2RwarovaADtDbok9MZAC">Abrir o B →</a>
+      </div>
+    </article>
+
+    <article class="ficha">
+      <a class="ficha__capa" href="https://claude.ai/artifact/3BTGYXq8uC72bJeRsaTqfB">
+        <img src="miniaturas/c.jpg" alt="A capa do caminho C: escuro, com a fotografia dentro de uma moldura técnica e quatro medidas por baixo.">
+        <span class="ficha__letra">C</span>
+      </a>
+      <div class="ficha__corpo">
+        <p class="rotulo">Novo</p>
+        <h2>Painel</h2>
+        <p class="ficha__diz">
+          Um instrumento, não um cartaz. Escolhe-se uma modalidade e a ficha
+          dela abre ao lado; a semana aparece desenhada, com a linha de agora.
+        </p>
+        <div class="linhas">
+          <div class="linha"><p class="rotulo">Vem de</p><p>capricorn (o configurador), Arc’teryx (as fichas), Plato</p></div>
+          <div class="linha"><p class="rotulo">Ganha em</p><p>Responde a perguntas: a que horas abre, o que é cada modalidade, o que levar. É o mais útil dos quatro.</p></div>
+          <div class="linha"><p class="rotulo">Custa</p><p>É o mais frio, e o que mais trabalho dá a manter — cada coisa nova tem de caber no sistema.</p></div>
+        </div>
+        <a class="abrir" href="https://claude.ai/artifact/3BTGYXq8uC72bJeRsaTqfB">Abrir o C →</a>
+      </div>
+    </article>
+
+    <article class="ficha">
+      <a class="ficha__capa" href="https://claude.ai/artifact/C2BSs25itAkxupqr2Z6jSV">
+        <img src="miniaturas/d.jpg" alt="A capa do caminho D: um cartaz com BOXE KICKBOXING JIU-JITSU em letras enormes sobre a fotografia tingida de laranja.">
+        <span class="ficha__letra">D</span>
+      </a>
+      <div class="ficha__corpo">
+        <p class="rotulo">Novo</p>
+        <h2>Cartaz</h2>
+        <p class="ficha__diz">
+          Um cartaz de combate. Letra enorme, blocos de cor inteira, tarjas a
+          correr. A letra é a Anton — a mesma que está pintada na parede do
+          cartão de sócio, na aplicação.
+        </p>
+        <div class="linhas">
+          <div class="linha"><p class="rotulo">Vem de</p><p>Primal Instinct, e dos cartazes que estão na parede do ginásio</p></div>
+          <div class="linha"><p class="rotulo">Ganha em</p><p>É o único que se reconhece a passar de olhos. Tem voz própria.</p></div>
+          <div class="linha"><p class="rotulo">Custa</p><p>Grita. Pode afastar quem anda à procura de ginásio para o filho de oito anos — e esses são muitos dos teus.</p></div>
+        </div>
+        <a class="abrir" href="https://claude.ai/artifact/C2BSs25itAkxupqr2Z6jSV">Abrir o D →</a>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="notas">
+
+    <div class="nota">
+      <h3>O que é igual nos quatro</h3>
+      <ul>
+        <li>A morada, o horário, os contactos e as modalidades vêm da <b>gestão</b>. Mudas em App do Sócio → O Ginásio e muda nos quatro.</li>
+        <li>O botão é o <b>WhatsApp</b>, com o recado já escrito.</li>
+        <li><b>Não há preços.</b> Nem quota, nem seguro, nem a aula experimental.</li>
+        <li>As fotografias são as tuas, e o texto dos três passos é o mesmo.</li>
+      </ul>
+    </div>
+
+    <div class="nota">
+      <h3>O que continua à tua espera</h3>
+      <p>
+        As frases que escrevi a partir das fotografias — que se marca por
+        WhatsApp, que o ginásio empresta material, que uma aula é aquecimento,
+        técnica e trabalho de saco. Estão os quatro a dizer o mesmo, e se
+        alguma estiver errada corrige-se nos quatro de uma vez.
+      </p>
+    </div>
+
+    <div class="nota">
+      <h3>Dá para misturar</h3>
+      <p>
+        A capa do <b>D</b> com a grelha de horário do <b>C</b>, ou a calma do
+        <b>B</b> com as fotografias grandes do <b>A</b>. Não escolhas uma
+        prenda inteira — diz-me o que te agarrou em cada um.
+      </p>
+    </div>
+
+  </section>
+
+</div>

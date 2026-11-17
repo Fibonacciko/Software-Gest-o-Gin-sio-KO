@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ginásio KO — Exemplo D · Cartaz</title>
+<meta name="description" content="Ginásio de bairro nos Olivais, em Lisboa. Boxe, kickboxing e jiu-jitsu para todas as idades. A primeira aula é experimental.">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="icon" href="fotos/logo-ko.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+<link rel="preload" href="tipos/Anton-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="d-cartaz.css">
+</head>
+
+<body>
+
+<!-- ───────────────────────────── o cartaz ─────────────────────────────── -->
+<header class="cartaz" id="topo">
+  <div class="cartaz__foto duotone">
+    <picture>
+      <source media="(max-width: 760px)" srcset="fotos/sparring-900.jpg">
+      <img src="fotos/sparring.jpg" alt="Dois atletas em sparring, vistos por entre as cordas do ringue." fetchpriority="high">
+    </picture>
+  </div>
+
+  <div class="cartaz__cima">
+    <span class="etiqueta">Olivais · Lisboa</span>
+    <span class="etiqueta" id="estadoAgora">—</span>
+  </div>
+
+  <h1 class="cartaz__titulo">
+    <span>Boxe</span>
+    <span>Kickboxing</span>
+    <span class="cor">Jiu-Jitsu</span>
+  </h1>
+
+  <div class="cartaz__baixo">
+    <p>Aprende a lutar, a cair<br>e a levantar-te.</p>
+    <a class="botao" id="botaoWhatsapp" href="#onde">A minha primeira aula</a>
+  </div>
+</header>
+
+<!-- ───────────────────────────── a tarja ─────────────────────────────── -->
+<div class="tarja" aria-hidden="true">
+  <div class="tarja__tira" id="tarja1"></div>
+</div>
+
+<!-- ──────────────────────────── modalidades ───────────────────────────── -->
+<section class="bloco bloco--preto" id="modalidades">
+  <p class="etiqueta etiqueta--sozinha">O que se treina</p>
+  <ol class="listao" id="listaModalidades"></ol>
+</section>
+
+<!-- ──────────────────────────── a primeira aula ───────────────────────── -->
+<section class="bloco bloco--papel" id="primeira">
+  <p class="etiqueta etiqueta--sozinha">A primeira aula</p>
+  <h2 class="titulao">Três passos<br>e já está.</h2>
+
+  <div class="passos">
+    <article class="passo">
+      <span class="passo__numero">01</span>
+      <div>
+        <h3>Dizes que vens</h3>
+        <p>Uma mensagem no WhatsApp chega. Dizes o que queres experimentar e em
+           que dia podes — nós dizemos-te a que horas há turma.</p>
+      </div>
+      <picture>
+        <source media="(max-width: 760px)" srcset="fotos/porta-900.jpg">
+        <img src="fotos/porta.jpg" loading="lazy" alt="A fachada do ginásio, com a palavra KNOCKOUT pintada na parede.">
+      </picture>
+    </article>
+
+    <article class="passo">
+      <span class="passo__numero">02</span>
+      <div>
+        <h3>Apareces</h3>
+        <p>Roupa de treino e uma garrafa de água. Não precisas de trazer
+           material nem de saber nada — ninguém aqui chegou a saber.</p>
+      </div>
+      <picture>
+        <source media="(max-width: 760px)" srcset="fotos/treinador-ensina-900.jpg">
+        <img src="fotos/treinador-ensina.jpg" loading="lazy" alt="O treinador a explicar um movimento a um aluno.">
+      </picture>
+    </article>
+
+    <article class="passo">
+      <span class="passo__numero">03</span>
+      <div>
+        <h3>Treinas com a turma</h3>
+        <p>Aquecimento, técnica, trabalho de saco. Ao teu ritmo, no meio dos
+           outros. No fim decides se voltas.</p>
+      </div>
+      <picture>
+        <source media="(max-width: 760px)" srcset="fotos/turma-flexoes-900.jpg">
+        <img src="fotos/turma-flexoes.jpg" loading="lazy" alt="A turma a fazer flexões no tapete, com o treinador a acompanhar.">
+      </picture>
+    </article>
+  </div>
+</section>
+
+<!-- ───────────────────────────── a tarja 2 ────────────────────────────── -->
+<div class="tarja tarja--cor" aria-hidden="true">
+  <div class="tarja__tira" id="tarja2"></div>
+</div>
+
+<!-- ──────────────────────────── quem treina ───────────────────────────── -->
+<section class="bloco bloco--preto" id="quem">
+  <p class="etiqueta etiqueta--sozinha">Quem treina aqui</p>
+  <h2 class="titulao">Dos oito<br>aos sessenta<br><span class="cor">e muitos.</span></h2>
+
+  <div class="colagem">
+    <figure class="colagem__um"><img src="fotos/grupo-900.jpg" loading="lazy" alt="Fotografia de grupo no fim de um treino."></figure>
+    <figure class="colagem__dois"><img src="fotos/jiujitsu-criancas-900.jpg" loading="lazy" alt="A turma de jiu-jitsu de crianças no tapete."></figure>
+    <figure class="colagem__tres"><img src="fotos/nariz-900.jpg" loading="lazy" alt="Duas atletas a rir depois do treino."></figure>
+    <figure class="colagem__quatro"><img src="fotos/veterano-900.jpg" loading="lazy" alt="Um atleta mais velho a trabalhar o balão de velocidade."></figure>
+    <figure class="colagem__cinco"><img src="fotos/kickboxing-900.jpg" loading="lazy" alt="Treino de kickboxing com escudo de pontapés."></figure>
+  </div>
+
+  <p class="frase">
+    O boxe não se aprende sozinho em frente a um espelho. Aprende-se com alguém
+    que corrige a guarda, que segura o saco e que sabe quando é para carregar e
+    quando é para parar.
+  </p>
+</section>
+
+<!-- ─────────────────────────────── horário ────────────────────────────── -->
+<section class="bloco bloco--papel" id="horario">
+  <p class="etiqueta etiqueta--sozinha">Horário</p>
+  <div class="horas" id="listaHorario"></div>
+  <p class="miudinho">
+    As aulas têm hora marcada dentro deste horário. Diz-nos o dia e dizemos-te
+    a que horas há turma da modalidade que queres.
+  </p>
+</section>
+
+<!-- ─────────────────────────────── onde é ─────────────────────────────── -->
+<section class="bloco bloco--preto" id="onde">
+  <p class="etiqueta etiqueta--sozinha">Onde é</p>
+  <h2 class="titulao">Ao lado<br>do campo.</h2>
+
+  <div class="contactos">
+    <div>
+      <p class="etiqueta">Morada</p>
+      <p id="morada">Rua Almada Negreiros<br>Campo Branca Lucas<br>Sport Lisboa e Olivais<br>1800-070 Lisboa</p>
+      <a class="ligacao" id="ligacaoMapa" href="#" target="_blank" rel="noopener">Google Maps</a>
+    </div>
+    <div>
+      <p class="etiqueta">Falar connosco</p>
+      <p>
+        <a class="ligacao" id="ligacaoWhatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a><br>
+        <a class="ligacao" id="ligacaoTelefone" href="#">926 372 441</a><br>
+        <a class="ligacao" id="ligacaoEmail" href="#">Email</a>
+      </p>
+    </div>
+    <div>
+      <p class="etiqueta">Seguir</p>
+      <p>
+        <a class="ligacao" id="ligacaoInstagram" href="#" target="_blank" rel="noopener">Instagram</a><br>
+        <a class="ligacao" id="ligacaoAvaliar" href="#" target="_blank" rel="noopener">Deixar uma avaliação</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── o fecho ────────────────────────────── -->
+<section class="fecho">
+  <h2 class="fecho__titulo">Aparece.</h2>
+  <p>A primeira aula é experimental. Traz roupa de treino e água.</p>
+  <a class="botao botao--preto" id="botaoWhatsappFim" href="#">Marcar no WhatsApp</a>
+</section>
+
+<footer class="rodape">
+  <p class="rodape__marca">Ginásio KO</p>
+  <p class="etiqueta">Boxe · Kickboxing · Jiu-Jitsu · Olivais, Lisboa</p>
+  <p class="etiqueta">© <span id="ano"></span> · <a href="https://ginasioko.site/app">Aplicação do sócio</a></p>
+</footer>
+
+<!-- a barra do fundo, no telemóvel: o botão nunca sai do ecrã -->
+<a class="bilhete" id="botaoWhatsappFixo" href="#onde">
+  <span>Primeira aula experimental</span>
+  <strong>Marcar →</strong>
+</a>
+
+<script src="comum.js"></script>
+<script src="d-cartaz.js"></script>
+</body>
+</html>
