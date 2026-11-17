@@ -204,12 +204,21 @@
     return tx;
   }
 
-  function carregar(url) {
+  /* O `crossOrigin` e preciso para a imagem poder entrar numa textura: sem
+     ele, uma imagem de outra origem suja a tela e o WebGL recusa-a. Mas se o
+     servidor nao mandar o cabecalho a autorizar, pedi-la assim *impede-a de
+     carregar* -- o remedio passa a ser a doenca. Por isso tenta-se com, e se
+     falhar tenta-se sem: uma das duas serve, e qual delas depende de onde a
+     pagina esta pousada, que daqui nao se sabe. */
+  function carregar(url, semCors) {
     return new Promise(function (ok, falha) {
       var im = new Image();
-      im.crossOrigin = 'anonymous';
+      if (!semCors) im.crossOrigin = 'anonymous';
       im.onload = function () { ok(im); };
-      im.onerror = function () { falha(new Error(url)); };
+      im.onerror = function () {
+        if (semCors) { falha(new Error(url)); return; }
+        carregar(url, true).then(ok, falha);
+      };
       im.src = url;
     });
   }
@@ -382,10 +391,14 @@
     window.addEventListener('resize', pedir, { passive: true });
 
     return function pronto(cor, rel) {
+      /* Uma imagem que tenha vindo sem autorizacao suja a tela, e e aqui que
+         isso rebenta. Deixar rebentar deixava um quadrado vazio no meio da
+         pagina; apanhado, volta-se a fotografia, que e o caminho de sempre. */
       gl.activeTexture(gl.TEXTURE0); textura(gl, cor, false);
       gl.uniform1i(U.mapaCor, 0);
       gl.activeTexture(gl.TEXTURE1); textura(gl, rel, true);
       gl.uniform1i(U.mapaRel, 1);
+      if (gl.getError() !== gl.NO_ERROR) throw new Error('textura recusada');
       medir();
       visivel = true;
       pedir();
@@ -413,12 +426,16 @@
     } catch (e) {
       return;                       /* sem WebGL fica a fotografia, e está bem */
     }
+    function desistir() {
+      var tela = palco.querySelector('.artefacto__tela');
+      if (tela) tela.remove();
+      palco.classList.remove('artefacto__palco--vivo');
+    }
     Promise.all([carregar(MAPA_COR), carregar(MAPA_REL)])
-      .then(function (m) { pronto(m[0], m[1]); })
-      .catch(function () {
-        var tela = palco.querySelector('.artefacto__tela');
-        if (tela) tela.remove();
-      });
+      .then(function (m) {
+        try { pronto(m[0], m[1]); } catch (e) { desistir(); }
+      })
+      .catch(desistir);
   }
 
   if (document.readyState === 'loading') {
