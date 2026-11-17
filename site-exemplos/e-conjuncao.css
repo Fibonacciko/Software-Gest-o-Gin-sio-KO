@@ -396,6 +396,7 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
   place-items: center;
   perspective: 1500px;
   pointer-events: none;
+  z-index: 0;
 }
 .artefacto__inclina {
   transform: translateY(-3%) rotateX(62deg);
@@ -409,19 +410,46 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
 }
 @keyframes rodar { to { transform: rotate(360deg); } }
 
+/* A tela onde a luz e calculada. Entra por cima da fotografia e so se
+   mostra quando os mapas chegam -- assim quem tem a ligacao fraca ve a peca
+   na mesma, iluminada uma vez, em vez de ver um buraco a espera. */
+.artefacto__tela {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1100ms ease;
+}
+.artefacto__palco--vivo .artefacto__tela { opacity: 1; }
+.artefacto__palco--vivo .artefacto__inclina {
+  opacity: 0;
+  animation: none;
+  transition: opacity 700ms ease;
+}
+/* a fotografia deixa de rodar quando ja nao se ve: e trabalho a troco de
+   nada, e o telemovel paga-o em bateria */
+.artefacto__palco--vivo .artefacto__disco { animation: none; }
+
 /* o disco entra no preto pelas bordas, em vez de acabar num corte */
 .artefacto::before {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 1;
+  /* Mais leve do que era, porque o disco passou a trazer o seu proprio
+     escuro: a luz e uma poca e o resto da peca ja esta na sombra. Somar-lhe
+     o escurecimento de antes apagava-a por inteiro. O que fica e so o que
+     serve para o texto da esquerda se ler. */
   background:
-    linear-gradient(0deg, rgba(13,13,13,.8) 0%, rgba(13,13,13,.3) 26%, transparent 46%),
-    radial-gradient(78% 62% at 50% 54%, transparent 22%, rgba(13,13,13,.72) 72%, var(--preto) 100%),
-    linear-gradient(95deg, rgba(13,13,13,.94) 0%, rgba(13,13,13,.8) 34%, rgba(13,13,13,.42) 60%, transparent 86%);
+    linear-gradient(0deg, rgba(13,13,13,.74) 0%, rgba(13,13,13,.22) 26%, transparent 46%),
+    radial-gradient(84% 68% at 54% 54%, transparent 30%, rgba(13,13,13,.42) 78%, var(--preto) 100%),
+    linear-gradient(95deg, rgba(13,13,13,.92) 0%, rgba(13,13,13,.62) 30%, rgba(13,13,13,.2) 54%, transparent 76%);
   pointer-events: none;
 }
 
-.artefacto__texto { position: relative; max-width: 620px; }
+.artefacto__texto { position: relative; z-index: 2; max-width: 620px; }
 .artefacto__texto .corrido { margin-top: 24px; }
 /* esta nota fica por cima do bronze iluminado: sem a sombra, as primeiras
    palavras desapareciam na parte mais clara do disco */

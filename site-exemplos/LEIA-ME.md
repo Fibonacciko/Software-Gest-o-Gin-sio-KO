@@ -38,30 +38,103 @@ escolheu.
 ### O disco grego
 
 A imagem do Primal Instinct é uma peça de pedra fotografada, e copiá-la não
-era possível nem decente. O **`fotos/artefacto-*.webp`** é um disco de bronze
-com dois pugilistas em relevo, um meandro à volta e a inscrição **ΚΟ** — que
-são as iniciais do ginásio e são letras gregas a sério.
+era possível nem decente. O nosso é um disco de bronze com dois pugilistas em
+relevo, um meandro à volta, um astrágalo de contas e uma legenda incisa no
+aro. **Foi desenhado de raiz, e não é a fotografia de peça nenhuma.**
 
-**Foi desenhado de raiz, e não é a fotografia de peça nenhuma.** O guião que
-o faz está em **`desenhos/artefacto.py`**, ao lado — como o `desenhos.py` da
-aplicação do sócio: constrói-se um *mapa de alturas* — que é alto, que é baixo, onde estão as figuras, onde estão as
-mossas de dois mil e setecentos anos — e depois ilumina-se esse mapa com uma
-luz rasante, que é o que levanta o relevo. Não há fotografia nenhuma por
-baixo.
+Na borda está escrito, em grego:
+**ΓΥΜΝΑΣΙΟΝ · ΚΟ · ΟΛΙΣΙΠΩΝ · ΠΥΓΜΑΧΙΑ** — ginásio, KO, Olisipo, pugilismo.
+*Olisipo* era o nome antigo de Lisboa e *pygmachia* é o pugilismo; está tudo
+certo. Uma inscrição inventada só com letras bonitas não é nada.
 
-O que se aprendeu a fazê-lo, e que vale a pena guardar:
+#### A luz não está pintada na imagem
+
+É aqui que isto mudou. Até agora o disco era **uma fotografia iluminada uma
+vez**: o brilho estava onde tinha ficado, e nenhuma imagem dessas reage a
+coisa nenhuma.
+
+Foi-se ver o que o site dele faz por dentro: um modelo 3D em WebGL com
+**17 MB de texturas** — `Normals_*`, `ColorAO_*`, `RoughHeight_*` — e a luz
+calculada a cada fotograma. Fez-se o mesmo, com **580 KB e sem biblioteca
+nenhuma**:
+
+| Ficheiro | O que é |
+|---|---|
+| `fotos/artefacto-cor.webp` | a cor própria do metal, com a oclusão lá dentro (24 KB) |
+| `fotos/artefacto-rel.webp` | as normais, a altura e o recorte (560 KB) |
+| `fotos/artefacto-1500.webp` | a peça já iluminada, para quem não tem WebGL |
+| `artefacto-luz.js` | o sombreador que faz a luz |
+
+O que se vê **não é uma imagem a rodar**: é um plano inclinado no espaço, e
+cada pixel do ecrã é um raio que vai lá bater. Por isso a perspectiva é a
+verdadeira — o lado de lá afasta-se e perde-se no escuro.
+
+#### O que se mediu no site dele, antes de mexer em nada
+
+| | Primal | O nosso, antes | O nosso, agora |
+|---|---|---|---|
+| Luminância mediana | 4/255 | 13 | 15 |
+| Percentil 95 | 65 | 91 | 81 |
+| Mudança entre dois fotogramas a 3,5 s | 7,5 a 12,7 | — (parado) | 6,3 a 8,0 |
+
+O terceiro número é o que mais conta: **com o rato parado, o disco dele muda
+tanto como com o rato a mexer.** O rato é um empurrão, não o motor. Por isso
+a inclinação, a guinada, a distância e a luz andam todas sozinhas, cada uma
+no seu tempo, e nunca voltam ao mesmo sítio ao mesmo tempo.
+
+#### O que se aprendeu, e vale a pena guardar
 
 - **O relevo nasce da derivada do mapa, e a derivada amplifica o que é
-  miúdo.** Um ruído de superfície com um milésimo de altura dava uma peça com
-  aspecto de casca de árvore. A patina mancha a **cor**, não a altura.
+  miúdo.** Um ruído de superfície com um milésimo de altura dava uma peça
+  com aspecto de casca de árvore. A patina mancha a **cor**, não a altura.
+- **Guardar as normais custa cinco vezes mais do que guardar a altura** —
+  1,0 MB contra 157 KB — e mesmo assim é o que se faz: a normal é a derivada
+  da altura, e derivar um número de 8 bits amplifica cada degrau até uma
+  encosta de 79 graus. O que se pode fazer é **arredondar as normais a
+  degraus de 3**: 1,35 graus de erro, que o olho não vê, e menos um quarto
+  de ficheiro.
+- **Os mapas têm 1024 pixéis porque o WebGL 1 só faz mipmaps em potências de
+  dois.** Sem mipmaps, o lado longe do disco — que a perspectiva comprime
+  três vezes — cintila a cada volta. E com filtragem anisotrópica, que é o
+  que impede a greca e a legenda de se desfazerem em papa a meio do disco.
+- **O grão fino não vai no mapa: nasce no sombreador.** Um mapa de 1024
+  esticado por um disco maior do que o ecrã fica mole de perto. Uma conta de
+  ruído é nítida a qualquer tamanho e não pesa byte nenhum.
+- **Num ecrã estreito a câmara recua, não se aproxima.** A largura visível
+  encolhe com o feitio do ecrã, e de perto o disco deixava de se ler como
+  disco — era só bronze.
+- **A luz anda à volta do centro do disco, e não de um ponto fixo do
+  espaço.** Presa ao mundo, havia voltas inteiras em que a poça caía ao lado
+  dos lutadores, que são o assunto da peça.
 - **Uma bola com um triângulo à frente lê-se como um boné**, não como uma
   cabeça. O que faz a cabeça é o perfil — testa, nariz, queixo.
-- O disco pesa **157 KB** em WebP a 1500 pixéis. Em PNG eram 2,4 MB. O
-  guião guarda os dois tamanhos que a página usa (1500 e 820).
-- Correr `python desenhos/artefacto.py` a partir de `site-exemplos/fotos/`
-  refaz a peça. Precisa de `numpy` e de `Pillow`, e demora 15 segundos.
-- A página diz, por palavras, que o disco não é uma peça de museu. Se o site
-  for publicado assim, essa frase tem de lá ficar.
+- **As incisões dos corpos estiveram meses a não existir, sem erro nenhum.**
+  A tela desenha-se em dobro para suavizar, e as coordenadas das incisões
+  iam sem essa escala: caíam no canto da tela, e lá eram apagadas pela
+  multiplicação com a máscara das figuras. O produto dava zero. Descobriu-se
+  por medida e não a olho — triplicou-se a profundidade do sulco e a soma do
+  mapa de alturas não mexeu um milésimo. Era por isso que os lutadores eram
+  bolhas lisas. Hoje todas as coordenadas passam por um `risco()`, que é o
+  único sítio onde a escala se aplica.
+- **O músculo é um inchaço do membro, não um ovo pousado em cima dele.** O
+  que o distingue não é a amplitude — é o quanto esbate nas pontas: com um
+  borrão de 10 as coxas ficavam ovos claros colados à perna; com 18 ficam
+  uma curva.
+- **As lascas do aro só mordem a borda.** Postas por dentro, abriam buracos
+  no meio da peça — que é uma coisa muito diferente de um aro gasto.
+- **Uma fenda não passa por cima do KO.** Uma risca a atravessar duas letras
+  lê-se como um erro de quem desenhou, não como o tempo.
+
+#### Refazer a peça
+
+`python desenhos/artefacto.py`, a partir de `site-exemplos/desenhos/`.
+Precisa de `numpy` e de `Pillow` e demora cerca de um minuto. Os *seeds*
+estão fixos: correr outra vez dá exactamente os mesmos ficheiros.
+
+Sem WebGL, com **reduzir movimento** ligado ou com poupança de dados, nada
+disto acontece e fica a fotografia — que é a mesma peça, iluminada uma vez
+em vez de a toda a hora. A página diz, por palavras, que o disco não é uma
+peça de museu. Se o site for publicado assim, essa frase tem de lá ficar.
 
 ---
 

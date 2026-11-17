@@ -1,26 +1,42 @@
 # -*- coding: utf-8 -*-
 """
-O artefacto: um disco de bronze com dois pugilistas em relevo.
+O artefacto: um disco de bronze com dois pugilistas, desenhado de raiz.
 
-Desenhado de raiz. Nada vem da internet: constroi-se um *mapa de alturas*
-(que e alto, que e baixo), e depois ilumina-se esse mapa com uma luz
-rasante, como se ilumina uma peca de museu. E dai que vem o relevo --
-nao ha fotografia nenhuma por baixo.
+NAO produz uma fotografia iluminada. Produz os *mapas* da peca -- a cor, a
+oclusao, o relevo -- e a luz e calculada no navegador, a cada fotograma,
+por `artefacto-luz.js`. E por isso que ela segue o rato.
+
+Uma imagem com a luz pintada por dentro nao reage a nada: o brilho esta
+onde ficou. Separar as duas coisas e o que distingue uma ilustracao de uma
+peca que esta mesmo ali.
+
+Sai daqui:
+  artefacto-cor.webp    RGB  = cor da peca x oclusao   (como o ColorAO)
+  artefacto-rel.webp    RGBA = normal.x, normal.y, altura, recorte
+  artefacto-1500.webp   a peca ja iluminada, para quem nao tem WebGL
+  artefacto-820.webp    o mesmo, para ecras pequenos
+
+Correr:  python artefacto.py          (acrescentar --png guarda o original)
+Os seeds estao fixos: correr outra vez da exactamente os mesmos ficheiros.
 """
-import math, random, sys
+import math, os, random, sys
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 random.seed(7); np.random.seed(7)
 
-N = 2000                      # lado da tela
-R = 930.0                     # raio do disco
+N = 2048                      # lado da tela de construcao
+LADO = 1024                   # lado dos mapas que vao para o site.
+# Potencia de dois de proposito: o WebGL 1 so faz mipmaps em texturas assim,
+# e sem mipmaps o lado longe do disco -- que a perspectiva comprime tres
+# vezes -- cintila a cada volta.
+R = 952.0                     # raio do disco
 C = N / 2.0
 
-# --------------------------- utilitarios -------------------------------
+AQUI = os.path.dirname(os.path.abspath(__file__))
+SAIDA = os.path.normpath(os.path.join(AQUI, '..', 'fotos'))
 
-def nova(v=0.0):
-    return np.full((N, N), v, dtype=np.float32)
+# --------------------------- utilitarios -------------------------------
 
 def _caixa(a, r, eixo):
     """Media movel de raio r, com as bordas estendidas."""
@@ -41,19 +57,35 @@ def borrar(a, raio):
         a = _caixa(_caixa(a, r, 0), r, 1)
     return a
 
-def mascara(desenho_fn, escala=1):
-    """Desenha a preto-e-branco com PIL e devolve 0..1."""
-    im = Image.new('L', (N * escala, N * escala), 0)
-    d = ImageDraw.Draw(im)
-    desenho_fn(d, escala)
+def borrar_ciclico(a, raio):
+    """Borrao que da a volta -- o grao tem de encaixar consigo proprio."""
+    n = a.shape[0]
+    f = np.fft.fftfreq(n)
+    k = np.sqrt(f[:, None] ** 2 + f[None, :] ** 2)
+    g = np.exp(-2.0 * (math.pi * raio * k) ** 2)
+    return np.real(np.fft.ifft2(np.fft.fft2(a) * g)).astype(np.float32)
+
+def normalizar(a):
+    return (a - a.mean()) / (a.std() + 1e-6)
+
+def mascara(desenho_fn, escala=2, lado=None):
+    """Desenha a preto-e-branco com PIL, em dobro, e devolve 0..1 suavizado."""
+    lado = lado or N
+    im = Image.new('L', (lado * escala, lado * escala), 0)
+    desenho_fn(ImageDraw.Draw(im), escala)
     if escala != 1:
-        im = im.resize((N, N), Image.LANCZOS)
+        im = im.resize((lado, lado), Image.LANCZOS)
     return np.asarray(im, dtype=np.float32) / 255.0
 
+def encolher(a, lado):
+    """Media por area -- preserva o detalhe melhor do que apanhar pixeis."""
+    im = Image.fromarray(np.clip(a, -8, 8).astype(np.float32), mode='F')
+    return np.asarray(im.resize((lado, lado), Image.BOX), dtype=np.float32)
+
 # --------------------------- a figura ----------------------------------
-# Um corpo nasce de um esqueleto: pontos e ossos. Cada osso e um tronco
-# que afina de uma ponta a outra. E assim que se desenha uma figura de
-# vaso grego -- membros finos, musculo exagerado, tudo de perfil.
+# Um corpo nasce de um esqueleto: pontos e ossos. Cada osso e um tronco que
+# afina de uma ponta a outra. E assim que se desenha uma figura de vaso
+# grego -- membros finos, musculo exagerado, tudo de perfil.
 
 def osso(d, a, b, wa, wb, esc):
     ax, ay = a; bx, by = b
@@ -69,9 +101,19 @@ def osso(d, a, b, wa, wb, esc):
 def disco(d, p, r, esc):
     d.ellipse([(p[0] - r) * esc, (p[1] - r) * esc, (p[0] + r) * esc, (p[1] + r) * esc], fill=255)
 
+def oval(d, p, rx, ry, ang, esc):
+    """Uma elipse inclinada -- um musculo nunca esta direito."""
+    pts = []
+    for i in range(36):
+        t = i / 36.0 * 2 * math.pi
+        x, y = rx * math.cos(t), ry * math.sin(t)
+        pts.append(((p[0] + x * math.cos(ang) - y * math.sin(ang)) * esc,
+                    (p[1] + x * math.sin(ang) + y * math.cos(ang)) * esc))
+    d.polygon(pts, fill=255)
+
 def figura(d, esc, ox, oy, h, virado, pose):
     """pose: juntas em coordenadas locais (x para a frente, y para cima,
-       fracao da altura). virado = +1 olha para a direita, -1 esquerda."""
+       fraccao da altura). virado = +1 olha para a direita, -1 esquerda."""
     def P(k):
         x, y = pose[k]
         return (ox + virado * x * h, oy - y * h)
@@ -98,8 +140,8 @@ def figura(d, esc, ox, oy, h, virado, pose):
     # pescoco
     osso(d, P('ombro'), P('pescoco'), w(.027), w(.022), esc)
 
-    # a cabeca de perfil: testa, nariz, queixo. Uma bola com um triangulo
-    # a frente le-se como um bone -- o perfil e que faz dela uma cabeca.
+    # a cabeca de perfil: testa, nariz, queixo. Uma bola com um triangulo a
+    # frente le-se como um bone -- o perfil e que faz dela uma cabeca.
     cx, cy = P('cabeca'); r = w(.058)
     d.ellipse([(cx - virado * .10 * r - .92 * r) * esc, (cy - 1.06 * r) * esc,
                (cx - virado * .10 * r + .92 * r) * esc, (cy + 1.06 * r) * esc], fill=255)
@@ -132,198 +174,463 @@ POSE_B = {   # recua: guarda alta, as duas maos a frente da cara
     'ombroT': (-.028, .780), 'cotoveloT': (-.176, .726), 'pulsoT': (-.046, .874),
 }
 
-# --------------------------- o meandro ---------------------------------
+ALTURA = R * 0.80                  # altura das figuras
+CHAO = C + R * 0.345               # a linha onde assentam os pes
+ESQ, DIR = C - R * 0.250, C + R * 0.295
+FIGURAS = ((ESQ, +1, POSE_A), (DIR, -1, POSE_B))
 
-def tira_do_meandro(largura, altura, celulas):
-    """Uma tira direita com a greca, para depois se enrolar no anel."""
-    im = Image.new('L', (largura, altura), 0)
-    d = ImageDraw.Draw(im)
-    passo = largura / celulas
-    u = altura / 8.0                 # a grelha da greca: 8 unidades de alto
-    t = max(2, int(round(u)))        # espessura do traco
-    g = passo / 8.0
-    for i in range(celulas + 1):
-        x0 = i * passo
-        # espiral quadrada: entra, roda, sai
-        pts = [(0, 7), (6.6, 7), (6.6, 1.4), (2.0, 1.4), (2.0, 4.6), (4.4, 4.6)]
-        caminho = [(x0 + px * g, altura - py * u) for px, py in pts]
-        d.line(caminho, fill=255, width=t, joint='curve')
-        # o traco que liga uma celula a seguinte
-        d.line([(x0, altura - 7 * u), (x0 - 1.4 * g, altura - 7 * u)], fill=255, width=t)
-    return np.asarray(im, dtype=np.float32) / 255.0
+def ponto(ox, virado, pose, k, h=None):
+    h = h or ALTURA
+    x, y = pose[k]
+    return (ox + virado * x * h, CHAO - y * h)
 
-def enrolar(tira, r_dentro, r_fora):
-    """Mapeia a tira para um anel: o angulo e o x, o raio e o y."""
+def entre(a, b, f):
+    return (a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)
+
+def musculos_largos(d, esc):
+    """Peito, coxa, gemeo, trapezio -- as massas grandes."""
+    h = ALTURA
+    for ox, v, pose in FIGURAS:
+        P = lambda k: ponto(ox, v, pose, k)
+        d_ = lambda a, b, f: entre(P(a), P(b), f)
+        incl = 0.0 if v > 0 else math.pi
+        oval(d, (P('peito')[0] + v * .030 * h, P('peito')[1] - .022 * h),
+             .060 * h, .034 * h, incl + v * 0.22, esc)                 # peitoral
+        oval(d, d_('anca', 'joelhoF', .42), .050 * h, .082 * h,
+             math.atan2(P('joelhoF')[1] - P('anca')[1], P('joelhoF')[0] - P('anca')[0]) - math.pi / 2, esc)
+        oval(d, d_('ancaT', 'joelhoT', .42), .042 * h, .074 * h,
+             math.atan2(P('joelhoT')[1] - P('ancaT')[1], P('joelhoT')[0] - P('ancaT')[0]) - math.pi / 2, esc)
+        oval(d, d_('joelhoF', 'tornozeloF', .34), .030 * h, .050 * h,
+             math.atan2(P('tornozeloF')[1] - P('joelhoF')[1], P('tornozeloF')[0] - P('joelhoF')[0]) - math.pi / 2, esc)
+        oval(d, (P('ombro')[0] - v * .018 * h, P('ombro')[1] - .004 * h),
+             .048 * h, .026 * h, incl - v * 0.30, esc)                 # trapezio
+        oval(d, d_('ombroF', 'cotoveloF', .40), .029 * h, .040 * h,
+             math.atan2(P('cotoveloF')[1] - P('ombroF')[1], P('cotoveloF')[0] - P('ombroF')[0]) - math.pi / 2, esc)
+
+def musculos_finos(d, esc):
+    """Abdominais e deltoides -- as massas pequenas, que pedem outro borrao."""
+    h = ALTURA
+    for ox, v, pose in FIGURAS:
+        P = lambda k: ponto(ox, v, pose, k)
+        base = P('cintura')
+        for i in range(4):                                             # a prancha
+            y = base[1] + .012 * h - i * .036 * h
+            x = base[0] + v * (.012 + i * .004) * h
+            oval(d, (x, y), .030 * h, .013 * h, 0.0, esc)
+        disco(d, (P('ombroF')[0], P('ombroF')[1] - .004 * h), .030 * h, esc)   # deltoide
+        disco(d, (P('ombroT')[0], P('ombroT')[1] - .004 * h), .024 * h, esc)
+        oval(d, entre(P('joelhoT'), P('tornozeloT'), .34), .024 * h, .040 * h,
+             math.atan2(P('tornozeloT')[1] - P('joelhoT')[1], P('tornozeloT')[0] - P('joelhoT')[0]) - math.pi / 2, esc)
+
+def incisoes(d, esc):
+    """O que o artifice risca por cima do relevo depois de fundido. Um sulco
+       le-se de longe melhor do que um volume: apanha luz de um lado e sombra
+       do outro, e por isso nao desaparece quando a luz lhe bate de frente.
+
+       Tudo aqui se desenha em coordenadas da peca e so o `risco` lhes aplica
+       a escala. A primeira versao passava-as cruas ao PIL: a tela e desenhada
+       em dobro, as incisoes caiam no canto dela, e la eram apagadas pela
+       multiplicacao com a mascara das figuras. Nao davam erro nenhum -- so
+       nunca chegavam a existir, e os corpos ficavam bolhas lisas."""
+    h = ALTURA
+    lw = max(2, int(0.0070 * h * esc))
+    fino = max(2, int(0.0046 * h * esc))
+
+    def risco(pontos, w):
+        d.line([(x * esc, y * esc) for x, y in pontos], fill=255, width=w, joint='curve')
+
+    for ox, v, pose in FIGURAS:
+        P = lambda k: ponto(ox, v, pose, k)
+        pei, cin, anc, cab = P('peito'), P('cintura'), P('anca'), P('cabeca')
+
+        # o risco do peitoral, que desce do ombro e volta para dentro
+        alto = (pei[0] + v * .052 * h, pei[1] - .018 * h)
+        risco([P('ombroF'), alto], lw)
+        risco([alto, (pei[0] - v * .018 * h, pei[1] + .018 * h)], lw)
+
+        # a prancha: a linha do meio e as travessas
+        risco([(cin[0] + v * .004 * h, cin[1] + .022 * h),
+               (cin[0] + v * .022 * h, cin[1] - .110 * h)], fino)
+        for i in range(3):
+            y = cin[1] - .006 * h - i * .036 * h
+            risco([(cin[0] - v * .018 * h, y), (cin[0] + v * .044 * h, y - .006 * h)], fino)
+
+        # o V da virilha, que e o que diz que aquilo e um corpo de atleta
+        baixo = (anc[0] + v * .006 * h, anc[1] + .024 * h)
+        risco([(anc[0] + v * .052 * h, anc[1] - .034 * h), baixo], lw)
+        risco([(anc[0] - v * .048 * h, anc[1] - .030 * h), baixo], lw)
+
+        risco([anc, P('joelhoT')], lw)                     # separar as pernas
+        joe = P('joelhoF')
+        risco([(joe[0] - v * .024 * h, joe[1]),
+               (joe[0] + v * .024 * h, joe[1] + .004 * h)], fino)      # a rotula
+
+        # o cabelo: madeixas curtas da testa para a nuca
+        r = .058 * h
+        for i in range(5):
+            risco([(cab[0] + v * (0.12 - 0.032 * i) * r, cab[1] - 0.84 * r + i * 0.30 * r),
+                   (cab[0] - v * (0.84 + 0.05 * i) * r, cab[1] - 0.30 * r + i * 0.28 * r)], fino)
+
+        # os himantes: as correias de couro enroladas na mao e no antebraco.
+        # E o pormenor que diz que isto e pugilismo e nao luta.
+        for k, ante in (('pulsoF', 'cotoveloF'), ('pulsoT', 'cotoveloT')):
+            pu, co = P(k), P(ante)
+            dx, dy = co[0] - pu[0], co[1] - pu[1]
+            L = math.hypot(dx, dy) or 1.0
+            ux, uy = dx / L, dy / L
+            px, py = -uy, ux
+            for j in range(6):
+                sj = 0.02 + j * 0.105
+                cxp, cyp = pu[0] + ux * L * sj, pu[1] + uy * L * sj
+                e = (.040 - .004 * j) * h
+                risco([(cxp + px * e - ux * .012 * h, cyp + py * e - uy * .012 * h),
+                       (cxp - px * e + ux * .012 * h, cyp - py * e + uy * .012 * h)], fino)
+
+def chao(d, esc):
+    """Nas pecas gregas as figuras assentam sempre num risco de solo."""
+    d.line([((C - R * 0.555) * esc, CHAO * esc), ((C + R * 0.555) * esc, CHAO * esc)],
+           fill=255, width=int(0.011 * R * esc))
+
+def cena(d, esc):
+    for ox, v, pose in FIGURAS:
+        figura(d, esc, ox, CHAO, ALTURA, v, pose)
+
+# --------------------------- os aneis ----------------------------------
+
+def enrolar(tira, r_dentro, r_fora, repeticoes=1):
+    """Mapeia uma tira direita para um anel: o angulo da o x, o raio da o y.
+       Com amostragem bilinear -- a de vizinho mais proximo esfarrapa letras."""
     yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
     dx, dy = xx - C, yy - C
     rr = np.hypot(dx, dy)
-    th = (np.arctan2(dy, dx) + math.pi) / (2 * math.pi)        # 0..1
-    u = (rr - r_dentro) / (r_fora - r_dentro)                   # 0..1
+    th = (np.arctan2(dy, dx) + math.pi) / (2 * math.pi)
+    th = (th * repeticoes) % 1.0
+    u = (rr - r_dentro) / (r_fora - r_dentro)
     H, W = tira.shape
-    sx = np.clip((th * (W - 1)).astype(np.int32), 0, W - 1)
-    sy = np.clip((u * (H - 1)).astype(np.int32), 0, H - 1)
-    out = tira[sy, sx]
+    fx = np.clip(th * W, 0, W - 1.001)
+    fy = np.clip(u * (H - 1), 0, H - 1.001)
+    x0 = fx.astype(np.int32); y0 = fy.astype(np.int32)
+    ax = fx - x0; ay = fy - y0
+    x1 = (x0 + 1) % W; y1 = np.minimum(y0 + 1, H - 1)
+    out = (tira[y0, x0] * (1 - ax) * (1 - ay) + tira[y0, x1] * ax * (1 - ay)
+           + tira[y1, x0] * (1 - ax) * ay + tira[y1, x1] * ax * ay)
     out[(rr < r_dentro) | (rr > r_fora)] = 0.0
-    return out
+    return out.astype(np.float32)
+
+def tira_do_meandro(largura, altura, celulas):
+    """A greca: uma espiral quadrada que entra, roda e sai."""
+    im = Image.new('L', (largura, altura), 0)
+    d = ImageDraw.Draw(im)
+    passo = largura / celulas
+    u = altura / 8.0
+    t = max(2, int(round(u * 1.05)))
+    g = passo / 8.0
+    for i in range(celulas + 1):
+        x0 = i * passo
+        pts = [(0, 7), (6.6, 7), (6.6, 1.4), (2.0, 1.4), (2.0, 4.6), (4.4, 4.6)]
+        d.line([(x0 + px * g, altura - py * u) for px, py in pts],
+               fill=255, width=t, joint='curve')
+        d.line([(x0, altura - 7 * u), (x0 - 1.4 * g, altura - 7 * u)], fill=255, width=t)
+    return np.asarray(im, dtype=np.float32) / 255.0
+
+def fonte(tamanho):
+    """Uma letra lapidar arcaica e monolinear -- sem serifas. Por isso uma
+       grotesca assenta-lhe melhor do que uma romana."""
+    for nome in ('arial.ttf', 'segoeui.ttf', 'tahoma.ttf', 'times.ttf',
+                 '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'):
+        caminho = nome if '/' in nome else 'C:/Windows/Fonts/' + nome
+        try:
+            f = ImageFont.truetype(caminho, tamanho)
+            if f.getbbox('\u0393\u03a9')[2] > tamanho * 0.5:   # tem grego?
+                return f
+        except Exception:
+            pass
+    return ImageFont.load_default()
+
+LEGENDA = '\u0393\u03a5\u039c\u039d\u0391\u03a3\u0399\u039f\u039d\u00b7' \
+          '\u039a\u039f\u00b7\u039f\u039b\u0399\u03a3\u0399\u03a0\u03a9\u039d\u00b7' \
+          '\u03a0\u03a5\u0393\u039c\u0391\u03a7\u0399\u0391\u00b7'
+# GYMNASION . KO . OLISIPON . PYGMACHIA
+# Olisipo era o nome antigo de Lisboa; pygmachia e o pugilismo. Tudo
+# verdade -- uma inscricao inventada so com letras bonitas nao e nada.
+
+def tira_da_legenda(largura, altura):
+    im = Image.new('L', (largura, altura), 0)
+    d = ImageDraw.Draw(im)
+    f = fonte(int(altura * 0.66))
+    texto = LEGENDA
+    # repete-se ate dar a volta, com o espaco acertado para fechar certo
+    larg_uma = d.textlength(texto, font=f)
+    # Duas voltas e nao as que couberem: com tres, cada letra fica com 24
+    # pixeis no mapa e le-se como rabisco. A legenda existe para ser lida.
+    vezes = 2 if largura > larg_uma * 1.6 else max(1, int(round(largura / larg_uma)))
+    passo = largura / vezes
+    extra = (passo - larg_uma) / max(1, len(texto))
+    for v in range(vezes):
+        x = v * passo
+        for ch in texto:
+            d.text((x, altura * 0.5), ch, font=f, fill=255, anchor='lm')
+            x += d.textlength(ch, font=f) + extra
+    return np.asarray(im, dtype=np.float32) / 255.0
+
+def tira_das_contas(largura, altura, contas):
+    """Astragalo: contas e carreteis. O bordo classico, e o que mais brilha
+       sob luz rasante -- sao dezenas de pequenas superficies curvas."""
+    im = Image.new('L', (largura, altura), 0)
+    d = ImageDraw.Draw(im)
+    passo = largura / contas
+    r = min(altura * 0.44, passo * 0.40)      # a conta nunca come o carretel
+    for i in range(contas + 1):
+        x = i * passo
+        d.ellipse([x - r, altura * .5 - r, x + r, altura * .5 + r], fill=255)
+        a, b = x + r * .88, x + passo - r * .88
+        if b > a:
+            d.rectangle([a, altura * .5 - r * .34, b, altura * .5 + r * .34], fill=190)
+    return np.asarray(im, dtype=np.float32) / 255.0
 
 # --------------------------- o mapa de alturas -------------------------
 
 yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
 rr = np.hypot(xx - C, yy - C)
+ang = np.arctan2(yy - C, xx - C)
 dentro = (rr <= R).astype(np.float32)
 
-# corpo do disco: levemente bojudo ao centro, como um disco fundido
-alt = dentro * (0.40 + 0.055 * np.clip(1 - (rr / R) ** 2, 0, 1))
+# corpo do disco: levemente bojudo ao centro, como um disco fundido a mao
+alt = dentro * (0.40 + 0.050 * np.clip(1 - (rr / R) ** 2, 0, 1))
 
-# aro exterior
-aro = ((rr > R * 0.885) & (rr < R * 0.985)).astype(np.float32)
-alt += borrar(aro, 7) * 0.13
+# o aro: um torulo redondo, nao um degrau. E a forma que apanha a luz toda
+# a volta e diz "isto e uma peca", nao um recorte.
+u_aro = np.clip((rr - R * 0.905) / (R * 0.082), 0, 1)
+alt += dentro * np.sqrt(np.clip(1 - (2 * u_aro - 1) ** 2, 0, 1)) * 0.115
+alt -= borrar(((rr > R * 0.880) & (rr < R * 0.908)).astype(np.float32), 6) * 0.055  # a goteira
 
-# anel do meandro
-tira = tira_do_meandro(5400, 300, 34)
-alt += borrar(enrolar(tira, R * 0.745, R * 0.870), 5) * 0.115
+# a inscricao, incisa no rebaixo entre o aro e a greca
+alt -= borrar(((rr > R * 0.790) & (rr < R * 0.884)).astype(np.float32), 7) * 0.030
+alt -= borrar(enrolar(tira_da_legenda(7200, 190), R * 0.800, R * 0.874), 2.6) * 0.105
+# as barras que separam os painees da legenda
+barras = ((np.abs(((ang + math.pi) / (2 * math.pi) * 36) % 1.0 - 0.5) > 0.470)
+          & (rr > R * 0.792) & (rr < R * 0.882)).astype(np.float32)
+alt += borrar(barras, 3) * 0.045
 
-# circulo fino a separar o campo do meandro
-fio = ((rr > R * 0.718) & (rr < R * 0.735)).astype(np.float32)
-alt += borrar(fio, 4) * 0.07
+# o astragalo entre a legenda e a greca
+alt += borrar(enrolar(tira_das_contas(4800, 72, 132), R * 0.756, R * 0.792), 3) * 0.080
 
-# as figuras
-ALTURA = R * 0.84                  # altura das figuras
-CHAO = C + R * 0.355               # a linha onde assentam os pes
-ESQ, DIR = C - R * 0.255, C + R * 0.300
+# o anel da greca
+alt += borrar(enrolar(tira_do_meandro(6400, 320, 38), R * 0.640, R * 0.744), 4) * 0.115
 
-def cena(d, esc):
-    figura(d, esc, ESQ, CHAO, ALTURA, +1, POSE_A)
-    figura(d, esc, DIR, CHAO, ALTURA, -1, POSE_B)
+# fio fino a separar o campo da greca
+alt += borrar(((rr > R * 0.612) & (rr < R * 0.630)).astype(np.float32), 3.5) * 0.070
 
-figs = mascara(cena, escala=2)
+# ---- as figuras ----
+figs = mascara(cena)
+figs = np.clip(figs + mascara(chao), 0, 1)
 
-def chao(d, esc):
-    # a linha de solo: nas pecas gregas as figuras assentam sempre num risco
-    d.line([((C - R * 0.56) * esc, CHAO * esc), ((C + R * 0.56) * esc, CHAO * esc)],
-           fill=255, width=int(0.012 * R * esc))
-figs = np.clip(figs + mascara(chao, escala=2), 0, 1)
-
-# o relevo: a silhueta borrada da forma, e uma segunda camada mais
-# apertada por cima -- e isso que da volume em vez de um carimbo chato
+# o relevo: a silhueta borrada da forma, e uma segunda camada mais apertada
+# por cima -- e isso que da volume em vez de um carimbo chato
 relevo = np.clip(borrar(figs, 9) * 1.45, 0, 1) ** 0.75
 relevo = relevo * 0.5 + np.clip(borrar(figs, 3) * 1.2, 0, 1) * 0.5
-alt += relevo * 0.205 * dentro
+alt += relevo * 0.200 * dentro
 
-# incisoes: as linhas que o artifice risca por cima do relevo
-def incisoes(d, esc):
-    h, base = ALTURA, CHAO
-    lw = max(1, int(0.013 * h * esc))
-    for ox, vir, pose in ((ESQ, +1, POSE_A), (DIR, -1, POSE_B)):
-        P = lambda k: ((ox + vir * pose[k][0] * h) * esc, (base - pose[k][1] * h) * esc)
-        d.line([P('ombroF'), P('peito')], fill=255, width=lw)          # o peitoral
-        d.line([P('anca'), P('joelhoT')], fill=255, width=lw)          # separar as pernas
-        d.line([P('anca'), ((ox - vir * .055 * h) * esc,
-                            (base - .505 * h) * esc)], fill=255, width=lw)
-        for k in ('pulsoF', 'pulsoT'):                                  # as correias da mao
-            cx, cy = P(k)
-            for j in range(3):
-                d.line([(cx - .036 * h * esc, cy - (.014 - j * .014) * h * esc),
-                        (cx + .036 * h * esc, cy - (.022 - j * .014) * h * esc)],
-                       fill=255, width=lw)
-alt -= borrar(mascara(incisoes, escala=2) * figs, 3) * 0.075
+# o musculo por cima do relevo, so onde ha corpo
+mus = borrar(mascara(musculos_largos), 18) * figs
+alt += np.clip(mus * 1.80, 0, 1) * 0.034 * dentro
+mus2 = borrar(mascara(musculos_finos), 7) * figs
+alt += np.clip(mus2 * 1.70, 0, 1) * 0.016 * dentro
 
-# a inscricao: KO em letras gregas, como os vasos rotulam quem la esta
+# e as incisoes por cima do musculo
+# Fundos: um sulco raso desaparece quando a luz lhe bate de frente, e e
+# precisamente ai que o corpo precisa de se ler. Com 0,072 as figuras ficavam
+# lisas de cada vez que a poca de luz lhes passava por cima.
+alt -= borrar(mascara(incisoes) * np.clip(borrar(figs, 4) * 1.6, 0, 1), 1.6) * 0.022
+
+# a inscricao do centro: KO em letras gregas, incisa como a legenda
 def letras(d, esc):
-    try:
-        f = ImageFont.truetype("C:/Windows/Fonts/georgia.ttf", int(R * 0.105 * esc))
-    except Exception:
-        f = ImageFont.load_default()
-    d.text((C * esc, (C - R * 0.515) * esc), "\u039a\u039f", font=f, fill=255, anchor="mm")
-alt += borrar(mascara(letras, escala=2), 4) * 0.085 * dentro
+    f = fonte(int(R * 0.138 * esc))
+    d.text((C * esc, (C - R * 0.470) * esc), '\u039a\u039f', font=f, fill=255, anchor='mm')
+alt -= borrar(mascara(letras), 3) * 0.085 * dentro
 
 # --------------------------- o tempo -----------------------------------
-# Sem desgaste isto e um logotipo. Com desgaste e uma peca que esteve
-# dois mil e setecentos anos debaixo de terra.
+# Sem desgaste isto e um logotipo. Com desgaste e uma peca que esteve dois
+# mil e setecentos anos debaixo de terra.
 
 ruido = np.random.rand(N, N).astype(np.float32)
-grosso = borrar(ruido, 26); grosso = (grosso - grosso.mean()) / (grosso.std() + 1e-6)
-medio = borrar(ruido, 7);   medio = (medio - medio.mean()) / (medio.std() + 1e-6)
-fino = borrar(np.random.rand(N, N).astype(np.float32), 3.0)
+grosso = normalizar(borrar(ruido, 30))
+medio = normalizar(borrar(ruido, 8))
 
-# A patina mancha a *cor*, e nao a altura: um bronze manchado continua a
-# ser uma superficie lisa. Confundir as duas dava casca de arvore.
-alt += (grosso * 0.0022 + medio * 0.0005) * dentro
-alt += (fino - fino.mean()) * 0.00035 * dentro          # porosidade do metal
+# A patina mancha a *cor* e nao a altura: um bronze manchado continua a ser
+# uma superficie lisa. Confundir as duas da casca de arvore -- o relevo sai
+# da *derivada* da altura, e a derivada amplifica tudo o que e miudo.
+alt += (grosso * 0.0011 + medio * 0.0003) * dentro
 
 # mossas: concavidades onde o disco bateu em alguma coisa
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
-for _ in range(34):
+for _ in range(38):
     a = random.uniform(0, 2 * math.pi); q = R * math.sqrt(random.uniform(0, 1)) * 0.97
     x, y = C + q * math.cos(a), C + q * math.sin(a)
-    s = random.uniform(10, 54)
+    s = random.uniform(10, 56)
     d.ellipse([x - s, y - s * random.uniform(.5, 1.2), x + s, y + s * random.uniform(.5, 1.2)], fill=255)
-mossas = np.asarray(im, dtype=np.float32) / 255.0
-alt -= borrar(mossas, 20) * 0.013 * dentro
+alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 20) * 0.013 * dentro
+
+# picadas da fundicao: bolhas de ar que vieram a superficie. So as graudas
+# vao para o mapa -- as miudas sao grao, e o grao faz-se no sombreador: um
+# mapa guarda-as uma vez e estica-as; o sombreador desenha-as a qualquer
+# tamanho, e nao pesa byte nenhum.
+im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
+# Vem em ninhos, como vem no metal a serio: o ar nao se distribui por igual
+# pelo molde. Espalhadas por igual liam-se como pintas de um padrao.
+for _ in range(26):
+    a = random.uniform(0, 2 * math.pi); q = R * math.sqrt(random.uniform(0, 1)) * 0.96
+    nx0, ny0 = C + q * math.cos(a), C + q * math.sin(a)
+    for _ in range(random.randint(4, 16)):
+        x = nx0 + random.gauss(0, 46); y = ny0 + random.gauss(0, 46)
+        if math.hypot(x - C, y - C) > R * 0.985:
+            continue
+        s = random.uniform(1.8, 5.0)
+        d.ellipse([x - s, y - s, x + s, y + s], fill=255)
+picadas = np.asarray(im, dtype=np.float32) / 255.0
+alt -= borrar(picadas, 1.6) * 0.034 * dentro
+
+# fendas: o metal fadigado racha, e a racha corre sem destino
+im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
+for _ in range(5):
+    a = random.uniform(0, 2 * math.pi)
+    x, y = C + R * random.uniform(.2, .95) * math.cos(a), C + R * random.uniform(.2, .95) * math.sin(a)
+    rumo = random.uniform(0, 2 * math.pi)
+    pts = [(x, y)]
+    for _ in range(random.randint(14, 30)):
+        rumo += random.uniform(-0.55, 0.55)
+        passo = random.uniform(12, 34)
+        x += passo * math.cos(rumo); y += passo * math.sin(rumo)
+        if math.hypot(x - C, y - C) > R * 0.99:
+            break
+        pts.append((x, y))
+    if len(pts) > 2:
+        d.line(pts, fill=255, width=random.choice([2, 2, 3]), joint='curve')
+fendas = np.asarray(im, dtype=np.float32) / 255.0
+# A fenda nao passa por cima do KO. Uma risca a atravessar duas letras le-se
+# como um erro de quem desenhou, e nao como o tempo: o olho ve um O cortado
+# e pensa que alguem se enganou.
+longe_do_ko = np.clip((np.hypot(xx - C, yy - (C - R * 0.470)) - R * 0.150) / (R * 0.07), 0, 1)
+alt -= borrar(fendas * longe_do_ko, 1.6) * 0.060 * dentro
+
+# o gito: o rebarbo por onde o bronze entrou no molde, limado mas nao a zero
+im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
+d.ellipse([C + R * .54, C - R * .80, C + R * .70, C - R * .70], fill=255)
+alt += borrar(np.asarray(im, dtype=np.float32) / 255.0, 9) * 0.045 * dentro
 
 # o aro comido: a borda nao e um circulo perfeito, foi-se lascando
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
-for _ in range(26):
+# So mordem a borda: ficam de fora do raio e entram o que entrarem. Postas
+# por dentro abriam buracos no meio da peca, que e uma coisa muito
+# diferente de um aro gasto.
+for _ in range(13):
     a = random.uniform(0, 2 * math.pi)
-    q = R * random.uniform(0.975, 1.02)
+    s = random.uniform(9, 30)
+    q = R + s * random.uniform(0.42, 0.95)
     x, y = C + q * math.cos(a), C + q * math.sin(a)
-    s = random.uniform(14, 62)
-    d.ellipse([x - s, y - s, x + s, y + s], fill=255)
+    pts = []
+    for j in range(9):                      # uma lasca nao e um circulo
+        t = j / 9.0 * 2 * math.pi
+        e = s * random.uniform(0.55, 1.25)
+        pts.append((x + e * math.cos(t), y + e * math.sin(t)))
+    d.polygon(pts, fill=255)
 lascas = np.asarray(im, dtype=np.float32) / 255.0
 
-alt = np.clip(alt, 0, 1.2)
+alt = np.clip(alt, 0.0, 1.2)
 
-# --------------------------- a luz -------------------------------------
-# Luz rasante de cima-esquerda: e a que levanta o relevo. De frente,
-# achatava tudo.
+# --------------------------- os mapas ----------------------------------
 
-ESC_Z = 2600.0
-gy, gx = np.gradient(alt.astype(np.float32))
-nx, ny, nz = -gx * ESC_Z, -gy * ESC_Z, np.ones_like(alt)
+alt_p = encolher(alt, LADO)
+rr_p = encolher(rr, LADO) * (LADO / float(N))
+lascas_p = encolher(lascas, LADO)
+grosso_p = encolher(grosso, LADO)
+medio_p = encolher(medio, LADO)
+R_p = R * LADO / float(N)
+dentro_p = (rr_p <= R_p).astype(np.float32)
+
+# as normais: e a derivada da altura que faz o relevo
+ESC_Z = 1750.0 * (LADO / 1280.0)   # a inclinacao acompanha a resolucao
+gy, gx = np.gradient(alt_p.astype(np.float32))
+nx, ny, nz = -gx * ESC_Z, -gy * ESC_Z, np.ones_like(alt_p)
 ln = np.sqrt(nx * nx + ny * ny + nz * nz) + 1e-6
 nx, ny, nz = nx / ln, ny / ln, nz / ln
 
-L = np.array([-0.62, -0.60, 0.50]); L /= np.linalg.norm(L)
+# oclusao: o que esta em baixo recebe menos luz do ceu. E o que da a peca o
+# ar de suja e funda em vez de impressa.
+longe = borrar(alt_p, 26)
+perto = borrar(alt_p, 7)
+oc = np.clip(0.30 + 1.05 * (alt_p * 0.34 + perto * 0.36 + longe * 0.30) - 0.16, 0.06, 1.0)
+oc = oc ** 1.25
+
+# a cor da peca: bronze escuro, patina verde no fundo das reentrancias.
+# Nunca sai daqui luz nenhuma -- so a cor propria do metal.
+baixo = np.clip(1.0 - (alt_p - 0.355) / 0.300, 0, 1)
+bronze = np.stack([0.248 - 0.086 * baixo,
+                   0.196 - 0.030 * baixo,
+                   0.132 + 0.008 * baixo], axis=-1).astype(np.float32)
+patina = np.clip(grosso_p * 0.5 + 0.5, 0, 1)
+verde = np.array([0.104, 0.142, 0.122], dtype=np.float32)
+m = (patina * baixo * 0.44)[..., None]
+bronze = bronze * (1 - m) + verde * m
+# o metal gasto nos pontos altos volta a aparecer, mais claro e mais limpo
+gasto = np.clip((alt_p - 0.56) / 0.16, 0, 1) * np.clip(medio_p * 0.4 + 0.6, 0, 1)
+bronze = bronze * (1 - gasto[..., None] * 0.55) + \
+         np.array([0.560, 0.470, 0.330], dtype=np.float32) * (gasto[..., None] * 0.55)
+
+cor_ao = np.clip(bronze * oc[..., None], 0, 1)
+
+# o recorte
+alfa = np.clip((R_p - rr_p) / 1.8, 0, 1)
+alfa = np.clip(alfa - lascas_p * 0.95, 0, 1)
+alfa = np.clip(borrar(alfa, 1.0), 0, 1)
+
+def guardar(nome, arr, modo, **kw):
+    Image.fromarray(arr, modo).save(os.path.join(SAIDA, nome), **kw)
+
+guardar('artefacto-cor.webp', (cor_ao ** (1 / 2.2) * 255).astype(np.uint8), 'RGB',
+        quality=88, method=6)
+
+# nx, ny, altura, recorte. Sem perdas: um mapa de normais comprimido com
+# perdas da ondulacao na luz, que e exactamente o que ele existe para evitar.
+# Os valores das normais vao em degraus de 3: 1,35 graus de erro, que o olho
+# nao ve, e menos um quarto de ficheiro. Guardar a altura em vez delas seria
+# cinco vezes mais leve -- mas a normal e a *derivada* da altura, e derivar
+# um numero de 8 bits amplifica cada degrau ate uma encosta de 79 graus.
+def degraus(v, passo=3):
+    return (np.round(np.clip((v * 0.5 + 0.5) * 255, 0, 255) / passo) * passo).clip(0, 255).astype(np.uint8)
+
+rel = np.dstack([
+    degraus(nx),
+    degraus(ny),
+    (np.clip(alt_p / 1.2, 0, 1) * 255).astype(np.uint8),
+    (alfa * 255).astype(np.uint8),
+])
+guardar('artefacto-rel.webp', rel, 'RGBA', lossless=True, quality=100, method=6)
+
+# --------------------------- o retrato cozido --------------------------
+# Para quem nao tem WebGL. A mesma peca, com uma luz fixa -- e com a mesma
+# conta que o navegador faz, para nao haver duas pecas diferentes.
+
+L = np.array([-0.60, -0.62, 0.505]); L /= np.linalg.norm(L)
 V = np.array([0.0, 0.0, 1.0])
 H = (L + V); H /= np.linalg.norm(H)
-
 dif = np.clip(nx * L[0] + ny * L[1] + nz * L[2], 0, 1)
-esp = np.clip(nx * H[0] + ny * H[1] + nz * H[2], 0, 1) ** 58
-
-# oclusao: o que esta em baixo recebe menos luz do ceu
-oc = np.clip(borrar(alt, 30) * 1.25, 0, 1.2)
-oc = np.clip(0.45 + 0.70 * (alt * 0.6 + oc * 0.4), 0, 1.25)
-
-# cor da peca: bronze escuro, com patina mais verde no fundo das reentrancias
-baixo = np.clip(1.0 - (alt - 0.36) / 0.30, 0, 1)
-bronze = np.stack([
-    0.455 - 0.150 * baixo,
-    0.390 - 0.055 * baixo,
-    0.300 + 0.010 * baixo,
-], axis=-1).astype(np.float32)
-patina = np.clip((grosso * 0.5 + 0.5), 0, 1)
-verde = np.array([0.215, 0.275, 0.248], dtype=np.float32)
-m = (patina * baixo * 0.38)[..., None]
-bronze = bronze * (1 - m) + verde * m
-
-AMBIENTE = np.array([0.175, 0.185, 0.205], dtype=np.float32)   # luz do ceu, fria
-CHAVE = np.array([1.00, 0.845, 0.600], dtype=np.float32)       # a luz, quente
-cor = bronze * (AMBIENTE + CHAVE * dif[..., None] * 0.92) * oc[..., None]
-cor += (CHAVE * 0.50) * esp[..., None]
-
-# --------------------------- recortar ----------------------------------
-alfa = np.clip((R - rr) / 2.2, 0, 1)
-alfa = np.clip(alfa - lascas * 0.95, 0, 1)
-alfa = np.clip(borrar(alfa, 1.2), 0, 1)
-
-rgb = (np.clip(cor, 0, 1) ** (1 / 1.12) * 255).astype(np.uint8)
-out = np.dstack([rgb, (alfa * 255).astype(np.uint8)])
-peca = Image.fromarray(out, 'RGBA')
-# O PNG de 2000 e o original, e pesa 2,4 MB -- nao vai para o Git: os seeds
-# estao fixos, e correr isto outra vez da exactamente o mesmo ficheiro.
+aspereza = np.clip(0.72 - 0.34 * np.clip((alt_p - 0.50) / 0.22, 0, 1), 0.2, 1.0)
+brilho = np.clip(nx * H[0] + ny * H[1] + nz * H[2], 0, 1) ** (2.0 / (aspereza ** 4 + 1e-3))
+AMBIENTE = np.array([0.105, 0.120, 0.142], dtype=np.float32)
+CHAVE = np.array([1.00, 0.840, 0.595], dtype=np.float32)
+cor = cor_ao * (AMBIENTE + CHAVE * dif[..., None] * 0.86)
+cor += (CHAVE * 0.22) * (brilho * oc)[..., None]
+rgb = (np.clip(cor, 0, 1) ** (1 / 2.2) * 255).astype(np.uint8)
+peca = Image.fromarray(np.dstack([rgb, (alfa * 255).astype(np.uint8)]), 'RGBA')
 if '--png' in sys.argv:
-    peca.save('artefacto.png')
+    peca.save(os.path.join(SAIDA, 'artefacto.png'))
 for lado in (1500, 820):
-    peca.resize((lado, lado), Image.LANCZOS).save('artefacto-%d.webp' % lado,
-                                                  quality=86, method=6)
-print('artefacto', N, 'alt', round(float(alt.min()), 3), round(float(alt.max()), 3))
+    peca.resize((lado, lado), Image.LANCZOS).save(
+        os.path.join(SAIDA, 'artefacto-%d.webp' % lado), quality=86, method=6)
+
+for n in ('artefacto-cor.webp', 'artefacto-rel.webp',
+          'artefacto-1500.webp', 'artefacto-820.webp'):
+    print('%-22s %7d bytes' % (n, os.path.getsize(os.path.join(SAIDA, n))))
+print('alt %.3f .. %.3f   oclusao %.3f .. %.3f' %
+      (float(alt_p.min()), float(alt_p.max()), float(oc.min()), float(oc.max())))
