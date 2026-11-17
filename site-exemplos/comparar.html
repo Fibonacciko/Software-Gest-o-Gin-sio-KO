@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Quatro caminhos para o site</title>
+<title>Os caminhos para o site</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7,9 +7,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500&display=swap">
 
 <style>
-/* Uma coluna só: a introdução, quatro fichas grandes com a capa de cada
-   caminho, e no fim o que é igual nos quatro. Página de trabalho — o que
-   tem de saltar à vista são as fotografias, não ela. */
+/* Uma coluna só: a introdução, a ficha do E (a junção das ideias que ele
+   apontou), o mapa de onde ficou cada uma, e depois os quatro de ontem
+   para comparar. Página de trabalho — o que tem de saltar à vista são as
+   fotografias, não ela. */
 :root {
   --fundo:   #f7f5f1;
   --caixa:   #ffffff;
@@ -83,7 +84,7 @@ a { color: inherit; }
 /* ── a entrada ─────────────────────────────────────────────────────── */
 
 .entrada { display: flex; flex-direction: column; gap: 14px; }
-.entrada h1 { font-size: clamp(27px, 5vw, 42px); line-height: 1.06; }
+.entrada h1, .entrada h2 { font-size: clamp(27px, 5vw, 42px); line-height: 1.06; }
 .entrada p { color: var(--fraca); max-width: 62ch; }
 
 /* ── as fichas ─────────────────────────────────────────────────────── */
@@ -183,23 +184,75 @@ a { color: inherit; }
 
   <header class="entrada">
     <p class="rotulo">Ginásio KO · site público</p>
-    <h1>Quatro caminhos para o mesmo site.</h1>
+    <h1>As tuas sete ideias, num site só.</h1>
     <p>
-      O mesmo ginásio, as mesmas fotografias, as mesmas palavras — desenhados
-      de quatro maneiras. Nenhum está publicado. Abre-os, anda por eles no
-      telemóvel, e depois decidimos: pode ser um deles, ou pedaços de vários.
+      O <b>E</b> é a conjunção que pediste: cada pormenor que apontaste, pela
+      ordem em que o apontaste, na paleta escura. Por baixo ficam os quatro de
+      ontem, para comparares. Nenhum está publicado.
     </p>
   </header>
 
   <section class="fichas">
 
     <article class="ficha ficha--vista">
+      <a class="ficha__capa" href="https://claude.ai/artifact/EuowzTTrPZYjJnqYWFjgv8">
+        <img src="miniaturas/e.jpg" alt="A segunda página do caminho E: um disco de bronze grego com dois pugilistas em relevo, inclinado e a rodar atrás do título.">
+        <span class="ficha__letra">E</span>
+      </a>
+      <div class="ficha__corpo">
+        <p class="rotulo">O novo — a conjunção</p>
+        <h2>Conjunção</h2>
+        <p class="ficha__diz">
+          Abre como uma revista, e a segunda página é um disco de bronze grego
+          com dois pugilistas em relevo, inclinado e a rodar. Depois o ginásio
+          visto de longe e de perto, as três modalidades uma a uma, as frases
+          com fotografias a flutuar, o preto-e-branco que ganha cor, e a loja
+          a sobrepor-se no fim.
+        </p>
+        <div class="linhas">
+          <div class="linha"><p class="rotulo">Vem de</p><p>Mara, Primal Instinct, Jakobsen, Heatherwick, Maison Integre, Studio Plato</p></div>
+          <div class="linha"><p class="rotulo">Ganha em</p><p>É o único com uma imagem que mais ninguém tem. O disco foi desenhado de raiz para o site — não é uma peça de museu nem a fotografia de nenhuma.</p></div>
+          <div class="linha"><p class="rotulo">Custa</p><p>É o mais comprido e o que tem mais a mexer. Cada movimento é mais uma coisa que pode correr mal num telemóvel fraco.</p></div>
+        </div>
+        <a class="abrir" href="https://claude.ai/artifact/EuowzTTrPZYjJnqYWFjgv8">Abrir o E &rarr;</a>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="notas">
+    <div class="nota">
+      <h3>Onde ficou cada ideia</h3>
+      <ul>
+        <li><b>Mara, abrir como uma revista</b> &mdash; a capa: cabeçalho, n.&ordm; 1, chamadas de capa. Sai a subir quando se rola.</li>
+        <li><b>Primal Instinct, a peça a rodar</b> &mdash; o disco grego, logo a seguir. Lutadores da Antiguidade, desenhados de raiz.</li>
+        <li><b>Jakobsen</b> &mdash; texto pequeno à esquerda, fotografia grande à direita; e a linha de quatro fotografias que trocam para o pormenor.</li>
+        <li><b>Heatherwick e Maison Integre</b> &mdash; Boxe, Kickboxing e Jiu-Jitsu Kids, fotografia de um lado e texto do outro, com tiras de fotografias pequenas pelo meio.</li>
+        <li><b>Studio Plato</b> &mdash; as frases, com fotografias pequenas a flutuar e a fugir do rato.</li>
+        <li><b>Heatherwick, no fim</b> &mdash; duas fotografias a preto-e-branco que ganham cor: o retrato antigo da parede, e o grupo de hoje.</li>
+        <li><b>Mara, no fim</b> &mdash; os artigos da loja a sobreporem-se enquanto se rola, e a seguir volta tudo ao normal.</li>
+      </ul>
+    </div>
+  </section>
+
+  <header class="entrada">
+    <p class="rotulo">Para comparar</p>
+    <h2>Os quatro de ontem.</h2>
+    <p>
+      O mesmo ginásio, as mesmas fotografias, as mesmas palavras &mdash;
+      desenhados de quatro maneiras.
+    </p>
+  </header>
+
+  <section class="fichas">
+
+    <article class="ficha">
       <a class="ficha__capa" href="https://claude.ai/artifact/Rk1pDaSNvFP6xxgc72dZqu">
         <img src="miniaturas/a.jpg" alt="A capa do caminho A: o ringue a toda a largura, com a frase Aprende a lutar.">
         <span class="ficha__letra">A</span>
       </a>
       <div class="ficha__corpo">
-        <p class="rotulo">Foi este que viste</p>
+        <p class="rotulo">O primeiro</p>
         <h2>Cinema</h2>
         <p class="ficha__diz">
           Escuro, fotografia a toda a largura, uma frase e um botão. A página
@@ -220,7 +273,7 @@ a { color: inherit; }
         <span class="ficha__letra">B</span>
       </a>
       <div class="ficha__corpo">
-        <p class="rotulo">Novo</p>
+        <p class="rotulo">De ontem</p>
         <h2>Papel</h2>
         <p class="ficha__diz">
           Claro, com muito ar e letra grande. Um índice fixo à esquerda, e as
@@ -241,7 +294,7 @@ a { color: inherit; }
         <span class="ficha__letra">C</span>
       </a>
       <div class="ficha__corpo">
-        <p class="rotulo">Novo</p>
+        <p class="rotulo">De ontem</p>
         <h2>Painel</h2>
         <p class="ficha__diz">
           Um instrumento, não um cartaz. Escolhe-se uma modalidade e a ficha
@@ -262,7 +315,7 @@ a { color: inherit; }
         <span class="ficha__letra">D</span>
       </a>
       <div class="ficha__corpo">
-        <p class="rotulo">Novo</p>
+        <p class="rotulo">De ontem</p>
         <h2>Cartaz</h2>
         <p class="ficha__diz">
           Um cartaz de combate. Letra enorme, blocos de cor inteira, tarjas a
@@ -283,12 +336,13 @@ a { color: inherit; }
   <section class="notas">
 
     <div class="nota">
-      <h3>O que é igual nos quatro</h3>
+      <h3>O que é igual nos cinco</h3>
       <ul>
-        <li>A morada, o horário, os contactos e as modalidades vêm da <b>gestão</b>. Mudas em App do Sócio → O Ginásio e muda nos quatro.</li>
+        <li>A morada, o horário, os contactos e as modalidades vêm da <b>gestão</b>. Mudas em App do Sócio → O Ginásio e muda nos cinco.</li>
         <li>O botão é o <b>WhatsApp</b>, com o recado já escrito.</li>
         <li><b>Não há preços.</b> Nem quota, nem seguro, nem a aula experimental.</li>
         <li>As fotografias são as tuas, e o texto dos três passos é o mesmo.</li>
+        <li>No <b>E</b>, os artigos da loja também vêm da gestão — os mesmos que o sócio vê na aplicação.</li>
       </ul>
     </div>
 
@@ -305,9 +359,9 @@ a { color: inherit; }
     <div class="nota">
       <h3>Dá para misturar</h3>
       <p>
-        A capa do <b>D</b> com a grelha de horário do <b>C</b>, ou a calma do
-        <b>B</b> com as fotografias grandes do <b>A</b>. Não escolhas uma
-        prenda inteira — diz-me o que te agarrou em cada um.
+        O <b>E</b> já é uma mistura, e pode levar mais: a grelha de horário
+        do <b>C</b>, a letra enorme do <b>D</b>, a calma do <b>B</b>. Diz-me o
+        que te agarrou e o que te sobra — tirar é tão útil como juntar.
       </p>
     </div>
 

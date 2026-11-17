@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ginásio KO — Exemplo E · Conjunção</title>
+<meta name="description" content="Ginásio de bairro nos Olivais, em Lisboa. Boxe, kickboxing e jiu-jitsu para todas as idades. A primeira aula é experimental.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" href="fotos/logo-ko.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="preload" href="tipos/Anton-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="fotos/artefacto-1500.webp" as="image" type="image/webp">
+<link rel="stylesheet" href="e-conjuncao.css">
+</head>
+
+<body>
+
+<!-- ════════════════════════════ a barra ═════════════════════════════ -->
+<nav class="barra" id="barra">
+  <a class="barra__marca" href="#capa">
+    <img src="fotos/logo-ko.png" alt="" width="30" height="30">
+    <span>Ginásio KO</span>
+  </a>
+  <div class="barra__meio">
+    <a href="#ginasio">O ginásio</a>
+    <a href="#modalidades">Modalidades</a>
+    <a href="#horario">Horário</a>
+    <a href="#onde">Onde é</a>
+  </div>
+  <a class="barra__botao" id="botaoBarra" href="#onde">Marcar</a>
+</nav>
+
+<!-- ═══════════════════ 0 · a capa, como uma revista ══════════════════ -->
+<header class="capa" id="capa">
+  <div class="capa__foto">
+    <picture>
+      <source media="(max-width: 760px)" srcset="fotos/sala-vazia-900.jpg">
+      <img src="fotos/sala-vazia.jpg" alt="A sala dos sacos do Ginásio KO, vazia, com a luz da tarde a entrar pelas janelas altas." fetchpriority="high">
+    </picture>
+  </div>
+
+  <div class="capa__grelha">
+    <!-- o cabeçalho da revista -->
+    <div class="capa__alto">
+      <span class="capa__edicao">N.º 1</span>
+      <span class="capa__edicao capa__edicao--meio">Olivais · Lisboa</span>
+      <span class="capa__edicao" id="capaAno">—</span>
+    </div>
+
+    <h1 class="capa__nome"><span>Ginásio</span><span>KO</span></h1>
+
+    <p class="capa__linha">Boxe · Kickboxing · Jiu-Jitsu</p>
+
+    <!-- as chamadas de capa, como numa revista -->
+    <ul class="chamadas">
+      <li><em>Olímpico desde 688 a.C.</em><span>Aprende a lutar, a cair e a levantar-te</span></li>
+      <li><em>O ginásio</em><span>Um ringue, uma sala de sacos, um tapete</span></li>
+      <li><em>Três modalidades</em><span>Boxe, kickboxing e jiu-jitsu de crianças</span></li>
+      <li><em>Horário</em><span>E se está aberto agora</span></li>
+    </ul>
+
+    <p class="capa__grande">A primeira aula<br>é experimental.</p>
+
+    <div class="capa__baixo">
+      <span class="capa__abrir">Role para abrir</span>
+      <span class="capa__seta" aria-hidden="true"></span>
+    </div>
+  </div>
+</header>
+<div class="capa__espaco" aria-hidden="true"></div>
+
+<!-- ══════════════════════ 1 · o artefacto ════════════════════════════ -->
+<section class="artefacto" id="artefacto">
+  <div class="artefacto__palco" aria-hidden="true">
+    <div class="artefacto__inclina">
+      <picture>
+        <source media="(max-width: 760px)" srcset="fotos/artefacto-820.webp">
+        <img class="artefacto__disco" id="disco" src="fotos/artefacto-1500.webp" alt="">
+      </picture>
+    </div>
+  </div>
+
+  <div class="artefacto__texto">
+    <p class="sobrescrito">Olímpico desde 688 a.C.</p>
+    <h2 class="titulo-grande">Aprende a lutar,<br>a cair e a <em>levantar-te</em>.</h2>
+    <p class="corrido">
+      O boxe entrou nos Jogos Olímpicos há <span id="anosDeBoxe">2714</span> anos.
+      Mudaram as luvas, mudou o chão, mudou tudo menos o essencial: dois pés no
+      sítio, as mãos à frente da cara, e alguém ao lado a corrigir-te.
+    </p>
+    <a class="botao" id="botaoArtefacto" href="#onde">Marcar a primeira aula</a>
+    <p class="nota">
+      O disco foi desenhado para este site, de raiz. Não é uma peça de museu
+      nem a fotografia de nenhuma.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 2 · o ginásio ═════════════════════════════ -->
+<section class="bloco ginasio" id="ginasio">
+  <div class="ginasio__cima">
+    <div class="ginasio__dito revela">
+      <p class="sobrescrito">O ginásio</p>
+      <p class="citacao">
+        Um ginásio de bairro, nos Olivais. Um ringue, uma sala de sacos, um
+        tapete — e um treinador que sabe o teu nome ao fim da segunda semana.
+      </p>
+      <p class="corrido">
+        Não é um open space com máquinas e música. É uma sala onde se treina
+        com outras pessoas, a horas marcadas, com alguém a olhar para o que
+        estás a fazer.
+      </p>
+    </div>
+    <figure class="ginasio__foto revela">
+      <picture>
+        <source media="(max-width: 760px)" srcset="fotos/sala-cheia-900.jpg">
+        <img src="fotos/sala-cheia.jpg" loading="lazy" alt="O ringue do Ginásio KO com atletas a treinar, visto da sala.">
+      </picture>
+    </figure>
+  </div>
+
+  <!-- a linha de fotografias que troca para o pormenor -->
+  <div class="pormenores revela" id="pormenores">
+    <figure class="pormenor">
+      <img class="pormenor__longe" src="fotos/ringue-900.jpg" loading="lazy" alt="O ringue do ginásio, visto de frente.">
+      <img class="pormenor__perto" src="fotos/pormenor-sinal.jpg" loading="lazy" alt="O emblema do KO pintado na parede, por cima do ringue.">
+      <figcaption><span>O ringue</span><em>o emblema na parede</em></figcaption>
+    </figure>
+    <figure class="pormenor">
+      <img class="pormenor__longe" src="fotos/sala-vazia-900.jpg" loading="lazy" alt="A sala dos sacos, vazia.">
+      <img class="pormenor__perto" src="fotos/pormenor-saco.jpg" loading="lazy" alt="Um saco de boxe pendurado pela corrente.">
+      <figcaption><span>A sala dos sacos</span><em>um saco, de perto</em></figcaption>
+    </figure>
+    <figure class="pormenor">
+      <img class="pormenor__longe" src="fotos/turma-flexoes-900.jpg" loading="lazy" alt="A turma a fazer flexões no tapete.">
+      <img class="pormenor__perto" src="fotos/pormenor-maos.jpg" loading="lazy" alt="Um atleta a meio de uma flexão, no tapete cor-de-rosa.">
+      <figcaption><span>O tapete</span><em>a meio de uma flexão</em></figcaption>
+    </figure>
+    <figure class="pormenor">
+      <img class="pormenor__longe" src="fotos/sparring-900.jpg" loading="lazy" alt="Dois atletas em sparring, no ringue.">
+      <img class="pormenor__perto" src="fotos/pormenor-guarda.jpg" loading="lazy" alt="A guarda de um atleta, com a luva junto à cara.">
+      <figcaption><span>O sparring</span><em>a guarda</em></figcaption>
+    </figure>
+  </div>
+  <p class="pormenores__dica" id="dicaPormenores">Passa o rato por cima para ver de perto.</p>
+</section>
+
+<!-- ═════════════════════ 3 · as modalidades ══════════════════════════ -->
+<section class="modalidades" id="modalidades">
+  <p class="sobrescrito sobrescrito--sozinho revela">O que se treina</p>
+
+  <article class="modalidade revela">
+    <figure class="modalidade__foto">
+      <picture>
+        <source media="(max-width: 760px)" srcset="fotos/sparring-900.jpg">
+        <img src="fotos/sparring.jpg" loading="lazy" alt="Treino de sparring no ringue do Ginásio KO.">
+      </picture>
+    </figure>
+    <div class="modalidade__dito">
+      <h3 class="modalidade__nome">Boxe</h3>
+      <p class="corrido" data-descricao="boxe">Guarda, deslocação e golpes.</p>
+      <p class="corrido corrido--fraco">
+        É a modalidade por onde quase toda a gente começa, e a base de tudo o
+        resto que se treina aqui. Dos oito anos aos sessenta e muitos.
+      </p>
+    </div>
+  </article>
+
+  <!-- uma linha de fotografias pequenas, no meio -->
+  <div class="tira" id="tiraUm" aria-hidden="true"><div class="tira__fio"></div></div>
+
+  <article class="modalidade modalidade--trocada revela">
+    <figure class="modalidade__foto">
+      <img src="fotos/kickboxing-900.jpg" loading="lazy" alt="Um pontapé de kickboxing a meio do movimento, contra o escudo.">
+    </figure>
+    <div class="modalidade__dito">
+      <h3 class="modalidade__nome">Kickboxing</h3>
+      <p class="corrido" data-descricao="kickboxing">As mãos do boxe mais as pernas.</p>
+      <p class="corrido corrido--fraco">
+        Muito trabalho de pés e de distância. É o treino que mais exige da
+        respiração — e aquele em que se nota primeiro que se está mais forte.
+      </p>
+    </div>
+  </article>
+
+  <div class="tira tira--volta" id="tiraDois" aria-hidden="true"><div class="tira__fio"></div></div>
+
+  <article class="modalidade revela">
+    <figure class="modalidade__foto">
+      <img src="fotos/jiujitsu-criancas-900.jpg" loading="lazy" alt="A turma de jiu-jitsu de crianças, de quimono, no tapete.">
+    </figure>
+    <div class="modalidade__dito">
+      <h3 class="modalidade__nome">Jiu-Jitsu <span>Kids</span></h3>
+      <p class="corrido" data-descricao="jiu-jitsu">Luta no chão: controlo, posição e finalização.</p>
+      <p class="corrido corrido--fraco">
+        Para os mais novos, começa por uma coisa só: aprender a cair sem medo.
+        Depois vem o resto — e vem devagar, que é como deve vir.
+      </p>
+    </div>
+  </article>
+
+  <p class="modalidades__resto revela" id="restoDasModalidades"></p>
+</section>
+
+<!-- ═════════════════════ 4 · as palavras ═════════════════════════════ -->
+<section class="palavras" id="palavras">
+  <div class="palavras__fotos" id="palavrasFotos" aria-hidden="true"></div>
+  <div class="palavras__coluna" id="palavrasColuna">
+    <p class="frase">Ninguém começa a saber.</p>
+    <p class="frase">Aqui não se bate em ninguém no primeiro dia.</p>
+    <p class="frase">Treina-se ao lado de quem tem oito anos<br>e de quem tem sessenta e muitos.</p>
+    <p class="frase">Não é preciso trazer material nenhum.</p>
+    <p class="frase">A primeira aula é experimental.</p>
+  </div>
+</section>
+
+<!-- ═════════════════════ 5 · a primeira aula ═════════════════════════ -->
+<section class="bloco passos" id="primeira">
+  <p class="sobrescrito sobrescrito--sozinho revela">A primeira aula</p>
+  <h2 class="titulo-medio revela">Três passos, e já está.</h2>
+
+  <ol class="passos__lista">
+    <li class="passo revela">
+      <span class="passo__numero">01</span>
+      <h3>Dizes que vens</h3>
+      <p>Uma mensagem no WhatsApp chega. Dizes o que queres experimentar e em
+         que dia podes — nós dizemos-te a que horas há turma.</p>
+      <img src="fotos/porta-900.jpg" loading="lazy" alt="A fachada do ginásio, com a palavra KNOCKOUT pintada.">
+    </li>
+    <li class="passo revela">
+      <span class="passo__numero">02</span>
+      <h3>Apareces</h3>
+      <p>Roupa de treino e uma garrafa de água. Não precisas de trazer material
+         nem de saber nada — ninguém aqui chegou a saber.</p>
+      <img src="fotos/treinador-ensina-900.jpg" loading="lazy" alt="O treinador a explicar um movimento a um aluno.">
+    </li>
+    <li class="passo revela">
+      <span class="passo__numero">03</span>
+      <h3>Treinas com a turma</h3>
+      <p>Aquecimento, técnica, trabalho de saco. Ao teu ritmo, no meio dos
+         outros. No fim decides se voltas.</p>
+      <img src="fotos/turma-flexoes-900.jpg" loading="lazy" alt="A turma a fazer flexões no tapete.">
+    </li>
+  </ol>
+</section>
+
+<!-- ═════════════════════════ 6 · o horário ═══════════════════════════ -->
+<section class="bloco horario" id="horario">
+  <div class="horario__alto revela">
+    <p class="sobrescrito sobrescrito--sozinho">Horário</p>
+    <span class="selo" id="seloAberto">—</span>
+  </div>
+  <div class="horario__lista" id="listaHorario"></div>
+  <p class="nota revela">
+    As aulas têm hora marcada dentro deste horário. Diz-nos o dia e dizemos-te
+    a que horas há turma da modalidade que queres.
+  </p>
+</section>
+
+<!-- ═════════════════════ 7 · antes, e agora ══════════════════════════ -->
+<section class="bloco antes" id="antes">
+  <h2 class="titulo-medio revela">Antes, e agora.</h2>
+  <div class="antes__par">
+    <figure class="cor-ao-passar revela">
+      <img src="fotos/retrato-antigo-900.jpg" loading="lazy" alt="Retrato antigo de um atleta de guarda, com uma camisola do KO.">
+      <figcaption>Uma fotografia antiga, da parede do ginásio.</figcaption>
+    </figure>
+    <figure class="cor-ao-passar revela">
+      <img src="fotos/grupo-900.jpg" loading="lazy" alt="Fotografia de grupo no fim de um treino, com toda a turma.">
+      <figcaption>O mesmo sítio, no fim de um treino.</figcaption>
+    </figure>
+  </div>
+  <p class="nota revela" id="dicaCor">Passa o rato por cima para lhes devolver a cor.</p>
+</section>
+
+<!-- ═════════════════════════ 8 · a loja ══════════════════════════════ -->
+<section class="loja" id="loja">
+  <div class="loja__caixa" id="lojaCaixa">
+    <div class="loja__palco">
+      <div class="loja__dito">
+        <p class="sobrescrito">O equipamento</p>
+        <h2 class="titulo-medio">E veste-se<br>a camisola.</h2>
+        <p class="corrido">
+          Luvas, caneleiras, calções e a roupa da casa, na receção do ginásio.
+          É a mesma lista que está na aplicação do sócio: um artigo acrescentado
+          lá aparece aqui.
+        </p>
+        <p class="loja__conta" id="lojaConta"></p>
+      </div>
+      <div class="loja__pilha" id="lojaPilha"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ 9 · onde é ══════════════════════════════ -->
+<section class="bloco onde" id="onde">
+  <div class="onde__grelha">
+    <div class="revela">
+      <p class="sobrescrito">Onde é</p>
+      <h2 class="titulo-medio">Ao lado<br>do campo.</h2>
+      <p class="morada" id="morada">
+        Rua Almada Negreiros<br>Campo Branca Lucas<br>Sport Lisboa e Olivais<br>1800-070 Lisboa
+      </p>
+      <a class="ligacao" id="ligacaoMapa" href="#" target="_blank" rel="noopener">Abrir no Google Maps</a>
+    </div>
+
+    <div class="revela">
+      <p class="sobrescrito">Falar connosco</p>
+      <a class="botao botao--largo" id="botaoWhatsapp" href="#">Marcar no WhatsApp</a>
+      <ul class="contactos">
+        <li><span>Telefone</span><a id="ligacaoTelefone" href="#">926 372 441</a></li>
+        <li><span>Email</span><a id="ligacaoEmail" href="#">Email</a></li>
+        <li><span>Instagram</span><a id="ligacaoInstagram" href="#" target="_blank" rel="noopener">@ginasioko</a></li>
+        <li><span>Google</span><a id="ligacaoAvaliar" href="#" target="_blank" rel="noopener">Deixar uma avaliação</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer class="rodape">
+  <p class="rodape__marca">Ginásio KO</p>
+  <p class="rodape__linha">Boxe · Kickboxing · Jiu-Jitsu — Olivais, Lisboa</p>
+  <p class="rodape__linha">© <span id="ano"></span> · <a href="https://ginasioko.site/app">Aplicação do sócio</a></p>
+</footer>
+
+<script src="comum.js"></script>
+<script src="e-conjuncao.js"></script>
+</body>
+</html>
