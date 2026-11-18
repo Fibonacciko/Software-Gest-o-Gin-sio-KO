@@ -224,39 +224,103 @@
   encherTira($('#tiraUm'), 0);
   encherTira($('#tiraDois'), 5);
 
-  /* ───────────── as frases, e as fotografias a flutuar ──────────────── */
+  /* ───────────── as frases, e as fotografias a vaguear ──────────────── */
 
-  /* `xp` é onde ela fica num ecrã estreito: encostada à ponta. As marcadas
-     `largo` só aparecem no ecrã grande — num telemóvel tapavam as frases. */
+  /* Medido no Studio Plato, a 1440: treze fotografias de 3% a 7% da
+     largura do ecrã — 43 a 101 px —, todas fora da coluna do texto, e
+     cada uma a vaguear por sua conta. O tamanho vem em `vw` porque é
+     assim que lá está: a fotografia é um pormenor da página, e um
+     pormenor cresce com a página.
+
+     `p` é onde ela fica num ecrã estreito — na faixa vazia por cima da
+     primeira frase, ou na de baixo da última, que é o único sítio onde
+     cabe sem tapar as palavras. Só duas lá ficam, em diagonal: quatro
+     encostadas ao topo deixavam de ser um pormenor e passavam a ser uma
+     tira de fotografias. As outras desaparecem. */
   const POUSADAS = [
-    { f: 'nariz-900.jpg', x: 7, xp: 1, y: 17, w: 120, dx: '14px', dy: '-20px', t: '11s' },
-    { f: 'jiujitsu-900.jpg', x: 18, y: 54, w: 164, dx: '-18px', dy: '16px', t: '14s', largo: true },
-    { f: 'porta-900.jpg', x: 9, xp: 3, y: 83, w: 106, dx: '12px', dy: '14px', t: '12s' },
-    { f: 'veterano-900.jpg', x: 28, y: 29, w: 94, dx: '-10px', dy: '18px', t: '13s', largo: true },
-    { f: 'kickboxing-900.jpg', x: 92, xp: 99, y: 21, w: 134, dx: '-16px', dy: '18px', t: '13s' },
-    { f: 'grupo-900.jpg', x: 84, xp: 97, y: 60, w: 116, dx: '14px', dy: '-16px', t: '15s' },
-    { f: 'alongamentos-900.jpg', x: 95, xp: 99, y: 86, w: 98, dx: '-12px', dy: '-14px', t: '11s' },
-    { f: 'a-rir-no-ringue-900.jpg', x: 73, y: 13, w: 90, dx: '10px', dy: '16px', t: '12s', largo: true },
-    { f: 'turma-flexoes-900.jpg', x: 31, y: 93, w: 88, dx: '-12px', dy: '-12px', t: '14s', largo: true },
+    /* à esquerda da coluna */
+    { f: 'nariz', x: 6.0, y: 13, w: 4.6, p: [17, '62px'] },
+    { f: 'porta', x: 13.5, y: 25, w: 3.2 },
+    { f: 'jiujitsu', x: 7.5, y: 39, w: 6.4 },
+    { f: 'turma-flexoes', x: 16.0, y: 54, w: 3.4 },
+    { f: 'veterano', x: 6.5, y: 69, w: 5.2 },
+    { f: 'sparring', x: 14.0, y: 85, w: 4.0 },
+    /* à direita */
+    { f: 'kickboxing', x: 93.5, y: 16, w: 5.0 },
+    { f: 'a-rir-no-ringue', x: 85.0, y: 29, w: 3.4 },
+    { f: 'grupo', x: 92.5, y: 45, w: 6.4 },
+    { f: 'alongamentos', x: 84.5, y: 61, w: 3.2 },
+    { f: 'ringue', x: 93.0, y: 75, w: 4.4, p: [83, 'calc(100% - 62px)'] },
+    { f: 'treinador-ensina', x: 85.5, y: 89, w: 4.0 },
   ];
 
+  /* Quanto cada uma vagueia: medido no original, fotografia a fotografia,
+     e dá sempre o mesmo — um terço da sua própria largura de lado, quase
+     metade para cima e para baixo. Uma fotografia de 43 px andava 14 px
+     em x e 19 px em y; uma de 101 px, 34 e 44. Por isso o caminho se
+     escreve em múltiplos de `--w` e não em pixeis: assim vale em qualquer
+     ecrã, e a fotografia grande vagueia mais do que a pequena, como lá. */
+  const VAI_DE_LADO = 0.33;
+  const VAI_A_CIMA = 0.44;
+  const PASSOS = 8;        // oito destinos por volta
+  const PARADA = 0.42;     // e fica quieta 42% do tempo entre cada um
+
+  /* O caminho é sorteado, mas com semente fixa: diferente de fotografia
+     para fotografia, igual em todas as aberturas da página. Sem isto não
+     havia como confirmar o movimento por fotografia do ecrã. */
+  function semente(n) {
+    let s = ((n + 1) * 1831565813) >>> 0;
+    return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  }
+
   const caixaDasFotos = $('#palavrasFotos');
+  const caminhos = [];
   POUSADAS.forEach((p, i) => {
     const img = document.createElement('img');
-    img.src = 'fotos/' + p.f;
+    img.src = 'fotos/' + p.f + '-900.jpg';
     img.loading = 'lazy';
     img.alt = '';
-    if (p.largo) img.className = 'so-largo';
+    if (!p.p) img.className = 'so-largo';
     img.style.setProperty('--x', p.x + '%');
-    if (p.xp != null) img.style.setProperty('--xp', p.xp + '%');
     img.style.setProperty('--y', p.y + '%');
-    img.style.setProperty('--w', p.w + 'px');
-    img.style.setProperty('--dx', p.dx);
-    img.style.setProperty('--dy', p.dy);
-    img.style.setProperty('--t', p.t);
-    img.style.setProperty('--atraso', (i * 0.37).toFixed(2) + 's');
+    /* Um chão de 26 px: abaixo disso deixa de se perceber o que é, e um
+       pormenor que não se percebe é só sujidade. E um tecto, para não
+       crescerem sem fim num monitor grande. */
+    img.style.setProperty('--w', 'clamp(26px, ' + p.w + 'vw, ' + Math.round(p.w * 18) + 'px)');
+    if (p.p) {
+      img.style.setProperty('--xp', p.p[0] + '%');
+      img.style.setProperty('--yp', p.p[1]);
+    }
+    /* Um passeio ao acaso, sempre dentro do seu quadrado, e que fecha onde
+       começou — senão a volta dava um salto visível ao repetir. */
+    const sorte = semente(i);
+    const pontos = [[0, 0]];
+    for (let k = 1; k < PASSOS; k++) {
+      const atras = pontos[k - 1];
+      pontos.push([
+        prender(atras[0] + (sorte() - 0.5) * VAI_DE_LADO * 1.6, -VAI_DE_LADO, VAI_DE_LADO),
+        prender(atras[1] + (sorte() - 0.5) * VAI_A_CIMA * 1.6, -VAI_A_CIMA, VAI_A_CIMA),
+      ]);
+    }
+    pontos.push([0, 0]);
+    let quadros = '';
+    pontos.forEach((q, k) => {
+      const onde = 'translate:calc(var(--w)*' + q[0].toFixed(3) + ') calc(var(--w)*' + q[1].toFixed(3) + ')';
+      quadros += (k / PASSOS * 100).toFixed(2) + '%{' + onde + '}';
+      /* o mesmo ponto outra vez, um instante depois: é o descanso */
+      if (k < PASSOS) quadros += ((k + PARADA) / PASSOS * 100).toFixed(2) + '%{' + onde + '}';
+    });
+    caminhos.push('@keyframes vagueia' + i + '{' + quadros + '}');
+    img.style.animationName = 'vagueia' + i;
+    /* voltas de duração diferente, e cada uma começa a meio da sua: assim
+       nunca se apanham duas a mexer ao mesmo tempo */
+    img.style.animationDuration = (11 + (i % 5) * 1.7).toFixed(1) + 's';
+    img.style.animationDelay = '-' + (i * 1.9).toFixed(1) + 's';
     caixaDasFotos.appendChild(img);
   });
+  const folha = document.createElement('style');
+  folha.textContent = caminhos.join('\n');
+  document.head.appendChild(folha);
 
   const seccaoDasPalavras = $('#palavras');
   const frases = $$('#palavrasColuna .frase');
@@ -273,13 +337,15 @@
     }, { threshold: 0.2 });
     olho.observe(seccaoDasPalavras);
 
-    /* O rato empurra a camada das fotografias, e não as frases: é a
-       diferença de velocidade entre as duas que o olho lê como fundo. */
-    seccaoDasPalavras.addEventListener('mousemove', (e) => {
-      const r = seccaoDasPalavras.getBoundingClientRect();
-      caixaDasFotos.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 2 - 1).toFixed(3));
-      caixaDasFotos.style.setProperty('--my', ((e.clientY - r.top) / r.height * 2 - 1).toFixed(3));
-    });
+    /* Fora do ecrã ficam quietas. São doze caminhos a andar ao mesmo
+       tempo, e o caminho leva `var()` lá dentro — o que o tira das mãos
+       da placa gráfica e o põe nas do JavaScript, a cada imagem. Deixá-lo
+       a correr numa página onde já roda um disco em WebGL era pagar por
+       um movimento que ninguém está a ver. */
+    const vigia = new IntersectionObserver((es) => {
+      caixaDasFotos.classList.toggle('quieta', !es[0].isIntersecting);
+    }, { rootMargin: '120px' });
+    vigia.observe(seccaoDasPalavras);
   } else {
     $$('#palavrasFotos img').forEach((img) => img.classList.add('visivel'));
   }

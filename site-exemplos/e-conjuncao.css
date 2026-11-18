@@ -685,27 +685,38 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
   object-fit: cover;
   opacity: 0;
   transform: translate(-50%, -50%);
-  filter: grayscale(0.5) brightness(0.8);
-  animation: flutuar var(--t) ease-in-out infinite alternate;
-  animation-delay: var(--atraso);
+  filter: grayscale(0.5) brightness(0.84);
+  /* o nome do caminho, a duração e o atraso vêm do JS: cada fotografia
+     tem o seu, sorteado, e nenhuma anda ao mesmo tempo que outra */
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
   transition: opacity 1.1s ease;
+  will-change: translate;
 }
-.palavras__fotos img.visivel { opacity: 0.92; }
-/* o rato empurra a camada toda, devagar -- é o que dá profundidade */
-.palavras__fotos { transform: translate(calc(var(--mx, 0) * 26px), calc(var(--my, 0) * 20px)); transition: transform 0.9s cubic-bezier(.2,.7,.3,1); }
-@keyframes flutuar {
-  from { translate: 0 0; }
-  to   { translate: var(--dx) var(--dy); }
-}
+.palavras__fotos img.visivel { opacity: 0.95; }
+.palavras__fotos.quieta img { animation-play-state: paused; }
 
-@media (max-width: 860px) {
-  /* Num ecrã estreito não há margens onde as pousar: as do meio saem, e as
-     que ficam encostam-se às pontas. Uma frase tapada não é um efeito. */
+/* O rato não mexe nestas fotografias — e é de propósito. Mexia na camada
+   toda de uma vez, o que se lê como uma folha a deslizar e não como doze
+   fotografias; medido no Studio Plato, o que lá se mexe é cada uma por
+   sua conta, e o rato não mexe nada. */
+
+@media (max-width: 760px) {
+  /* Num ecrã estreito não há margens onde as pousar: o texto vai de ponta
+     a ponta. Ficam duas, em diagonal, nas faixas vazias por cima da
+     primeira frase e por baixo da última; as outras saem. Uma frase tapada
+     não é um efeito.
+
+     E as faixas crescem para elas caberem: a secção passa a ter mais ar
+     em cima e em baixo, que num telemóvel lhe fazia falta de qualquer
+     maneira — eram cinco frases coladas aos cantos do ecrã. */
+  .palavras { padding-block: clamp(140px, 26vw, 200px); }
   .palavras__fotos img {
     left: var(--xp, var(--x));
-    width: calc(var(--w) * 0.56);
+    top: var(--yp, var(--y));
+    width: min(12vw, 48px);
   }
-  .palavras__fotos img.visivel { opacity: 0.58; }
+  .palavras__fotos img.visivel { opacity: 0.72; }
   .palavras__fotos img.so-largo { display: none; }
   .palavras__coluna { gap: clamp(30px, 7vw, 52px); }
 }

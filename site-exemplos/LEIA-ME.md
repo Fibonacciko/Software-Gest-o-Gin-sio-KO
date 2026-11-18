@@ -206,6 +206,71 @@ disto acontece e fica a fotografia — que é a mesma peça, iluminada uma vez
 em vez de a toda a hora. A página diz, por palavras, que o disco não é uma
 peça de museu. Se o site for publicado assim, essa frase tem de lá ficar.
 
+### As fotografias pequenas das frases
+
+A ideia é do Studio Plato. O que lá está foi **medido**, a 1440, antes de se
+mexer no nosso — e o nosso estava errado nas duas coisas.
+
+| | Studio Plato | O nosso, antes | O nosso, agora |
+|---|---|---|---|
+| Quantas | 13 | 9 | 12 |
+| Largura | 3% a 7% do ecrã (43 a 101 px) | 6,1% a 11,4% (88 a 164 px) | 3,2% a 6,4% (46 a 92 px) |
+| Por cima do texto | nenhuma | quatro das nove | nenhuma |
+| O que se mexe | cada fotografia, por sua conta | a camada toda, com o rato | cada fotografia, por sua conta |
+
+**O tamanho vem em `vw`**, como lá: a fotografia é um pormenor da página, e
+um pormenor cresce com a página. Com um chão de 26 px — abaixo disso não se
+percebe o que é, e um pormenor que não se percebe é só sujidade — e um tecto,
+para não crescerem sem fim num monitor grande.
+
+**Nenhuma entra na coluna das frases.** A coluna ocupa dos 22% aos 78% da
+largura em todos os ecrãs acima dos 820; as fotografias vivem nas duas
+margens, e o teste confirma-o em nove feitios de ecrã **contando já o
+passeio**, que é quanto cada uma se pode afastar.
+
+#### O movimento: cada uma por sua conta
+
+O que lá se mexe **não é o rato**. Media-se a página com o rato parado e
+continuavam a andar; levava-se o rato aos quatro cantos e o deslocamento não
+acompanhava — a fotografia ia tanto para a esquerda com o rato à esquerda
+como com o rato à direita. O rato não manda ali nada.
+
+O nosso tinha uma camada só, que o rato empurrava 26 px para o lado. Doze
+fotografias a deslizarem juntas leem-se como **uma folha**, e era isso que se
+estava a ver. Saiu.
+
+Ficou o que lá está: **cada fotografia vagueia sozinha**, para um destino
+novo, pára, e vai para outro. Medido fotografia a fotografia no original, e
+dá sempre o mesmo número: **um terço da sua própria largura de lado, quase
+metade para cima e para baixo** — a de 43 px andava 14 px em x e 19 em y; a
+de 101 px, 34 e 44. Por isso o caminho se escreve em múltiplos da largura e
+não em pixeis: vale em qualquer ecrã, e a fotografia grande vagueia mais do
+que a pequena, como lá.
+
+- **Oito destinos por volta**, e fica quieta 42% do tempo entre cada um.
+  No original mediram-se 500 ms seguidos sem nada mexer, e logo a seguir um
+  salto de 50 px. É esse o compasso: anda, assenta, anda.
+- **O caminho é sorteado, mas com semente fixa** — diferente de fotografia
+  para fotografia, igual em todas as aberturas da página. Sem isto não havia
+  como confirmar o movimento por fotografia do ecrã.
+- **Voltas de duração diferente** (11 a 18 segundos) e cada uma a começar a
+  meio da sua, para nunca se apanharem duas em passo certo.
+- **Fora do ecrã param.** O caminho leva `var()` lá dentro, o que o tira das
+  mãos da placa gráfica e o põe nas do JavaScript; deixá-lo a correr numa
+  página onde já roda um disco em WebGL era pagar por um movimento que
+  ninguém está a ver.
+
+#### No telemóvel ficam duas
+
+Num ecrã estreito não há margens: o texto vai de ponta a ponta. O Plato
+**esconde-as todas**. Aqui ficam **duas**, em diagonal — uma na faixa vazia
+por cima da primeira frase, outra por baixo da última. Quatro encostadas ao
+topo deixavam de ser um pormenor e passavam a ser uma tira de fotografias.
+
+As faixas crescem para elas caberem: a secção ganhou mais ar em cima e em
+baixo, que num telemóvel lhe fazia falta de qualquer maneira — eram cinco
+frases coladas aos cantos do ecrã.
+
 ---
 
 ## De onde vieram
