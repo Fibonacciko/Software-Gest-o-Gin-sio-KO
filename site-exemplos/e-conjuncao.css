@@ -378,14 +378,24 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
 
 /* ══════════════ o artefacto — a peça que roda (Primal) ═══════════════ */
 
+/* A seccao tem curso proprio, e o palco fica preso enquanto a roda o
+   percorre. No site dele a pagina nao rola de todo -- tem a altura do ecra -
+   e a roda passeia a camara por cima da peca. Aqui a pagina tem de rolar,
+   porque tem mais coisas por baixo; este curso e o que lhe da o mesmo
+   momento sem lhe tirar a pagina das maos. */
 .artefacto {
   position: relative;
   z-index: 2;
-  min-height: 100svh;
+  background: var(--preto);
+}
+.artefacto__viagem { height: 260svh; }
+.artefacto__fixo {
+  position: sticky;
+  top: 0;
+  height: 100svh;
   display: flex;
   align-items: center;
   padding: clamp(96px, 14vh, 160px) var(--margem);
-  background: var(--preto);
   overflow: hidden;
 }
 
@@ -433,7 +443,7 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
 .artefacto__palco--vivo .artefacto__disco { animation: none; }
 
 /* o disco entra no preto pelas bordas, em vez de acabar num corte */
-.artefacto::before {
+.artefacto__fixo::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -459,18 +469,21 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
 }
 
 @media (max-width: 760px) {
-  .artefacto {
+  .artefacto__viagem { height: 230svh; }
+  .artefacto__fixo {
     align-items: flex-start;
-    min-height: 112svh;
     padding-top: clamp(104px, 17vh, 150px);
   }
   .artefacto__palco { align-items: end; }
   .artefacto__inclina { transform: translateY(2%) rotateX(50deg); }
   .artefacto__disco { width: 218vw; }
-  .artefacto::before {
+  .artefacto__fixo::before {
+    /* O disco deixou de ficar so no rodape do ecra -- com a viagem da roda
+       sobe ate ao texto -- e por isso o escurecimento tem de o acompanhar
+       ate mais abaixo. O que se le aqui e so o texto; a peca esta ao lado. */
     background:
-      radial-gradient(94% 52% at 50% 80%, transparent 10%, rgba(13,13,13,.5) 62%, var(--preto) 100%),
-      linear-gradient(180deg, var(--preto) 4%, rgba(13,13,13,.88) 30%, rgba(13,13,13,.52) 52%, transparent 74%);
+      radial-gradient(96% 54% at 50% 82%, transparent 8%, rgba(13,13,13,.46) 62%, var(--preto) 100%),
+      linear-gradient(180deg, var(--preto) 6%, rgba(13,13,13,.92) 34%, rgba(13,13,13,.74) 56%, rgba(13,13,13,.34) 76%, transparent 92%);
   }
 }
 

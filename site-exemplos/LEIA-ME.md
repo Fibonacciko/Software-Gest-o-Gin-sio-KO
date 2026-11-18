@@ -60,14 +60,58 @@ nenhuma**:
 
 | Ficheiro | O que é |
 |---|---|
-| `fotos/artefacto-cor.webp` | a cor própria do metal, com a oclusão lá dentro (24 KB) |
-| `fotos/artefacto-rel.webp` | as normais, a altura e o recorte (560 KB) |
+| `fotos/artefacto-cor.webp` | a cor própria do metal, com a oclusão lá dentro (45 KB) |
+| `fotos/artefacto-rel.webp` | as normais, a altura e o recorte (1,34 MB) |
+| `fotos/artefacto-rug.webp` | a aspereza, o metal e a cavidade (139 KB) |
 | `fotos/artefacto-1500.webp` | a peça já iluminada, para quem não tem WebGL |
 | `artefacto-luz.js` | o sombreador que faz a luz |
+
+Os mapas têm **2048 pixéis**. Estiveram a 1024, e o dono disse o que era
+preciso dizer: 580 KB contra os 17 MB dele estava longe da realidade. Quatro
+vezes o detalhe custou um megabyte, e o megabyte paga-se — é a imagem que a
+página inteira tem para dar.
+
+#### As cinco coisas que nenhuma imagem cozida tem
+
+Subir a resolução sozinho não chegava. O que faz a peça parecer metal, e não
+um desenho de metal, é isto, e nada disto cabe numa fotografia:
+
+1. **O relevo tem espessura.** O raio entra nele e procura onde bate mesmo
+   (paralaxe), por isso um braço levantado tapa o que está atrás dele quando
+   a peça se deita. É o que separa relevo de pintura numa folha lisa.
+2. **O relevo faz sombra sobre si próprio.** Sem isso, uma figura levantada
+   meio milímetro acima do campo não escurece nada à sua frente, e a luz
+   rasante deixa de querer dizer seja o que for.
+3. **A aspereza muda de sítio para sítio.** O metal gasto nos pontos altos é
+   polido e devolve um reflexo apertado; a patina do fundo é baça e não
+   devolve nada. Uma peça com o mesmo brilho em todo o lado lê-se como
+   plástico — e era esse o problema, não a forma.
+4. **Há uma sala à volta que o metal reflecte**, e não só uma lâmpada. Metade
+   do que o olho lê como metal vem daí, e não custa textura nenhuma: é uma
+   conta sobre a direcção em que o reflexo sai.
+5. **As marcas do torno correm à volta do disco.** Ao acaso leem-se como
+   sujidade; em círculo leem-se como fabrico.
+
+E duas que são de fotografia e não de metal: uma **curva de cinema** em vez de
+um corte (o brilho passa muito acima do branco, e cortá-lo a direito dava
+chapas brancas sem forma lá dentro) e **meio nível de ruído**, porque num
+escuro destes oito bits partem-se em anéis.
 
 O que se vê **não é uma imagem a rodar**: é um plano inclinado no espaço, e
 cada pixel do ecrã é um raio que vai lá bater. Por isso a perspectiva é a
 verdadeira — o lado de lá afasta-se e perde-se no escuro.
+
+#### A roda do rato
+
+No site dele **a página não rola**: tem a altura do ecrã, e a roda passeia a
+câmara por cima da peça — cada volta leva a outro sítio do artefacto.
+Confirmado a correr: o `scrollY` nunca sai de zero.
+
+Aqui a página tem de rolar, porque tem mais coisas por baixo. Por isso a
+secção ganhou **curso próprio** (`.artefacto__viagem`, 260svh) com o palco
+preso lá dentro: enquanto a roda anda nesse curso é a câmara que viaja — o
+disco roda mais de uma volta, a câmara recua e a peça endireita-se até se ver
+inteira. Só depois a página segue. É a mesma técnica da loja, no fim.
 
 #### O que se mediu no site dele, antes de mexer em nada
 
@@ -76,6 +120,7 @@ verdadeira — o lado de lá afasta-se e perde-se no escuro.
 | Luminância mediana | 4/255 | 13 | 15 |
 | Percentil 95 | 65 | 91 | 81 |
 | Mudança entre dois fotogramas a 3,5 s | 7,5 a 12,7 | — (parado) | 6,3 a 8,0 |
+| Percentil 90, só na zona do disco | 49 | 91 | 42 a 64 |
 
 O terceiro número é o que mais conta: **com o rato parado, o disco dele muda
 tanto como com o rato a mexer.** O rato é um empurrão, não o motor. Por isso
@@ -84,6 +129,14 @@ no seu tempo, e nunca voltam ao mesmo sítio ao mesmo tempo.
 
 #### O que se aprendeu, e vale a pena guardar
 
+- **A espessura do relevo não é um gosto, é uma conta.** A 0,030 do mapa, o
+  raio da paralaxe varria 300 pixéis de lado, e em dezoito passos isso são
+  dezassete pixéis por passo: as figuras saíam serradas aos degraus. A
+  0,0125, com o passo refinado por **cinco bissecções** no fim, o relevo fica
+  limpo. Sem as bissecções o passo fica onde calhou, e onde calhou lê-se como
+  uma escada.
+- **Ao longe, a paralaxe só acrescenta serrilha**: o passo passa a cobrir mais
+  mapa do que o pixel que serve. Por isso ela desaparece com a distância.
 - **O relevo nasce da derivada do mapa, e a derivada amplifica o que é
   miúdo.** Um ruído de superfície com um milésimo de altura dava uma peça
   com aspecto de casca de árvore. A patina mancha a **cor**, não a altura.

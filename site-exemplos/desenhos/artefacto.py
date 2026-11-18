@@ -13,6 +13,7 @@ peca que esta mesmo ali.
 Sai daqui:
   artefacto-cor.webp    RGB  = cor da peca x oclusao   (como o ColorAO)
   artefacto-rel.webp    RGBA = normal.x, normal.y, altura, recorte
+  artefacto-rug.webp    RGB  = aspereza, metal, cavidade (como o RoughHeight)
   artefacto-1500.webp   a peca ja iluminada, para quem nao tem WebGL
   artefacto-820.webp    o mesmo, para ecras pequenos
 
@@ -25,8 +26,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 random.seed(7); np.random.seed(7)
 
-N = 2048                      # lado da tela de construcao
-LADO = 1024                   # lado dos mapas que vao para o site.
+N = 2560                      # lado da tela de construcao
+LADO = 2048                   # lado dos mapas que vao para o site.
 # Potencia de dois de proposito: o WebGL 1 so faz mipmaps em texturas assim,
 # e sem mipmaps o lado longe do disco -- que a perspectiva comprime tres
 # vezes -- cintila a cada volta.
@@ -590,6 +591,33 @@ def guardar(nome, arr, modo, **kw):
 guardar('artefacto-cor.webp', (cor_ao ** (1 / 2.2) * 255).astype(np.uint8), 'RGB',
         quality=88, method=6)
 
+# --------------------------- a aspereza --------------------------------
+# E este mapa que distingue metal de gesso, e nao a forma. O bronze gasto nos
+# pontos altos e polido e devolve um reflexo apertado; a patina do fundo das
+# reentrancias e baca e nao devolve nada. Sem isto o brilho e igual em toda a
+# peca, e uma peca com brilho igual em todo o lado le-se como plastico.
+
+aspereza = 0.90 - 0.44 * gasto - 0.16 * np.clip((alt_p - 0.50) / 0.20, 0, 1)
+aspereza += np.clip(medio_p, -2, 2) * 0.035
+aspereza = np.clip(aspereza, 0.16, 0.98)
+
+# quanto daquilo ainda e metal a vista: a patina e um oxido, nao e metal
+metal = np.clip(0.30 + 0.62 * gasto + 0.30 * np.clip((alt_p - 0.52) / 0.18, 0, 1)
+                - 0.34 * np.clip(patina * baixo, 0, 1), 0.06, 1.0)
+
+# cavidade: o fundo estreito de um sulco nao ve o ceu. E o passa-alto da
+# altura, e e o que faz as incisoes nao desaparecerem a luz de frente.
+cav = np.clip(0.5 + (alt_p - borrar(alt_p, 9)) * 7.0, 0, 1)
+
+guardar('artefacto-rug.webp', np.dstack([
+    (aspereza * 255).astype(np.uint8),
+    (metal * 255).astype(np.uint8),
+    (cav * 255).astype(np.uint8),
+]), 'RGB', quality=76, method=6)
+# Aqui as perdas nao custam: uma aspereza 2% ao lado nao se ve, e sao 120 KB
+# menos. No mapa de relevo seria o contrario -- la, um erro vira ondulacao
+# na luz, que e exactamente o que esse mapa existe para evitar.
+
 # nx, ny, altura, recorte. Sem perdas: um mapa de normais comprimido com
 # perdas da ondulacao na luz, que e exactamente o que ele existe para evitar.
 # Os valores das normais vao em degraus de 3: 1,35 graus de erro, que o olho
@@ -629,7 +657,7 @@ for lado in (1500, 820):
     peca.resize((lado, lado), Image.LANCZOS).save(
         os.path.join(SAIDA, 'artefacto-%d.webp' % lado), quality=86, method=6)
 
-for n in ('artefacto-cor.webp', 'artefacto-rel.webp',
+for n in ('artefacto-cor.webp', 'artefacto-rel.webp', 'artefacto-rug.webp',
           'artefacto-1500.webp', 'artefacto-820.webp'):
     print('%-22s %7d bytes' % (n, os.path.getsize(os.path.join(SAIDA, n))))
 print('alt %.3f .. %.3f   oclusao %.3f .. %.3f' %
