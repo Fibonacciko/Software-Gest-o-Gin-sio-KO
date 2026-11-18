@@ -212,13 +212,30 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 /* (Mara) A capa fica presa ao fundo e o resto do site sobe por cima dela,
    como quem vira a primeira página. */
 
-.capa {
-  position: fixed;
-  inset: 0;
+/* A capa deixou de abrir o site: abre-o o artefacto. Por isso deixou de poder
+   ser `fixed` -- uma camada fixa de ecra inteiro ficaria por cima do disco a
+   pagina toda. Passa a prender-se ao topo dentro de um recipiente com o dobro
+   da altura: segura-se um ecra de rolo e a seccao seguinte sobe-lhe por cima,
+   que e exactamente o que ela fazia quando era a primeira. */
+.capa__caixa {
+  position: relative;
   z-index: 1;
+  height: 200svh;
+}
+.capa {
+  position: sticky;
+  top: 0;
+  height: 100svh;
   overflow: hidden;
 }
-.capa__espaco { height: 100svh; position: relative; z-index: 2; }
+/* o que vem a seguir sobe por cima dela -- e por isso tem de ser opaco, que
+   os blocos deste site sao todos transparentes por omissao */
+.capa__caixa + * {
+  margin-top: -100svh;
+  position: relative;
+  z-index: 2;
+  background: var(--preto);
+}
 
 .capa__foto { position: absolute; inset: 0; }
 .capa__foto img {

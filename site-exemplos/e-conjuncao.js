@@ -2,7 +2,8 @@
    Ginásio KO — Exemplo E · Conjunção
 
    Sete ideias, pela ordem em que foram apontadas:
-     0  a capa, que abre como uma revista            (Mara)
+     0  o artefacto grego, que abre o site          (Primal Instinct)
+     1  a capa de revista, logo a seguir              (Mara)
      1  a peça antiga que roda                       (Primal Instinct)
      2  foto grande de um lado, texto do outro,
         e uma linha que troca para o pormenor        (Jakobsen)
@@ -23,10 +24,6 @@
   const prender = (v, a, b) => Math.max(a, Math.min(b, v));
   const semRato = window.matchMedia('(hover: none)').matches;
   const menosMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ───────────────────────── a revista abre ─────────────────────────── */
-
-  requestAnimationFrame(() => document.body.classList.add('pronto'));
 
   const ano = new Date().getFullYear();
   $('#ano').textContent = ano;
@@ -139,19 +136,38 @@
 
   const barra = $('#barra');
   const capa = $('#capa');
+  const capaCaixa = capa.parentElement;
   const capaFoto = capa.querySelector('.capa__foto');
   const capaGrelha = capa.querySelector('.capa__grelha');
 
-  function aoRolarCapa(y, altura) {
+  /* A capa deixou de abrir o site, e por isso a entrada dela deixou de poder
+     arrancar com a página: a animação corria toda antes de alguém a ver, e
+     quando lá chegasse já estava feita. Arranca quando ela aparece. */
+  if ('IntersectionObserver' in window) {
+    const olho = new IntersectionObserver((es) => {
+      if (!es[0].isIntersecting) return;
+      document.body.classList.add('pronto');
+      olho.disconnect();
+    }, { threshold: 0.15 });
+    olho.observe(capa);
+  } else {
+    document.body.classList.add('pronto');
+  }
+
+  function aoRolarCapa(altura) {
+    const y = window.scrollY || window.pageYOffset || 0;
     barra.classList.toggle('barra--pousada', y > 40);
 
-    const p = prender(y / Math.max(1, altura), 0, 1);
+    /* Mede-se pela posição dela e não pela da página: a capa já não começa
+       no topo, e com `scrollY` a fotografia aparecia com o parallax todo
+       feito antes de ela chegar ao ecrã. */
+    const r = capaCaixa.getBoundingClientRect();
+    const p = prender(-r.top / Math.max(1, altura), 0, 1);
     capaGrelha.style.opacity = String(prender(1 - p * 1.45, 0, 1));
     capaGrelha.style.transform = 'translateY(' + (-p * 52) + 'px)';
     capaFoto.style.transform = 'translateY(' + (p * 11) + '%)';
-    /* Deixa de ser desenhada mal saia do ecrã: está fixa, e uma camada
-       fixa de ecrã inteiro continua a custar a quem rola. */
-    capa.style.visibility = y > altura * 1.3 ? 'hidden' : '';
+    /* Deixa de ser desenhada mal saia do ecrã. */
+    capa.style.visibility = (r.bottom <= 0 || r.top >= altura) ? 'hidden' : '';
   }
 
   /* ─────────── as fotografias que trocam para o pormenor ────────────── */
@@ -365,7 +381,7 @@
     requestAnimationFrame(() => {
       marcado = false;
       const altura = window.innerHeight;
-      aoRolarCapa(window.scrollY || window.pageYOffset || 0, altura);
+      aoRolarCapa(altura);
       aoRolarPalavras(altura);
       aoRolarLoja(altura);
     });

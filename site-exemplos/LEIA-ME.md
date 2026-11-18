@@ -27,7 +27,7 @@ escolheu.
 | A ideia dele | Onde ficou |
 |---|---|
 | Mara: "começar como se fosse uma revista" | A capa: cabeçalho, n.º 1, chamadas de capa. Fica presa ao fundo e o resto do site sobe por cima |
-| Primal Instinct: a imagem de fundo a rodar | O disco grego, logo a seguir à capa |
+| Primal Instinct: a imagem de fundo a rodar | O disco grego, que **abre o site** |
 | Jakobsen: foto à direita, texto à esquerda, e a linha que troca para pormenores | A secção **O ginásio** |
 | Heatherwick: foto média de um lado, descrição do outro, para as três modalidades | **Boxe**, **Kickboxing** e **Jiu-Jitsu Kids** |
 | Maison Integre: uma ou duas linhas de fotografias pequenas | As duas tiras entre as modalidades, a correr em sentidos contrários |
@@ -100,6 +100,23 @@ escuro destes oito bits partem-se em anéis.
 O que se vê **não é uma imagem a rodar**: é um plano inclinado no espaço, e
 cada pixel do ecrã é um raio que vai lá bater. Por isso a perspectiva é a
 verdadeira — o lado de lá afasta-se e perde-se no escuro.
+
+#### O disco abre o site
+
+Decisão dele, em novembro de 2026: o artefacto passou à frente da capa de
+revista. A capa ficou logo a seguir, e por isso **deixou de poder ser
+`fixed`** — uma camada fixa de ecrã inteiro ficaria por cima do disco a
+página toda. Prende-se agora ao topo dentro de um recipiente com o dobro da
+altura, e a secção seguinte sobe-lhe por cima: é exactamente o que ela fazia
+quando era a primeira, só que a funcionar em qualquer sítio da página.
+
+Duas coisas tiveram de mudar com ela:
+
+- **A entrada da capa deixou de arrancar com a página.** A animação corria
+  toda antes de alguém a ver, e quando lá chegasse já estava feita. Arranca
+  quando ela aparece.
+- **O parallax mede-se pela posição dela**, e não pela da página. Com o
+  `scrollY` a fotografia chegava ao ecrã com o movimento todo já gasto.
 
 #### A roda do rato
 
