@@ -12,7 +12,7 @@ peca que esta mesmo ali.
 
 Sai daqui:
   artefacto-cor.webp    RGB  = cor da peca x oclusao   (como o ColorAO)
-  artefacto-rel.webp    RGBA = normal.x, normal.y, altura, recorte
+  artefacto-rel.webp    RGB  = normal.x, normal.y, altura
   artefacto-rug.webp    RGB  = aspereza, metal, cavidade (como o RoughHeight)
   artefacto-1500.webp   a peca ja iluminada, para quem nao tem WebGL
   artefacto-820.webp    o mesmo, para ecras pequenos
@@ -79,9 +79,20 @@ def mascara(desenho_fn, escala=2, lado=None):
     return np.asarray(im, dtype=np.float32) / 255.0
 
 def encolher(a, lado):
-    """Media por area -- preserva o detalhe melhor do que apanhar pixeis."""
+    """De 2560 para 2048, que e uma razao de 5 para 4.
+
+    Nao se faz por media de area. A media de area com uma razao destas
+    apanha ora um pixel ora dois, e repete-se de quatro em quatro: os bordos
+    saem com um xadrez de um pixel que nao se ve no mapa mas aparece todo na
+    *derivada* dele -- e a derivada e o mapa de normais. Era o que punha as
+    paredes do relevo aos dentes nas vistas rasantes, e levou muito tempo a
+    encontrar porque no mapa, a vista, nao esta la nada.
+
+    Com um filtro a serio cada pixel de saida pesa os de entrada como deve, e
+    o xadrez nao nasce. Cuidado com o `clip`: ele existe para o `borrar`, que
+    trabalha em alturas de 0 a 1; um raio em pixeis nao passa por aqui."""
     im = Image.fromarray(np.clip(a, -8, 8).astype(np.float32), mode='F')
-    return np.asarray(im.resize((lado, lado), Image.BOX), dtype=np.float32)
+    return np.asarray(im.resize((lado, lado), Image.LANCZOS), dtype=np.float32)
 
 # --------------------------- a figura ----------------------------------
 # Um corpo nasce de um esqueleto: pontos e ossos. Cada osso e um tronco que
@@ -428,8 +439,11 @@ figs = np.clip(figs + mascara(chao), 0, 1)
 
 # o relevo: a silhueta borrada da forma, e uma segunda camada mais apertada
 # por cima -- e isso que da volume em vez de um carimbo chato
-relevo = np.clip(borrar(figs, 9) * 1.45, 0, 1) ** 0.75
-relevo = relevo * 0.5 + np.clip(borrar(figs, 3) * 1.2, 0, 1) * 0.5
+# Os bordos sao firmes de proposito. Com a normal exagerada trinta e sete
+# vezes um bordo mole lia-se na mesma; com a normal honesta, o que da o
+# degrau e o degrau. Um relevo fundido tem o canto redondo, nao derretido.
+relevo = np.clip(borrar(figs, 6) * 1.45, 0, 1) ** 0.75
+relevo = relevo * 0.5 + np.clip(borrar(figs, 2) * 1.2, 0, 1) * 0.5
 alt += relevo * 0.200 * dentro
 
 # o musculo por cima do relevo, so onde ha corpo
@@ -442,7 +456,7 @@ alt += np.clip(mus2 * 1.70, 0, 1) * 0.016 * dentro
 # Fundos: um sulco raso desaparece quando a luz lhe bate de frente, e e
 # precisamente ai que o corpo precisa de se ler. Com 0,072 as figuras ficavam
 # lisas de cada vez que a poca de luz lhes passava por cima.
-alt -= borrar(mascara(incisoes) * np.clip(borrar(figs, 4) * 1.6, 0, 1), 1.6) * 0.022
+alt -= borrar(mascara(incisoes) * np.clip(borrar(figs, 4) * 1.6, 0, 1), 1.6) * 0.036
 
 # a inscricao do centro: KO em letras gregas, incisa como a legenda
 def letras(d, esc):
@@ -461,7 +475,33 @@ medio = normalizar(borrar(ruido, 8))
 # A patina mancha a *cor* e nao a altura: um bronze manchado continua a ser
 # uma superficie lisa. Confundir as duas da casca de arvore -- o relevo sai
 # da *derivada* da altura, e a derivada amplifica tudo o que e miudo.
-alt += (grosso * 0.0011 + medio * 0.0003) * dentro
+# A ondulacao da fundicao. Sobe-la mais do que isto parece boa ideia de
+# frente e e um desastre de raspao: uma onda de um pixel de mapa faz o bordo
+# de uma barra de relevo passear sete pixeis para o lado, e a parede dela sai
+# aos dentes. O que se ve no campo de perto vem do sombreador, que a desenha
+# tao fina quanto a camara pedir e nao mexe nos bordos.
+alt += (grosso * 0.0035 + medio * 0.0012) * dentro
+
+# ---- o torno -----------------------------------------------------------
+# A peca foi voltada depois de sair do molde, e o metal guarda os aneis da
+# ferramenta. Sao rasos -- o que se ve deles e a luz a correr ao longo, nao
+# o sulco -- e sao o que faz o campo ler-se como metal trabalhado em vez de
+# massa lisa. A ponta nao corta igual em todo o lado: a forca varia e a
+# fase treme, senao sai um padrao, e um padrao chama a atencao a si proprio.
+#
+# Nao vao para o mapa, e foi medido: a sete pixeis de intervalo mexem na
+# normal de cada pixel e o mapa sem perdas passava de 1,2 MB para 1,8 MB --
+# meio megabyte para guardar uma coisa que e uma linha de conta. Vao para o
+# sombreador, onde nao tem resolucao nenhuma a limita-los e se desenham a
+# qualquer tamanho. Aqui ficam so para o retrato cozido, que nao sabe fazer
+# contas nenhumas e tem de se parecer com a peca viva.
+# Na greca e nas figuras vem mais fracos: o torno toca no que esta ao nivel
+# do campo, nao no que foi fundido levantado.
+treme = normalizar(borrar(np.random.rand(N, N).astype(np.float32), 55))
+ponta = np.clip(0.55 + 0.45 * normalizar(borrar(np.random.rand(N, N).astype(np.float32), 75)), 0.12, 1.0)
+PASSO_DO_TORNO = R * 0.0095                 # ~9 px aqui, ~7 no mapa
+torno = (np.sin(rr / PASSO_DO_TORNO * 2 * math.pi + treme * 2.2)
+         * ponta * (1.0 - 0.55 * np.clip(relevo, 0, 1)) * 0.0026 * dentro)
 
 # mossas: concavidades onde o disco bateu em alguma coisa
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
@@ -542,15 +582,46 @@ alt = np.clip(alt, 0.0, 1.2)
 # --------------------------- os mapas ----------------------------------
 
 alt_p = encolher(alt, LADO)
-rr_p = encolher(rr, LADO) * (LADO / float(N))
+torno_p = encolher(torno, LADO)
 lascas_p = encolher(lascas, LADO)
 grosso_p = encolher(grosso, LADO)
 medio_p = encolher(medio, LADO)
 R_p = R * LADO / float(N)
-dentro_p = (rr_p <= R_p).astype(np.float32)
+# O raio nao passa pelo `encolher`: ele corta a -8..8, que e o que precisa
+# para um mapa de alturas e e veneno para um raio em pixeis. Passou por la
+# durante meses -- `rr_p` saia 8 em todo o lado, o recorte dava 1 em todo o
+# lado, e as lascas do aro que se desenham mais acima nunca chegaram a
+# aparecer em nada. Faz-se a conta na resolucao certa e acabou.
+yy_p, xx_p = np.mgrid[0:LADO, 0:LADO].astype(np.float32)
+rr_p = np.hypot(xx_p - LADO / 2.0, yy_p - LADO / 2.0)
 
-# as normais: e a derivada da altura que faz o relevo
-ESC_Z = 1750.0 * (LADO / 1280.0)   # a inclinacao acompanha a resolucao
+# ---- a altura, e as normais que saem dela -------------------------------
+# A altura guarda-se *inteira*, e nao a partir de um nivel qualquer: o que
+# ha no disco vai de ALT0 a ALT1, e e isso que ocupa os 256 degraus do
+# canal. Antes guardava-se `alt/1.2` e o sombreador so lia de 0,302 a 0,602:
+# sobravam dois tercos da gama para nada, o relevo ficava com 64 degraus --
+# que de perto se veem como socalcos -- e tudo o que era *mais fundo do que
+# o campo* (a legenda, o KO, a goteira, as picadas) era achatado ate ao
+# campo. As incisoes existiam so na luz, e nao no corpo da peca.
+ALT0, ALT1 = 0.280, 0.700
+ALT_CAMPO = 0.4338                 # a moda: o plano onde assenta o relevo
+# Quanto vale uma unidade de `alt` em unidades da peca (o raio e 0,7437).
+# Sai desta conta: o alto do relevo fica a 0,0200 acima do campo.
+POR_UNIDADE = 0.0200 / (0.6972 - ALT_CAMPO)
+alt_p = np.clip(alt_p, ALT0, ALT1)
+# fora do disco fica o campo, para a derivada nao ver um penhasco no aro
+alt_p = np.where(rr_p <= R_p + 2.0, alt_p, ALT_CAMPO)
+altura8 = np.clip((alt_p - ALT0) / (ALT1 - ALT0), 0, 1)
+
+# as normais: e a derivada da altura que faz o relevo, e a escala e a
+# verdadeira -- um pixel do mapa mede `1/R_p * 0,7437` da peca.
+# Estiveram trinta e sete vezes exageradas desde o principio: a luz dizia
+# que o campo era um terreno acidentado e o corpo dizia que era plano, e as
+# duas coisas nunca batiam certo. O campo de um disco fundido *e* plano; o
+# que ha nele para ver sao marcas miudas de mais para caberem num mapa, e
+# essas desenham-se no sombreador, onde nao tem resolucao nenhuma a limita-las.
+PIXEL = (0.7437 / R_p)             # quanto mede um pixel do mapa, na peca
+ESC_Z = POR_UNIDADE / PIXEL
 gy, gx = np.gradient(alt_p.astype(np.float32))
 nx, ny, nz = -gx * ESC_Z, -gy * ESC_Z, np.ones_like(alt_p)
 ln = np.sqrt(nx * nx + ny * ny + nz * nz) + 1e-6
@@ -566,9 +637,13 @@ oc = oc ** 1.25
 # a cor da peca: bronze escuro, patina verde no fundo das reentrancias.
 # Nunca sai daqui luz nenhuma -- so a cor propria do metal.
 baixo = np.clip(1.0 - (alt_p - 0.355) / 0.300, 0, 1)
-bronze = np.stack([0.248 - 0.086 * baixo,
-                   0.196 - 0.030 * baixo,
-                   0.132 + 0.008 * baixo], axis=-1).astype(np.float32)
+# O bronze estava cinzento -- 0,25 / 0,20 / 0,13 e um castanho sem sangue, e
+# com ele a peca lia-se como barro cozido. Um bronze de dois mil e setecentos
+# anos e escuro, mas e quente: o vermelho vale o triplo do azul. A cor nao
+# vem do brilho, vem daqui.
+bronze = np.stack([0.300 - 0.112 * baixo,
+                   0.202 - 0.058 * baixo,
+                   0.098 + 0.004 * baixo], axis=-1).astype(np.float32)
 patina = np.clip(grosso_p * 0.5 + 0.5, 0, 1)
 verde = np.array([0.104, 0.142, 0.122], dtype=np.float32)
 m = (patina * baixo * 0.44)[..., None]
@@ -576,11 +651,15 @@ bronze = bronze * (1 - m) + verde * m
 # o metal gasto nos pontos altos volta a aparecer, mais claro e mais limpo
 gasto = np.clip((alt_p - 0.56) / 0.16, 0, 1) * np.clip(medio_p * 0.4 + 0.6, 0, 1)
 bronze = bronze * (1 - gasto[..., None] * 0.55) + \
-         np.array([0.560, 0.470, 0.330], dtype=np.float32) * (gasto[..., None] * 0.55)
+         np.array([0.640, 0.472, 0.240], dtype=np.float32) * (gasto[..., None] * 0.55)
 
 cor_ao = np.clip(bronze * oc[..., None], 0, 1)
 
 # o recorte
+# O recorte so serve o retrato cozido: no navegador a silhueta vem do
+# proprio corpo (`raioEm`, no sombreador), que tambem leva mordidas e tem de
+# concordar com o aro e com o verso. Dois recortes diferentes -- um aqui e
+# outro la -- abriam buracos por onde se via o outro lado.
 alfa = np.clip((R_p - rr_p) / 1.8, 0, 1)
 alfa = np.clip(alfa - lascas_p * 0.95, 0, 1)
 alfa = np.clip(borrar(alfa, 1.0), 0, 1)
@@ -618,26 +697,30 @@ guardar('artefacto-rug.webp', np.dstack([
 # menos. No mapa de relevo seria o contrario -- la, um erro vira ondulacao
 # na luz, que e exactamente o que esse mapa existe para evitar.
 
-# nx, ny, altura, recorte. Sem perdas: um mapa de normais comprimido com
-# perdas da ondulacao na luz, que e exactamente o que ele existe para evitar.
-# Os valores das normais vao em degraus de 3: 1,35 graus de erro, que o olho
-# nao ve, e menos um quarto de ficheiro. Guardar a altura em vez delas seria
-# cinco vezes mais leve -- mas a normal e a *derivada* da altura, e derivar
-# um numero de 8 bits amplifica cada degrau ate uma encosta de 79 graus.
-def degraus(v, passo=3):
+# nx, ny, altura. Sem perdas: um mapa de normais comprimido com perdas da
+# ondulacao na luz, que e exactamente o que ele existe para evitar.
+# As normais vao agora em degraus de 1 e nao de 3 -- quatro vezes mais finas
+# e, ainda assim, menos ficheiro do que antes: com a escala honesta o campo
+# fica todo no mesmo valor e comprime-se sozinho. Guardar a altura em vez
+# delas continua a nao servir: a normal e a *derivada* da altura, e derivar
+# um numero de 8 bits amplifica cada degrau ate uma encosta inteira.
+# O quarto canal saiu -- o recorte vem do corpo, no sombreador.
+def degraus(v, passo=1):
     return (np.round(np.clip((v * 0.5 + 0.5) * 255, 0, 255) / passo) * passo).clip(0, 255).astype(np.uint8)
 
-rel = np.dstack([
-    degraus(nx),
-    degraus(ny),
-    (np.clip(alt_p / 1.2, 0, 1) * 255).astype(np.uint8),
-    (alfa * 255).astype(np.uint8),
-])
-guardar('artefacto-rel.webp', rel, 'RGBA', lossless=True, quality=100, method=6)
+rel = np.dstack([degraus(nx), degraus(ny), (altura8 * 255).astype(np.uint8)])
+guardar('artefacto-rel.webp', rel, 'RGB', lossless=True, quality=100, method=6)
 
 # --------------------------- o retrato cozido --------------------------
 # Para quem nao tem WebGL. A mesma peca, com uma luz fixa -- e com a mesma
 # conta que o navegador faz, para nao haver duas pecas diferentes.
+
+# O torno entra aqui e so aqui: na peca viva ele desenha-se a cada
+# fotograma, e o retrato tem de se parecer com ela.
+gy_t, gx_t = np.gradient((alt_p + torno_p).astype(np.float32))
+nx, ny, nz = -gx_t * ESC_Z, -gy_t * ESC_Z, np.ones_like(alt_p)
+ln = np.sqrt(nx * nx + ny * ny + nz * nz) + 1e-6
+nx, ny, nz = nx / ln, ny / ln, nz / ln
 
 L = np.array([-0.60, -0.62, 0.505]); L /= np.linalg.norm(L)
 V = np.array([0.0, 0.0, 1.0])
@@ -662,3 +745,13 @@ for n in ('artefacto-cor.webp', 'artefacto-rel.webp', 'artefacto-rug.webp',
     print('%-22s %7d bytes' % (n, os.path.getsize(os.path.join(SAIDA, n))))
 print('alt %.3f .. %.3f   oclusao %.3f .. %.3f' %
       (float(alt_p.min()), float(alt_p.max()), float(oc.min()), float(oc.max())))
+# Estes dois numeros tem de bater com os do `artefacto-luz.js`: sao eles que
+# dizem ao sombreador o que o canal da altura quer dizer. Mudar um aqui e
+# esquecer o de la nao da erro nenhum -- da um relevo com a altura errada.
+print('--- para o artefacto-luz.js ---')
+print('const float H_CAMPO  = %.4f;   // o canal da altura ao nivel do campo'
+      % ((ALT_CAMPO - ALT0) / (ALT1 - ALT0)))
+print('const float H_ESCALA = %.5f;  // de canal para unidades da peca'
+      % ((ALT1 - ALT0) * POR_UNIDADE))
+print('relevo acima do campo %.4f   fundo abaixo do campo %.4f'
+      % ((ALT1 - ALT_CAMPO) * POR_UNIDADE, (ALT_CAMPO - ALT0) * POR_UNIDADE))

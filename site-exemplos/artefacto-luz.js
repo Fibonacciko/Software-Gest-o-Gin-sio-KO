@@ -10,7 +10,14 @@
    De frente enganava; de perfil não havia nada para ver, porque um plano
    visto de lado é uma linha. Agora a marcha é no espaço: salta enquanto o
    raio vai acima do relevo todo — nada lhe pode estar à frente — e anda ao
-   pixel quando entra nele. Seis bissecções no fim acertam o ponto.
+   pixel quando entra nele. Oito bissecções no fim acertam o ponto.
+
+   E entra mesmo: a altura do mapa deixou de ser só o que *sobe* acima do
+   campo. Guarda hoje a peça inteira, o fundo das incisões incluído — a
+   legenda grega, o KO do meio, a goteira do aro —, e o raio desce lá
+   dentro. Até agora o sombreador achatava tudo o que estivesse abaixo do
+   campo: as incisões existiam na luz e não no corpo, e ao de perto
+   notava-se que eram riscos pintados.
 
    São três mapas — a cor da peça, o relevo e a aspereza — e a luz é
    calculada aqui, a cada fotograma. É por isso que ela segue o rato: numa
@@ -18,7 +25,15 @@
 
    É o mesmo método do site que ele apontou (uma peça iluminada em WebGL a
    cada fotograma), com duas diferenças: lá são 17 MB de texturas e um
-   modelo 3D; aqui são 1,6 MB e nenhuma biblioteca.
+   modelo 3D; aqui são 1,4 MB e nenhuma biblioteca.
+
+   E há uma divisão de trabalho, que é o que permite esses 1,4 MB: o mapa
+   guarda o que tem tamanho para caber nele — as figuras, a greca, as
+   letras, as incisões — e tudo o que é mais miúdo do que um pixel do mapa
+   desenha-se aqui. O torno, o grão da fundição, os riscos. Um mapa guarda o
+   miúdo uma vez e depois estica-o, e a partir de certa distância já não há
+   miúdo nenhum, só papa; desenhado, ele nasce com o tamanho que a câmara
+   pedir, e por isso é que a peça aguenta que a câmara lhe chegue ao pé.
 
    O que faz a peça parecer metal, e não um desenho de metal, são sete
    coisas que nenhuma imagem cozida tem:
@@ -33,7 +48,9 @@
         plástico;
      5. o desgaste é às manchas, e não igual em toda a peça;
      6. há um ambiente à volta que o metal reflecte, e não só uma lâmpada;
-     7. as marcas do torno correm à volta do disco, e não ao acaso.
+     7. as marcas do torno correm à volta do disco, e não ao acaso — e
+        afinam-se com a distância da câmara, em vez de serem sempre as
+        mesmas.
 
    Sem WebGL, com "reduzir movimento" ligado ou com poupança de dados, nada
    disto acontece e fica a fotografia — que continua a ser a mesma peça,
@@ -52,7 +69,23 @@
   ].join('\n');
 
   var FRAGMENTO = [
+    /* O mapa lido num nivel que nos escolhemos, e nao no que a placa
+       adivinha. Dentro da marcha a placa nao tem como adivinhar: ela mede o
+       detalhe pela diferenca entre pixeis vizinhos, e dois raios vizinhos a
+       meio de uma marcha estao em sitios muito diferentes -- um ja bateu, o
+       outro ainda vai a meio. O que ela media era essa diferenca, nao o
+       tamanho do pixel, e nas vistas rasantes dava-lhe um nivel grosseiro:
+       o relevo que o raio encontrava era uma papa, e as paredes saiam aos
+       dentes. Com a extensao pedimos o nivel certo; sem ela fica como
+       estava, que e o que ha em maquinas antigas. */
+    '#extension GL_EXT_shader_texture_lod : enable',
+    '#extension GL_OES_standard_derivatives : enable',
     '%PRECISAO%',
+    '#ifdef GL_EXT_shader_texture_lod',
+    '#define LER(m, uv, l) texture2DLodEXT(m, uv, l)',
+    '#else',
+    '#define LER(m, uv, l) texture2D(m, uv)',
+    '#endif',
 
     'uniform vec2  resolucao;',
     'uniform sampler2D mapaCor;',
@@ -64,12 +97,19 @@
 
     /* A peca, em unidades do mapa. O raio sai do desenho: o disco ocupa
        761,6 pixeis dos 1024 de meio mapa, e o mapa vai de -1 a 1. */
-    'const float RAIO   = 0.7437;',
-    /* Quanto o relevo sobe acima do campo. Nao e um gosto: a 0,030 o raio
-       varria 300 pixeis de mapa de lado, e as figuras saiam serradas. */
-    'const float RELEVO = 0.0220;',
-    'const float BISEL  = 0.040;',
-    'const float ESP    = 0.118;',
+    'const float RAIO  = 0.7437;',
+    'const float BISEL = 0.040;',
+    'const float ESP   = 0.118;',
+    'const float MAPA  = 2048.0;',
+
+    /* O canal da altura, lido como o gerador o escreveu. Estes dois numeros
+       sao impressos pelo `desenhos/artefacto.py` no fim de cada corrida, e tem
+       de bater com os de la: mudar um e esquecer o outro nao da erro nenhum,
+       da um relevo com a altura errada. */
+    'const float H_CAMPO  = 0.3662;',
+    'const float H_ESCALA = 0.03189;',
+    'const float RELEVO = (1.0 - H_CAMPO) * H_ESCALA;   /* acima do campo */',
+    'const float FUNDO  = H_CAMPO * H_ESCALA;           /* abaixo do campo */',
 
     'mat3 rodaX(float a) {',
     '  float c = cos(a), s = sin(a);',
@@ -89,9 +129,24 @@
     '  return mix(mix(baralha(i), baralha(i + vec2(1.0, 0.0)), f.x),',
     '             mix(baralha(i + vec2(0.0, 1.0)), baralha(i + vec2(1.0, 1.0)), f.x), f.y);',
     '}',
-    'vec2 declive(vec2 p, float e) {',
-    '  float a = ruido(p);',
-    '  return vec2(ruido(p + vec2(e, 0.0)) - a, ruido(p + vec2(0.0, e)) - a) / e;',
+
+    /* O valor e a *inclinacao* do ruido, de uma vez. Antes a inclinacao fazia-se
+       por diferencas -- tres ruidos e uma subtraccao -- e isso desenhava no
+       campo um xadrez na diagonal, com o tamanho da celula do ruido. Era a
+       coisa mais visivel da peca de perto, e nao era nada: era o reticulado do
+       proprio ruido a aparecer na derivada. Vem agora pela conta certa. */
+    'vec3 ruidoD(vec2 p) {',
+    '  vec2 i = floor(p), f = fract(p);',
+    '  vec2 u = f * f * (3.0 - 2.0 * f);',
+    '  vec2 du = 6.0 * f * (1.0 - f);',
+    '  float a = baralha(i);',
+    '  float b = baralha(i + vec2(1.0, 0.0));',
+    '  float c = baralha(i + vec2(0.0, 1.0));',
+    '  float d = baralha(i + vec2(1.0, 1.0));',
+    '  float k1 = b - a, k2 = c - a, k3 = a - b - c + d;',
+    '  return vec3(a + k1 * u.x + k2 * u.y + k3 * u.x * u.y,',
+    '              du.x * (k1 + k3 * u.y),',
+    '              du.y * (k2 + k3 * u.x));',
     '}',
 
     /* ─── o feitio da peca ───
@@ -129,29 +184,128 @@
     '}',
 
     'vec2 paraUV(vec2 q) { return vec2(q.x * 0.5 + 0.5, 0.5 - q.y * 0.5); }',
-    /* A altura vem num canal de oito bits, e sao setenta e sete degraus para
-       todo o relevo. De frente nao se nota; de raspao, cada degrau espalha-se
-       por dezenas de pixeis e a peca vira um terreno de socalcos -- foi o que
-       se viu ao subir o relevo. O GRAO desmancha-os, e de caminho faz o que
-       um bronze fundido tem mesmo: superficie. */
-    'const float GRAO = 0.00060;',
-    'float alturaEm(vec2 q) {',
-    '  float b = texture2D(mapaRel, paraUV(q)).b;',
-    '  float h = (1.0 - clamp((0.602 - b) / 0.300, 0.0, 1.0)) * RELEVO;',
-    '  return h + (ruido(q * 185.0) - 0.5) * GRAO;',
-    '}',
-    'float topoEm(vec2 q) {',
-    '  return campo(length(q)) + empeno(q) + alturaEm(q);',
+
+    /* O mapa lido com a fraccao suavizada. Entre quatro texels, a interpolacao
+       normal e uma pirâmide: o valor e continuo mas a *inclinacao* salta na
+       fronteira de cada texel, e de perto isso le-se como um losango em cada
+       celula -- a peca ficava com uma rede por cima. Suavizar a fraccao antes
+       de pedir o texel custa oito contas e deixa a superficie lisa de verdade.
+       E uma so leitura: normal e altura vem no mesmo texel. */
+    'vec3 relEm(vec2 uv, float lod) {',
+    '  float tam = MAPA / exp2(lod);',
+    '  vec2 p = uv * tam - 0.5;',
+    '  vec2 i = floor(p), f = fract(p);',
+    '  f = f * f * (3.0 - 2.0 * f);',
+    '  return LER(mapaRel, (i + 0.5 + f) / tam, lod).rgb;',
     '}',
 
+    /* ─── o torno ───
+       A peca foi voltada depois de sair do molde. Os aneis da ferramenta sao a
+       unica coisa que corre *a volta* do disco, e e por isso que se leem como
+       fabrico e nao como sujidade. Sao rasos -- dois decimos de um pixel do
+       mapa -- e o que se ve deles e a luz a correr ao longo, nao o sulco.
+    
+       Vivem aqui e nao no mapa, e foi medido: postos la, mexiam na normal de
+       cada texel e o mapa sem perdas passava de 1,2 MB para 1,8 MB. Aqui sao
+       tres contas, desenham-se a qualquer tamanho, e o raio entra-lhes mesmo --
+       fazem parte do corpo e nao da pintura. */
+    'const float TORNO_K = 897.0;',
+    'const float TORNO_A = 0.000062;',
+    /* A fase leva um desvio que anda com q: a peca nao ficou perfeitamente
+       centrada no torno, e os aneis saem um pouco excentricos -- que e o
+       que eles fazem a serio. Um seno so, e nao tres: isto e chamado a cada
+       passo da marcha, e um seno a mais aqui sao duzentos por pixel. */
+    'float torno(vec2 q, float r) {',
+    '  return sin(r * TORNO_K + dot(q, vec2(7.3, 5.9)) * 0.30) * TORNO_A;',
+    '}',
+    'float tornoDeclive(vec2 q, float r) {',
+    '  return cos(r * TORNO_K + dot(q, vec2(7.3, 5.9)) * 0.30) * TORNO_K * TORNO_A;',
+    '}',
+
+    /* Uma onda mais curta do que isto nao cabe num pixel do ecra: desenha-la na
+       mesma nao acrescenta nada e poe a peca a formigar quando roda. */
+    'float cabe(float onda, float porPixel) {',
+    '  return clamp(onda / max(porPixel * 3.2, 1e-6) - 0.6, 0.0, 1.0);',
+    '}',
+
+    'float alturaEm(vec2 q, float lod) {',
+    '  return (relEm(paraUV(q), lod).b - H_CAMPO) * H_ESCALA + torno(q, length(q));',
+    '}',
+
+
+    /* ─── o grao, os riscos e as picadas ───
+       Tudo o que e mais miudo do que um texel do mapa mora aqui. E o que faz a
+       diferenca de perto: um mapa guarda o grao uma vez e depois estica-o, e a
+       partir de certa distancia ja nao ha grao nenhum, so papa. Desenhado,
+       nasce com o tamanho que a camara pedir.
+    
+       Tres oitavas, cada uma com o seu reticulado rodado: o de uma tapa o da
+       outra, e nenhum chega a ler-se como rede. */
+    'vec2 onda(vec2 q, vec2 d, float k, float a, float f) {',
+    '  return d * (cos(dot(q, d) * k + f) * a);',
+    '}',
+    /* A ondulacao de um bronze fundido, na escala em que ela se ve. Sao
+       ondas somadas e nao ruido: o ruido vive num reticulado e a derivada
+       dele apaga-se na fronteira de cada celula -- de perto isso desenhava
+       uma rede na diagonal por cima da peca inteira, e era a coisa mais
+       visivel que ela tinha. Seis ondas em direccoes que nao se repetem nao
+       tem reticulado nenhum, e a inclinacao sai por conta. */
+    'vec2 ondas(vec2 q, float porPixel) {',
+    '  vec2 g = vec2(0.0);',
+    '  float c1 = cabe(0.0480, porPixel);',
+    '  if (c1 > 0.01) {',
+    '    g += onda(q, vec2( 0.9135,  0.4068), 131.0, 0.030 * c1, 0.0);',
+    '    g += onda(q, vec2(-0.2756,  0.9613), 167.0, 0.026 * c1, 1.7);',
+    '    g += onda(q, vec2( 0.6691, -0.7431), 211.0, 0.022 * c1, 3.1);',
+    '  }',
+    '  float c2 = cabe(0.0145, porPixel);',
+    '  if (c2 > 0.01) {',
+    '    g += onda(q, vec2( 0.3090,  0.9511), 433.0, 0.016 * c2, 0.6);',
+    '    g += onda(q, vec2(-0.8829,  0.4695), 541.0, 0.013 * c2, 2.4);',
+    '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.011 * c2, 4.2);',
+    '  }',
+    '  return g;',
+    '}',
+    /* O grao propriamente dito: mais miudo do que um texel do mapa, e por
+       isso nao ha mapa que o guarde. Desenhado, nasce com o tamanho que a
+       camara pedir. Nesta escala o reticulado do ruido ja e mais fino do
+       que um pixel e nao se le. */
+    'vec2 grao(vec2 q, float porPixel, float forca) {',
+    '  vec2 g = ondas(q, porPixel);',
+    '  float f3 = cabe(1.0 / 780.0, porPixel);',
+    '  if (f3 > 0.01) {',
+    '    vec2 r = vec2(q.x * 0.4536 + q.y * 0.8912, -q.x * 0.8912 + q.y * 0.4536);',
+    '    vec3 n = ruidoD(r * 780.0 + 41.3);',
+    '    g += vec2(n.y * 0.4536 - n.z * 0.8912, n.y * 0.8912 + n.z * 0.4536) * (0.026 * f3);',
+    '  }',
+    '  return g * forca;',
+    '}',
+    'vec2 riscos(vec2 q, float porPixel, float alto) {',
+    '  float f = cabe(1.0 / 520.0, porPixel) * alto;',
+    '  if (f < 0.01) return vec2(0.0);',
+    '  vec2 e = vec2(0.9272, 0.3746);',
+    '  vec2 s = vec2(dot(q, e), dot(q, vec2(-e.y, e.x)));',
+    '  vec3 n = ruidoD(vec2(s.x * 22.0, s.y * 520.0));',
+    '  float corta = smoothstep(0.62, 0.95, n.x);',
+    '  vec2 d = vec2(n.y * 22.0, n.z * 520.0) * corta * 0.00013 * f;',
+    '  return vec2(d.x * e.x - d.y * e.y, d.x * e.y + d.y * e.x);',
+    '}',
+
+    /* ─── o que a peca devolve a luz ─── */
     'vec3 ambienteEm(vec3 r) {',
     '  float h = clamp(r.y, -1.0, 1.0);',
-    '  vec3 alto  = vec3(0.040, 0.056, 0.082);',
-    '  vec3 linha = vec3(0.125, 0.120, 0.112);',
-    '  vec3 chao  = vec3(0.016, 0.014, 0.013);',
+    '  vec3 alto  = vec3(0.050, 0.066, 0.096);',
+    '  vec3 linha = vec3(0.148, 0.140, 0.128);',
+    '  vec3 chao  = vec3(0.014, 0.012, 0.011);',
     '  vec3 c = h > 0.0 ? mix(linha, alto, pow(h, 0.5)) : mix(linha, chao, pow(-h, 0.6));',
+      /* A janela: uma mancha alta e apertada. E ela que poe um risco de luz a
+         correr pelo metal quando a peca roda -- num ceu liso o metal nao tem
+         nada para devolver, e e por isso que sem ela lia-se como gesso. */
     '  float j = max(dot(r, normalize(vec3(-0.52, 0.58, -0.30))), 0.0);',
-    '  c += vec3(1.0, 0.93, 0.82) * pow(j, 14.0) * 0.62;',
+    '  c += vec3(1.0, 0.94, 0.84) * pow(j, 17.0) * 0.98;',
+      /* e uma segunda, fria e do outro lado, que da o contorno */
+    '  float k = max(dot(r, normalize(vec3(0.74, 0.20, 0.44))), 0.0);',
+    '  c += vec3(0.44, 0.58, 0.86) * pow(k, 6.0) * 0.16;',
     '  return c;',
     '}',
 
@@ -169,12 +323,12 @@
     '  vec3 eixoT = eixoU * cg - eixoV * sg;',
     '  vec3 eixoB = eixoU * sg + eixoV * cg;',
 
-    /* O raio, visto de dentro da peca. A base e ortonormal, por isso a volta
-       e so a transposta -- e tHit continua a ser a distancia verdadeira. */
+      /* O raio, visto de dentro da peca. A base e ortonormal, por isso a volta
+         e so a transposta -- e tHit continua a ser a distancia verdadeira. */
     '  vec3 o = vec3(-dot(centro, eixoT), -dot(centro, eixoB), -dot(centro, cima));',
     '  vec3 d = vec3( dot(raio, eixoT),   dot(raio, eixoB),   dot(raio, cima));',
 
-    /* a caixa: o cilindro do aro, e a fatia entre o verso e o cimo do relevo */
+      /* a caixa: o cilindro do aro, e a fatia entre o verso e o cimo do relevo */
     '  float a = max(dot(d.xy, d.xy), 1e-7);',
     '  float b = dot(o.xy, d.xy);',
     '  float oo = dot(o.xy, o.xy);',
@@ -191,7 +345,7 @@
     '    tc1 = (-b + sqrt(D)) / a;',
     '    Rout = raioEm(normalize((o + d * tc1).xy));',
     '  }',
-    '  float TOPO = RELEVO + GRAO + EMP_A + EMP_B;',
+    '  float TOPO = RELEVO + TORNO_A + EMP_A + EMP_B;',
     '  float ts0 = -1e5, ts1 = 1e5;',
     '  if (abs(d.z) > 1e-6) {',
     '    float ta = (-ESP - o.z) / d.z, tb = (TOPO - o.z) / d.z;',
@@ -201,54 +355,74 @@
     '  float t1 = min(tc1, ts1);',
     '  if (t0 >= t1) discard;',
 
+    /* Um texel do mapa mede 1/1024 da peca; o nivel certo e aquele em que
+       um texel e um pixel do ecra. Mede-se a entrada da peca, que e onde a
+       camara esta mais perto -- o resto do caminho afasta-se, e ali um
+       nivel mais fino custa nitidez a ninguem. */
+    /* O empeno e uma onda muito maior do que a peca: ao longo de uma
+       marcha comporta-se como um plano inclinado, e vale a pena trata-lo
+       assim. Sao quatro senos a cada passo, vezes sessenta e quatro passos,
+       trocados por uma conta feita uma vez. O erro, ao fim de toda a
+       travessia, e dois por cento da altura do relevo. */
+    '  vec2 qe = (o + d * t0).xy;',
+    '  float e0 = empeno(qe);',
+    '  vec2 eG = empenoDeclive(qe);',
+    '#define EMPENO(Q) (e0 + dot((Q) - qe, eG))',
+    '#define TOPO(Q, L) (campo(length(Q)) + EMPENO(Q) + alturaEm((Q), (L)))',
+    '  float tMeio = (t0 + min(t1, t0 + 0.6)) * 0.5;',
+    '  float lodM = clamp(log2(max(tMeio * abertura * 1024.0 / resolucao.y, 1.0)), 0.0, 7.0);',
     '  int tipo = 0;',
     '  float tHit = -1.0;',
     '  bool bateu = false;',
     '  vec3 pe = o + d * t0;',
-    '  if (pe.z <= topoEm(pe.xy) + 1e-5) {',
+    '  if (pe.z <= TOPO(pe.xy, lodM) + 1e-5) {',
     '    bateu = true; tHit = t0;',
     '    tipo = (t0 <= tc0 + 1e-5) ? 1 : 2;',
     '  }',
 
-    /* O relevo e uma paisagem, e o raio sobrevoa-a. Enquanto vai acima do
-       tecto da fatia salta -- nada lhe pode estar a frente -- e so dentro
-       dela e que anda a passo miudo. E o que torna a vista rasante possivel:
-       um braco levantado tapa mesmo o que esta por tras dele, e recorta-se
-       contra o escuro em vez de se achatar. */
+      /* O relevo e uma paisagem, e o raio percorre-a. Enquanto vai acima do
+         tecto da fatia salta -- nada lhe pode estar a frente -- e so dentro
+         dela e que anda a passo miudo, ate bater na altura que o mapa der.
+         Por isso um braco levantado tapa mesmo o que esta por tras dele, e as
+         incisoes sao buracos onde o raio entra, e nao riscos pintados.
+    
+         O fundo das incisoes conta para a marcha tanto como o alto do relevo:
+         ate ha pouco o sombreador achatava tudo o que estivesse abaixo do
+         campo, e a legenda, o KO e a goteira so existiam na luz. */
     '  float tAnt = t0;',
     '  if (!bateu) {',
-    /* O passo mede-se pelo que falta descer ate ao chao que esta por baixo,
-       e nao por uma fatia igual para todos: longe do relevo da passadas
-       largas, em cima dele anda ao pixel. Um passo fixo chegava a vinte
-       texels de cada vez numa vista rasante, e o relevo saia aos quadrados.
-       O tecto da fatia, esse, salta-se a serio -- acima dele nao lhe pode
-       estar nada a frente. */
     '    float passoMin = max(0.0011 / max(passosFundo / 22.0, 0.45), 0.0007);',
+    '    float fundoTodo = RELEVO + FUNDO;',
     '    float t = t0;',
-    '    for (int i = 0; i < 56; i++) {',
+    '    for (int i = 0; i < 64; i++) {',
     '      if (t >= t1) break;',
     '      vec3 p = o + d * t;',
-    '      float cz = campo(length(p.xy)) + empeno(p.xy);',
-    '      if (p.z > cz + RELEVO + GRAO) {',
+    '      float cz = campo(length(p.xy)) + EMPENO(p.xy);',
+    '      if (p.z > cz + RELEVO + TORNO_A) {',
     '        tAnt = t;',
-    '        t += max((p.z - cz - RELEVO - GRAO) / max(-d.z, 0.02) * 0.94, passoMin);',
+    '        t += max((p.z - cz - RELEVO - TORNO_A) / max(-d.z, 0.02) * 0.94, passoMin);',
     '        continue;',
     '      }',
-    '      float zs = cz + alturaEm(p.xy);',
+    '      float zs = cz + alturaEm(p.xy, lodM);',
     '      if (p.z <= zs) { bateu = true; tHit = t; break; }',
-    '      float folga = (p.z - zs) / RELEVO;',
+          /* O passo mede-se pelo que falta descer ate ao chao que esta por
+             baixo, e nao por uma fatia igual para todos: longe do relevo da
+             passadas largas, em cima dele anda ao pixel. Um passo fixo chegava
+             a vinte texels de cada vez numa vista rasante, e o relevo saia aos
+             quadrados. */
+    '      float folga = (p.z - zs) / fundoTodo;',
     '      tAnt = t;',
     '      t += clamp((p.z - zs) * 0.80 / max(-d.z, 0.025),',
-    '                 passoMin, mix(passoMin * 1.8, 0.013, clamp(folga, 0.0, 1.0)));',
+    '                 passoMin, mix(passoMin * 1.5, 0.0120, clamp(folga, 0.0, 1.0)));',
     '    }',
-    /* Seis bisseccoes entre o passo que passou e o anterior. Sem elas o passo
-       fica onde calhou, e as bordas do relevo leem-se como degraus. */
+        /* Oito bisseccoes entre o passo que passou e o anterior. Sem elas o
+           passo fica onde calhou, e as bordas do relevo leem-se como degraus. */
     '    if (bateu) {',
     '      float lo = tAnt, hi = tHit;',
-    '      for (int i = 0; i < 6; i++) {',
+    '      for (int i = 0; i < 8; i++) {',
     '        float m = (lo + hi) * 0.5;',
     '        vec3 pm = o + d * m;',
-    '        if (pm.z <= topoEm(pm.xy)) hi = m; else lo = m;',
+    '        if (pm.z <= TOPO(pm.xy, lodM)) hi = m; else lo = m;',
     '      }',
     '      tHit = hi;',
     '    }',
@@ -261,93 +435,139 @@
     '  vec2 dir = (r > 1e-5) ? q / r : vec2(1.0, 0.0);',
     '  vec2 uv = paraUV(q);',
     '  vec3 olho = -raio;',
-    '  float longe = clamp(1.1 / tHit, 0.0, 1.0);',
+      /* quanto da peca cabe num pixel do ecra, aqui. E isto que decide o que
+         vale a pena desenhar: o que for mais fino nao se ve e formiga. */
+    '  float porPixel = tHit * abertura * 2.0 / resolucao.y;',
 
     '  vec3 Nobj; vec3 albedo;',
     '  float aspereza = 0.6, metal = 0.4, cavidade = 0.5, oclusao = 1.0;',
 
     '  if (tipo == 0) {',
-    '    vec4 rel = texture2D(mapaRel, uv);',
-    '    if (rel.a < 0.30) discard;',
+    '    vec3 rel = relEm(uv, lodM);',
     '    vec3 rug = texture2D(mapaRug, uv).rgb;',
-    '    aspereza = clamp(rug.r, 0.06, 1.0);',
-    '    metal = rug.g;',
+    /* O mapa veio de uma peca muito mais baca do que a que se queria: a
+       0,90 o campo nao devolve nada e le-se como barro cozido. Bronze
+       enterrado nao e espelho, mas e metal -- devolve a janela toda. */
+    '    aspereza = clamp(rug.r * 0.74 + 0.02, 0.05, 1.0);',
+    '    metal = clamp(rug.g * 1.25, 0.04, 1.0);',
     '    cavidade = rug.b;',
     '    albedo = pow(texture2D(mapaCor, uv).rgb, vec3(2.2));',
-    '    oclusao = clamp(rel.b * 1.9, 0.0, 1.0) * mix(0.55, 1.0, cavidade);',
-    /* a normal do mapa vive nos eixos da textura: o v da textura desce e o y
-       do objecto sobe, e por isso o y troca de sinal */
+
+        /* Onde a peca esta alta e onde esta funda, lido do proprio canal da
+           altura. E o que faz o bronze ser bronze: o que se levanta rocou em
+           tudo durante dois mil e setecentos anos e esta polido; o que esta no
+           fundo nunca foi tocado e tem la o oxido. Um mapa de aspereza igual em
+           toda a peca le-se como plastico pintado de castanho. */
+    '    float acima = clamp((rel.b - H_CAMPO) / (1.0 - H_CAMPO), 0.0, 1.0);',
+    '    float abaixo = clamp((H_CAMPO - rel.b) / H_CAMPO, 0.0, 1.0);',
+    '    float manchas = ruido(q * 3.1 + 7.0) * 0.6 + ruido(q * 8.3 + 19.0) * 0.4;',
+    '    float polido = smoothstep(0.22, 0.80, acima) * smoothstep(0.26, 0.74, manchas);',
+    '    float funda = smoothstep(0.04, 0.42, abaixo);',
+    '    albedo = mix(albedo, vec3(0.330, 0.252, 0.150), polido * 0.70);',
+    '    albedo = mix(albedo, vec3(0.030, 0.042, 0.036), funda * 0.60);',
+    '    aspereza = clamp(aspereza - polido * 0.30 + funda * 0.18, 0.05, 1.0);',
+    '    metal = clamp(metal + polido * 0.40 - funda * 0.22, 0.04, 1.0);',
+    '    oclusao = mix(1.0, 0.22, funda) * mix(0.55, 1.0, cavidade);',
+
+        /* a normal do mapa vive nos eixos da textura: o v da textura desce e o y
+           do objecto sobe, e por isso o y troca de sinal */
     '    vec2 nxy = vec2(rel.r * 2.0 - 1.0, -(rel.g * 2.0 - 1.0));',
+    /* Tudo o que e miudo desenha-se em funcao de x e y, e numa parede quase
+       a pique uma coluna inteira de pixeis cai no mesmo x e y: o grao
+       esticava-se em riscas verticais e os bordos do relevo pareciam cartao
+       rasgado. Nas paredes o miudo desliga-se -- elas sao poucas no ecra, e
+       o que se ve nelas e o recorte, nao a superficie. */
+    '    float plano = clamp(1.0 - length(nxy) * 1.7, 0.0, 1.0);',
     '    nxy -= empenoDeclive(q);',
-    '    float pp = longe * longe;',
-    /* as marcas do torno correm a volta do disco: ao acaso leem-se como
-       sujidade, em circulo leem-se como fabrico */
-    '    float e1 = 0.0012;',
-    '    float volta = atan(q.y, q.x);',
-    '    float m0 = ruido(vec2(r * 1850.0, volta * 9.0));',
-    '    float m1 = ruido(vec2((r + e1) * 1850.0, volta * 9.0));',
-    '    nxy += dir * ((m1 - m0) / e1) * 0.000085 * pp;',
-    '    float g = graoForca * pp;',
-    '    if (g > 0.003) {',
-    '      vec2 w = q * 620.0;',
-    '      nxy += (declive(w, 0.35) * 0.55 + declive(w * 2.7 + 11.3, 0.35) * 0.25) * g;',
-    '      aspereza = clamp(aspereza + (ruido(w * 0.17) - 0.5) * 0.14 * pp, 0.06, 1.0);',
-    '    }',
-    /* O desgaste de uma peca velha nao e uniforme: ha zonas comidas e zonas
-       que se salvaram. Sem ele o bronze e todo igual, e um bronze todo igual
-       le-se como material de computador. */
+    '    nxy += dir * tornoDeclive(q, r) * cabe(0.0070, porPixel) * plano;',
+    '    nxy += grao(q, porPixel, (0.6 + graoForca * 2.2) * plano);',
+    '    nxy += riscos(q, porPixel, (0.25 + 0.75 * acima) * plano);',
+
+        /* O desgaste de uma peca velha nao e uniforme: ha zonas comidas e zonas
+           que se salvaram. Sem ele o bronze e todo igual, e um bronze todo igual
+           le-se como material de computador. */
     '    float comido = ruido(q * 2.7 + 4.0) * 0.6 + ruido(q * 6.1 + 17.0) * 0.4;',
     '    comido = smoothstep(0.38, 0.92, comido);',
-    '    albedo = mix(albedo, albedo * vec3(0.80, 0.71, 0.58), comido * 0.50);',
-    '    aspereza = clamp(aspereza + comido * 0.20, 0.06, 1.0);',
-    '    metal = metal * (1.0 - comido * 0.35);',
-    /* O aro rolado. O mapa, esticado ali por cima do bisel, sai em papa e
-       entra-lhe o halo que ficou do desenho -- por isso a cor passa a ser a
-       do aro e nao a da textura. E e escuro: um bordo rolado e por onde a
-       peca mais pega, e onde mais se gastou. */
+    '    albedo = mix(albedo, albedo * vec3(0.80, 0.71, 0.58), comido * 0.45);',
+    '    aspereza = clamp(aspereza + comido * 0.18, 0.05, 1.0);',
+    '    metal = metal * (1.0 - comido * 0.30);',
+    /* A sujidade nao se espalha por igual. Ha zonas da peca que ficaram ao
+       abrigo e ha zonas que apanharam tudo, e e isto -- mais do que o
+       brilho -- que distingue uma peca desenterrada de uma peca desenhada:
+       uma peca desenhada e igual em todo o lado, e nada no mundo e igual em
+       todo o lado. Tres escalas de mancha, e o oxido carrega no que ja esta
+       fundo, que e por onde ele pega. */
+    '    float mancha = ruido(q * 1.7 + 2.0) * 0.52 + ruido(q * 4.3 + 9.0) * 0.31',
+    '                 + ruido(q * 10.5 + 5.0) * 0.17;',
+    '    float oxido = smoothstep(0.50, 0.84, mancha) * (0.42 + 0.58 * funda);',
+    '    albedo = mix(albedo, vec3(0.034, 0.052, 0.042), oxido * 0.62);',
+    '    aspereza = clamp(aspereza + oxido * 0.26, 0.05, 1.0);',
+    '    metal = metal * (1.0 - oxido * 0.55);',
+    /* e, do outro lado, o que foi limpo pelo uso volta a ser ouro */
+    '    float limpo = smoothstep(0.46, 0.16, mancha) * polido;',
+    '    albedo = mix(albedo, vec3(0.395, 0.288, 0.138), limpo * 0.50);',
+    '    aspereza = clamp(aspereza - limpo * 0.14, 0.05, 1.0);',
+
+        /* O aro rolado. O mapa, esticado ali por cima do bisel, sai em papa e
+           entra-lhe o halo que ficou do desenho -- por isso a cor passa a ser a
+           do aro e nao a da textura. E e escuro: um bordo rolado e por onde a
+           peca mais pega, e onde mais se gastou. */
     '    float bw = smoothstep(RAIO - BISEL, RAIO - BISEL * 0.12, r);',
+    '    float nz0 = sqrt(max(1.0 - dot(nxy, nxy), 0.004));',
     '    if (bw > 0.001) {',
     '      float x = clamp(r - (RAIO - BISEL), 0.0, BISEL * 0.999);',
     '      float sa = x / BISEL;',
     '      vec3 nb = vec3(dir * sa, sqrt(max(1.0 - sa * sa, 0.004)));',
-    '      float nz0 = sqrt(max(1.0 - dot(nxy, nxy), 0.004));',
+    '      nb.xy += grao(q, porPixel, 0.8) * 1.6;',
     '      Nobj = normalize(mix(vec3(nxy, nz0), nb, bw));',
-    '      albedo = mix(albedo, vec3(0.106, 0.085, 0.057) * (0.75 + 0.5 * ruido(dir * 6.0)), bw * 0.85);',
-    '      oclusao = mix(oclusao, 0.62, bw);',
-    '      metal = mix(metal, 0.54, bw);',
-    '      aspereza = mix(aspereza, 0.70, bw);',
+    '      albedo = mix(albedo, vec3(0.118, 0.094, 0.062) * (0.75 + 0.5 * ruido(dir * 6.0)), bw * 0.85);',
+    '      oclusao = mix(oclusao, 0.66, bw);',
+    '      metal = mix(metal, 0.60, bw);',
+    '      aspereza = mix(aspereza, 0.62, bw);',
     '    } else {',
-    '      Nobj = normalize(vec3(nxy, sqrt(max(1.0 - dot(nxy, nxy), 0.004))));',
+    '      Nobj = normalize(vec3(nxy, nz0));',
     '    }',
     '  } else if (tipo == 1) {',
-    /* O aro. E ele que faz a peca ter lado: sem isto, de perfil nao havia
-       nada para ver. Nao leva mapa -- a parede de uma fundicao sao estrias a
-       descer, desgaste a volta e patina no fundo, e isso faz-se por conta. */
+        /* O aro. E ele que faz a peca ter lado: sem isto, de perfil nao havia
+           nada para ver. Nao leva mapa -- a parede de uma fundicao sao estrias a
+           descer, desgaste a volta e patina no fundo, e isso faz-se por conta. */
     '    float h01 = clamp((P.z + ESP) / (ESP - BISEL), 0.0, 1.0);',
-    '    vec2 gw = declive(vec2(atan(dir.y, dir.x) * 26.0, P.z * 54.0), 0.4);',
     '    vec3 tang = vec3(-dir.y, dir.x, 0.0);',
     '    vec3 vert = vec3(0.0, 0.0, 1.0);',
-    '    float estria = ruido(dir * 90.0) - 0.5;',
+    '    float volta = atan(dir.y, dir.x);',
+    '    vec3 g1 = ruidoD(vec2(volta * 26.0, P.z * 54.0));',
+    '    vec3 g2 = ruidoD(vec2(volta * 96.0, P.z * 12.0));',
+    '    float estria = g2.x - 0.5;',
     '    Nobj = normalize(vec3(dir, 0.0)',
-    '                   + tang * (gw.x * 0.055 + estria * 0.10)',
-    '                   + vert * (gw.y * 0.030));',
+    '                   + tang * (g1.y * 0.055 + g2.y * 0.085)',
+    '                   + vert * (g1.z * 0.030 + g2.z * 0.012));',
     '    float patina = smoothstep(0.55, 0.0, h01) * (0.5 + 0.5 * ruido(dir * 9.0));',
-    '    albedo = mix(vec3(0.152, 0.120, 0.078), vec3(0.068, 0.088, 0.074), patina * 0.7);',
+    '    albedo = mix(vec3(0.160, 0.126, 0.082), vec3(0.068, 0.088, 0.074), patina * 0.7);',
     '    albedo *= 0.70 + 0.55 * ruido(dir * 5.0 + 31.0);',
-    '    aspereza = clamp(0.74 - 0.22 * h01 + estria * 0.3, 0.18, 0.98);',
-    '    metal = 0.46 * (1.0 - patina * 0.6) + 0.22 * h01;',
+    '    aspereza = clamp(0.70 - 0.24 * h01 + estria * 0.3, 0.16, 0.98);',
+    '    metal = 0.52 * (1.0 - patina * 0.6) + 0.22 * h01;',
     '    cavidade = 0.6;',
     '    oclusao = mix(0.46, 1.08, h01);',
     '  } else {',
-    /* O verso. Quase nunca se ve, e por isso nao leva trabalho nenhum: e o
-       bronze bruto do molde, baco e escuro. Deixa-lo a faltar e que nao
-       dava -- ficava um buraco por onde se via o outro lado. */
-    '    Nobj = normalize(vec3(declive(q * 26.0, 0.4) * 0.05, -1.0));',
+        /* O verso. Quase nunca se ve, e por isso nao leva trabalho nenhum: e o
+           bronze bruto do molde, baco e escuro. Deixa-lo a faltar e que nao
+           dava -- ficava um buraco por onde se via o outro lado. */
+    '    vec3 g = ruidoD(q * 26.0);',
+    '    Nobj = normalize(vec3(g.yz * 0.05, -1.0));',
     '    albedo = vec3(0.062, 0.050, 0.036) * (0.7 + 0.6 * ruido(q * 7.0));',
     '    aspereza = 0.88; metal = 0.30; cavidade = 0.5; oclusao = 0.42;',
     '  }',
 
     '  vec3 N = normalize(eixoT * Nobj.x + eixoB * Nobj.y + cima * Nobj.z);',
+    /* Um brilho que nasce numa aresta de um pixel nao cabe nesse pixel: ele
+       acende e apaga conforme a peca roda, e um campo cheio deles ferve. O
+       remedio e alargar a aspereza onde a forma muda depressa -- onde a
+       normal nao e a mesma no pixel do lado, o brilho passa a ser largo em
+       vez de ser um ponto. */
+    '#ifdef GL_OES_standard_derivatives',
+    '  vec3 dNx = dFdx(N), dNy = dFdy(N);',
+    '  aspereza = clamp(sqrt(aspereza * aspereza + max(dot(dNx, dNx), dot(dNy, dNy)) * 0.80), 0.05, 1.0);',
+    '#endif',
     '  vec3 ponto = raio * tHit;',
 
     '  vec3 paraLuz = vec3(luzXY, luzZ) - ponto;',
@@ -355,20 +575,26 @@
     '  paraLuz /= dLuz;',
     '  float queda = 1.0 / (1.0 + pow(dLuz / luzAlcance, 2.3));',
 
-    /* A sombra que o relevo faz sobre si proprio. Sem ela, uma figura
-       levantada meio milimetro acima do campo nao escurece nada a sua
-       frente, e a luz rasante deixa de querer dizer seja o que for. */
+      /* A sombra que o relevo faz sobre si proprio. Sem ela, uma figura
+         levantada meio milimetro acima do campo nao escurece nada a sua
+         frente, e a luz rasante deixa de querer dizer seja o que for. */
     '  float sombra = 1.0;',
     '  if (tipo == 0 && passosSombra >= 2.0) {',
     '    vec3 L = vec3(dot(paraLuz, eixoT), dot(paraLuz, eixoB), dot(paraLuz, cima));',
     '    if (L.z > 0.05) {',
-    '      float sMax = RELEVO / max(L.z, 0.09);',
+    '      float sMax = (RELEVO + FUNDO) / max(L.z, 0.09);',
     '      float tapado = 0.0;',
+    /* O primeiro passo e sorteado pixel a pixel. Com todos os raios a
+       provar nos mesmos sitios, a parede sombreada saia as barras -- doze
+       amostras a cinco texels de intervalo, e o bordo do relevo a ser
+       apanhado ora por uma ora pela seguinte. Sorteado, o erro deixa de ter
+       feitio e le-se como grao. */
+    '      float jit = baralha(gl_FragCoord.xy * 1.37);',
     '      for (int i = 0; i < 14; i++) {',
     '        if (float(i) >= passosSombra) break;',
-    '        float s = sMax * (float(i) + 0.7) / passosSombra;',
+    '        float s = sMax * (float(i) + jit) / passosSombra;',
     '        vec3 ps = P + L * s;',
-    '        tapado = max(tapado, (topoEm(ps.xy) - ps.z) / RELEVO * (1.0 - float(i) / passosSombra));',
+    '        tapado = max(tapado, (TOPO(ps.xy, lodM) - ps.z) / RELEVO * (1.0 - float(i) / passosSombra));',
     '      }',
     '      sombra = 1.0 - clamp(tapado * 4.2, 0.0, 0.92);',
     '    }',
@@ -393,30 +619,30 @@
     '  vec3 CHAVE = vec3(1.0, 0.820, 0.560);',
     '  float luzQ = queda * sombra;',
 
-    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 2.90;',
-    '  vec3 especular = (D * G * 0.25 / max(ndl * ndv, 1e-4)) * F * ndl * luzQ * 1.5;',
+    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 3.05;',
+    '  vec3 especular = (D * G * 0.25 / max(ndl * ndv, 1e-4)) * F * ndl * luzQ * 1.9;',
 
     '  vec3 amb = ambienteEm(reflect(-olho, N));',
     '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
     '  vec3 cor = difusa * CHAVE + especular * CHAVE;',
     '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao;',
-    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.42 * oclusao;',
+    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.26 * oclusao;',
 
     '  vec3 paraFria = normalize(vec3(-luzXY * 0.75, luzZ * 0.9) - ponto);',
     '  cor += albedo * vec3(0.42, 0.56, 0.78) * max(dot(N, paraFria), 0.0) * 0.055;',
 
-    /* o que esta mais longe do que o centro da peca perde-se no escuro: e o
-       que faz a vista rasante ter fundo em vez de acabar num corte */
+      /* o que esta mais longe do que o centro da peca perde-se no escuro: e o
+         que faz a vista rasante ter fundo em vez de acabar num corte */
     '  cor *= exp(-max(tHit - distancia, 0.0) * 0.72);',
 
-    /* uma curva de cinema em vez de um corte: o brilho passa muito acima do
-       branco, e corta-lo a direito dava chapas brancas sem forma la dentro */
+      /* uma curva de cinema em vez de um corte: o brilho passa muito acima do
+         branco, e corta-lo a direito dava chapas brancas sem forma la dentro */
     '  cor = clamp((cor * (2.51 * cor + 0.03)) / (cor * (2.43 * cor + 0.59) + 0.14), 0.0, 1.0);',
     '  cor = pow(cor, vec3(1.0 / 2.2));',
-    /* meio nivel de ruido: num escuro destes oito bits partem-se em aneis */
+      /* meio nivel de ruido: num escuro destes oito bits partem-se em aneis */
     '  cor += (baralha(gl_FragCoord.xy) - 0.5) * (1.4 / 255.0);',
     '  gl_FragColor = vec4(cor, 1.0);',
-    '}'
+    '}',
   ].join('\n');
 
   /* ─────────────────────────── montagem ────────────────────────────── */
@@ -696,7 +922,7 @@
          página; apanhado, volta-se à fotografia, que é o caminho de sempre. */
       gl.activeTexture(gl.TEXTURE0); textura(gl, cor, false);
       gl.uniform1i(U.mapaCor, 0);
-      gl.activeTexture(gl.TEXTURE1); textura(gl, rel, true);
+      gl.activeTexture(gl.TEXTURE1); textura(gl, rel, false);
       gl.uniform1i(U.mapaRel, 1);
       gl.activeTexture(gl.TEXTURE2); textura(gl, rugo, false);
       gl.uniform1i(U.mapaRug, 2);

@@ -472,15 +472,25 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
   background:
     linear-gradient(0deg, rgba(13,13,13,.74) 0%, rgba(13,13,13,.22) 26%, transparent 46%),
     radial-gradient(84% 68% at 54% 54%, transparent 30%, rgba(13,13,13,.42) 78%, var(--preto) 100%),
-    linear-gradient(95deg, rgba(13,13,13,.92) 0%, rgba(13,13,13,.62) 30%, rgba(13,13,13,.2) 54%, transparent 76%);
+    linear-gradient(95deg, rgba(13,13,13,.88) 0%, rgba(13,13,13,.50) 24%, rgba(13,13,13,.14) 44%, transparent 62%);
   pointer-events: none;
 }
 
-.artefacto__texto { position: relative; z-index: 2; max-width: 620px; }
-.artefacto__texto .corrido { margin-top: 24px; }
+/* Nesta pagina quem manda e o objecto. O texto diz o que tem a dizer e sai
+   da frente: o titulo desce de 104 para 60, a coluna estreita de 620 para
+   470, e a nota do fim fica do tamanho de uma legenda -- porque e isso que
+   ela e. Vender o ginasio e trabalho da pagina inteira; aqui o trabalho e
+   fazer olhar. */
+.artefacto__texto { position: relative; z-index: 2; max-width: 470px; }
+.artefacto__texto .titulo-grande { font-size: clamp(31px, 4.3vw, 60px); }
+.artefacto__texto .corrido { margin-top: 18px; font-size: 15px; max-width: 37ch; }
+.artefacto__texto .botao { margin-top: 24px; padding: 12px 22px; font-size: 13px; }
 /* esta nota fica por cima do bronze iluminado: sem a sombra, as primeiras
    palavras desapareciam na parte mais clara do disco */
 .artefacto__texto .nota {
+  margin-top: 22px;
+  font-size: 11.5px;
+  max-width: 44ch;
   color: var(--papel-fraco);
   text-shadow: 0 1px 10px rgba(13, 13, 13, 0.9);
 }

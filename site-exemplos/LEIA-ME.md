@@ -78,7 +78,9 @@ um desenho de metal, é isto, e nada disto cabe numa fotografia:
 
 1. **O relevo é geometria, e não pintura.** O raio percorre-o e bate onde
    ele está mesmo, por isso um braço levantado tapa o que está atrás dele e
-   recorta-se contra o escuro quando a peça se deita.
+   recorta-se contra o escuro quando a peça se deita. E não é só o que sobe:
+   a legenda grega, o KO do meio e a goteira do aro são buracos onde o raio
+   desce.
 2. **O relevo faz sombra sobre si próprio.** Sem isso, uma figura levantada
    meio milímetro acima do campo não escurece nada à sua frente, e a luz
    rasante deixa de querer dizer seja o que for.
@@ -95,7 +97,8 @@ um desenho de metal, é isto, e nada disto cabe numa fotografia:
    do que o olho lê como metal vem daí, e não custa textura nenhuma: é uma
    conta sobre a direcção em que o reflexo sai.
 7. **As marcas do torno correm à volta do disco.** Ao acaso leem-se como
-   sujidade; em círculo leem-se como fabrico.
+   sujidade; em círculo leem-se como fabrico. Não estão guardadas em lado
+   nenhum: desenham-se a cada fotograma, com o tamanho que a câmara pedir.
 
 E duas que são de fotografia e não de metal: uma **curva de cinema** em vez de
 um corte (o brilho passa muito acima do branco, e cortá-lo a direito dava
@@ -269,11 +272,12 @@ disco — era só bronze.
   pensada para a paralaxe e não para a verdade: de raspão, as figuras eram
   **placas de papel** postas ao alto. Passou a 0,022. A 0,038 ficava melhor
   ainda — e apareceu outro problema.
-- **A altura vem num canal de oito bits**, e são setenta e sete degraus para
-  todo o relevo. De frente não se nota; de raspão cada degrau espalha-se por
-  dezenas de pixeis e a peça vira **um terreno de socalcos**. O que os
-  desmancha é um grão fino somado à altura — e de caminho faz o que um
-  bronze fundido tem mesmo: superfície.
+- **A altura vem num canal de oito bits**, e eram setenta e sete degraus
+  para todo o relevo. De frente não se nota; de raspão cada degrau
+  espalha-se por dezenas de pixeis e a peça vira **um terreno de socalcos**.
+  Tapou-se na altura com um grão fino somado à altura; resolveu-se depois a
+  sério, pondo a peça inteira a ocupar os 256 degraus do canal (ver **O
+  detalhe**, mais abaixo).
 - **O passo da marcha mede-se pelo que falta descer**, e não em fatias
   iguais. Com fatias iguais, numa vista rasante cada passo valia vinte
   texels e o relevo saía **aos quadrados**. Medido pela folga até ao chão
@@ -294,14 +298,134 @@ disco — era só bronze.
   chave mais baixa, as partes iluminadas voltam a ser castanhas em vez de
   creme.
 
+#### O detalhe: o que estava a limitá-lo
+
+Ele viu a peça de perto e disse que faltava detalhe — cada linha, cada
+estria, cada letra, cada figura. Tinha razão, e o que a limitava não era o
+tamanho dos mapas. Eram quatro coisas, três delas erros nossos.
+
+**As normais estavam trinta e sete vezes exageradas.** O mapa de normais
+nasce da derivada da altura, e a escala com que essa derivada era calculada
+não tinha nada que ver com a altura a que o relevo é marchado: um declive de
+um grau na peça aparecia na luz como trinta e sete. A luz dizia que o campo
+era um terreno acidentado e o corpo dizia que era plano — e as duas coisas
+nunca batiam certo. O que daí saía lia-se como couro gravado, não como
+bronze: tudo tinha relevo, e por isso nada tinha.
+
+Com a escala verdadeira, o campo de um disco fundido **é plano**, e o relevo
+é o que sobressai dele. Foi preciso dar o resto por outro caminho — ver
+abaixo.
+
+**O mapa tinha um xadrez de um pixel em todos os bordos.** O desenho é feito
+a 2560 e guardado a 2048, que é uma razão de 5 para 4; a redução era feita
+por média de área, e uma média de área com esta razão apanha ora um pixel
+ora dois, repetindo-se de quatro em quatro. No mapa, a olho, não está lá
+nada. Na **derivada** dele — que é o mapa de normais — está um xadrez em cada
+bordo, e nas vistas rasantes cada parede do relevo saía aos dentes, como
+cartão rasgado.
+
+Levou a tarde a encontrar, e só se encontrou olhando para o mapa ampliado,
+porque na imagem renderizada parecia um problema de marcha: provaram-se
+primeiro o número de passos, o tamanho do passo, as bissecções, as sombras e
+o nível dos *mipmaps*, e nenhum deles era. Com um filtro a sério
+(`Image.LANCZOS` em vez de `Image.BOX`) o xadrez não nasce.
+
+**A altura só guardava o que sobe.** O canal ia de 0,302 a 0,602 de uma gama
+de 0 a 1 — dois terços desperdiçados, e o relevo com 64 degraus, que de perto
+se veem como socalcos. Pior: tudo o que estivesse **abaixo do campo** era
+achatado até ao campo. A legenda grega, o KO do meio, a goteira do aro, as
+picadas da fundição — tudo isso existia só na luz, e ao de perto notava-se
+que eram riscos pintados. Hoje a altura guarda a peça inteira nos 256
+degraus, e o raio desce lá dentro: uma incisão é um buraco onde ele entra.
+
+**Dentro da marcha, a placa gráfica escolhia o nível errado do mapa.** Ela
+mede o detalhe pela diferença entre pixeis vizinhos; a meio de uma marcha,
+dois raios vizinhos estão em sítios muito diferentes — um já bateu, o outro
+ainda vai a meio —, e o que ela media era essa diferença, não o tamanho do
+pixel. Nas vistas rasantes isso dava-lhe um nível grosseiro, e o relevo que o
+raio encontrava era uma papa. Pede-se agora o nível certo
+(`EXT_shader_texture_lod`); sem a extensão, fica como estava.
+
+#### O que o mapa guarda e o que se desenha
+
+É esta divisão que permite 1,4 MB contra os 17 MB dele.
+
+**No mapa fica o que tem tamanho para caber lá**: as figuras, a greca, a
+legenda, as incisões, as picadas graúdas, as fendas. **Tudo o que é mais
+miúdo do que um pixel do mapa desenha-se no sombreador**: o torno, o grão da
+fundição, os riscos. Um mapa guarda o miúdo uma vez e depois estica-o, e a
+partir de certa distância já não há miúdo nenhum, só papa. Desenhado, ele
+nasce com o tamanho que a câmara pedir — e é por isso que a peça aguenta que
+a câmara lhe chegue ao pé.
+
+Foi medido dos dois lados: pôr os anéis do torno no mapa — sete pixeis de
+intervalo — mexia na normal de cada pixel e o mapa sem perdas passava de
+1,2 MB para 1,8 MB. Meio megabyte para guardar o que é uma linha de conta.
+
+- **O torno** são anéis concêntricos com a fase um pouco excêntrica, porque a
+  peça não ficou bem centrada. Rasos — dois décimos de um pixel do mapa — e o
+  que se vê deles é a luz a correr ao longo, não o sulco. Entram na altura, e
+  não só na luz: o raio passa por eles.
+- **O grão** são seis ondas somadas, em direcções que não se repetem, e **não
+  ruído**. O ruído vive num reticulado, e a derivada dele apaga-se na
+  fronteira de cada célula: de perto isso desenhava uma rede na diagonal por
+  cima da peça inteira, e era a coisa mais visível que ela tinha. Ondas não
+  têm reticulado nenhum.
+- **Tudo o que é miúdo se desliga nas paredes.** Desenha-se em função de x e
+  y, e numa parede quase a pique uma coluna inteira de pixeis cai no mesmo x
+  e y: o grão esticava-se em riscas verticais e os bordos pareciam pentes. Nas
+  paredes o que se vê é o recorte, não a superfície.
+- **E afina-se com a distância.** Uma onda mais curta do que um pixel do ecrã
+  não acrescenta nada e põe a peça a formigar quando roda; mede-se quanto da
+  peça cabe num pixel e desliga-se o que não couber.
+
+#### E o resto do que a peça ganhou
+
+- **O bronze estava cinzento.** 0,25 / 0,20 / 0,13 é um castanho sem sangue,
+  e com ele a peça lia-se como barro cozido. Um bronze de dois mil e
+  setecentos anos é escuro, mas é quente: o vermelho vale o triplo do azul.
+- **O que está alto e o que está fundo deixaram de ser a mesma coisa.** O que
+  se levanta roçou em tudo durante vinte e sete séculos e está polido; o que
+  está no fundo nunca foi tocado e tem lá o óxido. Lê-se do próprio canal da
+  altura, e é o que mais depressa faz um metal parecer metal.
+- **A sujidade não se espalha por igual.** Há zonas da peça que ficaram ao
+  abrigo e zonas que apanharam tudo. Uma peça desenhada é igual em todo o
+  lado, e nada no mundo é igual em todo o lado.
+- **O recorte do aro nunca chegou a existir.** As lascas da borda eram
+  desenhadas e apagadas a seguir: o raio em pixeis passava por uma função que
+  corta tudo a oito — serve para alturas, não para raios —, e o recorte dava
+  um em todo o lado. No navegador a silhueta vem do próprio corpo e sempre
+  veio; quem andou sem ela foi o retrato cozido, que agora tem o aro mordido
+  como deve.
+- **O brilho de uma aresta de um pixel não cabe nesse pixel**: acende e apaga
+  conforme a peça roda, e um campo cheio deles ferve. Onde a forma muda
+  depressa, a aspereza alarga-se e o brilho passa a ser largo em vez de ser
+  um ponto.
+
+#### O texto da primeira página encolheu
+
+Decisão dele: nesta página quem manda é o objecto. O título desceu de 104
+para 60, a coluna de 620 para 470, a nota do fim ficou do tamanho de uma
+legenda — porque é isso que ela é — e o escurecimento da esquerda aliviou,
+que o que ele tapava era a peça. Vender o ginásio é trabalho da página
+inteira; aqui o trabalho é fazer olhar.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
 2,1 milhões de pixeis): **16,7 ms por fotograma** — os 60 por segundo
-certos — no nível mais alto, do princípio ao fim da viagem. O nível
-automático não chegou a baixar. A marcha nova é mais trabalho do que a
-paralaxe antiga e mesmo assim não se paga aqui; nas máquinas fracas os
-quatro níveis de sempre continuam lá.
+certos — no nível mais alto, em cinco pontos da viagem. O nível automático
+não chega a baixar, e os três mapas somam **1,4 MB**, menos do que os 1,5 MB
+de antes.
+
+Chegou a não dar: com as incisões a entrar na geometria, a vista quase de
+perfil caiu a 33 ms. O que a pagou de volta não foi tirar detalhe, foi tirar
+contas de dentro da marcha. O **empeno** é uma onda muito maior do que a
+peça: ao longo de uma marcha comporta-se como um plano inclinado, e quatro
+senos a cada passo, vezes sessenta e quatro passos, trocaram-se por uma conta
+feita uma vez — o erro ao fim da travessia é dois por cento da altura do
+relevo. O **torno** passou de três senos a um. Nas máquinas fracas os quatro
+níveis de sempre continuam lá.
 
 #### Refazer a peça
 
