@@ -253,8 +253,10 @@ Três tempos, no mesmo curso de roda que já havia:
 
 A viagem **não desanda** — acaba noutro sítio, que é o que faz valer a pena
 percorrê-la. E não vai *até* ao perfil: a 1,52 de inclinação a câmara ficava
-abaixo da face e só se via o aro, uma mancha castanha sem assunto. Fica em
-1,40, que é onde ainda se vê a face em fuga **e** a parede.
+abaixo da face e só se via o aro, uma mancha castanha sem assunto.
+
+(As distâncias desta secção foram todas refeitas depois: ver **As medidas
+dele, e as nossas**, mais abaixo. A peça era pequena de mais no ecrã.)
 
 Num ecrã ao alto a câmara **recua**, não se aproxima: a largura visível
 encolhe com o feitio do ecrã, e de perto o disco deixava de se ler como
@@ -410,6 +412,63 @@ legenda — porque é isso que ela é — e o escurecimento da esquerda aliviou,
 que o que ele tapava era a peça. Vender o ginásio é trabalho da página
 inteira; aqui o trabalho é fazer olhar.
 
+#### As medidas dele, e as nossas
+
+Ele disse que a nossa peça estava pequena de mais e que isso tapava as
+fendas e os pormenores. Mediu-se, lado a lado, 14 passos da roda em cada um
+dos dois sites, a 1440×900:
+
+| | o dele | o nosso, antes |
+|---|---|---|
+| a peça toca os quatro bordos | em **todos** os 14 fotogramas | em **nenhum** |
+| quanto ocupa a peça, ao alto | o ecrã inteiro, e transborda | 58% da altura |
+| brilho médio do ecrã | 8,3 em 255 | 21,9 |
+| a página rola? | não — a roda só mexe a câmara | sim, por baixo |
+
+A peça dele **nunca se vê inteira**: ora se está por cima do campo, ora
+encostado às figuras, ora fora do aro a olhar para a parede. O nosso tinha o
+disco inteiro ao meio de um campo preto — bonito como um objecto pousado
+numa mesa, e sem nada para ver. Não havia fenda que se notasse porque não
+havia fenda com mais de dois pixeis.
+
+A câmara chegou-se. Ao princípio da viagem está a 0,88 do centro, com a peça
+cortada em cima e em baixo mas inteira de lado a lado; ao fim está a 0,44, o
+que a põe a **pairar treze centésimas acima da própria superfície**, a meio
+caminho entre o centro e o aro. A partir daí o que se vê é o que se veria
+com a cara a um palmo da peça.
+
+Num ecrã ao alto a câmara **fica onde estava**: ali o que prende a peça é a
+largura, e ela já transbordava pelos lados.
+
+- **A lâmpada teve de chegar mais longe.** O alcance dela ia em unidades da
+  distância, e com a câmara a 0,44 a poça de luz ficou mais pequena do que o
+  pedaço de peça que cabe no ecrã: havia voltas da roda em que a página
+  ficava **preta**. Vai agora a `dist × 1,55 + 0,30`.
+- **Há um limite para o quanto se pode chegar.** Passado certo ponto a
+  câmara olha *para lá* da peça e o ecrã esvazia-se. Mediu-se por fotografia,
+  numa grelha de dez poses de cada vez, e o fim da viagem assenta mesmo antes
+  disso.
+- **A peça roda mais**: uma volta e meia ao longo do curso da roda, em vez de
+  um terço. De tão perto, uma volta pequena não muda nada — e o que faz valer
+  a pena rolar é o assunto mudar.
+
+#### E, de tão perto, fez-se falta mais o que ver
+
+À distância antiga, uma fenda de dois pixeis era um risco; a esta, é uma
+fenda. Por isso a peça ganhou mais tempo em cima:
+
+- **Fendas**: de 5 para 11, e mais fundas. Continuam a não passar por cima do
+  KO — uma racha a atravessar duas letras lê-se como um erro de quem desenhou,
+  não como o tempo.
+- **Picadas da fundição**: de 26 ninhos para 44, e mais fundas. Vêm em
+  ninhos, como vêm no metal a sério: o ar não se distribui por igual pelo
+  molde.
+- **Riscos**: 74, de um pixel, quase direitos. Não se vêem de longe — e de
+  perto são metade do que distingue uma peça que esteve no mundo de uma peça
+  acabada de desenhar.
+- **Os bordos do relevo ficaram mais firmes.** Um relevo fundido tem o canto
+  redondo, não derretido, e à distância nova a diferença lê-se.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
@@ -417,6 +476,13 @@ Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
 certos — no nível mais alto, em cinco pontos da viagem. O nível automático
 não chega a baixar, e os três mapas somam **1,4 MB**, menos do que os 1,5 MB
 de antes.
+
+Com a câmara chegada, a peça passou a cobrir o ecrã todo e o trabalho
+duplicou: um fotograma em dez chega a passar dos 16,7 ms. Cortaram-se os
+passos da marcha de 26 para 22 e os da sombra de 12 para 8 — a diferença na
+imagem mede-se em 1% e não se vê —, e mesmo assim esse fotograma em dez
+continua lá. Não é a marcha: a página sozinha, com o artefacto parado, dá
+16,8 nos mesmos 90%, e cortar mais um quarto do trabalho não o mexeu.
 
 Chegou a não dar: com as incisões a entrar na geometria, a vista quase de
 perfil caiu a 33 ms. O que a pagou de volta não foi tirar detalhe, foi tirar

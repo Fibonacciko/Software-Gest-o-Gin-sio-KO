@@ -442,8 +442,8 @@ figs = np.clip(figs + mascara(chao), 0, 1)
 # Os bordos sao firmes de proposito. Com a normal exagerada trinta e sete
 # vezes um bordo mole lia-se na mesma; com a normal honesta, o que da o
 # degrau e o degrau. Um relevo fundido tem o canto redondo, nao derretido.
-relevo = np.clip(borrar(figs, 6) * 1.45, 0, 1) ** 0.75
-relevo = relevo * 0.5 + np.clip(borrar(figs, 2) * 1.2, 0, 1) * 0.5
+relevo = np.clip(borrar(figs, 4.5) * 1.45, 0, 1) ** 0.75
+relevo = relevo * 0.5 + np.clip(borrar(figs, 1.6) * 1.2, 0, 1) * 0.5
 alt += relevo * 0.200 * dentro
 
 # o musculo por cima do relevo, so onde ha corpo
@@ -519,26 +519,48 @@ alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 20) * 0.013 * dentro
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
 # Vem em ninhos, como vem no metal a serio: o ar nao se distribui por igual
 # pelo molde. Espalhadas por igual liam-se como pintas de um padrao.
-for _ in range(26):
+for _ in range(44):
     a = random.uniform(0, 2 * math.pi); q = R * math.sqrt(random.uniform(0, 1)) * 0.96
     nx0, ny0 = C + q * math.cos(a), C + q * math.sin(a)
-    for _ in range(random.randint(4, 16)):
+    for _ in range(random.randint(4, 18)):
         x = nx0 + random.gauss(0, 46); y = ny0 + random.gauss(0, 46)
         if math.hypot(x - C, y - C) > R * 0.985:
             continue
-        s = random.uniform(1.8, 5.0)
+        s = random.uniform(1.4, 5.6)
         d.ellipse([x - s, y - s, x + s, y + s], fill=255)
 picadas = np.asarray(im, dtype=np.float32) / 255.0
-alt -= borrar(picadas, 1.6) * 0.034 * dentro
+alt -= borrar(picadas, 1.5) * 0.042 * dentro
+
+# riscos: a peca foi arrastada, pousada e limpa durante seculos. Sao finos --
+# um pixel -- e por isso nao se veem de longe; de perto sao metade do que
+# distingue uma peca que esteve no mundo de uma peca acabada de desenhar.
+im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
+for _ in range(74):
+    a = random.uniform(0, 2 * math.pi)
+    q = R * math.sqrt(random.uniform(0, 1)) * 0.95
+    x, y = C + q * math.cos(a), C + q * math.sin(a)
+    rumo = random.uniform(0, 2 * math.pi)
+    comp = random.uniform(40, 320)
+    pts = [(x, y)]
+    passos = max(2, int(comp / 18))
+    for _ in range(passos):
+        rumo += random.uniform(-0.09, 0.09)     # um risco quase nao verga
+        x += 18 * math.cos(rumo); y += 18 * math.sin(rumo)
+        if math.hypot(x - C, y - C) > R * 0.97:
+            break
+        pts.append((x, y))
+    if len(pts) > 1:
+        d.line(pts, fill=random.randint(120, 255), width=1, joint='curve')
+alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 0.9) * 0.014 * dentro
 
 # fendas: o metal fadigado racha, e a racha corre sem destino
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
-for _ in range(5):
+for _ in range(11):
     a = random.uniform(0, 2 * math.pi)
     x, y = C + R * random.uniform(.2, .95) * math.cos(a), C + R * random.uniform(.2, .95) * math.sin(a)
     rumo = random.uniform(0, 2 * math.pi)
     pts = [(x, y)]
-    for _ in range(random.randint(14, 30)):
+    for _ in range(random.randint(14, 34)):
         rumo += random.uniform(-0.55, 0.55)
         passo = random.uniform(12, 34)
         x += passo * math.cos(rumo); y += passo * math.sin(rumo)
@@ -546,13 +568,13 @@ for _ in range(5):
             break
         pts.append((x, y))
     if len(pts) > 2:
-        d.line(pts, fill=255, width=random.choice([2, 2, 3]), joint='curve')
+        d.line(pts, fill=255, width=random.choice([1, 2, 2, 3]), joint='curve')
 fendas = np.asarray(im, dtype=np.float32) / 255.0
 # A fenda nao passa por cima do KO. Uma risca a atravessar duas letras le-se
 # como um erro de quem desenhou, e nao como o tempo: o olho ve um O cortado
 # e pensa que alguem se enganou.
 longe_do_ko = np.clip((np.hypot(xx - C, yy - (C - R * 0.470)) - R * 0.150) / (R * 0.07), 0, 1)
-alt -= borrar(fendas * longe_do_ko, 1.6) * 0.060 * dentro
+alt -= borrar(fendas * longe_do_ko, 1.5) * 0.085 * dentro
 
 # o gito: o rebarbo por onde o bronze entrou no molde, limado mas nao a zero
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)

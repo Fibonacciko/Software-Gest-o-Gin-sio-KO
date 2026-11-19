@@ -394,7 +394,7 @@
     '    float passoMin = max(0.0011 / max(passosFundo / 22.0, 0.45), 0.0007);',
     '    float fundoTodo = RELEVO + FUNDO;',
     '    float t = t0;',
-    '    for (int i = 0; i < 64; i++) {',
+    '    for (int i = 0; i < 52; i++) {',
     '      if (t >= t1) break;',
     '      vec3 p = o + d * t;',
     '      float cz = campo(length(p.xy)) + EMPENO(p.xy);',
@@ -619,14 +619,14 @@
     '  vec3 CHAVE = vec3(1.0, 0.820, 0.560);',
     '  float luzQ = queda * sombra;',
 
-    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 3.05;',
+    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 2.75;',
     '  vec3 especular = (D * G * 0.25 / max(ndl * ndv, 1e-4)) * F * ndl * luzQ * 1.9;',
 
     '  vec3 amb = ambienteEm(reflect(-olho, N));',
     '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
     '  vec3 cor = difusa * CHAVE + especular * CHAVE;',
     '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao;',
-    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.26 * oclusao;',
+    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.22 * oclusao;',
 
     '  vec3 paraFria = normalize(vec3(-luzXY * 0.75, luzZ * 0.9) - ponto);',
     '  cor += albedo * vec3(0.42, 0.56, 0.78) * max(dot(N, paraFria), 0.0) * 0.055;',
@@ -777,7 +777,7 @@
        disco perfeito aos saltos, e quem tem a máquina fraca não tem como
        saber que foi isso que aconteceu. */
     var nivel = 0;
-    var NIVEIS = [[26, 12], [18, 8], [12, 5], [8, 0]];
+    var NIVEIS = [[22, 8], [16, 6], [12, 5], [8, 0]];
     var contados = 0, somados = 0;
     function pesar(ms) {
       if (ms > 140) return;
@@ -840,51 +840,57 @@
          fotogramas seguidos com o rato parado mudam tanto como dois com o
          rato a mexer. O rato é um empurrão, não o motor.
 
-         A viagem tem três tempos. Começa longe, com a peça inteira — é
-         preciso vê-la uma vez para saber o que é. Depois a câmara desce e
-         aproxima-se, e o relevo, que de frente era um desenho, levanta-se:
-         as figuras tapam o que está atrás delas e fazem sombra à sua
-         frente. No fim a peça deita-se quase de perfil, e vê-se o que ela
-         nunca teve — a espessura, o aro a toda a volta e o relevo a
-         recortar-se contra o escuro. A viagem não desanda: acaba noutro
-         sítio, que é o que faz valer a pena percorrê-la. */
+         A peça enche o ecrã do princípio ao fim, e isso foi medido no
+         site dele: em catorze passos da roda não há um fotograma em que o
+         objecto não toque os quatro bordos. O nosso tinha o disco inteiro
+         ao meio de um campo preto — ocupava seis décimos da altura e
+         nenhuma fenda se via. A câmara chegou-se.
+
+         A viagem tem três tempos. Começa com a peça inteira mas a
+         transbordar, cortada em cima e em baixo: vê-se o que ela é, e vê-se
+         grande. Depois a câmara desce até pairar por cima da superfície, a
+         um décimo dela, e o relevo que de frente era um desenho levanta-se
+         — as figuras tapam o que está atrás delas e fazem sombra à sua
+         frente. No fim anda rente ao campo, onde se vêem as picadas da
+         fundição, as fendas e os anéis do torno. A viagem não desanda:
+         acaba noutro sítio, que é o que faz valer a pena percorrê-la. */
       var deitado = estreito.matches;
       var e1 = suaviza(p, 0.00, 0.36);
       var e2 = suaviza(p, 0.30, 0.70);
       var e3 = suaviza(p, 0.66, 1.00);
-      var incl = (deitado ? 0.90 : 1.00)
-               + e1 * (deitado ? 0.24 : 0.24)
-               + e2 * (deitado ? 0.15 : 0.12)
-               + e3 * (deitado ? 0.04 : 0.04)
-               + Math.sin(t * 0.058) * 0.042
-               + Math.sin(t * 0.0241 + 2.1) * 0.024
-               - ratoY * 0.120;
+      /* Num ecrã ao alto a peça já transborda pelos lados — o que a prende
+         ali é a largura, e por isso a câmara fica onde estava. */
+      var incl = (deitado ? 0.90 : 0.76)
+               + e1 * (deitado ? 0.24 : 0.21)
+               + e2 * (deitado ? 0.15 : 0.19)
+               + e3 * (deitado ? 0.04 : 0.10)
+               + Math.sin(t * 0.058) * 0.034
+               + Math.sin(t * 0.0241 + 2.1) * 0.020
+               - ratoY * 0.095;
       var guin = Math.sin(t * 0.039 + 1.3) * 0.130
                + Math.sin(t * 0.0146) * 0.060
                + (p - 0.5) * 0.30
                + ratoX * 0.170;
-      /* Num ecrã ao alto a câmara recua, não se aproxima: a largura visível
-         encolhe com o feitio do ecrã, e de perto o disco deixava de se ler
-         como disco — era só bronze. */
-      var dist = (deitado ? 2.45 : 1.32)
-               - e1 * (deitado ? 0.55 : 0.56)
-               + e2 * (deitado ? 0.15 : 0.12)
-               + e3 * (deitado ? 0.45 : 0.38)
-               + Math.sin(t * 0.0289 + 2.4) * 0.050;
+      var dist = (deitado ? 2.30 : 0.88)
+               - e1 * (deitado ? 0.30 : 0.16)
+               - e2 * (deitado ? 0.00 : 0.14)
+               - e3 * (deitado ? -0.30 : 0.14)
+               + Math.sin(t * 0.0289 + 2.4) * 0.022;
 
       /* O desvio anda com a distância, e não em unidades do mundo: o que ele
          vale no ecrã é `desvio/distancia`, e preso ao mundo a peça fugia do
          enquadramento quando a câmara se aproximava. */
-      var desvioX = (-0.075 + Math.sin(t * 0.0214 + 0.7) * 0.055) * dist;
-      var desvioY = ((deitado ? -0.205 : -0.085) + Math.sin(t * 0.0174) * 0.042
-                     + e2 * 0.075 + e3 * 0.005) * dist;
+      var desvioX = (-0.075 + Math.sin(t * 0.0214 + 0.7) * 0.048) * dist;
+      var desvioY = ((deitado ? -0.205 : -0.030) + Math.sin(t * 0.0174) * 0.034
+                     + e2 * (deitado ? 0.075 : 0.040)
+                     + e3 * (deitado ? 0.005 : 0.210)) * dist;
 
       gl.uniform2f(U.resolucao, largura, altura);
       gl.uniform1f(U.inclinacao, incl);
       gl.uniform1f(U.guinada, guin);
       /* a roda roda-o mesmo: mais de uma volta ao longo do curso, por cima
          da volta lenta que ele dá sozinho */
-      gl.uniform1f(U.giro, -t * 0.0235 - p * 2.15);
+      gl.uniform1f(U.giro, -t * 0.0235 - p * 3.30);
       gl.uniform1f(U.distancia, dist);
       gl.uniform1f(U.abertura, deitado ? 0.62 : 0.52);
       gl.uniform2f(U.desvio, desvioX, desvioY);
@@ -898,8 +904,11 @@
       gl.uniform2f(U.luzXY,
         (desvioX / dist + Math.sin(t * 0.0514 + 0.4) * 0.46 + (temRato ? ratoX * 0.92 : 0)) * dist,
         (desvioY / dist - 0.13 + Math.sin(t * 0.0421 + 1.9) * 0.34 - (temRato ? ratoY * 0.74 : 0)) * dist);
-      gl.uniform1f(U.luzZ, dist * (0.74 + Math.sin(t * 0.0259) * 0.10));
-      gl.uniform1f(U.luzAlcance, dist * 0.95 + 0.22);
+      gl.uniform1f(U.luzZ, dist * (0.88 + Math.sin(t * 0.0259) * 0.10));
+      /* De perto, a poça de luz tem de ser maior do que a peça que cabe no
+         ecrã: com o alcance preso a `dist`, havia voltas da roda em que a
+         superfície caía toda fora dela e a página ficava preta. */
+      gl.uniform1f(U.luzAlcance, dist * 1.55 + 0.30);
       gl.uniform1f(U.graoForca, deitado ? 0.08 : 0.12);
       gl.uniform1f(U.passosFundo, NIVEIS[nivel][0]);
       gl.uniform1f(U.passosSombra, NIVEIS[nivel][1]);
