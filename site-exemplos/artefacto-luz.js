@@ -106,7 +106,8 @@
     'uniform sampler2D mapaRel;',
     'uniform sampler2D mapaRug;',
     'uniform float inclinacao, guinada, giro, distancia, abertura;',
-    'uniform vec2  desvio, luzPlano;',
+    'uniform vec2  desvio, luzMira;',
+    'uniform vec2  luzBraco;',
     'uniform float luzAlt, luzAlcance, graoForca;',
     'uniform float passosFundo, passosSombra, passosLonge;',
 
@@ -363,7 +364,44 @@
          presa ao `eixoT` a luz dava a volta agarrada ao disco e nada mudava
          enquanto ele roda. Assim ela fica onde esta e e a peca que lhe passa
          por baixo. */
-    '  vec3 luzP = centro + eixoU * luzPlano.x + eixoV * luzPlano.y + cima * luzAlt;',
+      /* A lanterna pousa onde o rato aponta. O `luzMira` e o sitio do
+         rato no ecra; daqui sai um raio como o de qualquer pixel, cruza-se
+         com o plano da peca, e o ponto que der e onde a luz se poe -- a
+         `luzAlt` acima dele, que sao dois ou tres milimetros na peca.
+
+         Antes ela dava a volta a peca a uma distancia fixa e o rato so
+         dizia de que lado. Isso acendia metade do disco de uma vez: a
+         luz era rasante, mas era uma luz de sala rasante. Assim e uma
+         lanterna encostada ao relevo, e ve-se onde ela esta -- a dois
+         dedos dela ja esta tudo escuro, e e nesses dois dedos que as
+         fendas se abrem.
+
+         Nao se deixa ir muito para fora do aro: com o rato no canto da
+         pagina o raio quase nao cruza o plano, e o ponto fugia para o
+         infinito. */
+    '  vec3 rc = normalize(vec3(luzMira * abertura, 1.0));',
+    '  float dcc = dot(rc, cima);',
+    '  float tcc = (abs(dcc) > 1e-4) ? dot(centro, cima) / dcc : 1.0;',
+    '  float dAlvo = clamp(tcc, 0.05, 40.0);',
+    '  vec3 alvo = rc * dAlvo - centro;',
+    '  vec2 pl = vec2(dot(alvo, eixoU), dot(alvo, eixoV));',
+    '  float plr = length(pl);',
+    '  if (plr > RAIO * 1.25) pl *= RAIO * 1.25 / plr;',
+      /* E a lanterna nao esta *por cima* do sitio que ilumina: esta um
+         palmo ao lado, a apontar-lhe. Por cima, o meio da poca apanhava
+         a luz de frente e ficava uma mancha chapada e sem forma -- que
+         e a mesma doenca de antes, so que mais pequena. Ao lado, a luz
+         chega a vinte graus em *toda* a poca, e dentro dela nao ha um
+         sulco que nao tenha uma sombra atras.
+
+         O que ela acende e o circulo a volta do rato; de onde a luz vem
+         e o `luzBraco`. Sao duas coisas diferentes de proposito -- e um
+         foco, nao uma lampada pendurada. */
+    '  vec3 luzP = centro + eixoU * (pl.x + luzBraco.x)'
+                  + ' + eixoV * (pl.y + luzBraco.y) + cima * luzAlt;',
+      /* a mira, nos eixos que giram com o disco, para se poder medir dali
+         a cada ponto da peca */
+    '  vec2 mira = vec2(pl.x * cg + pl.y * sg, -pl.x * sg + pl.y * cg);',
 
       /* O raio, visto de dentro da peca. A base e ortonormal, por isso a volta
          e so a transposta -- e tHit continua a ser a distancia verdadeira. */
@@ -625,10 +663,19 @@
     '#endif',
     '  vec3 ponto = raio * tHit;',
 
-    '  vec3 paraLuz = luzP - ponto;',
-    '  float dLuz = length(paraLuz);',
-    '  paraLuz /= dLuz;',
-    '  float queda = 1.0 / (1.0 + pow(dLuz / luzAlcance, 2.3));',
+    '  vec3 paraLuz = normalize(luzP - ponto);',
+      /* A poca mede-se do ponto ate a *mira*, no plano da peca, e nao ate
+         a lanterna: e isso que a deixa ficar quieta por baixo do rato
+         enquanto a luz lhe chega de lado. Medida ate a lanterna, a poca
+         andava com ela e deixava o rato a iluminar ao lado do que
+         apontava. */
+      /* O raio da poca anda com a *distancia a que o rato aponta*, e nao
+         e um numero do mundo. Com um numero fixo, apontar para o alto do
+         ecra -- que e a parte da peca que esta longe -- dava uma poca que
+         na perspectiva encolhia a nada: metade do ecra nao acendia luz
+         nenhuma e parecia que o rato tinha deixado de servir. */
+    '  float alcance = luzAlcance * dAlvo;',
+    '  float queda = 1.0 / (1.0 + pow(length(q - mira) / alcance, 3.0));',
 
       /* A sombra que o relevo faz sobre si proprio. Sem ela, uma figura
          levantada meio milimetro acima do campo nao escurece nada a sua
@@ -670,7 +717,7 @@
     '        longe += clamp((TOPO(ps.xy, lodM) - ps.z) / RELEVO, 0.0, 1.0);',
     '      }',
     '      tapado = max(tapado, longe / max(passosLonge, 1.0) * 1.5);',
-    '      sombra = 1.0 - clamp(tapado * 3.0, 0.0, 0.93);',
+    '      sombra = 1.0 - clamp(tapado * 3.0, 0.0, 0.88);',
     '    }',
     '  }',
 
@@ -693,22 +740,32 @@
     '  vec3 CHAVE = vec3(1.0, 0.820, 0.560);',
     '  float luzQ = queda * sombra;',
 
-    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 1.50;',
-    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.010), 24.0) * F * ndl * luzQ * 2.70;',
+    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 3.60;',
+    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 9.0) * F * ndl * luzQ * 1.95;',
 
     '  vec3 amb = ambienteEm(reflect(-olho, N));',
     '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
     '  vec3 cor = difusa * CHAVE + especular * CHAVE;',
-    '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao * 0.60;',
-    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.105 * oclusao;',
+    '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao * 0.17;',
+    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.028 * oclusao;',
 
-    '  vec3 paraFria = normalize(centro - eixoU * luzPlano.x * 0.8'
-                  + ' - eixoV * luzPlano.y * 0.8 + cima * (luzAlt * 2.6 + 0.35) - ponto);',
-    '  cor += albedo * vec3(0.42, 0.56, 0.78) * max(dot(N, paraFria), 0.0) * 0.055;',
+    '  vec3 paraFria = normalize(centro - eixoU * pl.x * 0.9 - eixoV * pl.y * 0.9'
+                  + ' + cima * (luzAlt * 6.0 + 0.30) - ponto);',
+    '  cor += albedo * vec3(0.42, 0.56, 0.78) * max(dot(N, paraFria), 0.0) * 0.012;',
 
       /* o que esta mais longe do que o centro da peca perde-se no escuro: e o
-         que faz a vista rasante ter fundo em vez de acabar num corte */
-    '  cor *= exp(-max(tHit - distancia, 0.0) * 0.72);',
+         que faz a vista rasante ter fundo em vez de acabar num corte.
+
+         Subiu de 0,72 para 1,15 quando a luz passou a ser uma poca, e
+         passou a medir-se a partir do sitio para onde o rato aponta e nao do
+         centro da peca -- senao escurecia precisamente aquilo que se estava
+         a mandar iluminar. Numa
+         vista quase de perfil, o campo que fica para alem da poca e uma
+         faixa pálida e sem textura nenhuma -- esta tao de lado que um pixel
+         cobre meio centimetro de peca, e nessa escala ja nao ha grao que se
+         desenhe. Mais vale escuro: o que se ve passa a ser o que esta ao pe,
+         que e onde ha o que ver. */
+    '  cor *= exp(-max(tHit - dAlvo, 0.0) * 1.15);',
 
       /* uma curva de cinema em vez de um corte: o brilho passa muito acima do
          branco, e corta-lo a direito dava chapas brancas sem forma la dentro */
@@ -820,8 +877,8 @@
 
     var U = {};
     ['resolucao', 'mapaCor', 'mapaRel', 'mapaRug', 'inclinacao', 'guinada',
-     'giro', 'distancia', 'abertura', 'desvio', 'luzPlano', 'luzAlt', 'luzAlcance',
-     'graoForca', 'passosFundo', 'passosSombra', 'passosLonge']
+     'giro', 'distancia', 'abertura', 'desvio', 'luzMira', 'luzAlt', 'luzAlcance',
+     'luzBraco', 'graoForca', 'passosFundo', 'passosSombra', 'passosLonge']
       .forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     gl.enable(gl.BLEND);
@@ -984,34 +1041,35 @@
       gl.uniform1f(U.distancia, dist);
       gl.uniform1f(U.abertura, deitado ? 0.62 : 0.52);
       gl.uniform2f(U.desvio, desvioX, desvioY);
-      /* A lanterna. Não está no tecto: está pousada ao lado da peça, no
-         plano dela, e o rato diz de que lado. Quem passa o rato não está a
-         acender a sala — está a andar à volta da peça com a luz na mão, e
-         a cada passo é outra fiada de estrias que se levanta.
+      /* A lanterna vai onde o rato aponta. Não é o rumo, é o sítio: o
+         ponto do ecrã onde ele está, cruzado com o plano da peça (a conta
+         está no sombreador, que já tem lá os eixos todos).
 
-         O rato dá o *rumo*, não o sítio: a lanterna fica sempre à mesma
-         distância, a dar a volta. Ao pé do meio do ecrã o rumo não quer
-         dizer nada — dois pixéis de um lado ou do outro mandavam a luz
-         para o lado oposto —, por isso ali manda a volta que ela dá
-         sozinha, e o rato só vai entrando à medida que se afasta. */
-      var rr = Math.hypot(ratoX, ratoY);
-      var manda = temRato ? Math.min(rr / 0.30, 1) : 0;
-      var vagar = t * 0.085 + Math.sin(t * 0.031) * 0.60;
-      var lx = Math.cos(vagar) * (1 - manda) + (rr > 1e-4 ? ratoX / rr : 1) * manda;
-      var ly = Math.sin(vagar) * (1 - manda) - (rr > 1e-4 ? ratoY / rr : 0) * manda;
-      var ln = Math.hypot(lx, ly) || 1;
-      lx /= ln; ly /= ln;
-      /* E quanto mais para fora vai o rato, mais rasante ela fica: ao meio
-         está a vinte e dois graus, na borda a dez. É a diferença entre ver
-         a peça e ver o que ela tem escrito. */
-      var rasar = temRato ? Math.min(rr, 1) : 0.38;
-      var fora = dist * 0.92 + 0.30;
-      gl.uniform2f(U.luzPlano, lx * fora, ly * fora);
-      gl.uniform1f(U.luzAlt, fora * (0.41 - 0.23 * rasar) * (1 + Math.sin(t * 0.0259) * 0.07));
-      /* De perto, a poça de luz tem de ser maior do que a peça que cabe no
-         ecrã: com o alcance preso a `dist`, havia voltas da roda em que a
-         superfície caía toda fora dela e a página ficava preta. */
-      gl.uniform1f(U.luzAlcance, fora * 1.00 + 0.16);
+         Sem rato, passeia sozinha — uma volta lenta e desencontrada, para
+         quem chega à página ver a luz a andar e perceber que ela anda. */
+      var vagar = t * 0.074;
+      var soloX = Math.cos(vagar) * 0.46 + Math.sin(t * 0.0231 + 1.2) * 0.16;
+      var soloY = Math.sin(vagar * 0.82 + 0.6) * 0.30 + Math.sin(t * 0.0193) * 0.10;
+      var miraX = (temRato ? ratoX : soloX) + Math.sin(t * 0.0337 + 2.0) * 0.035;
+      var miraY = (temRato ? -ratoY : soloY) + Math.sin(t * 0.0281) * 0.028;
+      gl.uniform2f(U.luzMira, miraX * (largura / altura), miraY);
+      /* Rente à superfície. O relevo tem 0,020 de altura, e a lanterna
+         anda nos 0,05: é dessa diferença que nascem as sombras compridas
+         que fazem uma fenda parecer funda. Mais alta e a peça acende-se
+         toda; mais baixa e a luz passa por dentro das figuras. */
+      var alto = Math.max(dist * 0.045, 0.034) * (1 + Math.sin(t * 0.0259) * 0.10);
+      gl.uniform1f(U.luzAlt, alto);
+      /* O braço: de que lado está a mão que segura a lanterna. Roda
+         devagar, e por isso a mesma fenda acende de um lado, apaga, e
+         acende do outro — que é o que se faz com uma peça na mão quando
+         se quer perceber o que ela tem. O comprimento dá os vinte graus:
+         `alto / braço`. */
+      var braco = alto * 2.20;
+      var rumo = t * 0.116 + Math.sin(t * 0.047) * 0.9;
+      gl.uniform2f(U.luzBraco, Math.cos(rumo) * braco, Math.sin(rumo) * braco);
+      /* E a poça é uma poça: a dois dedos dela está tudo escuro. É isto
+         que faz a página dele ter mediana zero e a nossa não ter. */
+      gl.uniform1f(U.luzAlcance, 0.30);
       gl.uniform1f(U.graoForca, deitado ? 0.08 : 0.12);
       gl.uniform1f(U.passosFundo, NIVEIS[nivel][0]);
       gl.uniform1f(U.passosSombra, NIVEIS[nivel][1]);

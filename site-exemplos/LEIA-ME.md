@@ -486,8 +486,8 @@ dos lutadores se viam — e eram tubos lisos, porque também eles não tinham po
 onde mostrar a pele.
 
 Hoje a luz está **pousada no plano da peça**, um palmo acima da face dela. A
-dezassete graus de altura, uma estria de meio milímetro deita uma sombra de
-um milímetro e meio, e uma aresta apanha um risco de luz do comprimento dela.
+vinte e tal graus de altura, uma estria de meio milímetro deita uma sombra de
+mais de um milímetro, e uma aresta apanha um risco de luz do comprimento dela.
 É assim que se fotografa uma moeda, uma inscrição ou um baixo-relevo para se
 lhe ver o traço: encosta-se a luz ao plano e deixa-se a forma fazer o resto.
 O que apareceu com ela não foi desenhado agora — **já lá estava todo**, e não
@@ -495,18 +495,53 @@ havia luz que o mostrasse. A legenda grega, a greca, as fendas, as picadas da
 fundição, as correias enroladas nas mãos dos lutadores: tudo isso existia e
 não se via.
 
-- O rato dá o **rumo**, não o sítio. A lanterna fica sempre à mesma distância
-  e **anda à volta da peça**: é o gesto de quem a tem na mão e vira a luz
-  para a ver melhor. Ao pé do meio do ecrã o rumo não quer dizer nada — dois
-  pixéis de um lado ou do outro mandavam a luz para o lado oposto —, e por
-  isso ali manda a volta que ela dá sozinha; o rato só vai entrando à medida
-  que se afasta do meio.
-- E quanto mais para fora vai o rato, **mais rasante ela fica**: ao meio está
-  a vinte e dois graus, na borda a dez. É a diferença entre ver a peça e ver
-  o que ela tem escrito.
-- Mora nos eixos da peça **antes do giro**. Presa aos eixos girados, a luz
-  dava a volta agarrada ao disco e nada mudava enquanto ele rodava; assim ela
-  fica onde está e é a peça que lhe passa por baixo.
+#### A lanterna vai onde o rato aponta
+
+A primeira versão disto pôs a luz encostada ao plano, mas a dar a volta à
+peça a uma distância fixa: o rato dizia **de que lado**, e não **onde**. Ele
+viu e disse que ainda não era aquilo — que a do Primal *ilumina as fendas,
+vai ao pormenor*.
+
+Mediu-se a dele, em quatro sítios do rato, a 1440×900:
+
+| | o dele | o nosso, então |
+|---|---|---|
+| mediana da página | **0** | 30 |
+| média | 2 a 7 | 30 |
+| pixéis acima de 60 | 0,4% a 3,9% | 25% |
+
+Não é uma luz mais rasante: é **uma poça**. A página dele é preta, e o que
+se vê é a mancha que a lanterna faz, do tamanho de um palmo. Fora dela não
+há nada — nem peça, nem fundo, nem contorno.
+
+Hoje a nossa funciona assim. **O rato aponta e a luz pousa ali**: do sítio do
+rato no ecrã sai um raio como o de qualquer pixel, cruza-se com o plano da
+peça, e o ponto que der é o meio da poça.
+
+- **A lanterna não está por cima do que ilumina: está um palmo ao lado, a
+  apontar-lhe.** Por cima, o meio da poça apanhava a luz de frente e ficava
+  uma mancha chapada e sem forma — a mesma doença de antes, só que mais
+  pequena. Ao lado, a luz chega a vinte e tal graus em *toda* a poça, e lá
+  dentro não há sulco que não tenha uma sombra atrás. O braço roda devagar,
+  e por isso a mesma fenda acende de um lado, apaga, e acende do outro.
+- **A poça é medida do ponto até à mira, e não até à lanterna.** Medida até à
+  lanterna, a poça andava com ela e o rato iluminava ao lado do que apontava.
+- **O raio da poça anda com a distância a que o rato aponta.** Com um número
+  fixo do mundo, apontar para o alto do ecrã — que é a parte da peça que está
+  longe — dava uma poça que a perspectiva encolhia a nada: metade do ecrã não
+  acendia luz nenhuma e parecia que o rato tinha deixado de servir.
+- **O escurecimento da distância passou a medir-se a partir da mira**, e não
+  do centro da peça: senão escurecia precisamente aquilo que se estava a
+  mandar iluminar.
+- **Sem rato, passeia sozinha** — uma volta lenta e desencontrada, para quem
+  chega à página ver a luz a andar e perceber que ela anda. É também o que
+  acontece no telemóvel, onde não há rato nenhum.
+
+**E o resto apagou-se.** O que fazia a nossa página ter média 30 não era a
+chave: era o ambiente, que acendia a peça toda por igual e tirava a poça do
+meio. Caiu para um sexto, e a chave subiu para compensar. A página anda agora
+nos **15 a 24 de média**, contra os 2 a 7 dele — ele tem pedra cinzenta e luz
+branca, nós temos bronze escuro e uma manchete para ler por cima.
 
 **A sombra passou a ser duas marchas, e não uma.** Com a luz encostada, a
 sombra que um braço levantado deita à sua frente é dez vezes mais comprida do
@@ -594,8 +629,11 @@ que mais estiver a correr:
 | | antes | agora |
 |---|---|---|
 | mediana | 16,7 ms | 16,7 ms na maior parte do percurso |
-| média | 22,4 a 24,0 ms | 20,5 a 27,9 ms |
+| média | 22,4 a 24,0 ms | 17,6 a 26,7 ms |
 | ficheiros dos mapas | 1,4 MB | 3,7 MB no ecrã largo, 1,6 MB no estreito |
+
+A poça não custou nada: são duas contas a mais por pixel, e os pixéis que
+ficam escuros saem mais cedo das marchas da sombra.
 
 São **10 a 15% mais caro**, e ele pediu-o: *"se tivermos que exigir da
 máquina em fotogramas, pois bem"*. O que se comprou com isso foi o mapa ao
