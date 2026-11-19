@@ -71,25 +71,30 @@ preciso dizer: 580 KB contra os 17 MB dele estava longe da realidade. Quatro
 vezes o detalhe custou um megabyte, e o megabyte paga-se — é a imagem que a
 página inteira tem para dar.
 
-#### As cinco coisas que nenhuma imagem cozida tem
+#### As sete coisas que nenhuma imagem cozida tem
 
 Subir a resolução sozinho não chegava. O que faz a peça parecer metal, e não
 um desenho de metal, é isto, e nada disto cabe numa fotografia:
 
-1. **O relevo tem espessura.** O raio entra nele e procura onde bate mesmo
-   (paralaxe), por isso um braço levantado tapa o que está atrás dele quando
-   a peça se deita. É o que separa relevo de pintura numa folha lisa.
+1. **O relevo é geometria, e não pintura.** O raio percorre-o e bate onde
+   ele está mesmo, por isso um braço levantado tapa o que está atrás dele e
+   recorta-se contra o escuro quando a peça se deita.
 2. **O relevo faz sombra sobre si próprio.** Sem isso, uma figura levantada
    meio milímetro acima do campo não escurece nada à sua frente, e a luz
    rasante deixa de querer dizer seja o que for.
-3. **A aspereza muda de sítio para sítio.** O metal gasto nos pontos altos é
+3. **A peça está empenada.** Uma fundição não sai plana, e uma peça plana
+   lê-se como desenho — por mais relevo que tenha.
+4. **A aspereza muda de sítio para sítio.** O metal gasto nos pontos altos é
    polido e devolve um reflexo apertado; a patina do fundo é baça e não
    devolve nada. Uma peça com o mesmo brilho em todo o lado lê-se como
    plástico — e era esse o problema, não a forma.
-4. **Há uma sala à volta que o metal reflecte**, e não só uma lâmpada. Metade
+5. **O desgaste é às manchas**, e não igual em toda a peça. Há zonas comidas
+   e zonas que se salvaram; um bronze gasto por igual lê-se como material de
+   computador.
+6. **Há uma sala à volta que o metal reflecte**, e não só uma lâmpada. Metade
    do que o olho lê como metal vem daí, e não custa textura nenhuma: é uma
    conta sobre a direcção em que o reflexo sai.
-5. **As marcas do torno correm à volta do disco.** Ao acaso leem-se como
+7. **As marcas do torno correm à volta do disco.** Ao acaso leem-se como
    sujidade; em círculo leem-se como fabrico.
 
 E duas que são de fotografia e não de metal: uma **curva de cinema** em vez de
@@ -97,9 +102,9 @@ um corte (o brilho passa muito acima do branco, e cortá-lo a direito dava
 chapas brancas sem forma lá dentro) e **meio nível de ruído**, porque num
 escuro destes oito bits partem-se em anéis.
 
-O que se vê **não é uma imagem a rodar**: é um plano inclinado no espaço, e
-cada pixel do ecrã é um raio que vai lá bater. Por isso a perspectiva é a
-verdadeira — o lado de lá afasta-se e perde-se no escuro.
+O que se vê **não é uma imagem a rodar**: é uma peça no espaço, e cada pixel
+do ecrã é um raio que vai lá bater. Por isso a perspectiva é a verdadeira —
+o lado de lá afasta-se e perde-se no escuro.
 
 #### O disco abre o site
 
@@ -146,14 +151,10 @@ no seu tempo, e nunca voltam ao mesmo sítio ao mesmo tempo.
 
 #### O que se aprendeu, e vale a pena guardar
 
-- **A espessura do relevo não é um gosto, é uma conta.** A 0,030 do mapa, o
-  raio da paralaxe varria 300 pixéis de lado, e em dezoito passos isso são
-  dezassete pixéis por passo: as figuras saíam serradas aos degraus. A
-  0,0125, com o passo refinado por **cinco bissecções** no fim, o relevo fica
-  limpo. Sem as bissecções o passo fica onde calhou, e onde calhou lê-se como
-  uma escada.
-- **Ao longe, a paralaxe só acrescenta serrilha**: o passo passa a cobrir mais
-  mapa do que o pixel que serve. Por isso ela desaparece com a distância.
+- **O passo tem de ser refinado por bissecções no fim.** Sem elas fica onde
+  calhou, e onde calhou lê-se como uma escada. (Isto ficou, e vale na marcha
+  de hoje: são seis.) A altura do relevo em si foi decidida outra vez, e por
+  outra razão — ver **A peça passou a ter lado**, mais abaixo.
 - **O relevo nasce da derivada do mapa, e a derivada amplifica o que é
   miúdo.** Um ruído de superfície com um milésimo de altura dava uma peça
   com aspecto de casca de árvore. A patina mancha a **cor**, não a altura.
@@ -194,6 +195,113 @@ no seu tempo, e nunca voltam ao mesmo sítio ao mesmo tempo.
   no meio da peça — que é uma coisa muito diferente de um aro gasto.
 - **Uma fenda não passa por cima do KO.** Uma risca a atravessar duas letras
   lê-se como um erro de quem desenhou, não como o tempo.
+
+#### A peça passou a ter lado
+
+Ele viu a diferença e disse-a: o nosso continuava longe do dele, e **não se
+podia ver de lado**. Tinha razão nas duas, e a segunda explica a primeira.
+
+Até aqui o disco era **um plano inclinado** com o relevo fingido por paralaxe
+— o raio batia numa folha lisa e depois andava dentro da textura à procura da
+altura. De frente engana bem. De perfil não há nada para ver: **um plano
+visto de lado é uma linha**, e por isso a peça nunca podia deitar-se.
+
+Agora o disco é **um corpo**, e é o corpo que se percorre:
+
+| | O que é |
+|---|---|
+| a face | o campo, com o relevo por cima |
+| o bordo | um quarto de círculo que rola do campo para o aro |
+| o aro | a parede a toda a volta — 0,118 de espessura, com estrias de fundição e patina em baixo |
+| o verso | bronze bruto do molde, baço e escuro |
+
+O raio entra na caixa da peça — o cilindro do aro cortado pela fatia entre o
+verso e o cimo do relevo — e aí decide: se entrou pela parede é aro, se
+entrou por baixo é verso, e se entrou por cima **sobrevoa o relevo** até lhe
+bater. É isso que faz a vista rasante: um braço levantado tapa mesmo o que
+está atrás dele e recorta-se contra o escuro, em vez de se achatar.
+
+#### O que se mediu no site dele, desta vez
+
+A roda do rato dele foi percorrida de ponta a ponta, 50 passos, com
+fotografia a cada dois. O que se viu:
+
+- a peça dele é **muito maior do que o ecrã** — nunca se vê inteira. Ora se
+  está por cima do campo, ora encostado às figuras, ora fora do aro a olhar
+  para a parede de pedra.
+- a **câmara desce até quase ao plano** e os relevos levantam-se contra o
+  preto. Há fotogramas inteiros quase pretos, com um fio de luz.
+- o `scrollY` dele **nunca sai de zero**: a página tem a altura do ecrã e a
+  roda só mexe a câmara. (Já se sabia; confirmou-se outra vez.)
+- as texturas dele estão separadas por **zona da peça** —
+  `ColorAO_top`, `ColorAO_statues`, `ColorAO_flank`. O `flank` é o lado.
+  Quem separa o lado numa textura própria é porque o mostra.
+
+#### O caminho que a câmara faz agora
+
+Três tempos, no mesmo curso de roda que já havia:
+
+1. **Longe, a peça inteira.** É preciso vê-la uma vez para saber o que é —
+   as figuras, a greca, a legenda em grego.
+2. **Perto e em baixo.** O relevo, que de frente era um desenho, levanta-se:
+   as figuras tapam o que está atrás delas e fazem sombra à sua frente.
+3. **Quase de perfil.** Vê-se o que a peça nunca teve: a espessura, o aro a
+   toda a volta e o relevo a recortar-se contra o escuro.
+
+A viagem **não desanda** — acaba noutro sítio, que é o que faz valer a pena
+percorrê-la. E não vai *até* ao perfil: a 1,52 de inclinação a câmara ficava
+abaixo da face e só se via o aro, uma mancha castanha sem assunto. Fica em
+1,40, que é onde ainda se vê a face em fuga **e** a parede.
+
+Num ecrã ao alto a câmara **recua**, não se aproxima: a largura visível
+encolhe com o feitio do ecrã, e de perto o disco deixava de se ler como
+disco — era só bronze.
+
+#### O que se aprendeu a fazer isto
+
+- **O sinal do `y` da normal estava trocado**, desde sempre. O mapa de
+  normais vive nos eixos da textura, onde o *v* desce; o *y* da peça sobe.
+  A luz batia no lado errado de cada relevo. Confirmou-se contra a peça já
+  iluminada que o gerador produz — a mesma pose, a mesma luz, e as duas
+  fotografias lado a lado: com o sinal certo as figuras acendem-se por cima,
+  como nela; com o sinal de antes, por baixo.
+- **O relevo tinha de subir, mas não muito.** Estava em 0,0125, uma altura
+  pensada para a paralaxe e não para a verdade: de raspão, as figuras eram
+  **placas de papel** postas ao alto. Passou a 0,022. A 0,038 ficava melhor
+  ainda — e apareceu outro problema.
+- **A altura vem num canal de oito bits**, e são setenta e sete degraus para
+  todo o relevo. De frente não se nota; de raspão cada degrau espalha-se por
+  dezenas de pixeis e a peça vira **um terreno de socalcos**. O que os
+  desmancha é um grão fino somado à altura — e de caminho faz o que um
+  bronze fundido tem mesmo: superfície.
+- **O passo da marcha mede-se pelo que falta descer**, e não em fatias
+  iguais. Com fatias iguais, numa vista rasante cada passo valia vinte
+  texels e o relevo saía **aos quadrados**. Medido pela folga até ao chão
+  que está por baixo, longe dá passadas largas e em cima anda ao pixel.
+- **A lâmpada tem de andar com a câmara.** Presa ao mundo, a 1,0 do centro,
+  ficava *para lá* da peça assim que a câmara se aproximava — e a peça
+  aparecia toda em contraluz. A posição e o alcance dela vão agora em
+  unidades da distância.
+- **O desvio também.** O que ele vale no ecrã é `desvio/distância`: preso ao
+  mundo, a peça fugia do enquadramento ao aproximar-se.
+- **Uma peça fundida não sai plana.** O empeno são duas ondas cruzadas — não
+  ruído, para a inclinação sair por conta e não por diferenças — e é o que
+  tira à peça o ar de desenho: a luz escorrega por cima dele e, de lado, a
+  própria silhueta ondula.
+- **Um aro perfeitamente redondo é o primeiro sinal de computador.** O raio
+  leva mordidas; fundas de mais ficam com ar de cera, e por isso são rasas.
+- **O brilho passava tão acima do branco que o bronze perdia a cor.** Com a
+  chave mais baixa, as partes iluminadas voltam a ser castanhas em vez de
+  creme.
+
+#### O que custa
+
+Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
+2,1 milhões de pixeis): **16,7 ms por fotograma** — os 60 por segundo
+certos — no nível mais alto, do princípio ao fim da viagem. O nível
+automático não chegou a baixar. A marcha nova é mais trabalho do que a
+paralaxe antiga e mesmo assim não se paga aqui; nas máquinas fracas os
+quatro níveis de sempre continuam lá.
 
 #### Refazer a peça
 
