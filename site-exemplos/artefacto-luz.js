@@ -106,9 +106,8 @@
     'uniform sampler2D mapaRel;',
     'uniform sampler2D mapaRug;',
     'uniform float inclinacao, guinada, giro, distancia, abertura;',
-    'uniform vec2  desvio, luzMira;',
-    'uniform vec2  luzBraco;',
-    'uniform float luzAlt, luzAlcance, graoForca;',
+    'uniform vec2  desvio, luzRumo;',
+    'uniform float luzRasar, graoForca;',
     'uniform float passosFundo, passosSombra, passosLonge;',
 
     /* A peca, em unidades do mapa. O raio sai do desenho: o disco ocupa
@@ -378,62 +377,39 @@
     '  vec3 eixoT = eixoU * cg - eixoV * sg;',
     '  vec3 eixoB = eixoU * sg + eixoV * cg;',
 
-      /* A luz nao vem de cima: vem de encostada. E uma lanterna pousada no
-         plano da peca, um palmo acima da face dela, e e por isso que se ve
-         alguma coisa -- a esta altura cada estria deita uma sombra do seu
-         comprimento e cada aresta apanha um risco de luz. Um candeeiro ao
-         alto da peca ilumina-a toda por igual, e uma peca iluminada por
-         igual nao tem relevo nenhum: era isso que estava aqui.
+      /* A luz nao vem de cima: vem de encostada, rasante ao plano da
+         peca. A esta altura cada estria deita uma sombra do seu
+         comprimento e cada aresta apanha um risco de luz. Um candeeiro
+         ao alto ilumina a peca toda por igual, e uma peca iluminada por
+         igual nao tem relevo nenhum.
 
-         Mora no `eixoU`/`eixoV`, que sao os eixos da peca *antes* do giro:
-         presa ao `eixoT` a luz dava a volta agarrada ao disco e nada mudava
-         enquanto ele roda. Assim ela fica onde esta e e a peca que lhe passa
-         por baixo. */
-      /* A lanterna pousa onde o rato aponta. O `luzMira` e o sitio do
-         rato no ecra; daqui sai um raio como o de qualquer pixel, cruza-se
-         com o plano da peca, e o ponto que der e onde a luz se poe -- a
-         `luzAlt` acima dele, que sao dois ou tres milimetros na peca.
+         E nao e um foco. Nao esta pousada em sitio nenhum da peca: vem
+         de uma *direccao*, de longe, e cai sobre a peca toda. Por isso
+         nao ha mancha, nao ha contorno e nao ha um sitio onde a luz
+         esteja -- o que se ve acender e so o que tem declive, esteja
+         onde estiver: a parede de uma incisao, o bordo de uma figura, a
+         aresta de uma fenda, a picada da fundicao.
 
-         Antes ela dava a volta a peca a uma distancia fixa e o rato so
-         dizia de que lado. Isso acendia metade do disco de uma vez: a
-         luz era rasante, mas era uma luz de sala rasante. Assim e uma
-         lanterna encostada ao relevo, e ve-se onde ela esta -- a dois
-         dedos dela ja esta tudo escuro, e e nesses dois dedos que as
-         fendas se abrem.
+         Houve duas versoes antes desta e as duas eram lanternas. A
+         primeira dava a volta a peca a uma distancia fixa; a segunda
+         pousava onde o rato apontava, com a poca a alargar e a perder o
+         bordo. Qualquer poca da a mesma coisa, por larga e mansa que
+         seja: um *sitio* iluminado, e la dentro a peca a ver-se como se
+         veria em qualquer outro lado. O que foi pedido e o contrario --
+         que a luz nao ande a escolher sitios e so apareca onde ha
+         relevo.
 
-         Nao se deixa ir muito para fora do aro: com o rato no canto da
-         pagina o raio quase nao cruza o plano, e o ponto fugia para o
-         infinito. */
-    '  vec3 rc = normalize(vec3(luzMira * abertura, 1.0));',
-    '  float dcc = dot(rc, cima);',
-    '  float tcc = (abs(dcc) > 1e-4) ? dot(centro, cima) / dcc : 1.0;',
-    '  float dAlvo = clamp(tcc, 0.05, 40.0);',
-    '  vec3 alvo = rc * dAlvo - centro;',
-    '  vec2 pl = vec2(dot(alvo, eixoU), dot(alvo, eixoV));',
-    '  float plr = length(pl);',
-    '  if (plr > RAIO * 1.25) pl *= RAIO * 1.25 / plr;',
-      /* E a lanterna nao esta *por cima* do sitio que ilumina: esta um
-         palmo ao lado, a apontar-lhe. Por cima, o meio da poca apanhava
-         a luz de frente e ficava uma mancha chapada e sem forma -- que
-         e a mesma doenca de antes, so que mais pequena. Ao lado, a luz
-         chega a vinte graus em *toda* a poca, e dentro dela nao ha um
-         sulco que nao tenha uma sombra atras.
+         O que o rato manda e de *onde* ela vem (`luzRumo`) e quao
+         rasante chega (`luzRasar`): e isso que decide em que parede de
+         cada fenda e que ela aparece. Mexer o rato nao passeia mancha
+         nenhuma -- apaga uma parede da fenda e acende a outra.
 
-         O que ela acende e o circulo a volta do rato; de onde a luz vem
-         e o `luzBraco`. Sao duas coisas diferentes de proposito -- e um
-         foco, nao uma lampada pendurada. */
-    '  vec3 luzP = centro + eixoU * (pl.x + luzBraco.x)'
-                  + ' + eixoV * (pl.y + luzBraco.y) + cima * luzAlt;',
-      /* a mira, nos eixos que giram com o disco, para se poder medir dali
-         a cada ponto da peca */
-    '  vec2 mira = vec2(pl.x * cg + pl.y * sg, -pl.x * sg + pl.y * cg);',
-      /* e de que lado vem, nos mesmos eixos: e por este rumo que a poca
-         se estica. Uma luz rasante nao faz um circulo no chao -- faz uma
-         elipse deitada no rumo por onde chega, e um circulo de luz le-se
-         sempre como uma lanterna apontada a peca. */
-    '  vec2 bra = vec2(luzBraco.x * cg + luzBraco.y * sg,'
-                  + ' -luzBraco.x * sg + luzBraco.y * cg);',
-    '  vec2 rumoL = (dot(bra, bra) > 1e-9) ? normalize(bra) : vec2(1.0, 0.0);',
+         Mora no `eixoU`/`eixoV`, que sao os eixos da peca *antes* do
+         giro: presa ao `eixoT` a luz dava a volta agarrada ao disco e
+         nada mudava enquanto ele roda. Assim ela fica onde esta e e a
+         peca que lhe passa por baixo. */
+    '  vec3 paraLuz = normalize(eixoU * luzRumo.x + eixoV * luzRumo.y'
+                  + ' + cima * luzRasar);',
 
       /* O raio, visto de dentro da peca. A base e ortonormal, por isso a volta
          e so a transposta -- e tHit continua a ser a distancia verdadeira. */
@@ -723,40 +699,21 @@
     '  aspereza = clamp(sqrt(aspereza * aspereza + max(dot(dNx, dNx), dot(dNy, dNy)) * 0.80), 0.17, 1.0);',
     '#endif',
     '  vec3 ponto = raio * tHit;',
-      /* E aqui esta o que ele pediu: *o rato diz onde a luz aparece nas
-         fendas*. A luz nao se reparte por igual pelo que esta debaixo
-         dela -- quem a apanha e o que tem declive: a parede de uma
-         incisao, o bordo de uma figura, a aresta de uma fenda, a picada
-         da fundicao. O campo liso fica no escuro mesmo no meio da poca.
+      /* E aqui esta o pedido: a luz **so** aparece na parede de uma
+         incisao, no bordo de uma figura, na aresta de uma fenda, na
+         picada da fundicao. Quem a apanha e o declive; o campo liso
+         fica no escuro, e fica no escuro *em toda a peca* -- nao ha
+         sitio nenhum onde ele acenda.
 
-         Sem isto, a poca era uma mancha clara por cima da peca, com as
-         fendas la dentro. Com isto, a mancha e feita *das* fendas: o que
-         se ve acender nao e o sitio, e o desenho que esta naquele sitio. */
+         O chao desta conta era 0,26 e e ele que fazia a luz continuar
+         a ler-se como um foco: um quarto da chave chegava ao campo
+         liso, e um campo liso levemente aceso **e** a mancha da
+         lanterna -- tem forma, tem bordo, e o relevo la dentro passa
+         a ser o que se ve por estar iluminado em vez de ser o que
+         ilumina. A zero, a unica coisa com luz na peca e o relevo, e o
+         desenho desenha-se a si proprio. */
     '  float declive = clamp(1.0 - abs(Nobj.z), 0.0, 1.0);',
-    '  float fendas = mix(0.26, 1.0, smoothstep(0.012, 0.16, declive));',
-
-    '  vec3 paraLuz = normalize(luzP - ponto);',
-      /* A poca mede-se do ponto ate a *mira*, no plano da peca, e nao ate
-         a lanterna: e isso que a deixa ficar quieta por baixo do rato
-         enquanto a luz lhe chega de lado. Medida ate a lanterna, a poca
-         andava com ela e deixava o rato a iluminar ao lado do que
-         apontava. */
-      /* O raio da poca anda com a *distancia a que o rato aponta*, e nao
-         e um numero do mundo. Com um numero fixo, apontar para o alto do
-         ecra -- que e a parte da peca que esta longe -- dava uma poca que
-         na perspectiva encolhia a nada: metade do ecra nao acendia luz
-         nenhuma e parecia que o rato tinha deixado de servir. */
-    '  float alcance = luzAlcance * dAlvo;',
-      /* Larga e sem bordo, de proposito. Era um disco de luz com a cauda
-         curta -- um palmo ao lado estava tudo preto, e o que se via era a
-         mancha da lanterna e nao a peca. Hoje a mancha nao tem contorno
-         nenhum: quem diz onde esta a luz e o que ela levanta no relevo,
-         logo abaixo. Esticada no rumo por onde a luz chega. */
-    '  vec2 dq = q - mira;',
-    '  float dpar = dot(dq, rumoL) * 0.56;',
-    '  float dper = dot(dq, vec2(-rumoL.y, rumoL.x));',
-    '  float queda = 1.0 / (1.0 + pow(sqrt(dpar * dpar + dper * dper)'
-                  + ' / alcance, 2.2));',
+    '  float fendas = smoothstep(0.010, 0.145, declive);',
 
       /* A sombra que o relevo faz sobre si proprio. Sem ela, uma figura
          levantada meio milimetro acima do campo nao escurece nada a sua
@@ -817,16 +774,24 @@
 
     '  vec3 BRONZE = vec3(0.735, 0.545, 0.330);',
     '  vec3 F0 = mix(vec3(0.045), BRONZE, metal);',
-    '  vec3 F = F0 + (1.0 - F0) * pow(1.0 - vdh, 5.0);',
+      /* O Fresnel rasante e o que fazia a aresta acesa sair um tubo de
+         creme. A conta de manual leva qualquer material a espelhar como
+         um vidro quando a luz chega quase de lado -- e esta luz chega
+         *sempre* quase de lado. Um bronze comido nao espelha assim: a
+         rugosidade nao deixa, e por isso o tecto do Fresnel desce com a
+         aspereza em vez de ir a um. E o que devolve a cor ao bordo que
+         a luz levanta -- era branco, e o branco nao tem liga nenhuma
+         com a peca. */
+    '  vec3 F = F0 + (max(vec3(1.0 - aspereza), F0) - F0) * pow(1.0 - vdh, 5.0);',
       /* A chave era ambar -- 1,00 / 0,82 / 0,56 -- e isso punha verniz
          dourado na peca toda, aqui e nas pedras do fundo. A luz de quem
          examina uma peca e branca; o ouro ha de vir do bronze, e nao da
          lampada. */
     '  vec3 CHAVE = vec3(1.0, 0.893, 0.772);',
-    '  float luzQ = queda * sombra * fendas;',
+    '  float luzQ = sombra * fendas;',
 
-    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 2.45;',
-    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 5.0) * F * ndl * luzQ * 1.30;',
+    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 1.34;',
+    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 3.0) * F * ndl * luzQ * 0.70;',
 
     '  vec3 amb = ambienteEm(reflect(-olho, N));',
     '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
@@ -834,23 +799,23 @@
     '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao * 0.17;',
     '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.028 * oclusao;',
 
-    '  vec3 paraFria = normalize(centro - eixoU * pl.x * 0.9 - eixoV * pl.y * 0.9'
-                  + ' + cima * (luzAlt * 6.0 + 0.30) - ponto);',
+      /* o enchimento frio vem de cima e do lado contrario a chave, para
+         a parede que fica as escuras nao ficar um buraco preto */
+    '  vec3 paraFria = normalize(cima * 0.88 - paraLuz * 0.52);',
     '  cor += albedo * vec3(0.42, 0.56, 0.78) * max(dot(N, paraFria), 0.0) * 0.012;',
 
-      /* o que esta mais longe do que o centro da peca perde-se no escuro: e o
-         que faz a vista rasante ter fundo em vez de acabar num corte.
+      /* o que esta mais longe do que o centro da peca perde-se no escuro:
+         e o que faz a vista rasante ter fundo em vez de acabar num corte.
+         Numa vista quase de perfil, o campo que fica alem do centro e uma
+         faixa palida e sem textura nenhuma -- esta tao de lado que um
+         pixel cobre meio centimetro de peca, e nessa escala ja nao ha
+         grao que se desenhe. Mais vale escuro.
 
-         Subiu de 0,72 para 1,15 quando a luz passou a ser uma poca, e
-         passou a medir-se a partir do sitio para onde o rato aponta e nao do
-         centro da peca -- senao escurecia precisamente aquilo que se estava
-         a mandar iluminar. Numa
-         vista quase de perfil, o campo que fica para alem da poca e uma
-         faixa pálida e sem textura nenhuma -- esta tao de lado que um pixel
-         cobre meio centimetro de peca, e nessa escala ja nao ha grao que se
-         desenhe. Mais vale escuro: o que se ve passa a ser o que esta ao pe,
-         que e onde ha o que ver. */
-    '  cor *= exp(-max(tHit - dAlvo, 0.0) * 1.15);',
+         Volta a medir-se a partir do *centro* da peca, e nao do sitio
+         para onde o rato aponta: deixou de haver sitio nenhum para onde
+         o rato aponte. E aliviou de 1,15 para 0,80, que era o travao da
+         poca -- sem poca, 1,15 comia metade do relevo que agora acende. */
+    '  cor *= exp(-max(tHit - distancia, 0.0) * 0.80);',
 
       /* uma curva de cinema em vez de um corte: o brilho passa muito acima do
          branco, e corta-lo a direito dava chapas brancas sem forma la dentro */
@@ -962,8 +927,8 @@
 
     var U = {};
     ['resolucao', 'mapaCor', 'mapaRel', 'mapaRug', 'inclinacao', 'guinada',
-     'giro', 'distancia', 'abertura', 'desvio', 'luzMira', 'luzAlt', 'luzAlcance',
-     'luzBraco', 'graoForca', 'passosFundo', 'passosSombra', 'passosLonge']
+     'giro', 'distancia', 'abertura', 'desvio', 'luzRumo', 'luzRasar',
+     'graoForca', 'passosFundo', 'passosSombra', 'passosLonge']
       .forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     gl.enable(gl.BLEND);
@@ -1131,43 +1096,35 @@
          lado dele. */
       gl.uniform1f(U.abertura, deitado ? 0.56 : 0.46);
       gl.uniform2f(U.desvio, desvioX, desvioY);
-      /* A lanterna vai onde o rato aponta. Não é o rumo, é o sítio: o
-         ponto do ecrã onde ele está, cruzado com o plano da peça (a conta
-         está no sombreador, que já tem lá os eixos todos).
+      /* O rato diz de **onde** a luz vem, e não onde ela cai. Não há onde
+         ela cai: cai na peça toda, e só o relevo a apanha. Mexer o rato
+         não passeia mancha nenhuma pela página — apaga uma parede de cada
+         fenda e acende a outra, e o desenho da peça muda de feição sem
+         que nada se acenda em volta dele.
 
-         Sem rato, passeia sozinha — uma volta lenta e desencontrada, para
-         quem chega à página ver a luz a andar e perceber que ela anda. */
-      var vagar = t * 0.074;
-      var soloX = Math.cos(vagar) * 0.46 + Math.sin(t * 0.0231 + 1.2) * 0.16;
-      /* E no ecrã estreito passeia mais abaixo: ali a peça está no rodapé,
-         porque é o texto que manda na parte de cima. Sem isto havia voltas
-         inteiras em que a lanterna andava a iluminar página preta. */
-      var soloY = Math.sin(vagar * 0.82 + 0.6) * 0.30 + Math.sin(t * 0.0193) * 0.10
-               - (deitado ? 0.46 : 0);
-      var miraX = (temRato ? ratoX : soloX) + Math.sin(t * 0.0337 + 2.0) * 0.035;
-      var miraY = (temRato ? -ratoY : soloY) + Math.sin(t * 0.0281) * 0.028;
-      gl.uniform2f(U.luzMira, miraX * (largura / altura), miraY);
-      /* Rente à superfície. O relevo tem 0,020 de altura, e a lanterna
-         anda nos 0,05: é dessa diferença que nascem as sombras compridas
-         que fazem uma fenda parecer funda. Mais alta e a peça acende-se
-         toda; mais baixa e a luz passa por dentro das figuras. */
-      var alto = Math.max(dist * 0.045, 0.034) * (1 + Math.sin(t * 0.0259) * 0.10);
-      gl.uniform1f(U.luzAlt, alto);
-      /* O braço: de que lado está a mão que segura a lanterna. Roda
-         devagar, e por isso a mesma fenda acende de um lado, apaga, e
-         acende do outro — que é o que se faz com uma peça na mão quando
-         se quer perceber o que ela tem. O comprimento dá os vinte graus:
-         `alto / braço`. */
-      var braco = alto * 2.20;
-      var rumo = t * 0.116 + Math.sin(t * 0.047) * 0.9;
-      gl.uniform2f(U.luzBraco, Math.cos(rumo) * braco, Math.sin(rumo) * braco);
-      /* A poça alargou de 0,30 para 0,46, e pode alargar porque deixou de
-         ser ela a acender o que quer que seja: quem apanha a luz é o
-         declive, e o campo liso fica escuro esteja onde estiver. Uma poça
-         estreita dava uma mancha de lanterna a um canto da página e o
-         resto preto — e era essa mancha, e não a peça, que tinha o
-         tamanho de um artefacto pequeno. */
-      gl.uniform1f(U.luzAlcance, 0.46);
+         Ao pé do meio do ecrã o rumo não quer dizer nada — dois pixéis de
+         um lado ou do outro mandavam a luz para o lado oposto —, e por
+         isso ali manda a volta que ela dá sozinha; o rato só vai entrando
+         à medida que se afasta do meio. */
+      var rr = Math.hypot(ratoX, ratoY);
+      var manda = temRato ? Math.min(rr / 0.26, 1) : 0;
+      var vagar = t * 0.074 + Math.sin(t * 0.031) * 0.55;
+      var rx = Math.cos(vagar) * (1 - manda) + (rr > 1e-4 ? ratoX / rr : 1) * manda;
+      var ry = Math.sin(vagar) * (1 - manda) - (rr > 1e-4 ? ratoY / rr : 0) * manda;
+      var rn = Math.hypot(rx, ry) || 1;
+      gl.uniform2f(U.luzRumo, rx / rn, ry / rn);
+      /* E quanto mais para fora vai o rato, mais rasante ela fica: ao meio
+         está a dezassete graus, na borda a dez. Rasante, a mesma fenda
+         deita uma sombra quase do dobro do comprimento — é a diferença
+         entre ver a peça e ver o que ela tem escrito.
+
+         Não desce mais do que isto. Chegou a ir aos nove graus e a
+         essa altura a luz quase não entra em nada: com a chave presa
+         ao declive, uma luz rasante de mais deixa de acender sequer as
+         paredes, e o canto de cima do ecrã apagava a peça toda. */
+      var rasar = temRato ? Math.min(rr, 1) : 0.42;
+      gl.uniform1f(U.luzRasar,
+                   (0.31 - 0.13 * rasar) * (1 + Math.sin(t * 0.0259) * 0.09));
       gl.uniform1f(U.graoForca, deitado ? 0.08 : 0.12);
       gl.uniform1f(U.passosFundo, NIVEIS[nivel][0]);
       gl.uniform1f(U.passosSombra, NIVEIS[nivel][1]);

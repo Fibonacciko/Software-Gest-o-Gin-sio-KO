@@ -654,6 +654,11 @@ círculo de luz com coisas lá dentro: é feita **das próprias fendas**.
   quartos nesse rumo, que é o do braço que segura a lanterna. Um círculo de
   luz lê-se sempre como uma lanterna apontada à peça.
 
+**Isto ficou a meio caminho, e ele viu-o logo.** A poça alargou, perdeu o
+contorno e deixou de ser redonda, mas continuou a ser uma poça — e o quarto
+de luz que o campo liso ainda apanhava lá dentro chegava para ela ter forma.
+A secção **A luz não é um foco**, mais abaixo, é o resto do caminho.
+
 #### Mais cru
 
 *"Apesar de ser ouro, será que o conseguimos fazer mais cru?"* O que fazia a
@@ -722,6 +727,66 @@ por três lados ao mesmo tempo:
 Num ecrã ao alto, a mesma coisa em menor grau: 2,30 para 2,10, e a objectiva
 de 0,62 para 0,56.
 
+#### A luz não é um foco
+
+*"Consigo perceber que a luz agora bate na parede de uma incisão, no bordo de
+uma figura, na aresta de uma fenda, na picada da fundição mas continua a agir
+como uma lanterna. A luz não deve agir como um foco mas sim como uma luz que
+SÓ aparece na parede de uma incisão."*
+
+Ele tem razão, e o erro era de desenho e não de afinação. **Qualquer poça dá
+sempre a mesma coisa**, por larga, mansa e deitada que seja: um *sítio*
+iluminado, com a peça lá dentro a ver-se como se veria em qualquer outro
+lado. Alargá-la não a tira; só a torna maior.
+
+Por isso a luz deixou de estar em sítio nenhum. **Vem de uma direcção, de
+longe, e cai sobre a peça toda** — como quando se leva uma peça à janela em
+vez de lhe apontar uma lanterna. Não há mancha, não há contorno e não há um
+sítio onde a luz esteja: o que acende é o que tem declive, esteja onde
+estiver, e o campo liso fica no escuro de um lado ao outro do disco.
+
+- **O chão da conta do declive era 0,26, e é ele que fazia a luz continuar a
+  ler-se como um foco.** Um quarto da chave chegava ao campo liso — e um
+  campo liso levemente aceso *é* a mancha da lanterna: tem forma e tem bordo,
+  e o relevo lá dentro passa a ser o que se vê por estar iluminado em vez de
+  ser o que ilumina. A zero, a única coisa com luz na peça é o relevo.
+- **O que o rato manda passou a ser de onde a luz vem**, e já não onde ela
+  cai — porque deixou de haver onde ela cai. Mexê-lo não passeia mancha
+  nenhuma pela página: **apaga uma parede de cada fenda e acende a outra**, e
+  o desenho inteiro muda de feição sem que nada se acenda em volta dele. Foi
+  visto nas quatro posições do rato, e o mesmo boxeador vem de um lado e do
+  outro.
+- E quanto mais para fora vai o rato, **mais rasante ela fica**: ao meio a
+  dezassete graus, na borda a dez. Não desce mais. Chegou a ir aos nove e a
+  essa altura a luz já quase não entra em nada — com a chave presa ao
+  declive, uma luz rasante de mais nem as paredes acende, e um canto do ecrã
+  apagava a peça toda.
+- **A poça levava dois `pow()` por pixel e foi-se embora com eles.** Isto
+  ficou mais barato do que estava.
+
+**E o bordo aceso era branco.** Com a poça fora, as arestas que a luz levanta
+passaram a ser o que se vê da peça — e saíam tubos de creme, que é o aspecto
+de plástico de que ele se queixava desde o princípio. A culpa é do Fresnel: a
+conta de manual leva qualquer material a espelhar como um vidro quando a luz
+chega quase de lado, e **esta luz chega sempre quase de lado**. Um bronze
+comido não espelha assim — a rugosidade não deixa —, e por isso o tecto do
+Fresnel passou a descer com a aspereza em vez de ir a um. É o que devolve a
+cor ao bordo: medido, o alto da aresta estava em 171/147/108 e está em
+127/103/72, que é bronze e já não é creme.
+
+A chave desceu com ele — 2,45 para 1,34 no difuso, 1,30 para 0,70 no
+especular. Sem poça, a mesma chave acendia o relevo da peça inteira ao mesmo
+tempo e o que se ganhava em desenho perdia-se em branco queimado.
+
+| | com poça | sem poça |
+|---|---|---|
+| mediana da página | 13 | **9 a 10** |
+| média | 20,2 a 21,2 | **15,2 a 16,0** |
+| pixéis acima de 60 | 4,5% a 5,2% | 4,4% a 6,0% |
+
+A página ficou mais escura e tem mais peça à vista ao mesmo tempo — que é o
+que acontece quando se deixa de acender o chão.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
@@ -733,11 +798,11 @@ que mais estiver a correr:
 | | antes | agora |
 |---|---|---|
 | mediana | 16,7 ms | 16,7 ms em todo o percurso |
-| média | 22,4 a 24,0 ms | 18,7 a 24,3 ms |
+| média | 22,4 a 24,0 ms | 17,3 a 23,8 ms |
 | ficheiros dos mapas | 1,4 MB | 3,7 MB no ecrã largo, 1,6 MB no estreito |
 
-A poça não custou nada: são duas contas a mais por pixel, e os pixéis que
-ficam escuros saem mais cedo das marchas da sombra. A sujidade fina, a
+A poça foi-se embora e levou os dois `pow()` que tinha por pixel: a luz de
+agora é uma direcção, e uma direcção não se mede. A sujidade fina, a
 porosidade e a pele das paredes também não — são ruído, e o ruído só é pedido
 quando o tamanho dele cabe num pixel; de longe nem chega a ser calculado.
 
