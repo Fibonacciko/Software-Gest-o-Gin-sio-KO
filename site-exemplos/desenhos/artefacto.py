@@ -26,12 +26,20 @@ from PIL import Image, ImageDraw, ImageFont
 
 random.seed(7); np.random.seed(7)
 
-N = 2560                      # lado da tela de construcao
-LADO = 2048                   # lado dos mapas que vao para o site.
+N = 4096                      # lado da tela de construcao
+LADO = 4096                   # lado dos mapas que vao para o site.
+LADO_PEQUENO = 2048           # o mesmo mapa, para os ecras estreitos.
+# Tudo o que aqui esta escrito em pixeis nasceu numa tela de 2560 e um
+# disco de 952. Mudar a tela sem mudar esses numeros nao da uma peca mais
+# nitida: da outra peca -- com os borroes mais apertados, as picadas mais
+# pequenas e os riscos mais finos *em relacao a ela propria*. Por isso o
+# que se escreve aqui sao medidas da peca, e a escala converte-as.
+ESC = N / 2560.0
+MESC = LADO / 2048.0          # a mesma coisa, do lado do mapa
 # Potencia de dois de proposito: o WebGL 1 so faz mipmaps em texturas assim,
 # e sem mipmaps o lado longe do disco -- que a perspectiva comprime tres
 # vezes -- cintila a cada volta.
-R = 952.0                     # raio do disco
+R = 952.0 * ESC               # raio do disco
 C = N / 2.0
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -91,6 +99,8 @@ def encolher(a, lado):
     Com um filtro a serio cada pixel de saida pesa os de entrada como deve, e
     o xadrez nao nasce. Cuidado com o `clip`: ele existe para o `borrar`, que
     trabalha em alturas de 0 a 1; um raio em pixeis nao passa por aqui."""
+    if lado == a.shape[0]:
+        return np.asarray(a, dtype=np.float32)
     im = Image.fromarray(np.clip(a, -8, 8).astype(np.float32), mode='F')
     return np.asarray(im.resize((lado, lado), Image.LANCZOS), dtype=np.float32)
 
@@ -414,24 +424,27 @@ alt = dentro * (0.40 + 0.050 * np.clip(1 - (rr / R) ** 2, 0, 1))
 # a volta e diz "isto e uma peca", nao um recorte.
 u_aro = np.clip((rr - R * 0.905) / (R * 0.082), 0, 1)
 alt += dentro * np.sqrt(np.clip(1 - (2 * u_aro - 1) ** 2, 0, 1)) * 0.115
-alt -= borrar(((rr > R * 0.880) & (rr < R * 0.908)).astype(np.float32), 6) * 0.055  # a goteira
+alt -= borrar(((rr > R * 0.880) & (rr < R * 0.908)).astype(np.float32), 6 * ESC) * 0.055  # a goteira
 
 # a inscricao, incisa no rebaixo entre o aro e a greca
-alt -= borrar(((rr > R * 0.790) & (rr < R * 0.884)).astype(np.float32), 7) * 0.030
-alt -= borrar(enrolar(tira_da_legenda(7200, 190), R * 0.800, R * 0.874), 2.6) * 0.105
+alt -= borrar(((rr > R * 0.790) & (rr < R * 0.884)).astype(np.float32), 7 * ESC) * 0.030
+alt -= borrar(enrolar(tira_da_legenda(int(7200 * ESC), int(190 * ESC)),
+                       R * 0.800, R * 0.874), 2.6 * ESC) * 0.105
 # as barras que separam os painees da legenda
 barras = ((np.abs(((ang + math.pi) / (2 * math.pi) * 36) % 1.0 - 0.5) > 0.470)
           & (rr > R * 0.792) & (rr < R * 0.882)).astype(np.float32)
-alt += borrar(barras, 3) * 0.045
+alt += borrar(barras, 3 * ESC) * 0.045
 
 # o astragalo entre a legenda e a greca
-alt += borrar(enrolar(tira_das_contas(4800, 72, 132), R * 0.756, R * 0.792), 3) * 0.080
+alt += borrar(enrolar(tira_das_contas(int(4800 * ESC), int(72 * ESC), 132),
+                       R * 0.756, R * 0.792), 3 * ESC) * 0.080
 
 # o anel da greca
-alt += borrar(enrolar(tira_do_meandro(6400, 320, 38), R * 0.640, R * 0.744), 4) * 0.115
+alt += borrar(enrolar(tira_do_meandro(int(6400 * ESC), int(320 * ESC), 38),
+                       R * 0.640, R * 0.744), 4 * ESC) * 0.115
 
 # fio fino a separar o campo da greca
-alt += borrar(((rr > R * 0.612) & (rr < R * 0.630)).astype(np.float32), 3.5) * 0.070
+alt += borrar(((rr > R * 0.612) & (rr < R * 0.630)).astype(np.float32), 3.5 * ESC) * 0.070
 
 # ---- as figuras ----
 figs = mascara(cena)
@@ -442,35 +455,36 @@ figs = np.clip(figs + mascara(chao), 0, 1)
 # Os bordos sao firmes de proposito. Com a normal exagerada trinta e sete
 # vezes um bordo mole lia-se na mesma; com a normal honesta, o que da o
 # degrau e o degrau. Um relevo fundido tem o canto redondo, nao derretido.
-relevo = np.clip(borrar(figs, 4.5) * 1.45, 0, 1) ** 0.75
-relevo = relevo * 0.5 + np.clip(borrar(figs, 1.6) * 1.2, 0, 1) * 0.5
+relevo = np.clip(borrar(figs, 4.5 * ESC) * 1.45, 0, 1) ** 0.75
+relevo = relevo * 0.5 + np.clip(borrar(figs, 1.6 * ESC) * 1.2, 0, 1) * 0.5
 alt += relevo * 0.200 * dentro
 
 # o musculo por cima do relevo, so onde ha corpo
-mus = borrar(mascara(musculos_largos), 18) * figs
+mus = borrar(mascara(musculos_largos), 18 * ESC) * figs
 alt += np.clip(mus * 1.80, 0, 1) * 0.034 * dentro
-mus2 = borrar(mascara(musculos_finos), 7) * figs
+mus2 = borrar(mascara(musculos_finos), 7 * ESC) * figs
 alt += np.clip(mus2 * 1.70, 0, 1) * 0.016 * dentro
 
 # e as incisoes por cima do musculo
 # Fundos: um sulco raso desaparece quando a luz lhe bate de frente, e e
 # precisamente ai que o corpo precisa de se ler. Com 0,072 as figuras ficavam
 # lisas de cada vez que a poca de luz lhes passava por cima.
-alt -= borrar(mascara(incisoes) * np.clip(borrar(figs, 4) * 1.6, 0, 1), 1.6) * 0.036
+alt -= borrar(mascara(incisoes) * np.clip(borrar(figs, 4 * ESC) * 1.6, 0, 1),
+              1.6 * ESC) * 0.036
 
 # a inscricao do centro: KO em letras gregas, incisa como a legenda
 def letras(d, esc):
     f = fonte(int(R * 0.138 * esc))
     d.text((C * esc, (C - R * 0.470) * esc), '\u039a\u039f', font=f, fill=255, anchor='mm')
-alt -= borrar(mascara(letras), 3) * 0.085 * dentro
+alt -= borrar(mascara(letras), 3 * ESC) * 0.085 * dentro
 
 # --------------------------- o tempo -----------------------------------
 # Sem desgaste isto e um logotipo. Com desgaste e uma peca que esteve dois
 # mil e setecentos anos debaixo de terra.
 
 ruido = np.random.rand(N, N).astype(np.float32)
-grosso = normalizar(borrar(ruido, 30))
-medio = normalizar(borrar(ruido, 8))
+grosso = normalizar(borrar(ruido, 30 * ESC))
+medio = normalizar(borrar(ruido, 8 * ESC))
 
 # A patina mancha a *cor* e nao a altura: um bronze manchado continua a ser
 # uma superficie lisa. Confundir as duas da casca de arvore -- o relevo sai
@@ -497,8 +511,8 @@ alt += (grosso * 0.0035 + medio * 0.0012) * dentro
 # contas nenhumas e tem de se parecer com a peca viva.
 # Na greca e nas figuras vem mais fracos: o torno toca no que esta ao nivel
 # do campo, nao no que foi fundido levantado.
-treme = normalizar(borrar(np.random.rand(N, N).astype(np.float32), 55))
-ponta = np.clip(0.55 + 0.45 * normalizar(borrar(np.random.rand(N, N).astype(np.float32), 75)), 0.12, 1.0)
+treme = normalizar(borrar(np.random.rand(N, N).astype(np.float32), 55 * ESC))
+ponta = np.clip(0.55 + 0.45 * normalizar(borrar(np.random.rand(N, N).astype(np.float32), 75 * ESC)), 0.12, 1.0)
 PASSO_DO_TORNO = R * 0.0095                 # ~9 px aqui, ~7 no mapa
 torno = (np.sin(rr / PASSO_DO_TORNO * 2 * math.pi + treme * 2.2)
          * ponta * (1.0 - 0.55 * np.clip(relevo, 0, 1)) * 0.0026 * dentro)
@@ -508,9 +522,9 @@ im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
 for _ in range(38):
     a = random.uniform(0, 2 * math.pi); q = R * math.sqrt(random.uniform(0, 1)) * 0.97
     x, y = C + q * math.cos(a), C + q * math.sin(a)
-    s = random.uniform(10, 56)
+    s = random.uniform(10, 56) * ESC
     d.ellipse([x - s, y - s * random.uniform(.5, 1.2), x + s, y + s * random.uniform(.5, 1.2)], fill=255)
-alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 20) * 0.013 * dentro
+alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 20 * ESC) * 0.013 * dentro
 
 # picadas da fundicao: bolhas de ar que vieram a superficie. So as graudas
 # vao para o mapa -- as miudas sao grao, e o grao faz-se no sombreador: um
@@ -523,13 +537,13 @@ for _ in range(44):
     a = random.uniform(0, 2 * math.pi); q = R * math.sqrt(random.uniform(0, 1)) * 0.96
     nx0, ny0 = C + q * math.cos(a), C + q * math.sin(a)
     for _ in range(random.randint(4, 18)):
-        x = nx0 + random.gauss(0, 46); y = ny0 + random.gauss(0, 46)
+        x = nx0 + random.gauss(0, 46 * ESC); y = ny0 + random.gauss(0, 46 * ESC)
         if math.hypot(x - C, y - C) > R * 0.985:
             continue
-        s = random.uniform(1.4, 5.6)
+        s = random.uniform(1.4, 5.6) * ESC
         d.ellipse([x - s, y - s, x + s, y + s], fill=255)
 picadas = np.asarray(im, dtype=np.float32) / 255.0
-alt -= borrar(picadas, 1.5) * 0.042 * dentro
+alt -= borrar(picadas, 1.5 * ESC) * 0.042 * dentro
 
 # riscos: a peca foi arrastada, pousada e limpa durante seculos. Sao finos --
 # um pixel -- e por isso nao se veem de longe; de perto sao metade do que
@@ -540,18 +554,19 @@ for _ in range(74):
     q = R * math.sqrt(random.uniform(0, 1)) * 0.95
     x, y = C + q * math.cos(a), C + q * math.sin(a)
     rumo = random.uniform(0, 2 * math.pi)
-    comp = random.uniform(40, 320)
+    comp = random.uniform(40, 320) * ESC
     pts = [(x, y)]
-    passos = max(2, int(comp / 18))
+    passos = max(2, int(comp / (18 * ESC)))
     for _ in range(passos):
         rumo += random.uniform(-0.09, 0.09)     # um risco quase nao verga
-        x += 18 * math.cos(rumo); y += 18 * math.sin(rumo)
+        x += 18 * ESC * math.cos(rumo); y += 18 * ESC * math.sin(rumo)
         if math.hypot(x - C, y - C) > R * 0.97:
             break
         pts.append((x, y))
     if len(pts) > 1:
-        d.line(pts, fill=random.randint(120, 255), width=1, joint='curve')
-alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 0.9) * 0.014 * dentro
+        d.line(pts, fill=random.randint(120, 255), width=max(1, int(round(ESC))),
+               joint='curve')
+alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 0.9 * ESC) * 0.014 * dentro
 
 # fendas: o metal fadigado racha, e a racha corre sem destino
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
@@ -562,24 +577,25 @@ for _ in range(11):
     pts = [(x, y)]
     for _ in range(random.randint(14, 34)):
         rumo += random.uniform(-0.55, 0.55)
-        passo = random.uniform(12, 34)
+        passo = random.uniform(12, 34) * ESC
         x += passo * math.cos(rumo); y += passo * math.sin(rumo)
         if math.hypot(x - C, y - C) > R * 0.99:
             break
         pts.append((x, y))
     if len(pts) > 2:
-        d.line(pts, fill=255, width=random.choice([1, 2, 2, 3]), joint='curve')
+        d.line(pts, fill=255, width=int(round(random.choice([1, 2, 2, 3]) * ESC)),
+               joint='curve')
 fendas = np.asarray(im, dtype=np.float32) / 255.0
 # A fenda nao passa por cima do KO. Uma risca a atravessar duas letras le-se
 # como um erro de quem desenhou, e nao como o tempo: o olho ve um O cortado
 # e pensa que alguem se enganou.
 longe_do_ko = np.clip((np.hypot(xx - C, yy - (C - R * 0.470)) - R * 0.150) / (R * 0.07), 0, 1)
-alt -= borrar(fendas * longe_do_ko, 1.5) * 0.085 * dentro
+alt -= borrar(fendas * longe_do_ko, 1.5 * ESC) * 0.085 * dentro
 
 # o gito: o rebarbo por onde o bronze entrou no molde, limado mas nao a zero
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
 d.ellipse([C + R * .54, C - R * .80, C + R * .70, C - R * .70], fill=255)
-alt += borrar(np.asarray(im, dtype=np.float32) / 255.0, 9) * 0.045 * dentro
+alt += borrar(np.asarray(im, dtype=np.float32) / 255.0, 9 * ESC) * 0.045 * dentro
 
 # o aro comido: a borda nao e um circulo perfeito, foi-se lascando
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
@@ -588,7 +604,7 @@ im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
 # diferente de um aro gasto.
 for _ in range(13):
     a = random.uniform(0, 2 * math.pi)
-    s = random.uniform(9, 30)
+    s = random.uniform(9, 30) * ESC
     q = R + s * random.uniform(0.42, 0.95)
     x, y = C + q * math.cos(a), C + q * math.sin(a)
     pts = []
@@ -632,7 +648,7 @@ ALT_CAMPO = 0.4338                 # a moda: o plano onde assenta o relevo
 POR_UNIDADE = 0.0200 / (0.6972 - ALT_CAMPO)
 alt_p = np.clip(alt_p, ALT0, ALT1)
 # fora do disco fica o campo, para a derivada nao ver um penhasco no aro
-alt_p = np.where(rr_p <= R_p + 2.0, alt_p, ALT_CAMPO)
+alt_p = np.where(rr_p <= R_p + 2.0 * MESC, alt_p, ALT_CAMPO)
 altura8 = np.clip((alt_p - ALT0) / (ALT1 - ALT0), 0, 1)
 
 # as normais: e a derivada da altura que faz o relevo, e a escala e a
@@ -651,8 +667,8 @@ nx, ny, nz = nx / ln, ny / ln, nz / ln
 
 # oclusao: o que esta em baixo recebe menos luz do ceu. E o que da a peca o
 # ar de suja e funda em vez de impressa.
-longe = borrar(alt_p, 26)
-perto = borrar(alt_p, 7)
+longe = borrar(alt_p, 26 * MESC)
+perto = borrar(alt_p, 7 * MESC)
 oc = np.clip(0.30 + 1.05 * (alt_p * 0.34 + perto * 0.36 + longe * 0.30) - 0.16, 0.06, 1.0)
 oc = oc ** 1.25
 
@@ -682,14 +698,24 @@ cor_ao = np.clip(bronze * oc[..., None], 0, 1)
 # proprio corpo (`raioEm`, no sombreador), que tambem leva mordidas e tem de
 # concordar com o aro e com o verso. Dois recortes diferentes -- um aqui e
 # outro la -- abriam buracos por onde se via o outro lado.
-alfa = np.clip((R_p - rr_p) / 1.8, 0, 1)
+alfa = np.clip((R_p - rr_p) / (1.8 * MESC), 0, 1)
 alfa = np.clip(alfa - lascas_p * 0.95, 0, 1)
-alfa = np.clip(borrar(alfa, 1.0), 0, 1)
+alfa = np.clip(borrar(alfa, 1.0 * MESC), 0, 1)
 
 def guardar(nome, arr, modo, **kw):
     Image.fromarray(arr, modo).save(os.path.join(SAIDA, nome), **kw)
 
-guardar('artefacto-cor.webp', (cor_ao ** (1 / 2.2) * 255).astype(np.uint8), 'RGB',
+def mirrar(arr, lado):
+    """Um mapa de 8 bits, mais pequeno. LANCZOS pela mesma razao de
+       sempre: uma media de area nesta razao poe um xadrez de um pixel
+       nos bordos, invisivel no mapa e inteiro na derivada dele."""
+    if arr.shape[0] == lado:
+        return arr
+    im = Image.fromarray(arr, 'RGB' if arr.ndim == 3 else 'L')
+    return np.asarray(im.resize((lado, lado), Image.LANCZOS))
+
+guardar('artefacto-cor.webp',
+        mirrar((cor_ao ** (1 / 2.2) * 255).astype(np.uint8), LADO_PEQUENO), 'RGB',
         quality=88, method=6)
 
 # --------------------------- a aspereza --------------------------------
@@ -708,13 +734,13 @@ metal = np.clip(0.30 + 0.62 * gasto + 0.30 * np.clip((alt_p - 0.52) / 0.18, 0, 1
 
 # cavidade: o fundo estreito de um sulco nao ve o ceu. E o passa-alto da
 # altura, e e o que faz as incisoes nao desaparecerem a luz de frente.
-cav = np.clip(0.5 + (alt_p - borrar(alt_p, 9)) * 7.0, 0, 1)
+cav = np.clip(0.5 + (alt_p - borrar(alt_p, 9 * MESC)) * 7.0, 0, 1)
 
-guardar('artefacto-rug.webp', np.dstack([
+guardar('artefacto-rug.webp', mirrar(np.dstack([
     (aspereza * 255).astype(np.uint8),
     (metal * 255).astype(np.uint8),
     (cav * 255).astype(np.uint8),
-]), 'RGB', quality=76, method=6)
+]), LADO_PEQUENO), 'RGB', quality=76, method=6)
 # Aqui as perdas nao custam: uma aspereza 2% ao lado nao se ve, e sao 120 KB
 # menos. No mapa de relevo seria o contrario -- la, um erro vira ondulacao
 # na luz, que e exactamente o que esse mapa existe para evitar.
@@ -732,6 +758,23 @@ def degraus(v, passo=1):
 
 rel = np.dstack([degraus(nx), degraus(ny), (altura8 * 255).astype(np.uint8)])
 guardar('artefacto-rel.webp', rel, 'RGB', lossless=True, quality=100, method=6)
+
+# E o mesmo mapa pequeno, para os ecras estreitos. Nao se encolhe o mapa
+# ja feito: encolhe-se a *altura* e refazem-se as normais a escala dela.
+# Encolher normais e fazer a media de direccoes, e a media de duas
+# encostas opostas e um chao -- a parede do relevo desaparecia.
+if LADO_PEQUENO != LADO:
+    alt_q = np.asarray(Image.fromarray(alt_p, mode='F')
+                       .resize((LADO_PEQUENO, LADO_PEQUENO), Image.LANCZOS),
+                       dtype=np.float32)
+    esc_q = POR_UNIDADE / (0.7437 / (R * LADO_PEQUENO / float(N)))
+    gyq, gxq = np.gradient(alt_q)
+    qx, qy, qz = -gxq * esc_q, -gyq * esc_q, np.ones_like(alt_q)
+    lq = np.sqrt(qx * qx + qy * qy + qz * qz) + 1e-6
+    guardar('artefacto-rel-2k.webp', np.dstack([
+        degraus(qx / lq), degraus(qy / lq),
+        (np.clip((alt_q - ALT0) / (ALT1 - ALT0), 0, 1) * 255).astype(np.uint8),
+    ]), 'RGB', lossless=True, quality=100, method=6)
 
 # --------------------------- o retrato cozido --------------------------
 # Para quem nao tem WebGL. A mesma peca, com uma luz fixa -- e com a mesma

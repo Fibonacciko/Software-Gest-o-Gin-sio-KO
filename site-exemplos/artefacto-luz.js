@@ -60,8 +60,22 @@
   'use strict';
 
   var MAPA_COR = 'fotos/artefacto-cor.webp';
-  var MAPA_REL = 'fotos/artefacto-rel.webp';
   var MAPA_RUG = 'fotos/artefacto-rug.webp';
+  /* O relevo tem dois tamanhos. No fim da viagem a câmara fica a pairar um
+     décimo acima da superfície, e ali um texel do mapa de 2048 cobre dois
+     pixéis do ecrã: tudo o que é bordo sai amolecido, por mais passos que a
+     marcha dê. Com 4096 passa a haver mais mapa do que ecrã, e o limite
+     deixa de ser ele.
+
+     Num ecrã estreito fica o de sempre, e não é para poupar bytes: são 89
+     MB de memória de vídeo contra 22, e no telemóvel a câmara nem chega
+     perto — ali o que prende a peça é a largura. Os outros dois mapas ficam
+     nos 2048 nos dois casos: a cor e a aspereza não têm bordos, e o que se
+     ganhava neles não se via. */
+  var GRANDE = false;
+  function mapaDoRelevo() {
+    return GRANDE ? 'fotos/artefacto-rel.webp' : 'fotos/artefacto-rel-2k.webp';
+  }
 
   var VERTICE = [
     'attribute vec2 posicao;',
@@ -92,15 +106,16 @@
     'uniform sampler2D mapaRel;',
     'uniform sampler2D mapaRug;',
     'uniform float inclinacao, guinada, giro, distancia, abertura;',
-    'uniform vec2  desvio, luzXY;',
-    'uniform float luzZ, luzAlcance, graoForca, passosFundo, passosSombra;',
+    'uniform vec2  desvio, luzPlano;',
+    'uniform float luzAlt, luzAlcance, graoForca;',
+    'uniform float passosFundo, passosSombra, passosLonge;',
 
     /* A peca, em unidades do mapa. O raio sai do desenho: o disco ocupa
-       761,6 pixeis dos 1024 de meio mapa, e o mapa vai de -1 a 1. */
+       74,4% do lado do mapa, qualquer que ele seja, e o mapa vai de -1 a 1. */
     'const float RAIO  = 0.7437;',
     'const float BISEL = 0.040;',
     'const float ESP   = 0.118;',
-    'const float MAPA  = 2048.0;',
+    '%MAPA%',
 
     /* O canal da altura, lido como o gerador o escreveu. Estes dois numeros
        sao impressos pelo `desenhos/artefacto.py` no fim de cada corrida, e tem
@@ -210,7 +225,7 @@
        tres contas, desenham-se a qualquer tamanho, e o raio entra-lhes mesmo --
        fazem parte do corpo e nao da pintura. */
     'const float TORNO_K = 897.0;',
-    'const float TORNO_A = 0.000062;',
+    'const float TORNO_A = 0.000024;',
     /* A fase leva um desvio que anda com q: a peca nao ficou perfeitamente
        centrada no torno, e os aneis saem um pouco excentricos -- que e o
        que eles fazem a serio. Um seno so, e nao tres: isto e chamado a cada
@@ -225,7 +240,7 @@
     /* Uma onda mais curta do que isto nao cabe num pixel do ecra: desenha-la na
        mesma nao acrescenta nada e poe a peca a formigar quando roda. */
     'float cabe(float onda, float porPixel) {',
-    '  return clamp(onda / max(porPixel * 3.2, 1e-6) - 0.6, 0.0, 1.0);',
+    '  return clamp(onda / max(porPixel * 2.4, 1e-6) - 0.45, 0.0, 1.0);',
     '}',
 
     'float alturaEm(vec2 q, float lod) {',
@@ -254,15 +269,29 @@
     '  vec2 g = vec2(0.0);',
     '  float c1 = cabe(0.0480, porPixel);',
     '  if (c1 > 0.01) {',
-    '    g += onda(q, vec2( 0.9135,  0.4068), 131.0, 0.030 * c1, 0.0);',
-    '    g += onda(q, vec2(-0.2756,  0.9613), 167.0, 0.026 * c1, 1.7);',
-    '    g += onda(q, vec2( 0.6691, -0.7431), 211.0, 0.022 * c1, 3.1);',
+    '    g += onda(q, vec2( 0.9135,  0.4068), 131.0, 0.017 * c1, 0.0);',
+    '    g += onda(q, vec2(-0.2756,  0.9613), 167.0, 0.015 * c1, 1.7);',
+    '    g += onda(q, vec2( 0.6691, -0.7431), 211.0, 0.013 * c1, 3.1);',
     '  }',
     '  float c2 = cabe(0.0145, porPixel);',
     '  if (c2 > 0.01) {',
-    '    g += onda(q, vec2( 0.3090,  0.9511), 433.0, 0.016 * c2, 0.6);',
-    '    g += onda(q, vec2(-0.8829,  0.4695), 541.0, 0.013 * c2, 2.4);',
-    '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.011 * c2, 4.2);',
+    '    g += onda(q, vec2( 0.3090,  0.9511), 433.0, 0.030 * c2, 0.6);',
+    '    g += onda(q, vec2(-0.8829,  0.4695), 541.0, 0.026 * c2, 2.4);',
+    '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.022 * c2, 4.2);',
+    '  }',
+      /* E uma terceira fiada, de comprimento de onda de meio milimetro na
+         peca. Sem ela o campo, de perto, era sabao: tinha ondulacao e nao
+         tinha pele. */
+    '  float c3 = cabe(0.0052, porPixel);',
+    '  if (c3 > 0.01) {',
+    '    g += onda(q, vec2( 0.5878,  0.8090), 1213.0, 0.015 * c3, 2.0);',
+    '    g += onda(q, vec2(-0.6947,  0.7193), 1511.0, 0.013 * c3, 5.1);',
+    '    g += onda(q, vec2( 0.9945, -0.1045), 1759.0, 0.011 * c3, 0.9);',
+      /* Tres ondas da mesma medida leem-se como um tecido: ha sempre uma
+         direccao em que a trama bate certo. Metade da forca vem daqui, que
+         nao tem direccao nenhuma. */
+    '    vec3 nf = ruidoD(q * 302.0 + 17.1);',
+    '    g += nf.yz * (0.030 * c3);',
     '  }',
     '  return g;',
     '}',
@@ -276,7 +305,7 @@
     '  if (f3 > 0.01) {',
     '    vec2 r = vec2(q.x * 0.4536 + q.y * 0.8912, -q.x * 0.8912 + q.y * 0.4536);',
     '    vec3 n = ruidoD(r * 780.0 + 41.3);',
-    '    g += vec2(n.y * 0.4536 - n.z * 0.8912, n.y * 0.8912 + n.z * 0.4536) * (0.026 * f3);',
+    '    g += vec2(n.y * 0.4536 - n.z * 0.8912, n.y * 0.8912 + n.z * 0.4536) * (0.055 * f3);',
     '  }',
     '  return g * forca;',
     '}',
@@ -287,7 +316,7 @@
     '  vec2 s = vec2(dot(q, e), dot(q, vec2(-e.y, e.x)));',
     '  vec3 n = ruidoD(vec2(s.x * 22.0, s.y * 520.0));',
     '  float corta = smoothstep(0.62, 0.95, n.x);',
-    '  vec2 d = vec2(n.y * 22.0, n.z * 520.0) * corta * 0.00013 * f;',
+    '  vec2 d = vec2(n.y * 22.0, n.z * 520.0) * corta * 0.00024 * f;',
     '  return vec2(d.x * e.x - d.y * e.y, d.x * e.y + d.y * e.x);',
     '}',
 
@@ -322,6 +351,19 @@
     '  float cg = cos(giro), sg = sin(giro);',
     '  vec3 eixoT = eixoU * cg - eixoV * sg;',
     '  vec3 eixoB = eixoU * sg + eixoV * cg;',
+
+      /* A luz nao vem de cima: vem de encostada. E uma lanterna pousada no
+         plano da peca, um palmo acima da face dela, e e por isso que se ve
+         alguma coisa -- a esta altura cada estria deita uma sombra do seu
+         comprimento e cada aresta apanha um risco de luz. Um candeeiro ao
+         alto da peca ilumina-a toda por igual, e uma peca iluminada por
+         igual nao tem relevo nenhum: era isso que estava aqui.
+
+         Mora no `eixoU`/`eixoV`, que sao os eixos da peca *antes* do giro:
+         presa ao `eixoT` a luz dava a volta agarrada ao disco e nada mudava
+         enquanto ele roda. Assim ela fica onde esta e e a peca que lhe passa
+         por baixo. */
+    '  vec3 luzP = centro + eixoU * luzPlano.x + eixoV * luzPlano.y + cima * luzAlt;',
 
       /* O raio, visto de dentro da peca. A base e ortonormal, por isso a volta
          e so a transposta -- e tHit continua a ser a distancia verdadeira. */
@@ -370,7 +412,7 @@
     '#define EMPENO(Q) (e0 + dot((Q) - qe, eG))',
     '#define TOPO(Q, L) (campo(length(Q)) + EMPENO(Q) + alturaEm((Q), (L)))',
     '  float tMeio = (t0 + min(t1, t0 + 0.6)) * 0.5;',
-    '  float lodM = clamp(log2(max(tMeio * abertura * 1024.0 / resolucao.y, 1.0)), 0.0, 7.0);',
+    '  float lodM = clamp(log2(max(tMeio * abertura * MAPA * 0.5 / resolucao.y, 1.0)), 0.0, 7.0);',
     '  int tipo = 0;',
     '  float tHit = -1.0;',
     '  bool bateu = false;',
@@ -391,11 +433,12 @@
          campo, e a legenda, o KO e a goteira so existiam na luz. */
     '  float tAnt = t0;',
     '  if (!bateu) {',
-    '    float passoMin = max(0.0011 / max(passosFundo / 22.0, 0.45), 0.0007);',
+    '    float passoMin = max(0.00085 / max(passosFundo / 26.0, 0.45), 0.00055);',
     '    float fundoTodo = RELEVO + FUNDO;',
     '    float t = t0;',
-    '    for (int i = 0; i < 52; i++) {',
-    '      if (t >= t1) break;',
+    '    bool saiu = false;',
+    '    for (int i = 0; i < 72; i++) {',
+    '      if (t >= t1) { saiu = true; break; }',
     '      vec3 p = o + d * t;',
     '      float cz = campo(length(p.xy)) + EMPENO(p.xy);',
     '      if (p.z > cz + RELEVO + TORNO_A) {',
@@ -415,8 +458,19 @@
     '      t += clamp((p.z - zs) * 0.80 / max(-d.z, 0.025),',
     '                 passoMin, mix(passoMin * 1.5, 0.0120, clamp(folga, 0.0, 1.0)));',
     '    }',
-        /* Oito bisseccoes entre o passo que passou e o anterior. Sem elas o
-           passo fica onde calhou, e as bordas do relevo leem-se como degraus. */
+      /* Ficar sem passos la dentro nao e nao ter batido. Numa vista quase
+         de perfil o raio atravessa a peca quase paralelo a face: desce um
+         pixel de altura por cada cem que anda de lado, e os passos acabam
+         antes de ele chegar ao fim da fatia. Ate aqui isso era um
+         `discard` -- o pixel ficava a ver o fundo da pagina --, e como
+         uns pixeis acabavam os passos e os vizinhos nao, o bordo do
+         relevo saia aos dentes, regulares como os de uma serra. Agora
+         fica-se com o ponto onde se parou: a essa altura o passo ja e o
+         minimo, e o erro e menos de um pixel. Sair da fatia pelo outro
+         lado, esse sim, e nao ter batido. */
+    '    if (!bateu && !saiu) { bateu = true; tHit = t; tAnt = max(tAnt, t - 0.0013); }',
+      /* Oito bisseccoes entre o passo que passou e o anterior. Sem elas o
+         passo fica onde calhou, e as bordas do relevo leem-se como degraus. */
     '    if (bateu) {',
     '      float lo = tAnt, hi = tHit;',
     '      for (int i = 0; i < 8; i++) {',
@@ -448,7 +502,7 @@
     /* O mapa veio de uma peca muito mais baca do que a que se queria: a
        0,90 o campo nao devolve nada e le-se como barro cozido. Bronze
        enterrado nao e espelho, mas e metal -- devolve a janela toda. */
-    '    aspereza = clamp(rug.r * 0.74 + 0.02, 0.05, 1.0);',
+    '    aspereza = clamp(rug.r * 0.74 + 0.06, 0.11, 1.0);',
     '    metal = clamp(rug.g * 1.25, 0.04, 1.0);',
     '    cavidade = rug.b;',
     '    albedo = pow(texture2D(mapaCor, uv).rgb, vec3(2.2));',
@@ -464,8 +518,8 @@
     '    float polido = smoothstep(0.22, 0.80, acima) * smoothstep(0.26, 0.74, manchas);',
     '    float funda = smoothstep(0.04, 0.42, abaixo);',
     '    albedo = mix(albedo, vec3(0.330, 0.252, 0.150), polido * 0.70);',
-    '    albedo = mix(albedo, vec3(0.030, 0.042, 0.036), funda * 0.60);',
-    '    aspereza = clamp(aspereza - polido * 0.30 + funda * 0.18, 0.05, 1.0);',
+    '    albedo = mix(albedo, vec3(0.038, 0.050, 0.044), funda * 0.42);',
+    '    aspereza = clamp(aspereza - polido * 0.26 + funda * 0.18, 0.11, 1.0);',
     '    metal = clamp(metal + polido * 0.40 - funda * 0.22, 0.04, 1.0);',
     '    oclusao = mix(1.0, 0.22, funda) * mix(0.55, 1.0, cavidade);',
 
@@ -479,7 +533,8 @@
        o que se ve nelas e o recorte, nao a superficie. */
     '    float plano = clamp(1.0 - length(nxy) * 1.7, 0.0, 1.0);',
     '    nxy -= empenoDeclive(q);',
-    '    nxy += dir * tornoDeclive(q, r) * cabe(0.0070, porPixel) * plano;',
+    '    nxy += dir * tornoDeclive(q, r) * cabe(0.0070, porPixel) * plano'
+                  + ' * (1.0 - 0.75 * acima);',
     '    nxy += grao(q, porPixel, (0.6 + graoForca * 2.2) * plano);',
     '    nxy += riscos(q, porPixel, (0.25 + 0.75 * acima) * plano);',
 
@@ -566,11 +621,11 @@
        vez de ser um ponto. */
     '#ifdef GL_OES_standard_derivatives',
     '  vec3 dNx = dFdx(N), dNy = dFdy(N);',
-    '  aspereza = clamp(sqrt(aspereza * aspereza + max(dot(dNx, dNx), dot(dNy, dNy)) * 0.80), 0.05, 1.0);',
+    '  aspereza = clamp(sqrt(aspereza * aspereza + max(dot(dNx, dNx), dot(dNy, dNy)) * 0.80), 0.11, 1.0);',
     '#endif',
     '  vec3 ponto = raio * tHit;',
 
-    '  vec3 paraLuz = vec3(luzXY, luzZ) - ponto;',
+    '  vec3 paraLuz = luzP - ponto;',
     '  float dLuz = length(paraLuz);',
     '  paraLuz /= dLuz;',
     '  float queda = 1.0 / (1.0 + pow(dLuz / luzAlcance, 2.3));',
@@ -581,8 +636,8 @@
     '  float sombra = 1.0;',
     '  if (tipo == 0 && passosSombra >= 2.0) {',
     '    vec3 L = vec3(dot(paraLuz, eixoT), dot(paraLuz, eixoB), dot(paraLuz, cima));',
-    '    if (L.z > 0.05) {',
-    '      float sMax = (RELEVO + FUNDO) / max(L.z, 0.09);',
+    '    if (L.z > 0.02) {',
+    '      float sMax = (RELEVO + FUNDO) / max(L.z, 0.05);',
     '      float tapado = 0.0;',
     /* O primeiro passo e sorteado pixel a pixel. Com todos os raios a
        provar nos mesmos sitios, a parede sombreada saia as barras -- doze
@@ -590,13 +645,32 @@
        apanhado ora por uma ora pela seguinte. Sorteado, o erro deixa de ter
        feitio e le-se como grao. */
     '      float jit = baralha(gl_FragCoord.xy * 1.37);',
-    '      for (int i = 0; i < 14; i++) {',
+      /* Duas marchas, e nao uma. Com a luz encostada, a sombra que uma
+         figura levantada deita a sua frente e dez vezes mais comprida do
+         que a altura dela: uma marcha so, esticada ate la, da passadas de
+         quinze texels e perde pelo caminho tudo o que e fino -- que e
+         precisamente o que esta luz existe para mostrar.
+
+         A primeira anda ao pe do ponto, a passo de texel: e a que apanha
+         a estria, o risco e a picada, e e ela que faz o veio aparecer. A
+         segunda vai ate ao fim, a passadas largas, e e a que apanha o
+         braco levantado a tapar o campo. */
+    '      float sP = min(0.0085, sMax);',
+    '      for (int i = 0; i < 18; i++) {',
     '        if (float(i) >= passosSombra) break;',
-    '        float s = sMax * (float(i) + jit) / passosSombra;',
+    '        float s = sP * (float(i) + jit) / passosSombra;',
     '        vec3 ps = P + L * s;',
-    '        tapado = max(tapado, (TOPO(ps.xy, lodM) - ps.z) / RELEVO * (1.0 - float(i) / passosSombra));',
+    '        tapado = max(tapado, (TOPO(ps.xy, lodM) - ps.z) / RELEVO);',
     '      }',
-    '      sombra = 1.0 - clamp(tapado * 4.2, 0.0, 0.92);',
+    '      float longe = 0.0;',
+    '      for (int i = 0; i < 12; i++) {',
+    '        if (float(i) >= passosLonge) break;',
+    '        float s = mix(sP, sMax, (float(i) + jit) / passosLonge);',
+    '        vec3 ps = P + L * s;',
+    '        longe += clamp((TOPO(ps.xy, lodM) - ps.z) / RELEVO, 0.0, 1.0);',
+    '      }',
+    '      tapado = max(tapado, longe / max(passosLonge, 1.0) * 1.5);',
+    '      sombra = 1.0 - clamp(tapado * 3.0, 0.0, 0.93);',
     '    }',
     '  }',
 
@@ -619,16 +693,17 @@
     '  vec3 CHAVE = vec3(1.0, 0.820, 0.560);',
     '  float luzQ = queda * sombra;',
 
-    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 2.75;',
-    '  vec3 especular = (D * G * 0.25 / max(ndl * ndv, 1e-4)) * F * ndl * luzQ * 1.9;',
+    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 1.50;',
+    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.010), 24.0) * F * ndl * luzQ * 2.70;',
 
     '  vec3 amb = ambienteEm(reflect(-olho, N));',
     '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
     '  vec3 cor = difusa * CHAVE + especular * CHAVE;',
-    '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao;',
-    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.22 * oclusao;',
+    '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao * 0.60;',
+    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.105 * oclusao;',
 
-    '  vec3 paraFria = normalize(vec3(-luzXY * 0.75, luzZ * 0.9) - ponto);',
+    '  vec3 paraFria = normalize(centro - eixoU * luzPlano.x * 0.8'
+                  + ' - eixoV * luzPlano.y * 0.8 + cima * (luzAlt * 2.6 + 0.35) - ponto);',
     '  cor += albedo * vec3(0.42, 0.56, 0.78) * max(dot(N, paraFria), 0.0) * 0.055;',
 
       /* o que esta mais longe do que o centro da peca perde-se no escuro: e o
@@ -728,7 +803,8 @@
     var prog = gl.createProgram();
     gl.attachShader(prog, compilar(gl, gl.VERTEX_SHADER, VERTICE));
     gl.attachShader(prog, compilar(gl, gl.FRAGMENT_SHADER,
-      FRAGMENTO.replace('%PRECISAO%', 'precision ' + precisao + ' float;')));
+      FRAGMENTO.replace('%PRECISAO%', 'precision ' + precisao + ' float;')
+               .replace('%MAPA%', 'const float MAPA = ' + (GRANDE ? '4096.0' : '2048.0') + ';')));
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
       throw new Error(gl.getProgramInfoLog(prog));
@@ -744,8 +820,8 @@
 
     var U = {};
     ['resolucao', 'mapaCor', 'mapaRel', 'mapaRug', 'inclinacao', 'guinada',
-     'giro', 'distancia', 'abertura', 'desvio', 'luzXY', 'luzZ', 'luzAlcance', 'graoForca',
-     'passosFundo', 'passosSombra']
+     'giro', 'distancia', 'abertura', 'desvio', 'luzPlano', 'luzAlt', 'luzAlcance',
+     'graoForca', 'passosFundo', 'passosSombra', 'passosLonge']
       .forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     gl.enable(gl.BLEND);
@@ -754,7 +830,12 @@
 
     var largura = 0, altura = 0;
     /* Um tecto de pixeis: esta conta num ecrã 4K põe uma placa gráfica fraca
-       a arrastar-se, e ninguém repara na diferença. */
+       a arrastar-se, e ninguém repara na diferença.
+
+       Esteve em 2,6 milhões, para o ecrã dele — 1366 a 1,5 de densidade —
+       ser desenhado na densidade dele em vez de 9% mais pequeno. Voltou:
+       esses 9% custavam 20% do orçamento de cada fotograma, e agora que o
+       mapa tem 4096 não é a contagem de pixéis que limita o que se vê. */
     var tecto = 2100000;
     function medir(forcar) {
       var r = palco.getBoundingClientRect();
@@ -777,7 +858,8 @@
        disco perfeito aos saltos, e quem tem a máquina fraca não tem como
        saber que foi isso que aconteceu. */
     var nivel = 0;
-    var NIVEIS = [[22, 8], [16, 6], [12, 5], [8, 0]];
+    /* [passos da marcha, passos da sombra perto, passos da sombra longe] */
+    var NIVEIS = [[26, 10, 5], [20, 8, 4], [14, 6, 3], [9, 0, 0]];
     var contados = 0, somados = 0;
     function pesar(ms) {
       if (ms > 140) return;
@@ -859,11 +941,19 @@
       var e2 = suaviza(p, 0.30, 0.70);
       var e3 = suaviza(p, 0.66, 1.00);
       /* Num ecrã ao alto a peça já transborda pelos lados — o que a prende
-         ali é a largura, e por isso a câmara fica onde estava. */
-      var incl = (deitado ? 0.90 : 0.76)
-               + e1 * (deitado ? 0.24 : 0.21)
-               + e2 * (deitado ? 0.15 : 0.19)
-               + e3 * (deitado ? 0.04 : 0.10)
+         ali é a largura, e por isso a câmara fica exactamente onde estava,
+         estes números incluídos.
+
+         No ecrã largo, a inclinação do fim desceu de 72 graus para 58. Com
+         a luz encostada, um olhar quase de perfil mostra silhuetas: vê-se o
+         que tapa o quê e não se vê superfície nenhuma. O relevo lê-se a
+         cinquenta e tal, que é o ângulo em que a sombra de cada estria cai
+         à vista de quem olha. E a câmara chegou-se mais: 0,82 ao princípio
+         e 0,36 ao fim, contra 0,88 e 0,44. */
+      var incl = (deitado ? 0.90 : 0.72)
+               + e1 * (deitado ? 0.24 : 0.17)
+               + e2 * (deitado ? 0.15 : 0.12)
+               + e3 * (deitado ? 0.04 : 0.02)
                + Math.sin(t * 0.058) * 0.034
                + Math.sin(t * 0.0241 + 2.1) * 0.020
                - ratoY * 0.095;
@@ -871,10 +961,10 @@
                + Math.sin(t * 0.0146) * 0.060
                + (p - 0.5) * 0.30
                + ratoX * 0.170;
-      var dist = (deitado ? 2.30 : 0.88)
+      var dist = (deitado ? 2.30 : 0.82)
                - e1 * (deitado ? 0.30 : 0.16)
                - e2 * (deitado ? 0.00 : 0.14)
-               - e3 * (deitado ? -0.30 : 0.14)
+               - e3 * (deitado ? -0.30 : 0.16)
                + Math.sin(t * 0.0289 + 2.4) * 0.022;
 
       /* O desvio anda com a distância, e não em unidades do mundo: o que ele
@@ -894,24 +984,38 @@
       gl.uniform1f(U.distancia, dist);
       gl.uniform1f(U.abertura, deitado ? 0.62 : 0.52);
       gl.uniform2f(U.desvio, desvioX, desvioY);
-      /* A luz anda à volta do centro do disco e não de um ponto fixo do
-         espaço — o disco também se mexe, e com ela presa ao mundo havia
-         voltas inteiras em que a poça caía ao lado dos lutadores.
-         E anda também com a câmara, e não presa ao mundo: ao aproximar-se,
-         uma luz a 1,0 do centro ficava *para lá* da peça e deixava-a toda em
-         contraluz — que foi o que aconteceu à primeira. Por isso a posição e
-         o alcance dela vão ambos em unidades de `dist`. */
-      gl.uniform2f(U.luzXY,
-        (desvioX / dist + Math.sin(t * 0.0514 + 0.4) * 0.46 + (temRato ? ratoX * 0.92 : 0)) * dist,
-        (desvioY / dist - 0.13 + Math.sin(t * 0.0421 + 1.9) * 0.34 - (temRato ? ratoY * 0.74 : 0)) * dist);
-      gl.uniform1f(U.luzZ, dist * (0.88 + Math.sin(t * 0.0259) * 0.10));
+      /* A lanterna. Não está no tecto: está pousada ao lado da peça, no
+         plano dela, e o rato diz de que lado. Quem passa o rato não está a
+         acender a sala — está a andar à volta da peça com a luz na mão, e
+         a cada passo é outra fiada de estrias que se levanta.
+
+         O rato dá o *rumo*, não o sítio: a lanterna fica sempre à mesma
+         distância, a dar a volta. Ao pé do meio do ecrã o rumo não quer
+         dizer nada — dois pixéis de um lado ou do outro mandavam a luz
+         para o lado oposto —, por isso ali manda a volta que ela dá
+         sozinha, e o rato só vai entrando à medida que se afasta. */
+      var rr = Math.hypot(ratoX, ratoY);
+      var manda = temRato ? Math.min(rr / 0.30, 1) : 0;
+      var vagar = t * 0.085 + Math.sin(t * 0.031) * 0.60;
+      var lx = Math.cos(vagar) * (1 - manda) + (rr > 1e-4 ? ratoX / rr : 1) * manda;
+      var ly = Math.sin(vagar) * (1 - manda) - (rr > 1e-4 ? ratoY / rr : 0) * manda;
+      var ln = Math.hypot(lx, ly) || 1;
+      lx /= ln; ly /= ln;
+      /* E quanto mais para fora vai o rato, mais rasante ela fica: ao meio
+         está a vinte e dois graus, na borda a dez. É a diferença entre ver
+         a peça e ver o que ela tem escrito. */
+      var rasar = temRato ? Math.min(rr, 1) : 0.38;
+      var fora = dist * 0.92 + 0.30;
+      gl.uniform2f(U.luzPlano, lx * fora, ly * fora);
+      gl.uniform1f(U.luzAlt, fora * (0.41 - 0.23 * rasar) * (1 + Math.sin(t * 0.0259) * 0.07));
       /* De perto, a poça de luz tem de ser maior do que a peça que cabe no
          ecrã: com o alcance preso a `dist`, havia voltas da roda em que a
          superfície caía toda fora dela e a página ficava preta. */
-      gl.uniform1f(U.luzAlcance, dist * 1.55 + 0.30);
+      gl.uniform1f(U.luzAlcance, fora * 1.00 + 0.16);
       gl.uniform1f(U.graoForca, deitado ? 0.08 : 0.12);
       gl.uniform1f(U.passosFundo, NIVEIS[nivel][0]);
       gl.uniform1f(U.passosSombra, NIVEIS[nivel][1]);
+      gl.uniform1f(U.passosLonge, NIVEIS[nivel][2]);
 
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -953,6 +1057,7 @@
     if (!palco || !viagem) return;
     var img = document.getElementById('disco');
 
+    GRANDE = window.matchMedia('(min-width: 761px)').matches;
     var parado = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var ligacao = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     var poupa = !!(ligacao && (ligacao.saveData ||
@@ -970,7 +1075,7 @@
       if (tela) tela.remove();
       palco.classList.remove('artefacto__palco--vivo');
     }
-    Promise.all([carregar(MAPA_COR), carregar(MAPA_REL), carregar(MAPA_RUG)])
+    Promise.all([carregar(MAPA_COR), carregar(mapaDoRelevo()), carregar(MAPA_RUG)])
       .then(function (m) {
         try { pronto(m[0], m[1], m[2]); } catch (e) { desistir(); }
       })

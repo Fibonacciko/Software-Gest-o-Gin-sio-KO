@@ -350,7 +350,8 @@ raio encontrava era uma papa. Pede-se agora o nível certo
 
 #### O que o mapa guarda e o que se desenha
 
-É esta divisão que permite 1,4 MB contra os 17 MB dele.
+É esta divisão que permite 3,7 MB contra os 17 MB dele — e era 1,4 MB
+antes de o mapa do relevo duplicar.
 
 **No mapa fica o que tem tamanho para caber lá**: as figuras, a greca, a
 legenda, as incisões, as picadas graúdas, as fendas. **Tudo o que é mais
@@ -435,7 +436,8 @@ A câmara chegou-se. Ao princípio da viagem está a 0,88 do centro, com a peça
 cortada em cima e em baixo mas inteira de lado a lado; ao fim está a 0,44, o
 que a põe a **pairar treze centésimas acima da própria superfície**, a meio
 caminho entre o centro e o aro. A partir daí o que se vê é o que se veria
-com a cara a um palmo da peça.
+com a cara a um palmo da peça. (Chegou-se outra vez a seguir, a pedido dele —
+ver **A câmara chegou-se mais**, mais abaixo.)
 
 Num ecrã ao alto a câmara **fica onde estava**: ali o que prende a peça é a
 largura, e ela já transbordava pelos lados.
@@ -469,20 +471,142 @@ fenda. Por isso a peça ganhou mais tempo em cima:
 - **Os bordos do relevo ficaram mais firmes.** Um relevo fundido tem o canto
   redondo, não derretido, e à distância nova a diferença lê-se.
 
+#### A luz deixou de ser um candeeiro
+
+Ele disse que a luz que anda com o rato parecia uma lâmpada a clarear uma
+parte generosa da imagem, e que o que ele queria era outra coisa: uma luz que
+percorre os veios e os pormenores da peça. Tinha razão, e a razão é
+geométrica.
+
+A luz estava **à frente da peça**, entre ela e a câmara. Uma luz de frente é
+a pior luz que há para ler relevo: bate em tudo pelo mesmo ângulo, e o que
+tem meio milímetro de altura devolve exactamente o mesmo que o campo ao lado
+dele. Era por isso que o campo da peça aparecia preto e liso e só os braços
+dos lutadores se viam — e eram tubos lisos, porque também eles não tinham por
+onde mostrar a pele.
+
+Hoje a luz está **pousada no plano da peça**, um palmo acima da face dela. A
+dezassete graus de altura, uma estria de meio milímetro deita uma sombra de
+um milímetro e meio, e uma aresta apanha um risco de luz do comprimento dela.
+É assim que se fotografa uma moeda, uma inscrição ou um baixo-relevo para se
+lhe ver o traço: encosta-se a luz ao plano e deixa-se a forma fazer o resto.
+O que apareceu com ela não foi desenhado agora — **já lá estava todo**, e não
+havia luz que o mostrasse. A legenda grega, a greca, as fendas, as picadas da
+fundição, as correias enroladas nas mãos dos lutadores: tudo isso existia e
+não se via.
+
+- O rato dá o **rumo**, não o sítio. A lanterna fica sempre à mesma distância
+  e **anda à volta da peça**: é o gesto de quem a tem na mão e vira a luz
+  para a ver melhor. Ao pé do meio do ecrã o rumo não quer dizer nada — dois
+  pixéis de um lado ou do outro mandavam a luz para o lado oposto —, e por
+  isso ali manda a volta que ela dá sozinha; o rato só vai entrando à medida
+  que se afasta do meio.
+- E quanto mais para fora vai o rato, **mais rasante ela fica**: ao meio está
+  a vinte e dois graus, na borda a dez. É a diferença entre ver a peça e ver
+  o que ela tem escrito.
+- Mora nos eixos da peça **antes do giro**. Presa aos eixos girados, a luz
+  dava a volta agarrada ao disco e nada mudava enquanto ele rodava; assim ela
+  fica onde está e é a peça que lhe passa por baixo.
+
+**A sombra passou a ser duas marchas, e não uma.** Com a luz encostada, a
+sombra que um braço levantado deita à sua frente é dez vezes mais comprida do
+que a altura dele. Uma marcha só, esticada até lá, dá passadas de quinze
+texels e perde pelo caminho tudo o que é fino — que é precisamente o que esta
+luz existe para mostrar. Hoje são duas: uma ao pé do ponto, a passo de texel,
+que apanha a estria, o risco e a picada; outra até ao fim, a passadas largas,
+que apanha a figura a tapar o campo. A segunda é **média e não máximo**: oito
+amostras a quinze texels de intervalo, tomadas pela maior, davam lajes
+quadradas de sombra em vez de sombra.
+
+**E destapou dois defeitos que a luz de frente escondia.**
+
+- **Pontos brancos de um pixel**, nas arestas polidas. A conta do brilho
+  divide por `ndl · ndv`, e com a luz de frente `ndl` era sempre grande;
+  encostada, é pequeno em todo o lado, e o que sobra da divisão é `1/(k·k)` —
+  dois mil e quinhentos, com a aspereza no mínimo. Pôs-se um tecto, e a
+  aspereza mínima subiu de 0,05 para 0,11: um espelho de um pixel não cabe
+  num pixel.
+- **A superfície não tinha pele.** A ondulação que lá estava era toda de
+  comprimento de onda longo, e a esta luz lê-se como sabão. Passou-se o peso
+  das ondas largas para as curtas, acrescentou-se uma fiada de meio milímetro
+  e, com ela, uma oitava de ruído — três ondas da mesma medida lêem-se como
+  um tecido, porque há sempre uma direcção em que a trama bate certo.
+
+#### O mapa do relevo duplicou
+
+Ele disse que de perto se nota a falta de definição. A conta diz onde ela
+estava: no fim da viagem a câmara fica a pairar um décimo acima da
+superfície, e ali **um pixel do ecrã cobria meio texel do mapa**. O mapa
+estava a ser ampliado para o dobro, e um mapa ampliado é um mapa desfocado —
+não há passo de marcha que o conserte, porque o que falta não está lá.
+
+Passou a ter **4096 em vez de 2048**, e a peça é a mesma: o desenho também
+passou a ser feito ao dobro, e tudo o que nele estava escrito em pixéis — os
+borrões, as larguras dos traços, o tamanho das picadas, o comprimento dos
+riscos — passou a estar escrito em pixéis **vezes a escala**. Mudar a tela
+sem mudar esses números não dava uma peça mais nítida: dava outra peça, com
+as marcas todas mais pequenas em relação a ela própria.
+
+- Só o **relevo** cresceu, e são 3,5 MB. A cor e a aspereza ficam nos 2048:
+  são mapas de baixa frequência, não têm bordos, e o que se ganhava neles não
+  se via.
+- Num **ecrã estreito fica o mapa de sempre**, e não é para poupar bytes: são
+  89 MB de memória de vídeo contra 22, e no telemóvel a câmara nem chega
+  perto.
+- O mapa tem de ser uma **potência de dois** — é o que o WebGL 1 exige para
+  fazer mipmaps, e sem mipmaps o lado longe do disco cintila a cada volta.
+  Por isso não há meio-termo entre 2048 e 4096.
+
+**E apareceram dentes de serra, outra vez — mas de outra causa.** Desta vez
+não era o mapa: era o raio a **ficar sem passos**. Numa vista quase de perfil
+ele atravessa a peça quase paralelo à face — desce um pixel de altura por
+cada cem que anda de lado — e os passos acabavam antes de ele chegar ao fim
+da fatia. Isso contava como *não ter batido*, o pixel ficava a ver o fundo da
+página, e como uns pixéis acabavam os passos e os vizinhos não, o bordo do
+relevo saía aos dentes, regulares como os de uma serra. Agora fica-se com o
+ponto onde se parou: a essa altura o passo já é o mínimo e o erro é menos de
+um pixel. Sair da fatia pelo outro lado, esse sim, continua a ser não ter
+batido.
+
+#### A câmara chegou-se mais, e endireitou-se
+
+"Talvez aproximar um pouco mais a câmara." Aproximou-se: **0,82 ao princípio
+e 0,36 ao fim**, contra 0,88 e 0,44.
+
+E endireitou-se, que foi a parte que não estava no pedido. A inclinação do
+fim desceu de **72 para 58 graus**. Com a luz encostada, um olhar quase de
+perfil mostra silhuetas: vê-se o que tapa o quê e não se vê superfície
+nenhuma. O relevo lê-se a cinquenta e tal, que é o ângulo em que a sombra de
+cada estria cai à vista de quem olha. As duas coisas são a mesma: com uma luz
+rasante, a câmara tem de olhar para o chão onde as sombras caem.
+
+Num ecrã ao alto a câmara **fica exactamente onde estava** — ali o que prende
+a peça é a largura, e ela já transbordava pelos lados.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
-2,1 milhões de pixeis): **16,7 ms por fotograma** — os 60 por segundo
-certos — no nível mais alto, em cinco pontos da viagem. O nível automático
-não chega a baixar, e os três mapas somam **1,4 MB**, menos do que os 1,5 MB
-de antes.
+2,1 milhões de pixeis), com o navegador dele aberto como ele o tem. A
+comparação é com a versão anterior, medida no mesmo momento e na mesma
+máquina — números absolutos aqui não querem dizer nada, porque dependem do
+que mais estiver a correr:
 
-Com a câmara chegada, a peça passou a cobrir o ecrã todo e o trabalho
-duplicou: um fotograma em dez chega a passar dos 16,7 ms. Cortaram-se os
-passos da marcha de 26 para 22 e os da sombra de 12 para 8 — a diferença na
-imagem mede-se em 1% e não se vê —, e mesmo assim esse fotograma em dez
-continua lá. Não é a marcha: a página sozinha, com o artefacto parado, dá
-16,8 nos mesmos 90%, e cortar mais um quarto do trabalho não o mexeu.
+| | antes | agora |
+|---|---|---|
+| mediana | 16,7 ms | 16,7 ms na maior parte do percurso |
+| média | 22,4 a 24,0 ms | 20,5 a 27,9 ms |
+| ficheiros dos mapas | 1,4 MB | 3,7 MB no ecrã largo, 1,6 MB no estreito |
+
+São **10 a 15% mais caro**, e ele pediu-o: *"se tivermos que exigir da
+máquina em fotogramas, pois bem"*. O que se comprou com isso foi o mapa ao
+dobro, a luz encostada e a sombra a duas marchas. A escada automática dos
+quatro níveis continua lá para quem não aguentar, e não chega a ser chamada
+nesta máquina.
+
+Para a pagar, cortou-se onde não se vê: o tecto de pixéis voltou aos 2,1
+milhões — chegou a estar em 2,6, para o ecrã dele ser desenhado na densidade
+dele em vez de 9% mais pequeno, e esses 9% custavam 20% de cada fotograma.
+Com um mapa de 4096 não é a contagem de pixéis que limita o que se vê.
 
 Chegou a não dar: com as incisões a entrar na geometria, a vista quase de
 perfil caiu a 33 ms. O que a pagou de volta não foi tirar detalhe, foi tirar
@@ -490,14 +614,25 @@ contas de dentro da marcha. O **empeno** é uma onda muito maior do que a
 peça: ao longo de uma marcha comporta-se como um plano inclinado, e quatro
 senos a cada passo, vezes sessenta e quatro passos, trocaram-se por uma conta
 feita uma vez — o erro ao fim da travessia é dois por cento da altura do
-relevo. O **torno** passou de três senos a um. Nas máquinas fracas os quatro
-níveis de sempre continuam lá.
+relevo. O **torno** passou de três senos a um.
 
 #### Refazer a peça
 
 `python desenhos/artefacto.py`, a partir de `site-exemplos/desenhos/`.
-Precisa de `numpy` e de `Pillow` e demora cerca de um minuto. Os *seeds*
-estão fixos: correr outra vez dá exactamente os mesmos ficheiros.
+Precisa de `numpy` e de `Pillow`. Com a tela aos 4096 demora **cerca de vinte
+minutos** e chega a ocupar 2 GB de memória — era um minuto quando a tela
+tinha 2560. Os *seeds* estão fixos: correr outra vez dá exactamente os mesmos
+ficheiros.
+
+No fim imprime o `H_CAMPO` e o `H_ESCALA`, que **têm de bater** com os do
+`artefacto-luz.js`: são eles que dizem ao sombreador o que o canal da altura
+quer dizer, e mudar um aqui e esquecer o de lá não dá erro nenhum — dá um
+relevo com a altura errada.
+
+O **retrato cozido**, o que aparece a quem não tem WebGL, continua com a luz
+a trinta graus e sem nada do que o sombreador desenha por cima. É a mesma
+peça e a mesma conta, mas mais plana do que a viva: é um retrato, não é a
+peça.
 
 Sem WebGL, com **reduzir movimento** ligado ou com poupança de dados, nada
 disto acontece e fica a fotografia — que é a mesma peça, iluminada uma vez
