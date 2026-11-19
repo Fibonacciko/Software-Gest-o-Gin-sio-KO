@@ -196,7 +196,12 @@
     'float raioEm(vec2 dir) {',
     '  float m = ruido(dir * 5.3 + 21.0) + ruido(dir * 13.1 + 3.0) * 0.5;',
     '  float lasca = pow(ruido(dir * 7.9 + 41.0), 7.0);',
-    '  return RAIO * (1.0 - 0.0045 * m - 0.020 * lasca);',
+      /* Subiu de 0,45% para 0,8% de ondulacao e de 2% para 3,2% de lasca:
+         a meio por cento nao se via nada, e um disco de contorno exacto
+         e a primeira coisa que denuncia uma peca desenhada. O contorno
+         e o unico sitio onde a peca se ve em cheio contra o preto -- e
+         e ai que ela tem de ser torta. */
+    '  return RAIO * (1.0 - 0.0080 * m - 0.032 * lasca);',
     '}',
 
     'vec2 paraUV(vec2 q) { return vec2(q.x * 0.5 + 0.5, 0.5 - q.y * 0.5); }',
@@ -276,9 +281,16 @@
     '  }',
     '  float c2 = cabe(0.0145, porPixel);',
     '  if (c2 > 0.01) {',
-    '    g += onda(q, vec2( 0.3090,  0.9511), 433.0, 0.030 * c2, 0.6);',
-    '    g += onda(q, vec2(-0.8829,  0.4695), 541.0, 0.026 * c2, 2.4);',
-    '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.022 * c2, 4.2);',
+    '    g += onda(q, vec2( 0.3090,  0.9511), 433.0, 0.017 * c2, 0.6);',
+    '    g += onda(q, vec2(-0.8829,  0.4695), 541.0, 0.015 * c2, 2.4);',
+    '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.012 * c2, 4.2);',
+      /* Metade da forca desta fiada passou para aqui. Com os tres senos
+         sozinhos, o campo lia-se como tecido: a esta luz via-se uma rede
+         diagonal por cima do bronze, igual de um lado ao outro da peca,
+         e nada no mundo e igual de um lado ao outro. O ruido nao tem
+         direccao nenhuma -- e por isso nao tem trama. */
+    '    vec3 nm = ruidoD(q * 126.0 + 63.5);',
+    '    g += nm.yz * (0.042 * c2);',
     '  }',
       /* E uma terceira fiada, de comprimento de onda de meio milimetro na
          peca. Sem ela o campo, de perto, era sabao: tinha ondulacao e nao
@@ -293,6 +305,19 @@
          nao tem direccao nenhuma. */
     '    vec3 nf = ruidoD(q * 302.0 + 17.1);',
     '    g += nf.yz * (0.030 * c3);',
+    '  }',
+      /* E uma quarta, de um decimo de milimetro, que so entra ao pe do
+         fim da viagem. Ali o ecra inteiro cobre um palmo de bronze e a
+         fiada anterior -- meio milimetro -- ja e uma onda larga: entre
+         uma crista e a seguinte vao quinze pixeis de chapa lisa, e uma
+         chapa lisa iluminada de lado le-se como cera. Isto nao sao
+         ondas, e porosidade: bronze fundido tem bolhas, e sao elas que
+         de perto dizem que aquilo saiu de um molde e nao de um ecra. */
+    '  float c4 = cabe(0.0011, porPixel);',
+    '  if (c4 > 0.01) {',
+    '    vec3 n1 = ruidoD(q * 940.0 + 7.3);',
+    '    vec3 n2 = ruidoD(q * 2130.0 + 29.7);',
+    '    g += n1.yz * (0.046 * c4) + n2.yz * (0.028 * c4);',
     '  }',
     '  return g;',
     '}',
@@ -402,6 +427,13 @@
       /* a mira, nos eixos que giram com o disco, para se poder medir dali
          a cada ponto da peca */
     '  vec2 mira = vec2(pl.x * cg + pl.y * sg, -pl.x * sg + pl.y * cg);',
+      /* e de que lado vem, nos mesmos eixos: e por este rumo que a poca
+         se estica. Uma luz rasante nao faz um circulo no chao -- faz uma
+         elipse deitada no rumo por onde chega, e um circulo de luz le-se
+         sempre como uma lanterna apontada a peca. */
+    '  vec2 bra = vec2(luzBraco.x * cg + luzBraco.y * sg,'
+                  + ' -luzBraco.x * sg + luzBraco.y * cg);',
+    '  vec2 rumoL = (dot(bra, bra) > 1e-9) ? normalize(bra) : vec2(1.0, 0.0);',
 
       /* O raio, visto de dentro da peca. A base e ortonormal, por isso a volta
          e so a transposta -- e tHit continua a ser a distancia verdadeira. */
@@ -540,8 +572,8 @@
     /* O mapa veio de uma peca muito mais baca do que a que se queria: a
        0,90 o campo nao devolve nada e le-se como barro cozido. Bronze
        enterrado nao e espelho, mas e metal -- devolve a janela toda. */
-    '    aspereza = clamp(rug.r * 0.74 + 0.06, 0.11, 1.0);',
-    '    metal = clamp(rug.g * 1.25, 0.04, 1.0);',
+    '    aspereza = clamp(rug.r * 0.80 + 0.17, 0.20, 1.0);',
+    '    metal = clamp(rug.g * 0.82, 0.04, 1.0);',
     '    cavidade = rug.b;',
     '    albedo = pow(texture2D(mapaCor, uv).rgb, vec3(2.2));',
 
@@ -555,10 +587,10 @@
     '    float manchas = ruido(q * 3.1 + 7.0) * 0.6 + ruido(q * 8.3 + 19.0) * 0.4;',
     '    float polido = smoothstep(0.22, 0.80, acima) * smoothstep(0.26, 0.74, manchas);',
     '    float funda = smoothstep(0.04, 0.42, abaixo);',
-    '    albedo = mix(albedo, vec3(0.330, 0.252, 0.150), polido * 0.70);',
-    '    albedo = mix(albedo, vec3(0.038, 0.050, 0.044), funda * 0.42);',
-    '    aspereza = clamp(aspereza - polido * 0.26 + funda * 0.18, 0.11, 1.0);',
-    '    metal = clamp(metal + polido * 0.40 - funda * 0.22, 0.04, 1.0);',
+    '    albedo = mix(albedo, vec3(0.262, 0.208, 0.134), polido * 0.46);',
+    '    albedo = mix(albedo, vec3(0.056, 0.070, 0.058), funda * 0.46);',
+    '    aspereza = clamp(aspereza - polido * 0.15 + funda * 0.20, 0.20, 1.0);',
+    '    metal = clamp(metal + polido * 0.22 - funda * 0.22, 0.04, 1.0);',
     '    oclusao = mix(1.0, 0.22, funda) * mix(0.55, 1.0, cavidade);',
 
         /* a normal do mapa vive nos eixos da textura: o v da textura desce e o y
@@ -570,6 +602,14 @@
        rasgado. Nas paredes o miudo desliga-se -- elas sao poucas no ecra, e
        o que se ve nelas e o recorte, nao a superficie. */
     '    float plano = clamp(1.0 - length(nxy) * 1.7, 0.0, 1.0);',
+    /* Mas nao a zero. Isto chega ao fundo aos trinta graus de declive,
+       e dai para cima o miudo desligava-se por inteiro: a parede de uma
+       figura ficava uma chapa lisa -- e e precisamente nela que a luz
+       rasante bate. Era ai a cera de que ele se queixava: a peca tinha
+       pele no campo, onde a luz mal lhe toca, e nao tinha nenhuma no
+       flanco iluminado. Com um terco, o esticao vertical de que a nota
+       acima fala fica a um terco tambem, e esse nunca se viu. */
+    '    plano = mix(0.28, 1.0, plano);',
     '    nxy -= empenoDeclive(q);',
     '    nxy += dir * tornoDeclive(q, r) * cabe(0.0070, porPixel) * plano'
                   + ' * (1.0 - 0.75 * acima);',
@@ -580,9 +620,10 @@
            que se salvaram. Sem ele o bronze e todo igual, e um bronze todo igual
            le-se como material de computador. */
     '    float comido = ruido(q * 2.7 + 4.0) * 0.6 + ruido(q * 6.1 + 17.0) * 0.4;',
-    '    comido = smoothstep(0.38, 0.92, comido);',
-    '    albedo = mix(albedo, albedo * vec3(0.80, 0.71, 0.58), comido * 0.45);',
-    '    aspereza = clamp(aspereza + comido * 0.18, 0.05, 1.0);',
+    '    comido = smoothstep(0.26, 0.86, comido);',
+    '    albedo = mix(albedo, albedo * vec3(0.76, 0.68, 0.56), comido * 0.58);',
+    '    albedo = mix(albedo, vec3(0.106, 0.098, 0.084), comido * 0.22);',
+    '    aspereza = clamp(aspereza + comido * 0.24, 0.20, 1.0);',
     '    metal = metal * (1.0 - comido * 0.30);',
     /* A sujidade nao se espalha por igual. Ha zonas da peca que ficaram ao
        abrigo e ha zonas que apanharam tudo, e e isto -- mais do que o
@@ -592,14 +633,34 @@
        fundo, que e por onde ele pega. */
     '    float mancha = ruido(q * 1.7 + 2.0) * 0.52 + ruido(q * 4.3 + 9.0) * 0.31',
     '                 + ruido(q * 10.5 + 5.0) * 0.17;',
-    '    float oxido = smoothstep(0.50, 0.84, mancha) * (0.42 + 0.58 * funda);',
-    '    albedo = mix(albedo, vec3(0.034, 0.052, 0.042), oxido * 0.62);',
-    '    aspereza = clamp(aspereza + oxido * 0.26, 0.05, 1.0);',
+    '    float oxido = smoothstep(0.36, 0.80, mancha) * (0.48 + 0.52 * funda);',
+      /* Era 0,034 / 0,052 / 0,042 -- quase preto. Isso escurecia o bronze
+         em vez de o sujar: o que se via continuava a ser o mesmo ambar,
+         so que mais escuro nuns sitios. A patina do bronze tem cor, e e
+         ela que faz a peca deixar de ser de uma cor so. */
+    '    albedo = mix(albedo, vec3(0.072, 0.098, 0.078), oxido * 0.74);',
+    '    aspereza = clamp(aspereza + oxido * 0.30, 0.20, 1.0);',
     '    metal = metal * (1.0 - oxido * 0.55);',
     /* e, do outro lado, o que foi limpo pelo uso volta a ser ouro */
     '    float limpo = smoothstep(0.46, 0.16, mancha) * polido;',
-    '    albedo = mix(albedo, vec3(0.395, 0.288, 0.138), limpo * 0.50);',
-    '    aspereza = clamp(aspereza - limpo * 0.14, 0.05, 1.0);',
+    '    albedo = mix(albedo, vec3(0.302, 0.230, 0.124), limpo * 0.30);',
+    '    aspereza = clamp(aspereza - limpo * 0.10, 0.20, 1.0);',
+    /* E, no fim de tudo, uma volta atras no ouro. Uma cor cheia le-se
+       como metal novo: um bronze desenterrado perdeu-lhe a saturacao e
+       nunca mais a tem. Nao e cinzento -- e o mesmo bronze com menos
+       verniz. */
+    '    albedo = mix(albedo, vec3(dot(albedo, vec3(0.333))), 0.21) * 0.93;',
+    /* As manchas de cima sao grandes -- tres, seis, dez voltas por peca.
+       No fim da viagem o ecra inteiro cobre um palmo de bronze, e la
+       dentro nenhuma delas chega a mudar: a peca fica de uma cor so, e
+       uma cor so le-se como superficie pintada. Estas duas vivem a
+       setenta e a duzentas voltas, e so entram quando a camara chega
+       perto o bastante para as ver -- de longe seriam formigueiro. */
+    '    float fino = ruido(q * 74.0 + 13.0) * 0.62 + ruido(q * 197.0 + 51.0) * 0.38;',
+    '    float vemFino = cabe(0.0135, porPixel);',
+    '    albedo *= 1.0 + (fino - 0.5) * 0.50 * vemFino;',
+    '    aspereza = clamp(aspereza + (fino - 0.5) * 0.28 * vemFino, 0.20, 1.0);',
+    '    metal = clamp(metal * (1.0 - (fino - 0.5) * 0.30 * vemFino), 0.04, 1.0);',
 
         /* O aro rolado. O mapa, esticado ali por cima do bisel, sai em papa e
            entra-lhe o halo que ficou do desenho -- por isso a cor passa a ser a
@@ -659,9 +720,20 @@
        vez de ser um ponto. */
     '#ifdef GL_OES_standard_derivatives',
     '  vec3 dNx = dFdx(N), dNy = dFdy(N);',
-    '  aspereza = clamp(sqrt(aspereza * aspereza + max(dot(dNx, dNx), dot(dNy, dNy)) * 0.80), 0.11, 1.0);',
+    '  aspereza = clamp(sqrt(aspereza * aspereza + max(dot(dNx, dNx), dot(dNy, dNy)) * 0.80), 0.17, 1.0);',
     '#endif',
     '  vec3 ponto = raio * tHit;',
+      /* E aqui esta o que ele pediu: *o rato diz onde a luz aparece nas
+         fendas*. A luz nao se reparte por igual pelo que esta debaixo
+         dela -- quem a apanha e o que tem declive: a parede de uma
+         incisao, o bordo de uma figura, a aresta de uma fenda, a picada
+         da fundicao. O campo liso fica no escuro mesmo no meio da poca.
+
+         Sem isto, a poca era uma mancha clara por cima da peca, com as
+         fendas la dentro. Com isto, a mancha e feita *das* fendas: o que
+         se ve acender nao e o sitio, e o desenho que esta naquele sitio. */
+    '  float declive = clamp(1.0 - abs(Nobj.z), 0.0, 1.0);',
+    '  float fendas = mix(0.26, 1.0, smoothstep(0.012, 0.16, declive));',
 
     '  vec3 paraLuz = normalize(luzP - ponto);',
       /* A poca mede-se do ponto ate a *mira*, no plano da peca, e nao ate
@@ -675,7 +747,16 @@
          na perspectiva encolhia a nada: metade do ecra nao acendia luz
          nenhuma e parecia que o rato tinha deixado de servir. */
     '  float alcance = luzAlcance * dAlvo;',
-    '  float queda = 1.0 / (1.0 + pow(length(q - mira) / alcance, 3.0));',
+      /* Larga e sem bordo, de proposito. Era um disco de luz com a cauda
+         curta -- um palmo ao lado estava tudo preto, e o que se via era a
+         mancha da lanterna e nao a peca. Hoje a mancha nao tem contorno
+         nenhum: quem diz onde esta a luz e o que ela levanta no relevo,
+         logo abaixo. Esticada no rumo por onde a luz chega. */
+    '  vec2 dq = q - mira;',
+    '  float dpar = dot(dq, rumoL) * 0.56;',
+    '  float dper = dot(dq, vec2(-rumoL.y, rumoL.x));',
+    '  float queda = 1.0 / (1.0 + pow(sqrt(dpar * dpar + dper * dper)'
+                  + ' / alcance, 2.2));',
 
       /* A sombra que o relevo faz sobre si proprio. Sem ela, uma figura
          levantada meio milimetro acima do campo nao escurece nada a sua
@@ -737,11 +818,15 @@
     '  vec3 BRONZE = vec3(0.735, 0.545, 0.330);',
     '  vec3 F0 = mix(vec3(0.045), BRONZE, metal);',
     '  vec3 F = F0 + (1.0 - F0) * pow(1.0 - vdh, 5.0);',
-    '  vec3 CHAVE = vec3(1.0, 0.820, 0.560);',
-    '  float luzQ = queda * sombra;',
+      /* A chave era ambar -- 1,00 / 0,82 / 0,56 -- e isso punha verniz
+         dourado na peca toda, aqui e nas pedras do fundo. A luz de quem
+         examina uma peca e branca; o ouro ha de vir do bronze, e nao da
+         lampada. */
+    '  vec3 CHAVE = vec3(1.0, 0.893, 0.772);',
+    '  float luzQ = queda * sombra * fendas;',
 
-    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 3.60;',
-    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 9.0) * F * ndl * luzQ * 1.95;',
+    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 2.45;',
+    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 5.0) * F * ndl * luzQ * 1.30;',
 
     '  vec3 amb = ambienteEm(reflect(-olho, N));',
     '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
@@ -1018,10 +1103,10 @@
                + Math.sin(t * 0.0146) * 0.060
                + (p - 0.5) * 0.30
                + ratoX * 0.170;
-      var dist = (deitado ? 2.30 : 0.82)
-               - e1 * (deitado ? 0.30 : 0.16)
-               - e2 * (deitado ? 0.00 : 0.14)
-               - e3 * (deitado ? -0.30 : 0.16)
+      var dist = (deitado ? 2.10 : 0.69)
+               - e1 * (deitado ? 0.28 : 0.13)
+               - e2 * (deitado ? 0.00 : 0.12)
+               - e3 * (deitado ? -0.26 : 0.14)
                + Math.sin(t * 0.0289 + 2.4) * 0.022;
 
       /* O desvio anda com a distância, e não em unidades do mundo: o que ele
@@ -1039,7 +1124,12 @@
          da volta lenta que ele dá sozinho */
       gl.uniform1f(U.giro, -t * 0.0235 - p * 3.30);
       gl.uniform1f(U.distancia, dist);
-      gl.uniform1f(U.abertura, deitado ? 0.62 : 0.52);
+      /* O plano aumentou duas vezes: a camara chegou-se (0,69 em vez de
+         0,82) e a objectiva fechou (0,46 em vez de 0,52). Juntas dao um
+         terco mais de peca em cada bordo do ecra. O artefacto e o
+         assunto da pagina; estava a ocupar menos do que o texto ao
+         lado dele. */
+      gl.uniform1f(U.abertura, deitado ? 0.56 : 0.46);
       gl.uniform2f(U.desvio, desvioX, desvioY);
       /* A lanterna vai onde o rato aponta. Não é o rumo, é o sítio: o
          ponto do ecrã onde ele está, cruzado com o plano da peça (a conta
@@ -1049,7 +1139,11 @@
          quem chega à página ver a luz a andar e perceber que ela anda. */
       var vagar = t * 0.074;
       var soloX = Math.cos(vagar) * 0.46 + Math.sin(t * 0.0231 + 1.2) * 0.16;
-      var soloY = Math.sin(vagar * 0.82 + 0.6) * 0.30 + Math.sin(t * 0.0193) * 0.10;
+      /* E no ecrã estreito passeia mais abaixo: ali a peça está no rodapé,
+         porque é o texto que manda na parte de cima. Sem isto havia voltas
+         inteiras em que a lanterna andava a iluminar página preta. */
+      var soloY = Math.sin(vagar * 0.82 + 0.6) * 0.30 + Math.sin(t * 0.0193) * 0.10
+               - (deitado ? 0.46 : 0);
       var miraX = (temRato ? ratoX : soloX) + Math.sin(t * 0.0337 + 2.0) * 0.035;
       var miraY = (temRato ? -ratoY : soloY) + Math.sin(t * 0.0281) * 0.028;
       gl.uniform2f(U.luzMira, miraX * (largura / altura), miraY);
@@ -1067,9 +1161,13 @@
       var braco = alto * 2.20;
       var rumo = t * 0.116 + Math.sin(t * 0.047) * 0.9;
       gl.uniform2f(U.luzBraco, Math.cos(rumo) * braco, Math.sin(rumo) * braco);
-      /* E a poça é uma poça: a dois dedos dela está tudo escuro. É isto
-         que faz a página dele ter mediana zero e a nossa não ter. */
-      gl.uniform1f(U.luzAlcance, 0.30);
+      /* A poça alargou de 0,30 para 0,46, e pode alargar porque deixou de
+         ser ela a acender o que quer que seja: quem apanha a luz é o
+         declive, e o campo liso fica escuro esteja onde estiver. Uma poça
+         estreita dava uma mancha de lanterna a um canto da página e o
+         resto preto — e era essa mancha, e não a peça, que tinha o
+         tamanho de um artefacto pequeno. */
+      gl.uniform1f(U.luzAlcance, 0.46);
       gl.uniform1f(U.graoForca, deitado ? 0.08 : 0.12);
       gl.uniform1f(U.passosFundo, NIVEIS[nivel][0]);
       gl.uniform1f(U.passosSombra, NIVEIS[nivel][1]);

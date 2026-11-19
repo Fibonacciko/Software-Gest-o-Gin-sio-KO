@@ -468,11 +468,17 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
   /* Mais leve do que era, porque o disco passou a trazer o seu proprio
      escuro: a luz e uma poca e o resto da peca ja esta na sombra. Somar-lhe
      o escurecimento de antes apagava-a por inteiro. O que fica e so o que
-     serve para o texto da esquerda se ler. */
+     serve para o texto da esquerda se ler.
+
+     E aliviou outra vez quando ele disse que o artefacto era pequeno em
+     relacao a pagina: era isto que o fazia acabar a um palmo do meio. O
+     radial fechava a preto a 84% da largura e fecha agora a 106%; a faixa
+     de baixo desceu de 0,74 para 0,62. O lado esquerdo fica como estava --
+     e ele que faz o texto ler-se, e o texto nao se mudou de sitio. */
   background:
-    linear-gradient(0deg, rgba(13,13,13,.74) 0%, rgba(13,13,13,.22) 26%, transparent 46%),
-    radial-gradient(84% 68% at 54% 54%, transparent 30%, rgba(13,13,13,.42) 78%, var(--preto) 100%),
-    linear-gradient(95deg, rgba(13,13,13,.88) 0%, rgba(13,13,13,.50) 24%, rgba(13,13,13,.14) 44%, transparent 62%);
+    linear-gradient(0deg, rgba(13,13,13,.62) 0%, rgba(13,13,13,.16) 24%, transparent 42%),
+    radial-gradient(106% 88% at 54% 54%, transparent 48%, rgba(13,13,13,.24) 82%, rgba(13,13,13,.88) 100%),
+    linear-gradient(95deg, rgba(13,13,13,.86) 0%, rgba(13,13,13,.44) 22%, rgba(13,13,13,.11) 40%, transparent 56%);
   pointer-events: none;
 }
 
@@ -508,9 +514,13 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
     /* O disco deixou de ficar so no rodape do ecra -- com a viagem da roda
        sobe ate ao texto -- e por isso o escurecimento tem de o acompanhar
        ate mais abaixo. O que se le aqui e so o texto; a peca esta ao lado. */
+    /* Aliviado pela mesma razao do ecra largo, e aqui pesava mais: a peca
+       vive no rodape -- e o texto que manda na parte de cima -- e a faixa
+       escura comia-lhe metade. O que o texto precisa e dos dois primeiros
+       tercos; dai para baixo ja nao ha letras nenhumas. */
     background:
-      radial-gradient(96% 54% at 50% 82%, transparent 8%, rgba(13,13,13,.46) 62%, var(--preto) 100%),
-      linear-gradient(180deg, var(--preto) 6%, rgba(13,13,13,.92) 34%, rgba(13,13,13,.74) 56%, rgba(13,13,13,.34) 76%, transparent 92%);
+      radial-gradient(112% 64% at 50% 82%, transparent 16%, rgba(13,13,13,.32) 66%, rgba(13,13,13,.9) 100%),
+      linear-gradient(180deg, var(--preto) 4%, rgba(13,13,13,.88) 32%, rgba(13,13,13,.58) 54%, rgba(13,13,13,.20) 74%, transparent 88%);
   }
 }
 

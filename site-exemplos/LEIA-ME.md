@@ -543,6 +543,10 @@ meio. Caiu para um sexto, e a chave subiu para compensar. A página anda agora
 nos **15 a 24 de média**, contra os 2 a 7 dele — ele tem pedra cinzenta e luz
 branca, nós temos bronze escuro e uma manchete para ler por cima.
 
+(Depois do que vem a seguir — a luz a entrar só no declive, o plano maior e
+o escurecimento das bordas aliviado — a página ficou nos **20 a 21**, com
+menos de 5% dos pixeis acima de 60. Mais peça à vista, e a mesma penumbra.)
+
 **A sombra passou a ser duas marchas, e não uma.** Com a luz encostada, a
 sombra que um braço levantado deita à sua frente é dez vezes mais comprida do
 que a altura dele. Uma marcha só, esticada até lá, dá passadas de quinze
@@ -618,6 +622,106 @@ rasante, a câmara tem de olhar para o chão onde as sombras caem.
 Num ecrã ao alto a câmara **fica exactamente onde estava** — ali o que prende
 a peça é a largura, e ela já transbordava pelos lados.
 
+Estes números mudaram outra vez a seguir: ver **E o plano aumentou**, mais
+abaixo.
+
+#### A luz não é uma lanterna: é o rato a dizer onde o relevo acende
+
+*"Usas a luz como uma lanterna mas o objetivo não é bem esse. O objetivo
+seria o rato indicar onde a luz deve aparecer nas fendas."*
+
+A diferença está toda aí. Uma lanterna acende **um sítio**: há uma mancha
+clara, tem contorno, e lá dentro a peça vê-se como se veria em qualquer
+outro lado. O que ele quer é que a luz acenda **uma coisa** — o veio, a
+fenda, a aresta — e que o rato escolha qual.
+
+Por isso a luz deixou de se repartir por igual pelo que está debaixo dela.
+Quem a apanha é **o que tem declive**: a parede de uma incisão, o bordo de
+uma figura, a aresta de uma fenda, a picada da fundição. O campo liso fica
+no escuro mesmo no meio da poça — e por isso a mancha que se vê já não é um
+círculo de luz com coisas lá dentro: é feita **das próprias fendas**.
+
+- A conta é uma linha — quanto a normal se afasta do plano da peça
+  (`1 - |Nobj.z|`), passada por um degrau suave. No campo dá um quarto da
+  luz; numa parede dá-a toda.
+- **E a poça perdeu o contorno.** Alargou de 0,30 para 0,46 e a cauda passou
+  de cúbica a quase quadrática. Pode alargar porque já não é ela a acender
+  nada. Uma poça estreita dava uma mancha de lanterna a um canto da página,
+  e era essa mancha — e não a peça — que tinha o tamanho de um artefacto
+  pequeno.
+- **Deixou de ser redonda.** Uma luz rasante não faz um círculo no chão: faz
+  uma elipse deitada no rumo por onde chega. Estica-se uma vez e três
+  quartos nesse rumo, que é o do braço que segura a lanterna. Um círculo de
+  luz lê-se sempre como uma lanterna apontada à peça.
+
+#### Mais cru
+
+*"Apesar de ser ouro, será que o conseguimos fazer mais cru?"* O que fazia a
+peça parecer de computador não era o desenho — era o acabamento. Sete
+coisas, nenhuma delas grande:
+
+- **A chave era âmbar** (1,00 / 0,82 / 0,56) e punha verniz dourado em tudo:
+  no bronze, na patina, nas pedras do fundo. A luz de quem examina uma peça
+  é branca, e o ouro há-de vir do bronze e não da lâmpada. Está em
+  1,00 / 0,89 / 0,77.
+- **Menos metal e mais aspereza**: o mapa entra agora com um quinto menos de
+  metal e com o chão da aspereza a 0,20 em vez de 0,11, e o brilho especular
+  caiu de 1,95 para 1,30 com o tecto a 5 em vez de 9. Era este o lençol
+  macio que fazia o relevo parecer cera derretida.
+- **A patina ganhou cor.** Era 0,034 / 0,052 / 0,042 — quase preta: escurecia
+  o bronze em vez de o sujar, e o que se continuava a ver era o mesmo âmbar,
+  só que mais escuro nuns sítios. Uma peça de uma cor só lê-se sempre como
+  desenhada.
+- **O ouro levou uma volta atrás**: menos um quinto de saturação e menos sete
+  por cento de brilho, no fim de todas as outras contas. Não é cinzento — é o
+  mesmo bronze com menos verniz.
+- **Sujidade à escala do olho.** As manchas que lá estavam são grandes — três
+  a dez voltas por peça —, e no fim da viagem o ecrã inteiro cobre um palmo
+  de bronze: lá dentro nenhuma delas chega a mudar. Duas novas, a setenta e a
+  duzentas voltas, só entram quando a câmara chega perto o bastante para as
+  ver.
+- **Porosidade.** Uma quarta fiada de relevo, de um décimo de milímetro, pela
+  mesma razão: ao pé do fim, entre uma crista da fiada anterior e a seguinte
+  vão quinze pixeis de chapa lisa, e uma chapa lisa iluminada de lado é cera.
+  Bronze fundido tem bolhas, e são elas que de perto dizem que aquilo saiu de
+  um molde.
+- **O aro deixou de ser feito a compasso**: a ondulação passou de 0,45% do
+  raio para 0,8%, e a lasca de 2% para 3,2%. A meio por cento não se via
+  nada, e o contorno é o único sítio onde a peça se vê em cheio contra o
+  preto — é aí que ela tem de ser torta.
+
+**E o campo deixou de ser tecido.** Três ondas da mesma medida têm sempre uma
+direcção em que a trama bate certo: a esta luz via-se uma rede diagonal por
+cima do bronze, igual de um lado ao outro da peça, e nada no mundo é igual de
+um lado ao outro. Metade da força daquela fiada passou para ruído, que não
+tem direcção nenhuma.
+
+**A cera estava nas paredes, e a razão era outra.** Todo o miúdo — o grão, os
+riscos, as ondas, o torno — vinha multiplicado por um factor que chega a zero
+aos trinta graus de declive. Isso foi posto para as paredes a pique não
+saírem às riscas verticais, e o preço nunca se tinha visto: **a parede de uma
+figura ficava uma chapa lisa — e é precisamente nela que a luz rasante
+bate**. A peça tinha pele no campo, onde a luz mal lhe toca, e não tinha
+nenhuma no flanco iluminado. Hoje o factor pára num quarto em vez de parar em
+zero; o esticão vertical fica a um quarto também, e esse continua sem se ver.
+
+#### E o plano aumentou
+
+*"O artefacto continua a ser muito pequeno em relação à página."* Aumentou
+por três lados ao mesmo tempo:
+
+- **A câmara chegou-se**, de 0,82 para 0,69 ao princípio e de 0,36 para 0,30
+  ao fim.
+- **A objectiva fechou**, de 0,52 para 0,46. Juntas dão cerca de um terço mais
+  de peça em cada bordo do ecrã.
+- **O escurecimento das bordas da página aliviou.** Era ele que fazia o bronze
+  acabar a um palmo do meio: o radial fechava a preto a 84% da largura e
+  agora fecha a 106%, e a faixa de baixo passou de 0,74 para 0,62. O lado
+  esquerdo fica como estava — é o que faz o texto ler-se.
+
+Num ecrã ao alto, a mesma coisa em menor grau: 2,30 para 2,10, e a objectiva
+de 0,62 para 0,56.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
@@ -628,12 +732,14 @@ que mais estiver a correr:
 
 | | antes | agora |
 |---|---|---|
-| mediana | 16,7 ms | 16,7 ms na maior parte do percurso |
-| média | 22,4 a 24,0 ms | 17,6 a 26,7 ms |
+| mediana | 16,7 ms | 16,7 ms em todo o percurso |
+| média | 22,4 a 24,0 ms | 18,7 a 24,3 ms |
 | ficheiros dos mapas | 1,4 MB | 3,7 MB no ecrã largo, 1,6 MB no estreito |
 
 A poça não custou nada: são duas contas a mais por pixel, e os pixéis que
-ficam escuros saem mais cedo das marchas da sombra.
+ficam escuros saem mais cedo das marchas da sombra. A sujidade fina, a
+porosidade e a pele das paredes também não — são ruído, e o ruído só é pedido
+quando o tamanho dele cabe num pixel; de longe nem chega a ser calculado.
 
 São **10 a 15% mais caro**, e ele pediu-o: *"se tivermos que exigir da
 máquina em fotogramas, pois bem"*. O que se comprou com isso foi o mapa ao
