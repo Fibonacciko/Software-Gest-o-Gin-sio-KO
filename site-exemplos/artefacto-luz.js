@@ -106,8 +106,8 @@
     'uniform sampler2D mapaRel;',
     'uniform sampler2D mapaRug;',
     'uniform float inclinacao, guinada, giro, distancia, abertura;',
-    'uniform vec2  desvio, luzRumo;',
-    'uniform float luzRasar, graoForca;',
+    'uniform vec2  desvio, luzRumo, luzMira;',
+    'uniform float luzRasar, luzPerto, graoForca;',
     'uniform float passosFundo, passosSombra, passosLonge;',
 
     /* A peca, em unidades do mapa. O raio sai do desenho: o disco ocupa
@@ -410,6 +410,27 @@
          peca que lhe passa por baixo. */
     '  vec3 paraLuz = normalize(eixoU * luzRumo.x + eixoV * luzRumo.y'
                   + ' + cima * luzRasar);',
+
+      /* E, alem dessa, a luz do rato. Nao e outra lanterna: e a mesma
+         luz a ser *apanhada* onde ha o que apanhar. Do sitio do rato no
+         ecra sai um raio como o de qualquer pixel, cruza-se com o plano
+         da peca, e o ponto que der e por onde ela anda.
+
+         O que a torna diferente de todas as pocas que ja aqui houve e
+         nao ser o sitio a decidir se ha luz: e o pormenor. Onde a peca
+         e lisa, esta luz nao existe -- nem debaixo do rato. Por isso
+         nao ha mancha para se ver; o que se ve sao as arestas, os
+         bordos, as incisoes, as fendas e as picadas a acenderem-se por
+         onde ele passa, e a apagarem-se atras dele. */
+    '  vec3 rc = normalize(vec3(luzMira * abertura, 1.0));',
+    '  float dcc = dot(rc, cima);',
+    '  float tcc = (abs(dcc) > 1e-4) ? dot(centro, cima) / dcc : 1.0;',
+    '  float dAlvo = clamp(tcc, 0.05, 40.0);',
+    '  vec3 alvo = rc * dAlvo - centro;',
+    '  vec2 pl = vec2(dot(alvo, eixoU), dot(alvo, eixoV));',
+    '  float plr = length(pl);',
+    '  if (plr > RAIO * 1.35) pl *= RAIO * 1.35 / plr;',
+    '  vec2 mira = vec2(pl.x * cg + pl.y * sg, -pl.x * sg + pl.y * cg);',
 
       /* O raio, visto de dentro da peca. A base e ortonormal, por isso a volta
          e so a transposta -- e tHit continua a ser a distancia verdadeira. */
@@ -715,6 +736,57 @@
     '  float declive = clamp(1.0 - abs(Nobj.z), 0.0, 1.0);',
     '  float fendas = smoothstep(0.010, 0.145, declive);',
 
+      /* O que e um *pormenor*, em numeros. Nao e o declive -- uma parede
+         inteira tem declive do alto a baixo e nao e uma aresta. E a
+         curvatura: quatro alturas a volta do ponto contra a altura do
+         ponto. Da zero num campo liso e zero numa rampa, por mais
+         inclinada que seja, e salta no sitio exacto onde a superficie
+         *dobra* -- que e o bordo de uma figura, o canto de uma incisao,
+         o labio de uma picada, as duas margens de uma fenda. Em valor
+         absoluto, para apanhar tanto o que sobe como o que desce.
+
+         O passo nunca e menor do que tres texels do mapa nem do que um
+         pixel do ecra: mais curto do que isso, a conta mede o ruido da
+         interpolacao em vez de medir a peca, e a peca formigava.
+
+         So se pergunta onde a luz do rato chega: sao quatro leituras do
+         mapa, e noventa por cento do ecra nao precisa delas. */
+      /* O alcance mede-se no *ecra* e nao no mundo: e uma fraccao da
+         altura do que se ve a profundidade do alvo. Preso ao mundo, de
+         perto a luz do rato cobria tudo o que estava a vista -- a camara
+         chega-se, o pedaco de peca no ecra encolhe, e um raio fixo passa
+         a ser maior do que ele. Assim o rato manda sempre do mesmo
+         tamanho, veja-se a peca de longe ou de perto. */
+    '  float alcance = max(luzPerto * dAlvo * abertura * 2.0, 1e-4);',
+    '  float perto = 1.0 / (1.0 + pow(length(q - mira) / alcance, 3.2));',
+    '  float pormenor = 0.0;',
+    '  if (tipo == 0 && perto > 0.030) {',
+      /* Le-se o *mapa* e nao o `alturaEm`. O `alturaEm` traz o torno
+         junto, que e um seno de novecentos ciclos, e a curvatura de um
+         seno desses nao da arestas nenhumas: da um tracejado fino
+         espalhado pela peca inteira. Foi visto a desenhar so este termo
+         no ecra -- a peca saia as riscas e nao se via uma figura.
+
+         E le-se a *inclinacao* e nao a altura, que e o que faz isto
+         caber no orcamento. A curvatura pela altura obriga a quatro
+         leituras a volta mais a do meio; a inclinacao ja vem gravada no
+         mapa, nos dois primeiros canais, e a do proprio ponto ja foi
+         lida la em cima para a normal. Sobram duas -- uma para cada
+         lado -- e o quanto a inclinacao muda de um texel para o outro
+         e exactamente a mesma coisa. Com cinco leituras, a travessia
+         mais proxima caia de sessenta para trinta imagens por segundo;
+         com duas nao se mexe.
+
+         O `g` do mapa esta ao contrario do y do objecto, e o v da
+         textura tambem -- as duas voltas anulam-se, e por isso as duas
+         diferencas somam-se como estao. */
+    '    float eps = max(4.0 / MAPA, porPixel * 0.9);',
+    '    vec2 r0 = relEm(uv, lodM).rg;',
+    '    float dx = relEm(paraUV(q + vec2(eps, 0.0)), lodM).r - r0.r;',
+    '    float dy = relEm(paraUV(q + vec2(0.0, eps)), lodM).g - r0.g;',
+    '    pormenor = smoothstep(0.020, 0.150, length(vec2(dx, dy))) * perto;',
+    '  }',
+
       /* A sombra que o relevo faz sobre si proprio. Sem ela, uma figura
          levantada meio milimetro acima do campo nao escurece nada a sua
          frente, e a luz rasante deixa de querer dizer seja o que for. */
@@ -789,9 +861,19 @@
          lampada. */
     '  vec3 CHAVE = vec3(1.0, 0.893, 0.772);',
     '  float luzQ = sombra * fendas;',
+      /* A luz do rato leva a sombra do relevo, como a outra -- um
+         pormenor que esta atras de um braco levantado nao acende --,
+         mas apanha a luz dos dois lados (`ndlW`, meia volta em vez de
+         um quarto): uma aresta tem duas faces e, com o lambert seco,
+         so uma delas acendia. O que o rato acende e o *pormenor*, e um
+         pormenor sao as duas margens. */
+    '  float faisca = sombra * pormenor;',
+    '  float ndlW = max(dot(N, paraLuz) * 0.55 + 0.45, 0.0);',
 
-    '  vec3 difusa = albedo * (1.0 - metal * 0.72) * ndl * luzQ * 1.34;',
-    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 3.0) * F * ndl * luzQ * 0.70;',
+    '  vec3 difusa = albedo * (1.0 - metal * 0.72)'
+                  + ' * (ndl * luzQ * 1.34 + ndlW * faisca * 4.60);',
+    '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 3.0)'
+                  + ' * F * ndl * (luzQ * 0.70 + faisca * 1.80);',
 
     '  vec3 amb = ambienteEm(reflect(-olho, N));',
     '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
@@ -928,7 +1010,8 @@
     var U = {};
     ['resolucao', 'mapaCor', 'mapaRel', 'mapaRug', 'inclinacao', 'guinada',
      'giro', 'distancia', 'abertura', 'desvio', 'luzRumo', 'luzRasar',
-     'graoForca', 'passosFundo', 'passosSombra', 'passosLonge']
+     'luzMira', 'luzPerto', 'graoForca', 'passosFundo', 'passosSombra',
+     'passosLonge']
       .forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     gl.enable(gl.BLEND);
@@ -1068,8 +1151,8 @@
                + Math.sin(t * 0.0146) * 0.060
                + (p - 0.5) * 0.30
                + ratoX * 0.170;
-      var dist = (deitado ? 2.10 : 0.69)
-               - e1 * (deitado ? 0.28 : 0.13)
+      var dist = (deitado ? 1.80 : 0.59)
+               - e1 * (deitado ? 0.24 : 0.11)
                - e2 * (deitado ? 0.00 : 0.12)
                - e3 * (deitado ? -0.26 : 0.14)
                + Math.sin(t * 0.0289 + 2.4) * 0.022;
@@ -1089,12 +1172,15 @@
          da volta lenta que ele dá sozinho */
       gl.uniform1f(U.giro, -t * 0.0235 - p * 3.30);
       gl.uniform1f(U.distancia, dist);
-      /* O plano aumentou duas vezes: a camara chegou-se (0,69 em vez de
-         0,82) e a objectiva fechou (0,46 em vez de 0,52). Juntas dao um
-         terco mais de peca em cada bordo do ecra. O artefacto e o
-         assunto da pagina; estava a ocupar menos do que o texto ao
-         lado dele. */
-      gl.uniform1f(U.abertura, deitado ? 0.56 : 0.46);
+      /* O plano aumentou tres vezes, e sempre pelos dois lados ao mesmo
+         tempo: a camara chegou-se (0,88 -> 0,82 -> 0,69 -> 0,59) e a
+         objectiva fechou (0,52 -> 0,46 -> 0,42). Do principio ate aqui, a
+         peca ocupa mais do dobro do ecra. O artefacto e o assunto da
+         pagina; comecou por ocupar menos do que o texto ao lado dele.
+
+         No telemovel a peca esta deitada e vista de longe, e por isso
+         anda em numeros maiores -- 2,10 passou a 1,80. */
+      gl.uniform1f(U.abertura, deitado ? 0.52 : 0.42);
       gl.uniform2f(U.desvio, desvioX, desvioY);
       /* O rato diz de **onde** a luz vem, e não onde ela cai. Não há onde
          ela cai: cai na peça toda, e só o relevo a apanha. Mexer o rato
@@ -1125,6 +1211,29 @@
       var rasar = temRato ? Math.min(rr, 1) : 0.42;
       gl.uniform1f(U.luzRasar,
                    (0.31 - 0.13 * rasar) * (1 + Math.sin(t * 0.0259) * 0.09));
+
+      /* E depois há a luz do rato, que é outra coisa. A de cima vem de uma
+         direcção e cai na peça toda; esta anda com o cursor e **só existe
+         onde há pormenor** — a aresta, o bordo, a incisão, a fenda, a
+         picada. No campo liso não existe, nem debaixo do rato, e por isso
+         não há mancha nenhuma para se ver: o que se vê são os pormenores a
+         acenderem-se por onde ele passa e a apagarem-se atrás dele.
+
+         Sem rato, passeia sozinha — devagar e desencontrada, para quem
+         chega à página ver os pormenores a acender e perceber que aquilo
+         responde. É também o que acontece no telemóvel, onde não há rato. */
+      var passeio = t * 0.058;
+      var soloX = Math.cos(passeio) * 0.40 + Math.sin(t * 0.0231 + 1.2) * 0.18;
+      var soloY = Math.sin(passeio * 0.82 + 0.6) * 0.26 + Math.sin(t * 0.0193) * 0.10
+               - (deitado ? 0.34 : 0);
+      gl.uniform2f(U.luzMira,
+                   (temRato ? ratoX : soloX) * (largura / altura),
+                   temRato ? -ratoY : soloY);
+      /* O alcance anda com a distância a que o rato aponta, e não é um
+         número do mundo: apontar para o alto do ecrã — que é a parte da
+         peça que está longe — dava um alcance que a perspectiva encolhia a
+         nada. */
+      gl.uniform1f(U.luzPerto, deitado ? 0.40 : 0.55);
       gl.uniform1f(U.graoForca, deitado ? 0.08 : 0.12);
       gl.uniform1f(U.passosFundo, NIVEIS[nivel][0]);
       gl.uniform1f(U.passosSombra, NIVEIS[nivel][1]);

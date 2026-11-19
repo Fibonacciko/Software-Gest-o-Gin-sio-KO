@@ -727,6 +727,12 @@ por três lados ao mesmo tempo:
 Num ecrã ao alto, a mesma coisa em menor grau: 2,30 para 2,10, e a objectiva
 de 0,62 para 0,56.
 
+**E outra vez a seguir** (*"volta a aproximar mais o artefacto"*), pelos
+mesmos dois lados: a câmara de 0,69 para **0,59** e a objectiva de 0,46
+para **0,42**; no ecrã ao alto, 2,10 para 1,80 e 0,56 para 0,52. Do
+princípio até aqui são quatro passos — 0,88, 0,82, 0,69, 0,59 — e a peça
+ocupa mais do dobro do ecrã do que ocupava.
+
 #### A luz não é um foco
 
 *"Consigo perceber que a luz agora bate na parede de uma incisão, no bordo de
@@ -787,6 +793,73 @@ tempo e o que se ganhava em desenho perdia-se em branco queimado.
 A página ficou mais escura e tem mais peça à vista ao mesmo tempo — que é o
 que acontece quando se deixa de acender o chão.
 
+#### A luz do rato: exclusivamente nos pormenores
+
+*"A luz agora não vem de um ponto e está no artefacto todo, o que não está
+propriamente mal mas, ao passar o rato, deveria existir uma luz que iria
+incidir exclusivamente em arestas, bordos, incisões, fendas e picadas.
+Exclusivamente nos pormenores e nada mais."*
+
+Então são **duas**, e eram sempre duas. A de cima — a direcção rasante que
+cai na peça toda e só o declive apanha — fica como está. Por baixo dela
+anda agora a luz do rato, e essa **só existe onde há pormenor**: no campo
+liso não existe, nem debaixo do cursor. Por isso continua a não haver
+mancha nenhuma para se ver — o que se vê são os bordos, as incisões, as
+fendas e as picadas a acenderem-se por onde ele passa e a apagarem-se atrás
+dele.
+
+**O que é um pormenor, em números.** Não é o declive: uma parede inteira tem
+declive do alto a baixo e não é uma aresta. É o declive **a mudar** — quanto
+a inclinação da superfície vira de um texel para o outro. Dá zero num campo
+liso e zero numa rampa, por mais inclinada que seja, e salta no sítio exacto
+onde a superfície *dobra*: o bordo de uma figura, o canto de uma incisão, o
+lábio de uma picada, as duas margens de uma fenda.
+
+Três coisas se aprenderam a fazê-lo, e as três só se viram **desenhando esse
+termo sozinho no ecrã**, a preto e branco. Olhado dentro da imagem acabada
+não se percebia nenhuma delas:
+
+- **A primeira versão media a altura e trazia o torno junto.** Os anéis do
+  torno são um seno de novecentos ciclos, e a curvatura de um seno desses
+  não dá aresta nenhuma: dá um tracejado fino espalhado pela peça inteira. A
+  peça saía às riscas e não se via uma figura. Passou a ler-se o mapa, onde
+  o torno não está.
+- **Eram cinco leituras e passaram a três.** A curvatura pela altura obriga
+  a quatro medições à volta mais a do meio; mas a *inclinação* já vem gravada
+  no mapa, nos dois primeiros canais, e o quanto ela muda de um texel para o
+  outro é exactamente a mesma coisa. Sobram duas, uma para cada lado.
+- **E somavam-se as duas diferenças, que é o que não se deve fazer.** Numa
+  aresta na diagonal uma anula a outra, e a linha ficava com buracos. É a
+  distância entre elas que conta, não a soma.
+
+**O alcance mede-se no ecrã e não no mundo.** Preso ao mundo, de perto a luz
+do rato cobria tudo o que estava à vista: a câmara chega-se, o pedaço de peça
+no ecrã encolhe, e um raio fixo passa a ser maior do que ele. Medido como
+fracção da altura do que se vê, o rato manda sempre do mesmo tamanho, veja-se
+a peça de longe ou de perto.
+
+E apanha a luz **dos dois lados** — meia volta em vez de um quarto. Uma
+aresta tem duas faces e, com o lambert seco, só uma delas acendia; o que o
+rato acende é o pormenor, e um pormenor são as duas margens.
+
+##### E o que custou foi um registo, não as leituras
+
+Ao chegar ao fim da viagem — que é onde a câmara está mais perto — a página
+caiu de sessenta para **trinta imagens por segundo**. A conta óbvia era as
+leituras do mapa a mais, e não era: desligada a luz do rato, com as leituras
+lá, a mediana voltava aos 16,8 ms.
+
+Era o `rel` — os três números do mapa naquele ponto. Para os reaproveitar na
+luz nova, tinham sido **declarados no princípio** do sombreador em vez de
+dentro do bloco onde nascem. Isso mantém um `vec3` vivo da primeira linha à
+última, e num sombreador deste tamanho é o que decide quantos pixéis a placa
+gráfica consegue ter a andar ao mesmo tempo. Lidos outra vez lá dentro — uma
+leitura a mais, de propósito — voltou aos 16,7.
+
+É contra-intuitivo e vale a pena guardar: **numa placa integrada, poupar uma
+leitura à custa de prender um registo sai caro**. O que faz a conta não é o
+trabalho de cada pixel, é quantos cabem a trabalhar ao mesmo tempo.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
@@ -798,7 +871,7 @@ que mais estiver a correr:
 | | antes | agora |
 |---|---|---|
 | mediana | 16,7 ms | 16,7 ms em todo o percurso |
-| média | 22,4 a 24,0 ms | 17,3 a 23,8 ms |
+| média | 22,4 a 24,0 ms | 19,6 a 23,0 ms |
 | ficheiros dos mapas | 1,4 MB | 3,7 MB no ecrã largo, 1,6 MB no estreito |
 
 A poça foi-se embora e levou os dois `pow()` que tinha por pixel: a luz de
