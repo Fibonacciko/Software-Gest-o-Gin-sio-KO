@@ -721,7 +721,16 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
    fotografias; medido no Studio Plato, o que lá se mexe é cada uma por
    sua conta, e o rato não mexe nada. */
 
-@media (max-width: 760px) {
+/* Era 760 e passou a 1024. A 820 -- um tablet ao alto -- o texto ainda
+   vai quase de ponta a ponta mas as fotografias ficavam com as
+   percentagens do ecrã largo: seis empilhadas numa coluna de cento e
+   trinta pixéis à esquerda, e a do canto direito cortada ao meio pela
+   borda. Lia-se como avaria.
+
+   A margem onde elas cabem só existe mesmo num ecrã largo. Abaixo
+   disso ficam as duas das faixas vazias, que é o que já acontecia no
+   telemóvel. */
+@media (max-width: 1024px) {
   /* Num ecrã estreito não há margens onde as pousar: o texto vai de ponta
      a ponta. Ficam duas, em diagonal, nas faixas vazias por cima da
      primeira frase e por baixo da última; as outras saem. Uma frase tapada
