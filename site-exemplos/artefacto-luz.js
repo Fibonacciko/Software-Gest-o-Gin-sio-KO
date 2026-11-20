@@ -230,7 +230,11 @@
        tres contas, desenham-se a qualquer tamanho, e o raio entra-lhes mesmo --
        fazem parte do corpo e nao da pintura. */
     'const float TORNO_K = 897.0;',
-    'const float TORNO_A = 0.000024;',
+      /* Uma pedra nao sai de um torno. Os aneis ficam -- um disco de
+         pedra foi mesmo desbastado a roda, e as voltas da mo ficam-lhe
+         na cara -- mas a um terco: a esta altura eram um seno regular
+         e leem-se como metal maquinado. */
+    'const float TORNO_A = 0.0000082;',
     /* A fase leva um desvio que anda com q: a peca nao ficou perfeitamente
        centrada no torno, e os aneis saem um pouco excentricos -- que e o
        que eles fazem a serio. Um seno so, e nao tres: isto e chamado a cada
@@ -274,15 +278,15 @@
     '  vec2 g = vec2(0.0);',
     '  float c1 = cabe(0.0480, porPixel);',
     '  if (c1 > 0.01) {',
-    '    g += onda(q, vec2( 0.9135,  0.4068), 131.0, 0.017 * c1, 0.0);',
-    '    g += onda(q, vec2(-0.2756,  0.9613), 167.0, 0.015 * c1, 1.7);',
-    '    g += onda(q, vec2( 0.6691, -0.7431), 211.0, 0.013 * c1, 3.1);',
+    '    g += onda(q, vec2( 0.9135,  0.4068), 131.0, 0.0077 * c1, 0.0);',
+    '    g += onda(q, vec2(-0.2756,  0.9613), 167.0, 0.0068 * c1, 1.7);',
+    '    g += onda(q, vec2( 0.6691, -0.7431), 211.0, 0.0059 * c1, 3.1);',
     '  }',
     '  float c2 = cabe(0.0145, porPixel);',
     '  if (c2 > 0.01) {',
-    '    g += onda(q, vec2( 0.3090,  0.9511), 433.0, 0.017 * c2, 0.6);',
-    '    g += onda(q, vec2(-0.8829,  0.4695), 541.0, 0.015 * c2, 2.4);',
-    '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.012 * c2, 4.2);',
+    '    g += onda(q, vec2( 0.3090,  0.9511), 433.0, 0.0077 * c2, 0.6);',
+    '    g += onda(q, vec2(-0.8829,  0.4695), 541.0, 0.0068 * c2, 2.4);',
+    '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.0054 * c2, 4.2);',
       /* Metade da forca desta fiada passou para aqui. Com os tres senos
          sozinhos, o campo lia-se como tecido: a esta luz via-se uma rede
          diagonal por cima do bronze, igual de um lado ao outro da peca,
@@ -296,9 +300,9 @@
          tinha pele. */
     '  float c3 = cabe(0.0052, porPixel);',
     '  if (c3 > 0.01) {',
-    '    g += onda(q, vec2( 0.5878,  0.8090), 1213.0, 0.015 * c3, 2.0);',
-    '    g += onda(q, vec2(-0.6947,  0.7193), 1511.0, 0.013 * c3, 5.1);',
-    '    g += onda(q, vec2( 0.9945, -0.1045), 1759.0, 0.011 * c3, 0.9);',
+    '    g += onda(q, vec2( 0.5878,  0.8090), 1213.0, 0.0068 * c3, 2.0);',
+    '    g += onda(q, vec2(-0.6947,  0.7193), 1511.0, 0.0059 * c3, 5.1);',
+    '    g += onda(q, vec2( 0.9945, -0.1045), 1759.0, 0.0050 * c3, 0.9);',
       /* Tres ondas da mesma medida leem-se como um tecido: ha sempre uma
          direccao em que a trama bate certo. Metade da forca vem daqui, que
          nao tem direccao nenhuma. */
@@ -331,6 +335,44 @@
     '    vec2 r = vec2(q.x * 0.4536 + q.y * 0.8912, -q.x * 0.8912 + q.y * 0.4536);',
     '    vec3 n = ruidoD(r * 780.0 + 41.3);',
     '    g += vec2(n.y * 0.4536 - n.z * 0.8912, n.y * 0.8912 + n.z * 0.4536) * (0.055 * f3);',
+    '  }',
+    '  return g * forca;',
+    '}',
+    /* ─── a pedra ───
+       O que faz uma pedra nao e a cor: e ter *carocos* e ter *vincos*.
+       Tudo o que havia aqui era ruido liso, e ruido liso da colinas --
+       colinas de qualquer tamanho leem-se como sabao, que foi
+       exactamente a palavra que ele usou do principio ao fim.
+
+       Os carocos sao ruido normal, em duas medidas. Os vincos sao o
+       mesmo ruido **dobrado sobre si proprio**: onde ele passa por
+       meio, a superficie faz uma aresta em vez de um cume. E um truque
+       de uma linha -- o declive troca de sinal de um lado e do outro do
+       meio -- e e a diferenca entre uma duna e uma rocha partida.
+
+       Cada medida so entra quando cabe num pixel, como tudo o resto. */
+    'vec2 pedregulho(vec2 q, float porPixel, float forca) {',
+    '  vec2 g = vec2(0.0);',
+    '  float c1 = cabe(0.0215, porPixel);',
+    '  if (c1 > 0.01) {',
+    '    vec3 a = ruidoD(q * 84.0 + 2.3);',
+    '    g += a.yz * (0.235 * c1);',
+    '    vec3 b = ruidoD(q * 149.0 + 31.9);',
+    '    g -= b.yz * (sign(b.x - 0.5) * 0.185 * c1);',
+    '  }',
+    '  float c2 = cabe(0.0062, porPixel);',
+    '  if (c2 > 0.01) {',
+    '    vec3 c = ruidoD(q * 296.0 + 11.7);',
+    '    g += c.yz * (0.168 * c2);',
+    '    vec3 d = ruidoD(q * 497.0 + 7.1);',
+    '    g -= d.yz * (sign(d.x - 0.5) * 0.140 * c2);',
+    '  }',
+    '  float c3 = cabe(0.0019, porPixel);',
+    '  if (c3 > 0.01) {',
+    '    vec3 e = ruidoD(q * 1080.0 + 5.1);',
+    '    g -= e.yz * (sign(e.x - 0.5) * 0.132 * c3);',
+    '    vec3 f = ruidoD(q * 2360.0 + 19.3);',
+    '    g += f.yz * (0.098 * c3);',
     '  }',
     '  return g * forca;',
     '}',
@@ -569,8 +611,13 @@
     /* O mapa veio de uma peca muito mais baca do que a que se queria: a
        0,90 o campo nao devolve nada e le-se como barro cozido. Bronze
        enterrado nao e espelho, mas e metal -- devolve a janela toda. */
-    '    aspereza = clamp(rug.r * 0.80 + 0.17, 0.20, 1.0);',
-    '    metal = clamp(rug.g * 0.82, 0.04, 1.0);',
+        /* Pedra: a aspereza vive toda no alto da escala e o metal e
+           quase nada. Era `rug.r * 0,80 + 0,17` e `rug.g * 0,82`, que
+           com o mapa do bronze dava aspereza desde 0,20 e metal ate
+           1,0 -- um espelho. O que distingue pedra de metal nao e a
+           forma nem a cor: e isto. */
+    '    aspereza = clamp(rug.r * 0.34 + 0.63, 0.60, 1.0);',
+    '    metal = clamp(rug.g * 0.60, 0.0, 0.08);',
     '    cavidade = rug.b;',
     '    albedo = pow(texture2D(mapaCor, uv).rgb, vec3(2.2));',
 
@@ -584,8 +631,8 @@
     '    float manchas = ruido(q * 3.1 + 7.0) * 0.6 + ruido(q * 8.3 + 19.0) * 0.4;',
     '    float polido = smoothstep(0.22, 0.80, acima) * smoothstep(0.26, 0.74, manchas);',
     '    float funda = smoothstep(0.04, 0.42, abaixo);',
-    '    albedo = mix(albedo, vec3(0.262, 0.208, 0.134), polido * 0.46);',
-    '    albedo = mix(albedo, vec3(0.056, 0.070, 0.058), funda * 0.46);',
+    '    albedo = mix(albedo, vec3(0.296, 0.286, 0.262), polido * 0.42);',
+    '    albedo = mix(albedo, vec3(0.062, 0.064, 0.056), funda * 0.50);',
     '    aspereza = clamp(aspereza - polido * 0.15 + funda * 0.20, 0.20, 1.0);',
     '    metal = clamp(metal + polido * 0.22 - funda * 0.22, 0.04, 1.0);',
     '    oclusao = mix(1.0, 0.22, funda) * mix(0.55, 1.0, cavidade);',
@@ -648,6 +695,7 @@
     '    nxy += dir * tornoDeclive(q, r) * cabe(0.0070, porPixel) * plano'
                   + ' * (1.0 - 0.75 * acima);',
     '    nxy += grao(q, porPixel, (0.6 + graoForca * 6.0) * plano);',
+    '    nxy += pedregulho(q, porPixel, plano);',
     '    nxy += riscos(q, porPixel, (0.25 + 0.75 * acima) * plano);',
 
         /* E a pele das paredes, que e o contrario de tudo o que esta
@@ -682,8 +730,8 @@
            le-se como material de computador. */
     '    float comido = ruido(q * 2.7 + 4.0) * 0.6 + ruido(q * 6.1 + 17.0) * 0.4;',
     '    comido = smoothstep(0.26, 0.86, comido);',
-    '    albedo = mix(albedo, albedo * vec3(0.76, 0.68, 0.56), comido * 0.58);',
-    '    albedo = mix(albedo, vec3(0.106, 0.098, 0.084), comido * 0.22);',
+    '    albedo = mix(albedo, albedo * vec3(0.94, 0.92, 0.90), comido * 0.58);',
+    '    albedo = mix(albedo, vec3(0.128, 0.126, 0.116), comido * 0.26);',
     '    aspereza = clamp(aspereza + comido * 0.24, 0.20, 1.0);',
     '    metal = metal * (1.0 - comido * 0.30);',
     /* A sujidade nao se espalha por igual. Ha zonas da peca que ficaram ao
@@ -695,22 +743,22 @@
     '    float mancha = ruido(q * 1.7 + 2.0) * 0.52 + ruido(q * 4.3 + 9.0) * 0.31',
     '                 + ruido(q * 10.5 + 5.0) * 0.17;',
     '    float oxido = smoothstep(0.36, 0.80, mancha) * (0.48 + 0.52 * funda);',
-      /* Era 0,034 / 0,052 / 0,042 -- quase preto. Isso escurecia o bronze
-         em vez de o sujar: o que se via continuava a ser o mesmo ambar,
-         so que mais escuro nuns sitios. A patina do bronze tem cor, e e
-         ela que faz a peca deixar de ser de uma cor so. */
-    '    albedo = mix(albedo, vec3(0.072, 0.098, 0.078), oxido * 0.74);',
-    '    aspereza = clamp(aspereza + oxido * 0.30, 0.20, 1.0);',
-    '    metal = metal * (1.0 - oxido * 0.55);',
-    /* e, do outro lado, o que foi limpo pelo uso volta a ser ouro */
+      /* A pedra nao oxida: o que lhe fica nas reentrancias e terra,
+         po e liquen. Cinzento-esverdeado baco, e nao o verde de
+         patina que aqui estava -- aquele era do bronze. O que isto
+         faz continua a ser o mesmo: a peca deixa de ser de uma cor
+         so, e nada no mundo e de uma cor so. */
+    '    albedo = mix(albedo, vec3(0.086, 0.092, 0.078), oxido * 0.70);',
+    '    aspereza = clamp(aspereza + oxido * 0.12, 0.60, 1.0);',
+    /* e, do outro lado, o que o uso rocou fica limpo e mais claro */
     '    float limpo = smoothstep(0.46, 0.16, mancha) * polido;',
-    '    albedo = mix(albedo, vec3(0.302, 0.230, 0.124), limpo * 0.30);',
-    '    aspereza = clamp(aspereza - limpo * 0.10, 0.20, 1.0);',
-    /* E, no fim de tudo, uma volta atras no ouro. Uma cor cheia le-se
-       como metal novo: um bronze desenterrado perdeu-lhe a saturacao e
-       nunca mais a tem. Nao e cinzento -- e o mesmo bronze com menos
-       verniz. */
-    '    albedo = mix(albedo, vec3(dot(albedo, vec3(0.333))), 0.21) * 0.93;',
+    '    albedo = mix(albedo, vec3(0.336, 0.326, 0.304), limpo * 0.34);',
+    '    aspereza = clamp(aspereza - limpo * 0.07, 0.60, 1.0);',
+    /* E, no fim de tudo, mais um passo para o cinzento. Medida na peca
+       dele, a pedra tem o vermelho 4 a 8% acima do verde e o azul 10 a
+       18% abaixo: e um cinzento *quente*, e nao uma pedra castanha. A
+       cor que sai do mapa ainda vem com mais tinta do que isso. */
+    '    albedo = mix(albedo, vec3(dot(albedo, vec3(0.333))), 0.46) * 0.97;',
     /* As manchas de cima sao grandes -- tres, seis, dez voltas por peca.
        No fim da viagem o ecra inteiro cobre um palmo de bronze, e la
        dentro nenhuma delas chega a mudar: a peca fica de uma cor so, e
@@ -742,10 +790,10 @@
     '      vec3 nb = vec3(dir * sa, sqrt(max(1.0 - sa * sa, 0.004)));',
     '      nb.xy += grao(q, porPixel, 0.8) * 1.6;',
     '      Nobj = normalize(mix(vec3(nxy, nz0), nb, bw));',
-    '      albedo = mix(albedo, vec3(0.118, 0.094, 0.062) * (0.75 + 0.5 * ruido(dir * 6.0)), bw * 0.85);',
+    '      albedo = mix(albedo, vec3(0.142, 0.136, 0.122) * (0.75 + 0.5 * ruido(dir * 6.0)), bw * 0.85);',
     '      oclusao = mix(oclusao, 0.66, bw);',
-    '      metal = mix(metal, 0.60, bw);',
-    '      aspereza = mix(aspereza, 0.62, bw);',
+    '      metal = mix(metal, 0.04, bw);',
+    '      aspereza = mix(aspereza, 0.86, bw);',
     '    } else {',
     '      Nobj = normalize(vec3(nxy, nz0));',
     '    }',
@@ -764,10 +812,10 @@
     '                   + tang * (g1.y * 0.055 + g2.y * 0.085)',
     '                   + vert * (g1.z * 0.030 + g2.z * 0.012));',
     '    float patina = smoothstep(0.55, 0.0, h01) * (0.5 + 0.5 * ruido(dir * 9.0));',
-    '    albedo = mix(vec3(0.160, 0.126, 0.082), vec3(0.068, 0.088, 0.074), patina * 0.7);',
+    '    albedo = mix(vec3(0.196, 0.188, 0.170), vec3(0.082, 0.086, 0.074), patina * 0.7);',
     '    albedo *= 0.70 + 0.55 * ruido(dir * 5.0 + 31.0);',
-    '    aspereza = clamp(0.70 - 0.24 * h01 + estria * 0.3, 0.16, 0.98);',
-    '    metal = 0.52 * (1.0 - patina * 0.6) + 0.22 * h01;',
+    '    aspereza = clamp(0.92 - 0.10 * h01 + estria * 0.2, 0.62, 0.99);',
+    '    metal = 0.03;',
     '    cavidade = 0.6;',
     '    oclusao = mix(0.46, 1.08, h01);',
     '  } else {',
@@ -776,8 +824,8 @@
            dava -- ficava um buraco por onde se via o outro lado. */
     '    vec3 g = ruidoD(q * 26.0);',
     '    Nobj = normalize(vec3(g.yz * 0.05, -1.0));',
-    '    albedo = vec3(0.062, 0.050, 0.036) * (0.7 + 0.6 * ruido(q * 7.0));',
-    '    aspereza = 0.88; metal = 0.30; cavidade = 0.5; oclusao = 0.42;',
+    '    albedo = vec3(0.072, 0.070, 0.062) * (0.7 + 0.6 * ruido(q * 7.0));',
+    '    aspereza = 0.95; metal = 0.02; cavidade = 0.5; oclusao = 0.42;',
     '  }',
 
     '  vec3 N = normalize(eixoT * Nobj.x + eixoB * Nobj.y + cima * Nobj.z);',
@@ -931,8 +979,11 @@
     '  float k = al * 0.5;',
     '  float G = (ndl / (ndl * (1.0 - k) + k)) * (ndv / (ndv * (1.0 - k) + k));',
 
-    '  vec3 BRONZE = vec3(0.735, 0.545, 0.330);',
-    '  vec3 F0 = mix(vec3(0.045), BRONZE, metal);',
+      /* O F0 de uma pedra e 0,04 e nao tem cor: um dielectrico devolve
+         a luz na mesma cor com que ela chega. O do bronze tinha cor --
+         0,735 / 0,545 / 0,330 -- e era dai que vinha metade do ouro da
+         peca, mesmo depois de lhe tirarmos o ouro do albedo. */
+    '  vec3 F0 = vec3(0.042) + vec3(0.30) * metal;',
       /* O Fresnel rasante e o que fazia a aresta acesa sair um tubo de
          creme. A conta de manual leva qualquer material a espelhar como
          um vidro quando a luz chega quase de lado -- e esta luz chega
@@ -958,7 +1009,11 @@
     '  float ndlW = max(dot(N, paraLuz) * 0.55 + 0.45, 0.0);',
 
     '  vec3 difusa = albedo * (1.0 - metal * 0.72)'
-                  + ' * (ndl * luzQ * 2.15 + ndlW * faisca * 4.60);',
+      /* Metade da chave do bronze, e nao e uma escolha de gosto: o
+         bronze era metal, e um metal come o difuso (`1 - metal*0,72`
+         punha-o a 42%). A pedra nao come nada -- com o mesmo numero,
+         a peca saia ao dobro da luz. */
+                  + ' * (ndl * luzQ * 1.16 + ndlW * faisca * 2.55);',
     '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 3.0)'
                   + ' * F * ndl * (luzQ * 0.46 + faisca * 1.80);',
 

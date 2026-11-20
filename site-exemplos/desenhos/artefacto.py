@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-O artefacto: um disco de bronze com dois pugilistas, desenhado de raiz.
+O artefacto: um disco de pedra com dois pugilistas, desenhado de raiz.
 
 NAO produz uma fotografia iluminada. Produz os *mapas* da peca -- a cor, a
 oclusao, o relevo -- e a luz e calculada no navegador, a cada fotograma,
@@ -510,7 +510,7 @@ ruido = np.random.rand(N, N).astype(np.float32)
 grosso = normalizar(borrar(ruido, 30 * ESC))
 medio = normalizar(borrar(ruido, 8 * ESC))
 
-# A patina mancha a *cor* e nao a altura: um bronze manchado continua a ser
+# A sujidade mancha a *cor* e nao a altura: uma pedra manchada continua a ser
 # uma superficie lisa. Confundir as duas da casca de arvore -- o relevo sai
 # da *derivada* da altura, e a derivada amplifica tudo o que e miudo.
 # A ondulacao da fundicao. Sobe-la mais do que isto parece boa ideia de
@@ -750,26 +750,40 @@ perto = borrar(alt_p, 7 * MESC)
 oc = np.clip(0.30 + 1.05 * (alt_p * 0.34 + perto * 0.36 + longe * 0.30) - 0.16, 0.06, 1.0)
 oc = oc ** 1.25
 
-# a cor da peca: bronze escuro, patina verde no fundo das reentrancias.
-# Nunca sai daqui luz nenhuma -- so a cor propria do metal.
+# a cor da peca: **pedra**. Nunca sai daqui luz nenhuma -- so a cor
+# propria do material.
+#
+# A peca era bronze, e passou a pedra por decisao dele, depois de ver a do
+# Primal: *"gosto mais desse nivel de realismo, gosto da porosidade, da
+# pele nas paredes"*. A cor nao foi inventada -- foi medida na peca dele, a
+# 1440x900, separando a imagem por faixas de luminancia:
+#
+#   sombra        rgb  4,9 / 4,6 / 3,8     r/g 1,08   b/g 0,82
+#   meio-escuro        18,7 / 17,7 / 15,3  r/g 1,06   b/g 0,87
+#   meio               39,6 / 37,9 / 34,0  r/g 1,04   b/g 0,90
+#
+# Ou seja: **um cinzento quente, quase neutro** -- nada de castanho, nada
+# de bege. O vermelho anda 4 a 8% acima do verde e o azul 10 a 18% abaixo,
+# e essa diferenca aperta nos tons claros. Nao e pedra amarela: e pedra
+# cinzenta vista a uma luz quente.
 baixo = np.clip(1.0 - (alt_p - 0.355) / 0.300, 0, 1)
-# O bronze estava cinzento -- 0,25 / 0,20 / 0,13 e um castanho sem sangue, e
-# com ele a peca lia-se como barro cozido. Um bronze de dois mil e setecentos
-# anos e escuro, mas e quente: o vermelho vale o triplo do azul. A cor nao
-# vem do brilho, vem daqui.
-bronze = np.stack([0.300 - 0.112 * baixo,
-                   0.202 - 0.058 * baixo,
-                   0.098 + 0.004 * baixo], axis=-1).astype(np.float32)
+pedra = np.stack([0.268 - 0.094 * baixo,
+                  0.253 - 0.088 * baixo,
+                  0.226 - 0.080 * baixo], axis=-1).astype(np.float32)
+# o que se acumulou no fundo das reentrancias: terra, po e liquen. Nao e
+# verde de patina -- a pedra nao oxida; e cinzento-esverdeado baco.
 patina = np.clip(grosso_p * 0.5 + 0.5, 0, 1)
-verde = np.array([0.104, 0.142, 0.122], dtype=np.float32)
-m = (patina * baixo * 0.44)[..., None]
-bronze = bronze * (1 - m) + verde * m
-# o metal gasto nos pontos altos volta a aparecer, mais claro e mais limpo
+terra = np.array([0.098, 0.102, 0.086], dtype=np.float32)
+m = (patina * baixo * 0.50)[..., None]
+pedra = pedra * (1 - m) + terra * m
+# e o que esta no alto foi rocado durante seculos: a pedra ali esta limpa,
+# mais clara e mais fria -- e nao mais *dourada*, que era o que o metal
+# fazia neste mesmo sitio.
 gasto = np.clip((alt_p - 0.56) / 0.16, 0, 1) * np.clip(medio_p * 0.4 + 0.6, 0, 1)
-bronze = bronze * (1 - gasto[..., None] * 0.55) + \
-         np.array([0.640, 0.472, 0.240], dtype=np.float32) * (gasto[..., None] * 0.55)
+pedra = pedra * (1 - gasto[..., None] * 0.46) + \
+        np.array([0.372, 0.360, 0.336], dtype=np.float32) * (gasto[..., None] * 0.46)
 
-cor_ao = np.clip(bronze * oc[..., None], 0, 1)
+cor_ao = np.clip(pedra * oc[..., None], 0, 1)
 
 # o recorte
 # O recorte so serve o retrato cozido: no navegador a silhueta vem do
@@ -797,18 +811,21 @@ guardar('artefacto-cor.webp',
         quality=88, method=6)
 
 # --------------------------- a aspereza --------------------------------
-# E este mapa que distingue metal de gesso, e nao a forma. O bronze gasto nos
-# pontos altos e polido e devolve um reflexo apertado; a patina do fundo das
-# reentrancias e baca e nao devolve nada. Sem isto o brilho e igual em toda a
-# peca, e uma peca com brilho igual em todo o lado le-se como plastico.
+# E este mapa que distingue uma pedra de um gesso, e nao a forma. A pedra
+# rocada nos pontos altos fica um pouco menos aspera -- um pouco, nao
+# muito: pedra nao e espelho em sitio nenhum. A aspereza vive toda entre
+# 0,62 e 0,99, e e isso que separa isto do metal que aqui estava, que ia
+# ate 0,16.
 
-aspereza = 0.90 - 0.44 * gasto - 0.16 * np.clip((alt_p - 0.50) / 0.20, 0, 1)
-aspereza += np.clip(medio_p, -2, 2) * 0.035
-aspereza = np.clip(aspereza, 0.16, 0.98)
+aspereza = 0.97 - 0.19 * gasto - 0.07 * np.clip((alt_p - 0.50) / 0.20, 0, 1)
+aspereza += np.clip(medio_p, -2, 2) * 0.030
+aspereza = np.clip(aspereza, 0.62, 0.99)
 
-# quanto daquilo ainda e metal a vista: a patina e um oxido, nao e metal
-metal = np.clip(0.30 + 0.62 * gasto + 0.30 * np.clip((alt_p - 0.52) / 0.18, 0, 1)
-                - 0.34 * np.clip(patina * baixo, 0, 1), 0.06, 1.0)
+# E **metal nao ha**. Uma pedra e um dielectrico: devolve a luz na mesma
+# cor com que ela chega, e devolve pouca. O canal fica quase a zero, e nao
+# se tira de todo porque um graozito de mica aqui e ali e o que impede a
+# superficie de ser uma chapa mate perfeita -- que tambem nao existe.
+metal = np.clip(0.012 + 0.030 * gasto, 0.0, 0.07)
 
 # cavidade: o fundo estreito de um sulco nao ve o ceu. E o passa-alto da
 # altura, e e o que faz as incisoes nao desaparecerem a luz de frente.
@@ -869,12 +886,15 @@ L = np.array([-0.60, -0.62, 0.505]); L /= np.linalg.norm(L)
 V = np.array([0.0, 0.0, 1.0])
 H = (L + V); H /= np.linalg.norm(H)
 dif = np.clip(nx * L[0] + ny * L[1] + nz * L[2], 0, 1)
-aspereza = np.clip(0.72 - 0.34 * np.clip((alt_p - 0.50) / 0.22, 0, 1), 0.2, 1.0)
+# Pedra: a aspereza nunca desce e o brilho e um sopro. Com a conta do
+# bronze -- aspereza a 0,2 e brilho a 0,22 -- o retrato ficava envernizado
+# ao lado da peca viva, e as duas tem de ser a mesma peca.
+aspereza = np.clip(0.93 - 0.11 * np.clip((alt_p - 0.50) / 0.22, 0, 1), 0.6, 1.0)
 brilho = np.clip(nx * H[0] + ny * H[1] + nz * H[2], 0, 1) ** (2.0 / (aspereza ** 4 + 1e-3))
-AMBIENTE = np.array([0.105, 0.120, 0.142], dtype=np.float32)
-CHAVE = np.array([1.00, 0.840, 0.595], dtype=np.float32)
-cor = cor_ao * (AMBIENTE + CHAVE * dif[..., None] * 0.86)
-cor += (CHAVE * 0.22) * (brilho * oc)[..., None]
+AMBIENTE = np.array([0.112, 0.124, 0.140], dtype=np.float32)
+CHAVE = np.array([1.00, 0.950, 0.880], dtype=np.float32)
+cor = cor_ao * (AMBIENTE + CHAVE * dif[..., None] * 0.94)
+cor += (CHAVE * 0.045) * (brilho * oc)[..., None]
 rgb = (np.clip(cor, 0, 1) ** (1 / 2.2) * 255).astype(np.uint8)
 peca = Image.fromarray(np.dstack([rgb, (alfa * 255).astype(np.uint8)]), 'RGBA')
 if '--png' in sys.argv:

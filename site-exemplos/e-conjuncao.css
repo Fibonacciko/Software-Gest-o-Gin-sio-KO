@@ -491,7 +491,7 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
 .artefacto__texto .titulo-grande { font-size: clamp(31px, 4.3vw, 60px); }
 .artefacto__texto .corrido { margin-top: 18px; font-size: 15px; max-width: 37ch; }
 .artefacto__texto .botao { margin-top: 24px; padding: 12px 22px; font-size: 13px; }
-/* esta nota fica por cima do bronze iluminado: sem a sombra, as primeiras
+/* esta nota fica por cima da pedra iluminada: sem a sombra, as primeiras
    palavras desapareciam na parte mais clara do disco */
 .artefacto__texto .nota {
   margin-top: 22px;
