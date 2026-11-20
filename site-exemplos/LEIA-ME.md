@@ -860,6 +860,100 @@ leitura a mais, de propósito — voltou aos 16,7.
 leitura à custa de prender um registo sai caro**. O que faz a conta não é o
 trabalho de cada pixel, é quantos cabem a trabalhar ao mesmo tempo.
 
+#### Menos picadas, mais fendas, mais incisões
+
+*"Reduzir um pouco o nº de picadas, aumentar o nº de fendas e incisões, para
+a luz vir a trabalhar nessas fendas e incisões."*
+
+Está certo, e há uma razão por baixo que vale a pena escrever: **uma picada
+não diz nada a uma luz que vem de lado**. É redonda — acende de um lado,
+apaga do outro, e o que fica é uma pinta. Uma fenda tem duas margens e um
+rumo: a luz corre ao longo dela, uma margem acende e a outra fica no escuro,
+e é isso que se lê de longe *e* ao perto. A peça estava com sarampo e com
+poucas rachas, que é o contrário do que esta luz sabe mostrar.
+
+| | antes | agora |
+|---|---|---|
+| ninhos de picadas | 44, de 4 a 18 bolhas | **19**, de 3 a 11 |
+| fendas | 11 | **38**, com ramificações — perto de 60 linhas |
+| larguras de fenda | 1 a 3 | **a maior parte de cabelo**, poucas largas |
+| incisões por figura | peitoral, prancha, virilha, rótula, cabelo, himantes | **mais costelas, linha do abdómen, canela, tendão, deltoide**; o cabelo passou de 5 para 8 madeixas e os himantes de 6 para 9 voltas |
+| mossas no campo | 38, a 0,013 de fundo | **54, a 0,024** |
+
+As mossas não são um pormenor à parte: ao perto, um plano perfeito com grão
+por cima continua a ler-se como um plano com grão por cima. O que faz aquilo
+parecer metal é a chapa **ondular devagar por baixo do grão**.
+
+#### E a definição ao perto
+
+*"Cada vez que se faz zoom, o artefacto tem muito pouco realismo e definição.
+Vai ver novamente o site PRIMAL."*
+
+Fui, e a comparação é dura. A peça dele, de perto, tem **matéria em cada
+milímetro**: granulado denso e com contraste, manchas à escala do palmo, cada
+glifo com uma linha escura no fundo e uma clara no bordo. A nossa, no mesmo
+plano, era **preto com três fitas claras e nada no meio** — a luz só tocava no
+que tinha declive, e o declive acabava nas arestas.
+
+Cinco coisas faltavam, e a última é a que mandava em todas:
+
+- **A oclusão das cavidades.** O fundo de uma incisão vê menos céu do que o
+  campo à volta, e é isso — não o brilho do bordo — que faz um sulco parecer
+  cortado em vez de pintado. Mede-se comparando a altura do ponto com a
+  altura *borrada* à volta, e a borrada sai de graça: é o mesmo mapa num
+  nível mais grosso, que é um borrão já calculado.
+- **A porosidade a comer luz.** Até aqui ela só torcia a normal, e uma normal
+  torcida dá ondulação, não dá buracos. Um poro é um buraco: vê menos céu, e
+  por isso é mais escuro do que a chapa à volta seja de que lado for a luz.
+- **O céu.** Uma luz de cima, larga e fraca, como a clarabóia de um museu.
+  Não tem sítio nenhum — é igual de um lado ao outro da peça e não faz mancha.
+- **A pele das paredes**, que é o contrário de tudo o resto: entra onde o
+  miúdo saía. As paredes são o recorte das figuras e estavam lisas. O que as
+  deixou lisas foi a razão certa — tudo o que é miúdo desenha-se em função de
+  x e y, e numa parede a pique uma coluna inteira de pixéis cai no mesmo x e
+  y, com o grão a esticar-se em riscas verticais. A saída não era desligar:
+  era **meter a altura dentro da conta**. Dois pixéis um por cima do outro na
+  mesma parede têm o mesmo x e y e alturas diferentes, e deixam de pedir o
+  mesmo ponto do ruído.
+- **E o enchimento era o que lavava tudo.** Esta é a que custou a encontrar.
+  Com as quatro acima feitas, o grão continuava a não aparecer — e desenhando
+  a normal sozinha no ecrã via-se que ela estava lá, densa e grande. O que
+  faltava não era relevo: era **luz rasante**. A ambiente responde mal a uma
+  normal torta meio grau; a rasante responde-lhe em cheio — a dezassete
+  graus, uma inclinação de um décimo muda a luz daquele pixel em um terço.
+  Com o enchimento a pesar mais do que a chave, cada pixel ficava com a média
+  do que o rodeia, que é a definição de uma superfície sem textura.
+
+  O ambiente caiu para um quarto e a chave subiu para o dobro. A peça ficou
+  mais escura *e* com mais para ver, que é o que acontece quando se deixa de
+  acender tudo por igual.
+
+E o **chão da chave voltou** — 0,42 — depois de ter ido a zero há duas
+versões. A razão por que saiu já não existe: naquela altura a chave era uma
+poça com sítio, e um campo liso levemente aceso desenhava a mancha da
+lanterna. Hoje é uma direcção e não tem sítio nenhum; um chão igual de um
+lado ao outro da peça não desenha mancha nenhuma. O relevo continua a apanhar
+duas vezes e meia mais do que o campo, que é o que mantém o desenho a ler-se
+de longe.
+
+**O bordo deixou de ser vectorial.** Todos os bordos da peça eram linhas de
+vector borradas — largura igual do princípio ao fim, curva sem um tremor. A
+mordida vai onde a altura muda depressa, que é a definição de bordo, e em
+lado nenhum mais. À primeira errou-se pelos dois lados (ruído borrado a dois
+pixéis, mordida a 0,020) e o bordo saía **desfiado**, uma franja a toda a
+volta de tudo que se lê como rabisco. Uma lasca tem o tamanho de um grão de
+arroz e tira pouco: borrões de sete e vinte pixéis, e um quinto da força.
+
+| | antes | agora |
+|---|---|---|
+| mediana da página | 8 a 10 | **24** |
+| média | 15,8 a 21,1 | **29,9 a 34,5** |
+| mapa do relevo | 3,49 MB / 1,44 MB | **3,80 MB / 1,55 MB** |
+
+A página ficou mais clara, e é a troca que isto pede: um bronze que se vê ao
+microscópio não cabe numa página preta. O texto continua a ler-se — é branco
+sobre um fundo que, onde ele está, continua nos vinte.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
@@ -871,7 +965,7 @@ que mais estiver a correr:
 | | antes | agora |
 |---|---|---|
 | mediana | 16,7 ms | 16,7 ms em todo o percurso |
-| média | 22,4 a 24,0 ms | 19,6 a 23,0 ms |
+| média | 22,4 a 24,0 ms | 21,2 a 24,2 ms |
 | ficheiros dos mapas | 1,4 MB | 3,7 MB no ecrã largo, 1,6 MB no estreito |
 
 A poça foi-se embora e levou os dois `pow()` que tinha por pixel: a luz de

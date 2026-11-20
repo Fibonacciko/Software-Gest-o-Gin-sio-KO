@@ -590,6 +590,43 @@
     '    metal = clamp(metal + polido * 0.22 - funda * 0.22, 0.04, 1.0);',
     '    oclusao = mix(1.0, 0.22, funda) * mix(0.55, 1.0, cavidade);',
 
+        /* A oclusao a serio: o fundo de uma incisao ve menos ceu do que
+           o campo a volta dela, e e isso -- e nao o brilho do bordo --
+           que faz um sulco parecer cortado em vez de pintado. Mede-se
+           comparando a altura deste ponto com a altura *borrada* a
+           volta, e a altura borrada sai de graca: e o mesmo mapa num
+           nivel mais grosso, que e um borrao ja calculado.
+
+           Sem isto, de perto, as letras e as figuras liam-se como
+           riscos claros em cima de uma chapa preta. E e a primeira
+           coisa que se ve na peca dele: cada glifo tem uma linha
+           escura no fundo e uma linha clara no bordo. */
+        /* Pede-se o texel a direito e nao pelo `relEm`: aquele suaviza a
+           fraccao antes de ler, que e o que tira a rede de losangos ao
+           mapa visto de perto. Tres niveis acima o mapa ja e um borrao e
+           nao ha losango nenhum para tirar -- sao oito contas por pixel
+           a troco de nada. */
+    '    float grosso = LER(mapaRel, uv, min(lodM + 3.0, 7.0)).b;',
+    '    float cav = clamp((rel.b - grosso) * 3.2 + 0.5, 0.0, 1.0);',
+    '    oclusao *= mix(0.17, 1.12, cav);',
+
+        /* E os poros comem luz. Ate aqui a porosidade so torcia a
+           normal, e uma normal torcida a tanto apanha luz a mais de
+           um lado e a menos do outro -- da ondulacao, nao da buracos.
+           Um poro e um buraco: ve menos ceu, e por isso e mais escuro
+           do que a chapa a volta dele seja de que lado for a luz. E
+           isso, e nao a ondulacao, o que se ve na peca dele ao perto:
+           pontos escuros, muitos, de tamanhos diferentes.
+
+           So e pedida quando o tamanho dela cabe num pixel. */
+    '    float vePoro = cabe(1.0 / 620.0, porPixel);',
+    '    if (vePoro > 0.01) {',
+    '      float po = ruido(q * 620.0 + 83.0) * 0.56'
+                  + ' + ruido(q * 1490.0 + 11.0) * 0.44;',
+    '      oclusao *= 1.0 - smoothstep(0.52, 0.93, po) * 0.62 * vePoro;',
+    '      albedo *= 1.0 - smoothstep(0.60, 0.97, po) * 0.34 * vePoro;',
+    '    }',
+
         /* a normal do mapa vive nos eixos da textura: o v da textura desce e o y
            do objecto sobe, e por isso o y troca de sinal */
     '    vec2 nxy = vec2(rel.r * 2.0 - 1.0, -(rel.g * 2.0 - 1.0));',
@@ -610,8 +647,35 @@
     '    nxy -= empenoDeclive(q);',
     '    nxy += dir * tornoDeclive(q, r) * cabe(0.0070, porPixel) * plano'
                   + ' * (1.0 - 0.75 * acima);',
-    '    nxy += grao(q, porPixel, (0.6 + graoForca * 2.2) * plano);',
+    '    nxy += grao(q, porPixel, (0.6 + graoForca * 6.0) * plano);',
     '    nxy += riscos(q, porPixel, (0.25 + 0.75 * acima) * plano);',
+
+        /* E a pele das paredes, que e o contrario de tudo o que esta
+           acima: entra onde o `plano` sai. As paredes sao o recorte
+           das figuras e das incisoes -- e o que o olho usa para dizer
+           se aquilo foi cortado ou pintado --, e estavam lisas.
+
+           O que as deixou lisas foi a razao certa: tudo o que e miudo
+           desenha-se em funcao de x e y, e numa parede a pique uma
+           coluna inteira de pixeis cai no mesmo x e y -- o grao
+           esticava-se em riscas verticais. A saida nao era desligar,
+           era meter a **altura** dentro da conta: dois pixeis um por
+           cima do outro na mesma parede tem o mesmo x e y e alturas
+           diferentes, e por isso deixam de pedir o mesmo ponto do
+           ruido. A risca desaparece e a parede ganha pele.
+
+           Duas medidas: uma grossa, que e o bordo a lascar, e uma
+           fina, que e a pedra da parede. So entram quando a camara
+           esta perto o bastante para as ver. */
+    '    float parede = clamp(length(nxy) * 1.9 - 0.20, 0.0, 1.0);',
+    '    float vePar = cabe(1.0 / 300.0, porPixel) * parede;',
+    '    if (vePar > 0.01) {',
+    '      vec3 pg = ruidoD(vec2(q.x * 300.0 + P.z * 1900.0,'
+                  + ' q.y * 300.0 - P.z * 1450.0));',
+    '      vec3 pf = ruidoD(vec2(q.x * 880.0 - P.z * 5200.0,'
+                  + ' q.y * 880.0 + P.z * 4100.0));',
+    '      nxy += pg.yz * (0.062 * vePar) + pf.yz * (0.034 * vePar);',
+    '    }',
 
         /* O desgaste de uma peca velha nao e uniforme: ha zonas comidas e zonas
            que se salvaram. Sem ele o bronze e todo igual, e um bronze todo igual
@@ -653,11 +717,18 @@
        uma cor so le-se como superficie pintada. Estas duas vivem a
        setenta e a duzentas voltas, e so entram quando a camara chega
        perto o bastante para as ver -- de longe seriam formigueiro. */
-    '    float fino = ruido(q * 74.0 + 13.0) * 0.62 + ruido(q * 197.0 + 51.0) * 0.38;',
+        /* As manchas a escala do olho. As de cima sao do tamanho da
+           peca; estas sao do tamanho de um palmo e de um dedo, e sao
+           elas que, de perto, dizem que aquilo nao e uma chapa
+           pintada de castanho. Tres oitavas em vez de duas, e quase
+           o dobro da forca: a 0,50 o bronze continuava liso ao pe do
+           dele, que tem a superficie malhada de alto a baixo. */
+    '    float fino = ruido(q * 41.0 + 3.1) * 0.40 + ruido(q * 97.0 + 13.0) * 0.34'
+                  + ' + ruido(q * 231.0 + 51.0) * 0.26;',
     '    float vemFino = cabe(0.0135, porPixel);',
-    '    albedo *= 1.0 + (fino - 0.5) * 0.50 * vemFino;',
-    '    aspereza = clamp(aspereza + (fino - 0.5) * 0.28 * vemFino, 0.20, 1.0);',
-    '    metal = clamp(metal * (1.0 - (fino - 0.5) * 0.30 * vemFino), 0.04, 1.0);',
+    '    albedo *= 1.0 + (fino - 0.5) * 0.86 * vemFino;',
+    '    aspereza = clamp(aspereza + (fino - 0.5) * 0.42 * vemFino, 0.20, 1.0);',
+    '    metal = clamp(metal * (1.0 - (fino - 0.5) * 0.46 * vemFino), 0.04, 1.0);',
 
         /* O aro rolado. O mapa, esticado ali por cima do bisel, sai em papa e
            entra-lhe o halo que ficou do desenho -- por isso a cor passa a ser a
@@ -734,7 +805,23 @@
          ilumina. A zero, a unica coisa com luz na peca e o relevo, e o
          desenho desenha-se a si proprio. */
     '  float declive = clamp(1.0 - abs(Nobj.z), 0.0, 1.0);',
-    '  float fendas = smoothstep(0.010, 0.145, declive);',
+      /* O chao desta conta voltou, e a razao e outra. Quando saiu, a
+         chave era uma poca com sitio: um campo liso levemente aceso
+         desenhava a mancha da lanterna, e por isso tinha de ir a
+         zero. Hoje a chave e uma direccao e nao tem sitio nenhum --
+         um chao e igual de um lado ao outro da peca e nao desenha
+         mancha nenhuma.
+
+         E faz falta: **e a luz rasante que mostra grao**. A luz de
+         cima quase nao responde a uma normal torta meio grau; a
+         rasante responde-lhe em cheio -- a dezassete graus, uma
+         inclinacao de um decimo muda a luz daquele pixel em um
+         terco. Com o chao a zero, a peca ao perto nao tinha
+         superficie nenhuma: tres fitas claras e preto no meio.
+
+         O relevo continua a apanhar duas vezes e meia mais do que o
+         campo, que e o que mantem o desenho a ler-se de longe. */
+    '  float fendas = 0.42 + 0.58 * smoothstep(0.010, 0.145, declive);',
 
       /* O que e um *pormenor*, em numeros. Nao e o declive -- uma parede
          inteira tem declive do alto a baixo e nao e uma aresta. E a
@@ -871,15 +958,35 @@
     '  float ndlW = max(dot(N, paraLuz) * 0.55 + 0.45, 0.0);',
 
     '  vec3 difusa = albedo * (1.0 - metal * 0.72)'
-                  + ' * (ndl * luzQ * 1.34 + ndlW * faisca * 4.60);',
+                  + ' * (ndl * luzQ * 2.15 + ndlW * faisca * 4.60);',
     '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 3.0)'
-                  + ' * F * ndl * (luzQ * 0.70 + faisca * 1.80);',
+                  + ' * F * ndl * (luzQ * 0.46 + faisca * 1.80);',
 
     '  vec3 amb = ambienteEm(reflect(-olho, N));',
     '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
     '  vec3 cor = difusa * CHAVE + especular * CHAVE;',
-    '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao * 0.17;',
-    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.028 * oclusao;',
+      /* O ceu. A peca estava iluminada so pelo que tem declive, e por
+         isso ao perto nao tinha superficie nenhuma: tres fitas claras
+         em cima de preto, e nada no meio. Uma peca a serio tem materia
+         em cada milimetro -- o grao, a porosidade, as placas comidas --
+         e nada disso se ve sem uma luz que lhe chegue.
+
+         Esta vem de cima, larga e fraca, como a claraboia de um museu.
+         Nao tem sitio nenhum: e igual de um lado ao outro da peca, e
+         por isso nao faz mancha nem contorno -- nao e uma poca, e o
+         ar. O que a torna visivel e o relevo miudo, que lhe inclina a
+         normal pixel a pixel; numa chapa lisa de verdade ela nao se
+         veria.
+
+         Vai ao quadrado em vez de direita: assim o que esta virado
+         para cima apanha-a toda e as paredes apanham pouco, que e
+         como uma claraboia se comporta. */
+    '  float paraCima = dot(N, cima) * 0.5 + 0.5;',
+    '  vec3 CEU = vec3(0.80, 0.845, 0.95);',
+    '  cor += albedo * (1.0 - metal * 0.50) * CEU * (paraCima * paraCima)'
+                  + ' * oclusao * 0.022;',
+    '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao * 0.07;',
+    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.012 * oclusao;',
 
       /* o enchimento frio vem de cima e do lado contrario a chave, para
          a parede que fica as escuras nao ficar um buraco preto */
@@ -1234,7 +1341,12 @@
          peça que está longe — dava um alcance que a perspectiva encolhia a
          nada. */
       gl.uniform1f(U.luzPerto, deitado ? 0.40 : 0.55);
-      gl.uniform1f(U.graoForca, deitado ? 0.08 : 0.12);
+      /* O grao subiu de 0,12 para 0,30. Era afinado para uma peca que se
+         via de longe e com o campo as escuras: com o campo aceso e a
+         camara ao pe, um grao discreto le-se como veludo. O dele tem
+         grao com contraste em cada pixel, e e metade do que faz aquilo
+         parecer pedra e nao um desenho. */
+      gl.uniform1f(U.graoForca, deitado ? 0.19 : 0.30);
       gl.uniform1f(U.passosFundo, NIVEIS[nivel][0]);
       gl.uniform1f(U.passosSombra, NIVEIS[nivel][1]);
       gl.uniform1f(U.passosLonge, NIVEIS[nivel][2]);

@@ -282,6 +282,30 @@ def incisoes(d, esc):
         risco([(anc[0] + v * .052 * h, anc[1] - .034 * h), baixo], lw)
         risco([(anc[0] - v * .048 * h, anc[1] - .030 * h), baixo], lw)
 
+        # as costelas: tres arcos curtos por baixo do peitoral. Numa peca
+        # grega o torso nunca e liso -- e o sitio onde o artifice gastou
+        # mais tempo, e e onde a luz rasante tem mais o que levantar.
+        for i in range(3):
+            y0 = pei[1] + (.014 + i * .020) * h
+            risco([(pei[0] - v * .030 * h, y0),
+                   (pei[0] + v * .016 * h, y0 - .004 * h),
+                   (pei[0] + v * .040 * h, y0 + .010 * h)], fino)
+
+        # a linha do meio do abdomen, do esterno ao umbigo
+        risco([(pei[0] + v * .006 * h, pei[1] + .006 * h),
+               (cin[0] + v * .010 * h, cin[1] + .016 * h)], fino)
+
+        # a canela da perna da frente, e o tendao da de tras
+        risco([P('joelhoF'), entre(P('joelhoF'), P('tornozeloF'), 0.86)], fino)
+        risco([entre(P('joelhoT'), P('tornozeloT'), 0.22),
+               entre(P('joelhoT'), P('tornozeloT'), 0.92)], fino)
+
+        # o deltoide: o arco que separa o ombro do braco
+        omb = P('ombroF')
+        risco([(omb[0] - v * .030 * h, omb[1] - .004 * h),
+               (omb[0] + v * .014 * h, omb[1] + .022 * h),
+               (omb[0] + v * .036 * h, omb[1] + .006 * h)], fino)
+
         risco([anc, P('joelhoT')], lw)                     # separar as pernas
         joe = P('joelhoF')
         risco([(joe[0] - v * .024 * h, joe[1]),
@@ -289,7 +313,7 @@ def incisoes(d, esc):
 
         # o cabelo: madeixas curtas da testa para a nuca
         r = .058 * h
-        for i in range(5):
+        for i in range(8):
             risco([(cab[0] + v * (0.12 - 0.032 * i) * r, cab[1] - 0.84 * r + i * 0.30 * r),
                    (cab[0] - v * (0.84 + 0.05 * i) * r, cab[1] - 0.30 * r + i * 0.28 * r)], fino)
 
@@ -301,8 +325,8 @@ def incisoes(d, esc):
             L = math.hypot(dx, dy) or 1.0
             ux, uy = dx / L, dy / L
             px, py = -uy, ux
-            for j in range(6):
-                sj = 0.02 + j * 0.105
+            for j in range(9):
+                sj = 0.02 + j * 0.072
                 cxp, cyp = pu[0] + ux * L * sj, pu[1] + uy * L * sj
                 e = (.040 - .004 * j) * h
                 risco([(cxp + px * e - ux * .012 * h, cyp + py * e - uy * .012 * h),
@@ -519,12 +543,16 @@ torno = (np.sin(rr / PASSO_DO_TORNO * 2 * math.pi + treme * 2.2)
 
 # mossas: concavidades onde o disco bateu em alguma coisa
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
-for _ in range(38):
+for _ in range(54):
     a = random.uniform(0, 2 * math.pi); q = R * math.sqrt(random.uniform(0, 1)) * 0.97
     x, y = C + q * math.cos(a), C + q * math.sin(a)
-    s = random.uniform(10, 56) * ESC
+    s = random.uniform(10, 72) * ESC
     d.ellipse([x - s, y - s * random.uniform(.5, 1.2), x + s, y + s * random.uniform(.5, 1.2)], fill=255)
-alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 20 * ESC) * 0.013 * dentro
+# De 0,013 para 0,024: o campo de um disco fundido e plano, mas nao e uma
+# mesa. Ao perto -- e e ao perto que isto conta -- um plano perfeito com
+# grao por cima continua a ler-se como um plano com grao por cima; o que o
+# faz parecer metal e a chapa ondular devagar por baixo do grao.
+alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 20 * ESC) * 0.024 * dentro
 
 # picadas da fundicao: bolhas de ar que vieram a superficie. So as graudas
 # vao para o mapa -- as miudas sao grao, e o grao faz-se no sombreador: um
@@ -533,14 +561,18 @@ alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 20 * ESC) * 0.013 * dent
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
 # Vem em ninhos, como vem no metal a serio: o ar nao se distribui por igual
 # pelo molde. Espalhadas por igual liam-se como pintas de um padrao.
-for _ in range(44):
+# Eram 44 ninhos de ate 18 bolhas cada, e a peca ficava com sarampo: ao
+# perto nao se via outra coisa, e as fendas -- que e onde a luz tem o que
+# dizer -- perdiam-se no meio delas. Sao 19, com menos bolhas e de tamanhos
+# mais desencontrados, que e como o ar sai de um molde a serio.
+for _ in range(19):
     a = random.uniform(0, 2 * math.pi); q = R * math.sqrt(random.uniform(0, 1)) * 0.96
     nx0, ny0 = C + q * math.cos(a), C + q * math.sin(a)
-    for _ in range(random.randint(4, 18)):
-        x = nx0 + random.gauss(0, 46 * ESC); y = ny0 + random.gauss(0, 46 * ESC)
+    for _ in range(random.randint(3, 11)):
+        x = nx0 + random.gauss(0, 52 * ESC); y = ny0 + random.gauss(0, 52 * ESC)
         if math.hypot(x - C, y - C) > R * 0.985:
             continue
-        s = random.uniform(1.4, 5.6) * ESC
+        s = random.uniform(1.2, 7.8) * ESC
         d.ellipse([x - s, y - s, x + s, y + s], fill=255)
 picadas = np.asarray(im, dtype=np.float32) / 255.0
 alt -= borrar(picadas, 1.5 * ESC) * 0.042 * dentro
@@ -568,23 +600,46 @@ for _ in range(74):
                joint='curve')
 alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 0.9 * ESC) * 0.014 * dentro
 
-# fendas: o metal fadigado racha, e a racha corre sem destino
+# fendas: o metal fadigado racha, e a racha corre sem destino. Eram 11 e sao
+# 38 -- com as ramificacoes, perto de sessenta linhas. E onde a luz rasante
+# tem o que dizer: uma fenda tem duas margens, uma acende e a outra nao, e e
+# isso que se ve de longe e ao perto. As picadas, que sao redondas, nao dizem
+# nada a uma luz que vem de lado.
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
-for _ in range(11):
-    a = random.uniform(0, 2 * math.pi)
-    x, y = C + R * random.uniform(.2, .95) * math.cos(a), C + R * random.uniform(.2, .95) * math.sin(a)
-    rumo = random.uniform(0, 2 * math.pi)
+
+def _racha(x, y, rumo, passos, nervo=0.55):
     pts = [(x, y)]
-    for _ in range(random.randint(14, 34)):
-        rumo += random.uniform(-0.55, 0.55)
-        passo = random.uniform(12, 34) * ESC
+    for _ in range(passos):
+        rumo += random.uniform(-nervo, nervo)
+        passo = random.uniform(10, 30) * ESC
         x += passo * math.cos(rumo); y += passo * math.sin(rumo)
         if math.hypot(x - C, y - C) > R * 0.99:
             break
         pts.append((x, y))
-    if len(pts) > 2:
-        d.line(pts, fill=255, width=int(round(random.choice([1, 2, 2, 3]) * ESC)),
-               joint='curve')
+    return pts
+
+for _ in range(38):
+    a = random.uniform(0, 2 * math.pi)
+    x, y = C + R * random.uniform(.18, .96) * math.cos(a), C + R * random.uniform(.18, .96) * math.sin(a)
+    rumo = random.uniform(0, 2 * math.pi)
+    pts = _racha(x, y, rumo, random.randint(10, 32))
+    if len(pts) <= 2:
+        continue
+    # Uma fenda larga e uma fenda; quatro larguras sao uma peca rachada. A
+    # maior parte e de cabelo -- so se ve quando a luz lhe bate de lado, que
+    # e precisamente o que esta luz faz.
+    w = int(round(random.choice([1, 1, 1, 1, 2, 2, 3]) * ESC))
+    d.line(pts, fill=random.randint(170, 255), width=max(1, w), joint='curve')
+    # e uma racha abre outras: a tensao nao acaba onde a primeira parou
+    if len(pts) > 6 and random.random() < 0.55:
+        k = random.randrange(2, len(pts) - 2)
+        bx, by = pts[k]
+        braco = _racha(bx, by, random.uniform(0, 2 * math.pi),
+                       random.randint(4, 14), nervo=0.70)
+        if len(braco) > 2:
+            d.line(braco, fill=random.randint(150, 230),
+                   width=max(1, int(round(random.choice([1, 1, 2]) * ESC))),
+                   joint='curve')
 fendas = np.asarray(im, dtype=np.float32) / 255.0
 # A fenda nao passa por cima do KO. Uma risca a atravessar duas letras le-se
 # como um erro de quem desenhou, e nao como o tempo: o olho ve um O cortado
@@ -614,6 +669,29 @@ for _ in range(13):
         pts.append((x + e * math.cos(t), y + e * math.sin(t)))
     d.polygon(pts, fill=255)
 lascas = np.asarray(im, dtype=np.float32) / 255.0
+
+# --------------------------- o bordo lascado ---------------------------
+# Ate aqui todos os bordos da peca sao linhas de vector borradas: largura
+# igual do principio ao fim, curva sem um tremor, sem uma falha. Visto de
+# longe passa; ao perto le-se logo como desenho de computador, e foi essa a
+# queixa. Um sulco com dois mil e setecentos anos tem o bordo comido aos
+# bocados.
+#
+# A mordida vai *onde a altura muda depressa* -- que e a definicao de
+# bordo -- e em lado nenhum mais: o campo nao se mexe, so as margens. Duas
+# medidas de ruido, uma fina e uma grossa, para a falha nao ter tamanho
+# proprio.
+gy_b, gx_b = np.gradient(alt.astype(np.float32))
+bordo = np.clip(np.hypot(gx_b, gy_b) / (0.0042 * ESC) - 0.10, 0, 1)
+# As medidas contam, e a primeira tentativa errou-as pelos dois lados: o
+# ruido borrado a dois pixeis e a mordida a 0,020 davam um bordo *desfiado*
+# -- uma franja fina a toda a volta de tudo, que le-se como rabisco e nao
+# como desgaste. Uma lasca tem o tamanho de um gao de arroz e tira pouco:
+# borroes de sete e vinte pixeis, e um quinto da forca.
+_rf = borrar(np.random.rand(N, N).astype(np.float32), 4.5 * ESC)
+_rg = borrar(np.random.rand(N, N).astype(np.float32), 13.0 * ESC)
+lasca_fina = (normalizar(_rf) * 0.50 + normalizar(_rg) * 0.50)
+alt += borrar(bordo * lasca_fina, 2.2 * ESC) * 0.0075 * dentro
 
 alt = np.clip(alt, 0.0, 1.2)
 
