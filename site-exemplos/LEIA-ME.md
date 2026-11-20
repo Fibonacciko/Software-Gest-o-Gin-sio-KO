@@ -1041,6 +1041,19 @@ matéria. O bordo de uma picada é um anel de declive — ficava com um rebordo
 levantado a toda a volta, e a peça enchia-se de crateras de pasta de dentes.
 Lascar é tirar.
 
+##### E a lâmpada está no mundo, não no infinito
+
+Até aqui a chave era uma direcção pura: cada ponto da peça apanhava
+exactamente a mesma quantidade de luz. Por isso a peça não tinha **lado**
+-- lia-se como uma textura iluminada por igual, e não como um objecto
+pousado ao pé de um candeeiro. Na peça dele vê-se bem: há um lado mais
+claro e um lado mais escuro, e a travessia de um ao outro é lenta.
+
+É uma **rampa** e não uma poça: cresce a direito de um lado ao outro do
+disco, não tem meio nem bordo, e por isso não desenha mancha nenhuma. E
+anda com o rato, porque é o rato que diz de que lado está a mão que
+segura a luz.
+
 ##### O que se aprendeu a desenhar isto
 
 - **Desenhar o termo sozinho no ecrã é a única maneira de o ver.** Três

@@ -1002,7 +1002,22 @@
          material e nao da luz. Na pedra sente-se ainda mais -- uma
          chave amarela pinta-a de bege e o cinzento desaparece. */
     '  vec3 CHAVE = vec3(1.0, 0.893, 0.772);',
-    '  float luzQ = sombra * fendas;',
+      /* A lampada esta no mundo, nao no infinito. Ate aqui a chave era
+         uma direccao pura: cada ponto da peca apanhava exactamente a
+         mesma quantidade de luz, e por isso a peca nao tinha *lado* --
+         lia-se como uma textura iluminada por igual em vez de um
+         objecto pousado ao pe de um candeeiro. Na peca dele ve-se bem:
+         ha um lado mais claro e um lado mais escuro, e a travessia de
+         um ao outro e lenta.
+
+         E uma rampa e nao uma poca -- cresce a direito de um lado ao
+         outro do disco e nao tem meio nem bordo, por isso nao desenha
+         mancha nenhuma. E anda com o rato, porque e o rato que diz de
+         que lado esta a mao que segura a luz. */
+    '  vec2 rumoQ = vec2(luzRumo.x * cg + luzRumo.y * sg,'
+                  + ' -luzRumo.x * sg + luzRumo.y * cg);',
+    '  float rampa = clamp(1.0 + dot(q, rumoQ) * 0.34, 0.42, 1.7);',
+    '  float luzQ = sombra * fendas * rampa;',
       /* A luz do rato leva a sombra do relevo, como a outra -- um
          pormenor que esta atras de um braco levantado nao acende --,
          mas apanha a luz dos dois lados (`ndlW`, meia volta em vez de
