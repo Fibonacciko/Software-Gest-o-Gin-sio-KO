@@ -682,40 +682,75 @@ alt -= borrar(np.asarray(im, dtype=np.float32) / 255.0, 0.9 * ESC) * 0.014 * den
 # nada a uma luz que vem de lado.
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
 
-def _racha(x, y, rumo, passos, nervo=0.55):
+# O sorteio guarda-se e repoe-se no fim deste bloco: assim mexer nas rachas
+# nao re-sorteia tudo o que e desenhado depois delas.
+_est_r, _est_n = random.getstate(), np.random.get_state()
+
+# O PASSO E CURTO DE PROPOSITO. Era de 10 a 30 pixeis da peca, e entre dois
+# vertices a racha ia a direito -- vinte e tal pixeis de parede recta. De
+# muito perto isso da uma fita de luz limpa e comprida, e uma fita de luz
+# limpa e comprida e o brilho de um *cordao*, nao de uma fenda. Uma pedra
+# racha aos empurroes, e muda de rumo a cada milimetro.
+def _racha(x, y, rumo, passos, nervo=0.78):
     pts = [(x, y)]
     for _ in range(passos):
         rumo += random.uniform(-nervo, nervo)
-        passo = random.uniform(10, 30) * ESC
+        passo = random.uniform(4, 13) * ESC
         x += passo * math.cos(rumo); y += passo * math.sin(rumo)
         if math.hypot(x - C, y - C) > R * 0.99:
             break
         pts.append((x, y))
     return pts
 
-for _ in range(38):
+
+# E NAO TEM LARGURA CONSTANTE. Antes cada racha era uma linha de uma so
+# largura do principio ao fim, e isso e um sulco fresado, nao uma fenda:
+# abre, aperta, e ha trocos em que se perde de todo e volta mais a frente.
+def _tracar(pts, base, forte):
+    for i in range(len(pts) - 1):
+        # A largura abre e aperta -- mas pouco. Com um terco de folga para
+        # cada lado a racha respira; com o dobro ela parte-se em contas, e
+        # uma racha em contas le-se como uma lagarta.
+        w = max(1, int(round(base * random.uniform(0.72, 1.34) * ESC)))
+        d.line([pts[i], pts[i + 1]], fill=random.randint(forte - 40, forte),
+               width=w, joint='curve')
+
+
+# DEZASSEIS, E NAO TRINTA E OITO. A camara passa a viagem inteira por
+# cima deste campo, e com trinta e oito rachas ramificadas o que ela
+# mostra ao perto e uma rede de rios, nao uma pedra com fendas. Uma
+# peca partida tem meia duzia delas e muito cabelo a volta.
+for _ in range(16):
     a = random.uniform(0, 2 * math.pi)
     x, y = C + R * random.uniform(.18, .96) * math.cos(a), C + R * random.uniform(.18, .96) * math.sin(a)
     rumo = random.uniform(0, 2 * math.pi)
-    pts = _racha(x, y, rumo, random.randint(10, 32))
+    pts = _racha(x, y, rumo, random.randint(26, 80))
     if len(pts) <= 2:
         continue
     # Uma fenda larga e uma fenda; quatro larguras sao uma peca rachada. A
     # maior parte e de cabelo -- so se ve quando a luz lhe bate de lado, que
     # e precisamente o que esta luz faz.
-    w = int(round(random.choice([1, 1, 1, 2, 2, 3]) * ESC))
-    d.line(pts, fill=random.randint(170, 255), width=max(1, w), joint='curve')
+    _tracar(pts, random.choice([1, 1, 1, 2, 2, 3]), 255)
     # e uma racha abre outras: a tensao nao acaba onde a primeira parou
     if len(pts) > 6 and random.random() < 0.55:
         k = random.randrange(2, len(pts) - 2)
         bx, by = pts[k]
         braco = _racha(bx, by, random.uniform(0, 2 * math.pi),
-                       random.randint(4, 14), nervo=0.70)
+                       random.randint(10, 34), nervo=0.92)
         if len(braco) > 2:
-            d.line(braco, fill=random.randint(150, 230),
-                   width=max(1, int(round(random.choice([1, 1, 2]) * ESC))),
-                   joint='curve')
+            _tracar(braco, random.choice([1, 1, 2]), 230)
 fendas = np.asarray(im, dtype=np.float32) / 255.0
+# E A FUNDURA VARIA AO LONGO DELA. Mesmo com o traco irregular, uma racha
+# de fundo constante continua a devolver uma linha de luz sem interrupcao.
+# Este ruido -- curto, de meio pixel da peca -- faz a fenda respirar: aqui
+# tem fundo, ali quase nada. E o que a faz parecer aberta pelo tempo e nao
+# aberta por uma ferramenta.
+# Longo e fraco: a fenda tem de respirar ao longo de um palmo, nao de
+# um pixel. Com o borrao curto e a gama inteira, cada dois pixeis mudava
+# de fundo e o que saia era um colar de contas.
+_fr = borrar(np.random.rand(N, N).astype(np.float32), 5.0 * ESC)
+fendas *= 0.70 + 0.44 * normalizar(_fr)
+random.setstate(_est_r); np.random.set_state(_est_n)
 # O borrao era 1,5 pixeis da peca e isso arredondava a fenda toda: uma
 # racha de tres pixeis borrada a um e meio deixa de ter parede nenhuma, e
 # um vale em U visto de muito lado le-se como um *cordao saliente* -- um
@@ -741,7 +776,15 @@ longe_do_ko = np.clip((np.hypot(xx - C, yy - (C - R * 0.470)) - R * 0.150) / (R 
 # sao treze pixeis -- para seis de largura. E a essa proporcao a oclusao
 # faz o resto: o fundo nao ve ceu nenhum e fica preto, o labio apanha a
 # rasante, e o que se ve e uma linha escura com um fio de luz de um lado so.
-alt -= borrar(fendas * longe_do_ko, 0.35 * ESC) * 0.085 * dentro
+# E MENOS FUNDAS, PELA RAZAO CONTRARIA A DE ANTES. Elas eram rasas e
+# largas -- um pires -- e passaram a estreitas e fundas. So que a
+# camara olha para a peca de raspao, e de raspao uma fenda nao mostra
+# o fundo: mostra a **parede do outro lado**, que e um plano virado
+# para quem olha e para a luz. Treze pixeis de fundo projectam-se em
+# quarenta no ecra, e quarenta pixeis de faixa clara entre dois
+# escuros sao um cordao, outra vez -- desta vez por excesso.
+# Sete para seis: a fenda continua a ter parede e ja nao tem corredor.
+alt -= borrar(fendas * longe_do_ko, 0.35 * ESC) * 0.048 * dentro
 
 # o gito: o rebarbo por onde o bronze entrou no molde, limado mas nao a zero
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)

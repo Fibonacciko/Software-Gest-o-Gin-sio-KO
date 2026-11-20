@@ -1091,6 +1091,129 @@ segura a luz.
   `numpy` sobre a fotografia dele deram o cinzento quente ao primeiro; a
   olho teria saído castanho, que é o que o olho espera de uma pedra antiga.
 
+#### Porque e que a definicao nao era a do Primal
+
+*"De pedra ou de bronze, a definição é de longe [des]igual à do PRIMAL.
+Porque razão? Não te é possível criar um tal grau de realismo?"*
+
+**É possível, e o que faltava não era realismo: era matéria.** O mapa acaba
+antes do ecrã, e mediu-se onde.
+
+| | |
+|---|---|
+| um texel do mapa | `2/4096` = **0,000488** unidades da peça |
+| um pixel do ecrã, no fim da viagem a 1440 | `0,30 × 0,42 × 2 / 1440` = **0,000175** |
+| **texel por pixel** | **1 para 2,8** |
+
+No fim da viagem cada quadrado do mapa está esticado por quase três pixéis
+do ecrã. Daí para baixo não há mapa — há ruído, calculado pixel a pixel, e o
+mais fino que lá estava tem um comprimento de onda de 2,4 pixéis.
+
+**E ruído não é matéria.** Uma pedra àquela escala tem lascas cuja forma
+continua, faces de cristal que apanham a luz todas ao mesmo ângulo, uma marca
+de ferramenta que atravessa três centímetros. O ruído não tem memória de um
+pixel para o outro: cada um é sorteado outra vez. Dá grão por cima de um
+plano, e é isso que o olho lia.
+
+A peça dele aguenta o zoom por duas razões, e nenhuma é destreza: são **17 MB
+de texturas assadas** (`Normals_*`, `ColorAO_*`, `RoughHeight_*` — nomes de um
+cozimento, de uma peça real medida ou esculpida com milhões de polígonos), e
+**ele mostra um palmo de cada vez** (medido na página dele: luminância mediana
+0, 96 a 99% dos pixéis abaixo de 60). Nós mostramos o disco inteiro,
+iluminado, ao máximo de zoom.
+
+Subir o mapa não é o caminho: um texel por pixel pedia **16384**, que são
+65 MB de ficheiro e 1 GB de memória de vídeo. Fez-se o resto.
+
+##### O ambiente estava desligado, e ninguém deu por isso
+
+Dois travões na linha que devolve a sala à peça — o `mix(1, 0.18, aspereza)` e
+o `(1 - aspereza)` dentro do `Fv` — foram afinados quando a peça era de
+bronze, e um bronze polido tem aspereza 0,16. **Numa pedra ela nunca desce de
+0,60**, e aos dois juntos o ambiente ficou 20 a 30 vezes abaixo do que devia:
+
+| ndv | aspereza | o que devolvia | o que devia | vezes |
+|---|---|---|---|---|
+| 0,95 | 0,62 | 0,0015 | 0,0286 | **20** |
+| 0,70 | 0,80 | 0,0010 | 0,0247 | **24** |
+| 0,95 | 0,90 | 0,0008 | 0,0198 | **26** |
+| 0,70 | 0,99 | 0,0006 | 0,0169 | **31** |
+
+Ou seja: desde que a peça passou a ser de pedra, **a sala deixou de se ver
+nela** — e a sala é metade do que o olho chama real. Está agora a conta
+inteira (a aproximação de Lazarov ao *split-sum*), sem travão nenhum por cima,
+e é o termo `y` dela que dá o brilho de bordo, que numa pedra é metade do
+efeito.
+
+##### E a janela passou a ter forma de janela
+
+Era um `pow(dot, 17)` — um ponto de luz. **Um ponto não se parece com nada.**
+O que o olho lê como real num brilho não é ele ser forte: é ele ter a forma
+da sala. Hoje é um rectângulo com um caixilho a atravessá-lo, projectado numa
+base montada no rumo da janela, e o bordo alarga com a aspereza — e ao
+alargar **perde brilho**, porque borrar é espalhar a mesma luz por mais sítio
+e não acender mais. Numa pedra bruta a vidraça desaparece e fica só um lado
+mais claro, que é o que acontece de verdade.
+
+##### Uma pedra é feita de grãos, e um grão é uma face
+
+Todo o miúdo da peça era ruído, e ruído é **contínuo**: sobe e desce sem nunca
+partir. Por mais oitavas que se empilhem, o que sai são colinas — pele, barro,
+coiro.
+
+Entrou um Voronoi em três medidas: de nove vizinhos fica o mais perto, e o
+grão inteiro herda os números desse. Dentro dele a luz bate toda ao mesmo
+ângulo e na fronteira com o vizinho o ângulo **salta** — e é esse salto que o
+olho lê como matéria cristalina. Não é preciso medir a distância à fronteira,
+que custaria o dobro: a aresta nasce sozinha de cada pixel ficar com o grão
+mais perto.
+
+Cada grão mexe em **três** coisas ao mesmo tempo — a face, a cor e a aspereza
+—, porque num grão verdadeiro as três andam juntas: uma face de quartzo é mais
+clara *e* mais lisa do que a massa à volta. Só com a inclinação, a pedra ficava
+cinzenta e lisa de cor, e o salpicado de um granito é de cor.
+
+##### Os cordões eram a parede do outro lado da fenda
+
+Voltaram, e desta vez por excesso. Procurou-se em dois sítios errados antes —
+desligou-se o travão do declive (que acende as duas paredes de um sulco) e
+desligou-se o `plano` (que tira o grão a tudo o que tem declive). Nenhum era:
+os cordões ficaram lá nos dois casos, e isso vale mais do que uma teoria.
+
+O que era vê-se desenhando a altura sozinha ao lado da imagem iluminada, no
+mesmo fotograma: no mapa a fenda é **uma linha fina**; no ecrã é uma **fita
+clara três vezes mais larga**. A câmara olha a peça de raspão, e de raspão uma
+fenda não mostra o fundo — mostra a **parede do outro lado**, que é um plano
+virado para quem olha e para a luz. Treze pixéis de fundo projectam-se em
+quarenta no ecrã, e quarenta pixéis de faixa clara entre dois escuros são um
+cordão outra vez.
+
+A correcção anterior tinha sido ao contrário (de rasas e largas para estreitas
+e fundas) e passou do ponto. Hoje: **sete de fundo para seis de largura**.
+
+E **dezasseis fendas em vez de trinta e oito**. A câmara passa a viagem inteira
+por cima deste campo, e com trinta e oito ramificadas o que ela mostrava ao
+perto era uma rede de rios. Uma peça partida tem meia dúzia delas e muito
+cabelo à volta.
+
+O traço também mudou: o passo era de 10 a 30 pixéis e entre dois vértices a
+fenda ia a direito — vinte e tal pixéis de parede recta, que de perto dão uma
+fita de luz limpa e comprida. É de 4 a 13, com mais nervo, e a largura abre e
+aperta um terço para cada lado. **Um terço, e não o dobro**: ao dobro a fenda
+parte-se em contas, e uma fenda em contas lê-se como uma lagarta.
+
+##### O que se aprendeu desta vez
+
+- **Eliminar uma hipótese por experiência vale mais do que confirmá-la por
+  raciocínio.** As duas que caíram — o travão do declive e o `plano` — eram
+  ambas plausíveis e ambas erradas, e cada uma custou uma renderização.
+- **Desenhar o termo ao lado da imagem acabada, no mesmo fotograma**, é mais
+  forte do que desenhá-lo sozinho: o que resolveu isto foi ver a fenda fina no
+  mapa e a fita larga no ecrã, lado a lado, no mesmo sítio.
+- **Um erro de compilação do sombreador não aparece.** O `catch` cai para o
+  retrato cozido e a página fica bonita a mentir. Perderam-se duas voltas até
+  se pôr lá um `console.error`: era `'dd' : redefinition`.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,

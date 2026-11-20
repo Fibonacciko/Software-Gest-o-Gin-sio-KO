@@ -359,6 +359,44 @@
        isso nao ha mapa que o guarde. Desenhado, nasce com o tamanho que a
        camara pedir. Nesta escala o reticulado do ruido ja e mais fino do
        que um pixel e nao se le. */
+    /* ─── os graos ───
+
+       Tudo o que a peca tinha de miudo era ruido, e ruido e **continuo**:
+       sobe e desce sem nunca partir. Por mais oitavas que se empilhem, o
+       que sai sao colinas -- pele, barro, coiro. Nunca pedra.
+
+       Uma pedra e um aglomerado de **graos**, e cada grao e uma face
+       plana: dentro dele a luz bate toda ao mesmo angulo, e na fronteira
+       com o vizinho o angulo **salta**. E esse salto -- a
+       descontinuidade -- que o olho le como materia cristalina e que
+       nenhum ruido sabe fazer.
+
+       E um Voronoi: de nove vizinhos fica o mais perto, e o grao inteiro
+       herda os numeros desse. Sai a inclinacao da face (x, y) e um
+       terceiro numero (z) que e **o grao em si** -- o quartzo e o
+       feldspato de um granito nao tem so angulos diferentes, tem claros e
+       escuros diferentes, e e isso que da o salpicado. So com a
+       inclinacao, a pedra ficava cinzenta e lisa de cor.
+
+       Nao e preciso medir a distancia a fronteira, que custaria o dobro:
+       a aresta nasce sozinha de cada pixel ficar com o grao mais perto. */
+    'vec3 cristal(vec2 p) {',
+    '  vec2 i = floor(p), f = fract(p);',
+    '  float melhor = 9.0;',
+    '  vec2 id = vec2(0.0);',
+    '  for (int y = -1; y <= 1; y++) {',
+    '    for (int x = -1; x <= 1; x++) {',
+    '      vec2 g = vec2(float(x), float(y));',
+    '      float h = baralha(i + g);',
+    '      vec2 r = g + fract(vec2(h * 157.31, h * 311.17)) - f;',
+    '      float d = dot(r, r);',
+    '      if (d < melhor) { melhor = d; id = i + g; }',
+    '    }',
+    '  }',
+    '  float a = baralha(id + 11.7);',
+    '  float b = baralha(id + 53.1);',
+    '  return vec3(a - 0.5, b - 0.5, fract(a * 7.31 + b * 3.17));',
+    '}',
     'vec2 grao(vec2 q, float porPixel, float forca) {',
     '  vec2 g = ondas(q, porPixel);',
     '  float f3 = cabe(1.0 / 780.0, porPixel);',
@@ -419,21 +457,64 @@
     '}',
 
     /* ─── o que a peca devolve a luz ─── */
-    'vec3 ambienteEm(vec3 r) {',
+      /* `macio` e o quanto a aspereza borra o que a peca devolve: 0 e um
+         espelho, 1 e uma superficie que ja nao devolve forma nenhuma. */
+    'vec3 ambienteEm(vec3 r, float macio) {',
     '  float h = clamp(r.y, -1.0, 1.0);',
     '  vec3 alto  = vec3(0.050, 0.066, 0.096);',
     '  vec3 linha = vec3(0.148, 0.140, 0.128);',
     '  vec3 chao  = vec3(0.014, 0.012, 0.011);',
     '  vec3 c = h > 0.0 ? mix(linha, alto, pow(h, 0.5)) : mix(linha, chao, pow(-h, 0.6));',
-      /* A janela: uma mancha alta e apertada. E ela que poe um risco de luz a
-         correr pelo metal quando a peca roda -- num ceu liso o metal nao tem
-         nada para devolver, e e por isso que sem ela lia-se como gesso. */
-    '  float j = max(dot(r, normalize(vec3(-0.52, 0.58, -0.30))), 0.0);',
-    '  c += vec3(1.0, 0.94, 0.84) * pow(j, 17.0) * 0.98;',
+      /* A JANELA TEM FORMA DE JANELA.
+
+         Era um `pow(dot, 17)`: um ponto de luz, e um ponto nao se parece
+         com nada. O que o olho le como real num brilho nao e ele ser
+         forte -- e ele ter **a forma da sala**. Uma pedra ao lado de uma
+         janela devolve um rectangulo com um caixilho a atravessa-lo, e
+         e por esse rectangulo deformado que se percebe que aquilo e uma
+         superficie e nao um desenho.
+
+         Monta-se uma base ortonormal no rumo da janela e projecta-se o
+         raio nela (`w`), que da coordenadas na vidraca. Dai e um
+         rectangulo com dois `smoothstep`, e o caixilho sao duas barras
+         escuras por cima. */
+    '  vec3 ej = normalize(vec3(-0.52, 0.58, -0.30));',
+    '  vec3 jx = normalize(cross(vec3(0.0, 1.0, 0.0), ej));',
+    '  vec3 jy = cross(ej, jx);',
+    '  float d = dot(r, ej);',
+    '  vec2 w = vec2(dot(r, jx), dot(r, jy)) / max(d, 0.05);',
+      /* O bordo alarga com a aspereza, e ao alargar a janela **perde
+         brilho** (`ganho`): borrar e espalhar a mesma luz por mais
+         sitio, nao e acender mais. Sem isto uma pedra aspera ficava com
+         um rectangulo branco colado, que e o aspecto de um decalque. */
+    '  float b = 0.045 + macio * 0.52;',
+    '  float jan = smoothstep(0.34 + b, 0.34 - b, abs(w.x))',
+    '            * smoothstep(0.52 + b, 0.52 - b, abs(w.y))',
+    '            * step(0.0, d);',
+    '  float barra = max(1.0 - smoothstep(0.0, 0.034 + b * 1.8, abs(w.x)),',
+    '                    1.0 - smoothstep(0.0, 0.026 + b * 1.8, abs(w.y)));',
+    '  jan *= 1.0 - barra * 0.82;',
+    '  float ganho = 1.0 / (1.0 + macio * 2.6);',
+    '  c += vec3(1.0, 0.94, 0.84) * jan * 3.60 * ganho;',
+      /* e o derrame, que e o que fica quando a vidraca ja nao se
+         distingue: numa pedra bruta a janela e so um lado mais claro */
+    '  c += vec3(1.0, 0.94, 0.84) * pow(max(d, 0.0), mix(9.0, 2.2, macio))',
+    '       * (0.085 + macio * 0.300);',
       /* e uma segunda, fria e do outro lado, que da o contorno */
     '  float k = max(dot(r, normalize(vec3(0.74, 0.20, 0.44))), 0.0);',
-    '  c += vec3(0.44, 0.58, 0.86) * pow(k, 6.0) * 0.16;',
+    '  c += vec3(0.44, 0.58, 0.86) * pow(k, mix(6.0, 2.6, macio)) * 0.16;',
     '  return c;',
+    '}',
+      /* A conta do que uma superficie aspera devolve ao ambiente, inteira,
+         sem tabela nenhuma (aproximacao de Lazarov ao split-sum). Devolve
+         dois numeros: `x` multiplica o F0 e `y` soma-se -- e o `y` que da
+         o brilho de bordo, que numa pedra e metade do efeito. */
+    'vec2 brdfAmb(float ndv, float rug) {',
+    '  vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022);',
+    '  vec4 c1 = vec4(1.0, 0.0425, 1.040, -0.040);',
+    '  vec4 r = rug * c0 + c1;',
+    '  float a004 = min(r.x * r.x, exp2(-9.28 * ndv)) * r.x + r.y;',
+    '  return vec2(-1.04, 1.04) * a004 + r.zw;',
     '}',
 
     'void main() {',
@@ -811,6 +892,33 @@
     '    aspereza = clamp(aspereza + (fino - 0.5) * 0.42 * vemFino, 0.20, 1.0);',
     '    metal = clamp(metal * (1.0 - (fino - 0.5) * 0.46 * vemFino), 0.04, 1.0);',
 
+        /* Tres medidas de grao, e cada uma so entra quando cabe no pixel.
+           A grossa sao os calhaus da pasta, a media sao os graos a olho,
+           a fina e o que o zoom do fim alcanca. Mexem em tres coisas ao
+           mesmo tempo -- a face, a cor e a aspereza -- porque num grao
+           verdadeiro as tres andam juntas: uma face de quartzo e mais
+           clara *e* mais lisa do que a massa a volta dela. */
+    '    float veG1 = cabe(1.0 / 125.0, porPixel);',
+    '    if (veG1 > 0.01) {',
+    '      vec3 c1 = cristal(q * 125.0 + 4.1);',
+    '      nxy += c1.xy * (0.105 * veG1);',
+    '      albedo *= 1.0 + (c1.z - 0.5) * 0.20 * veG1;',
+    '      aspereza = clamp(aspereza + (c1.z - 0.5) * 0.16 * veG1, 0.52, 1.0);',
+    '    }',
+    '    float veG2 = cabe(1.0 / 430.0, porPixel);',
+    '    if (veG2 > 0.01) {',
+    '      vec3 c2 = cristal(q * 430.0 + 19.7);',
+    '      nxy += c2.xy * (0.082 * veG2);',
+    '      albedo *= 1.0 + (c2.z - 0.5) * 0.26 * veG2;',
+    '      aspereza = clamp(aspereza + (c2.z - 0.5) * 0.20 * veG2, 0.52, 1.0);',
+    '    }',
+    '    float veG3 = cabe(1.0 / 1350.0, porPixel);',
+    '    if (veG3 > 0.01) {',
+    '      vec3 c3 = cristal(q * 1350.0 + 61.3);',
+    '      nxy += c3.xy * (0.058 * veG3);',
+    '      albedo *= 1.0 + (c3.z - 0.5) * 0.22 * veG3;',
+    '    }',
+
         /* O aro rolado. O mapa, esticado ali por cima do bisel, sai em papa e
            entra-lhe o halo que ficou do desenho -- por isso a cor passa a ser a
            do aro e nao a da textura. E e escuro: um bordo rolado e por onde a
@@ -1067,8 +1175,13 @@
     '  vec3 especular = min(D * G * 0.25 / max(ndl * ndv, 0.009), 3.0)'
                   + ' * F * ndl * (luzQ * 0.46 + faisca * 1.80);',
 
-    '  vec3 amb = ambienteEm(reflect(-olho, N));',
-    '  vec3 Fv = F0 + (1.0 - F0) * pow(1.0 - ndv, 5.0) * (1.0 - aspereza);',
+      /* O RUMO DOMINANTE. Numa superficie aspera o que ela devolve nao
+         vem do espelho exacto: vem de um cone a volta dele, e o meio
+         desse cone encosta-se a normal. E a maneira barata de borrar o
+         ambiente sem ter mapa nenhum para borrar. */
+    '  float macio = aspereza * aspereza;',
+    '  vec3 amb = ambienteEm(normalize(mix(reflect(-olho, N), N, macio * 0.45)), macio);',
+    '  vec2 ab = brdfAmb(ndv, aspereza);',
     '  vec3 cor = difusa * CHAVE + especular * CHAVE;',
       /* O ceu. A peca estava iluminada so pelo que tem declive, e por
          isso ao perto nao tinha superficie nenhuma: tres fitas claras
@@ -1090,8 +1203,24 @@
     '  vec3 CEU = vec3(0.80, 0.845, 0.95);',
     '  cor += albedo * (1.0 - metal * 0.50) * CEU * (paraCima * paraCima)'
                   + ' * oclusao * 0.022;',
-    '  cor += amb * Fv * mix(1.0, 0.18, aspereza) * oclusao * 0.07;',
-    '  cor += ambienteEm(N) * albedo * (1.0 - metal * 0.6) * 0.012 * oclusao;',
+      /* ISTO ESTAVA DESLIGADO, E NINGUEM DEU POR ISSO.
+
+         Os dois travoes desta linha -- o `mix(1, 0.18, aspereza)` e o
+         `(1 - aspereza)` dentro do `Fv` -- foram afinados quando a peca
+         era de bronze, e um bronze polido tem aspereza 0,16. Numa pedra
+         ela nunca desce de 0,60, e aos dois juntos o que o ambiente
+         devolvia ficou **20 a 30 vezes abaixo** do que devia (medido, em
+         dezesseis pares de aspereza e angulo).
+
+         Ou seja: desde que a peca passou a ser de pedra, a sala deixou de
+         se ver nela. E a sala e metade do que o olho chama real -- uma
+         pedra de verdade tem a janela desenhada em cima, torta conforme a
+         superficie. Sem isso fica materia iluminada por uma conta, que e
+         exactamente o aspecto que tinha.
+
+         Agora e a conta certa, sem travao nenhum por cima. */
+    '  cor += amb * (F0 * ab.x + ab.y) * oclusao;',
+    '  cor += ambienteEm(N, 1.0) * albedo * (1.0 - metal * 0.6) * 0.012 * oclusao;',
 
       /* o enchimento frio vem de cima e do lado contrario a chave, para
          a parede que fica as escuras nao ficar um buraco preto */
