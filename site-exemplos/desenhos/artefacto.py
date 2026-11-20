@@ -502,6 +502,79 @@ def letras(d, esc):
     d.text((C * esc, (C - R * 0.470) * esc), '\u039a\u039f', font=f, fill=255, anchor='mm')
 alt -= borrar(mascara(letras), 3 * ESC) * 0.085 * dentro
 
+# ---- as marcas do campo ----
+# O campo dentro da greca estava vazio: pedra nua com rachas. E a camara
+# passa a viagem toda por cima dele, por isso era isso que se via -- uma
+# laje. Na peca do Primal nao ha um palmo sem nada: o campo e onde cabe
+# tudo o que se foi acrescentando depois de a peca estar feita.
+#
+# O que se escreve aqui nao e decoracao: sao **contas**. Grupos de tracos,
+# que e como se contam combates ganhos desde que ha combates; letras
+# soltas, que sao dedicatorias; e picotado a ponteiro, que e o que fica
+# quando alguem marca uma coisa sem ter ferramenta para a escrever.
+#
+# Tudo isto e incisao -- tirado, nunca posto -- e por isso e tudo o que a
+# luz rasante sabe mostrar.
+_mi = Image.new('L', (N * 2, N * 2), 0)
+_md = ImageDraw.Draw(_mi)
+_rnd = random.Random(23)
+_r0, _r1 = R * 0.165, R * 0.598
+
+# os grupos de tracos
+for _ in range(34):
+    _a = _rnd.uniform(0, 2 * math.pi)
+    _q = _r0 + (_r1 - _r0) * math.sqrt(_rnd.random())
+    _x, _y = C + _q * math.cos(_a), C + _q * math.sin(_a)
+    _rumo = _rnd.uniform(0, 2 * math.pi)
+    _n = _rnd.randint(2, 6)
+    _h = _rnd.uniform(14, 30) * ESC
+    _passo = _rnd.uniform(6.5, 11) * ESC
+    _w = max(2, int(round(_rnd.uniform(1.5, 2.6) * ESC * 2)))
+    _ux, _uy = math.cos(_rumo), math.sin(_rumo)
+    _px, _py = -_uy, _ux
+    for _i in range(_n):
+        _cx = _x + _px * (_i - (_n - 1) / 2.0) * _passo
+        _cy = _y + _py * (_i - (_n - 1) / 2.0) * _passo
+        _hh = _h * _rnd.uniform(0.78, 1.18)
+        _md.line([((_cx - _ux * _hh / 2) * 2, (_cy - _uy * _hh / 2) * 2),
+                  ((_cx + _ux * _hh / 2) * 2, (_cy + _uy * _hh / 2) * 2)],
+                 fill=255, width=_w)
+
+# o picotado a ponteiro: pontos miudos em fiadas tortas
+for _ in range(22):
+    _a = _rnd.uniform(0, 2 * math.pi)
+    _q = _r0 + (_r1 - _r0) * math.sqrt(_rnd.random())
+    _x, _y = C + _q * math.cos(_a), C + _q * math.sin(_a)
+    _rumo = _rnd.uniform(0, 2 * math.pi)
+    for _i in range(_rnd.randint(4, 13)):
+        _x += math.cos(_rumo) * _rnd.uniform(6, 10) * ESC
+        _y += math.sin(_rumo) * _rnd.uniform(6, 10) * ESC
+        _rumo += _rnd.uniform(-0.25, 0.25)
+        if math.hypot(_x - C, _y - C) > _r1:
+            break
+        _s = _rnd.uniform(1.3, 2.6) * ESC
+        _md.ellipse([(_x - _s) * 2, (_y - _s) * 2, (_x + _s) * 2, (_y + _s) * 2], fill=255)
+
+# as letras soltas, rodadas. Uma letra tem de ser desenhada a parte para
+# poder rodar -- o ImageDraw escreve sempre a direito.
+_f = fonte(int(30 * ESC * 2))
+for _ in range(18):
+    _a = _rnd.uniform(0, 2 * math.pi)
+    _q = _r0 + (_r1 - _r0) * math.sqrt(_rnd.random())
+    _x, _y = C + _q * math.cos(_a), C + _q * math.sin(_a)
+    _ch = _rnd.choice(LEGENDA.replace('\u00b7', ''))
+    _lado = int(110 * ESC)
+    _sel = Image.new('L', (_lado, _lado), 0)
+    ImageDraw.Draw(_sel).text((_lado / 2, _lado / 2), _ch, font=_f, fill=255, anchor='mm')
+    _sel = _sel.rotate(_rnd.uniform(0, 360), resample=Image.BICUBIC)
+    _cx, _cy = int(_x * 2 - _lado / 2), int(_y * 2 - _lado / 2)
+    _mi.paste(255, (_cx, _cy, _cx + _lado, _cy + _lado), _sel)
+
+marcas = np.asarray(_mi.resize((N, N), Image.LANCZOS), dtype=np.float32) / 255.0
+# nao atravessam os corpos: um traco por cima de um bracos le-se como erro
+_fora = 1.0 - np.clip(borrar(figs, 5 * ESC) * 1.8, 0, 1)
+alt -= borrar(marcas * _fora, 1.1 * ESC) * 0.055 * dentro
+
 # --------------------------- o tempo -----------------------------------
 # Sem desgaste isto e um logotipo. Com desgaste e uma peca que esteve dois
 # mil e setecentos anos debaixo de terra.
@@ -575,7 +648,9 @@ for _ in range(19):
         s = random.uniform(1.2, 7.8) * ESC
         d.ellipse([x - s, y - s, x + s, y + s], fill=255)
 picadas = np.asarray(im, dtype=np.float32) / 255.0
-alt -= borrar(picadas, 1.5 * ESC) * 0.042 * dentro
+# Pela mesma razao das fendas: uma bolha de ar que rebentou a superficie
+# tem bordo, e o borrao a 1,5 dava-lhe uma tacinha. Um poro e um buraco.
+alt -= borrar(picadas, 0.8 * ESC) * 0.026 * dentro
 
 # riscos: a peca foi arrastada, pousada e limpa durante seculos. Sao finos --
 # um pixel -- e por isso nao se veem de longe; de perto sao metade do que
@@ -628,7 +703,7 @@ for _ in range(38):
     # Uma fenda larga e uma fenda; quatro larguras sao uma peca rachada. A
     # maior parte e de cabelo -- so se ve quando a luz lhe bate de lado, que
     # e precisamente o que esta luz faz.
-    w = int(round(random.choice([1, 1, 1, 1, 2, 2, 3]) * ESC))
+    w = int(round(random.choice([1, 1, 1, 2, 2, 3]) * ESC))
     d.line(pts, fill=random.randint(170, 255), width=max(1, w), joint='curve')
     # e uma racha abre outras: a tensao nao acaba onde a primeira parou
     if len(pts) > 6 and random.random() < 0.55:
@@ -641,11 +716,32 @@ for _ in range(38):
                    width=max(1, int(round(random.choice([1, 1, 2]) * ESC))),
                    joint='curve')
 fendas = np.asarray(im, dtype=np.float32) / 255.0
+# O borrao era 1,5 pixeis da peca e isso arredondava a fenda toda: uma
+# racha de tres pixeis borrada a um e meio deixa de ter parede nenhuma, e
+# um vale em U visto de muito lado le-se como um *cordao saliente* -- um
+# fio de solda, nao uma racha. Uma pedra racha a direito e a racha tem
+# parede: 0,7 de borrao, e um pouco mais funda para compensar o que o
+# borrao deixava de tirar.
 # A fenda nao passa por cima do KO. Uma risca a atravessar duas letras le-se
 # como um erro de quem desenhou, e nao como o tempo: o olho ve um O cortado
 # e pensa que alguem se enganou.
 longe_do_ko = np.clip((np.hypot(xx - C, yy - (C - R * 0.470)) - R * 0.150) / (R * 0.07), 0, 1)
-alt -= borrar(fendas * longe_do_ko, 1.5 * ESC) * 0.085 * dentro
+# E a fundura tem de bater certo com a largura, que e o que fazia as rachas
+# lerem-se como *cordoes salientes* -- fios de solda colados por cima da
+# peca. Mediu-se o perfil no proprio mapa, que e a unica maneira de saber:
+#
+#   87 87 86 86 85 82 78 75 72 71 70 70 70 70 72 74 78 81 84 85 86
+#
+# Vinte pixeis de largura para tres de fundo. Isso nao e uma racha -- e um
+# pires. Um pires raso iluminado de lado nao diz ao olho se esta para
+# dentro ou para fora, e o olho escolhe para fora.
+#
+# Uma racha e o contrario: estreita e funda. Uma unidade de `alt` vale
+# 0,076 da peca e um pixel do mapa vale 0,00049, por isso 0,085 de fundo
+# sao treze pixeis -- para seis de largura. E a essa proporcao a oclusao
+# faz o resto: o fundo nao ve ceu nenhum e fica preto, o labio apanha a
+# rasante, e o que se ve e uma linha escura com um fio de luz de um lado so.
+alt -= borrar(fendas * longe_do_ko, 0.35 * ESC) * 0.085 * dentro
 
 # o gito: o rebarbo por onde o bronze entrou no molde, limado mas nao a zero
 im = Image.new('L', (N, N), 0); d = ImageDraw.Draw(im)
@@ -691,7 +787,12 @@ bordo = np.clip(np.hypot(gx_b, gy_b) / (0.0042 * ESC) - 0.10, 0, 1)
 _rf = borrar(np.random.rand(N, N).astype(np.float32), 4.5 * ESC)
 _rg = borrar(np.random.rand(N, N).astype(np.float32), 13.0 * ESC)
 lasca_fina = (normalizar(_rf) * 0.50 + normalizar(_rg) * 0.50)
-alt += borrar(bordo * lasca_fina, 2.2 * ESC) * 0.0075 * dentro
+# E a mordida **so tira**. Com o ruido centrado em zero, metade dela
+# acrescentava materia ao bordo -- e o bordo de uma picada, que e um anel
+# de declive, ficava com um rebordo levantado a toda a volta: a peca
+# enchia-se de crateras de pasta de dentes. Lascar e tirar. Fica o lado
+# positivo do ruido e o outro deita-se fora.
+alt -= borrar(bordo * np.clip(lasca_fina, 0, None), 2.2 * ESC) * 0.015 * dentro
 
 alt = np.clip(alt, 0.0, 1.2)
 
