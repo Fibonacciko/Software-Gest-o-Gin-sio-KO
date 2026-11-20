@@ -268,7 +268,7 @@
     'vec2 onda(vec2 q, vec2 d, float k, float a, float f) {',
     '  return d * (cos(dot(q, d) * k + f) * a);',
     '}',
-    /* A ondulacao de um bronze fundido, na escala em que ela se ve. Sao
+    /* A ondulacao larga da pedra, na escala em que ela se ve. Sao
        ondas somadas e nao ruido: o ruido vive num reticulado e a derivada
        dele apaga-se na fronteira de cada celula -- de perto isso desenhava
        uma rede na diagonal por cima da peca inteira, e era a coisa mais
@@ -289,7 +289,7 @@
     '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.0054 * c2, 4.2);',
       /* Metade da forca desta fiada passou para aqui. Com os tres senos
          sozinhos, o campo lia-se como tecido: a esta luz via-se uma rede
-         diagonal por cima do bronze, igual de um lado ao outro da peca,
+         diagonal por cima da pedra, igual de um lado ao outro da peca,
          e nada no mundo e igual de um lado ao outro. O ruido nao tem
          direccao nenhuma -- e por isso nao tem trama. */
     '    vec3 nm = ruidoD(q * 126.0 + 63.5);',
@@ -310,12 +310,12 @@
     '    g += nf.yz * (0.030 * c3);',
     '  }',
       /* E uma quarta, de um decimo de milimetro, que so entra ao pe do
-         fim da viagem. Ali o ecra inteiro cobre um palmo de bronze e a
+         fim da viagem. Ali o ecra inteiro cobre um palmo de pedra e a
          fiada anterior -- meio milimetro -- ja e uma onda larga: entre
          uma crista e a seguinte vao quinze pixeis de chapa lisa, e uma
          chapa lisa iluminada de lado le-se como cera. Isto nao sao
-         ondas, e porosidade: bronze fundido tem bolhas, e sao elas que
-         de perto dizem que aquilo saiu de um molde e nao de um ecra. */
+         ondas, e porosidade: a pedra tem poros, e sao eles que de perto
+         dizem que aquilo foi cortado e nao desenhado. */
     '  float c4 = cabe(0.0011, porPixel);',
     '  if (c4 > 0.01) {',
     '    vec3 n1 = ruidoD(q * 940.0 + 7.3);',
@@ -609,8 +609,10 @@
     '    vec3 rel = relEm(uv, lodM);',
     '    vec3 rug = texture2D(mapaRug, uv).rgb;',
     /* O mapa veio de uma peca muito mais baca do que a que se queria: a
-       0,90 o campo nao devolve nada e le-se como barro cozido. Bronze
-       enterrado nao e espelho, mas e metal -- devolve a janela toda. */
+       0,90 o campo nao devolve nada e le-se como barro cozido. (Era
+       assim quando a peca era de bronze: um metal enterrado nao e
+       espelho mas devolve a janela toda. A pedra devolve muito menos,
+       e e disso que trata a conta logo abaixo.) */
         /* Pedra: a aspereza vive toda no alto da escala e o metal e
            quase nada. Era `rug.r * 0,80 + 0,17` e `rug.g * 0,82`, que
            com o mapa do bronze dava aspereza desde 0,20 e metal ate
@@ -622,7 +624,7 @@
     '    albedo = pow(texture2D(mapaCor, uv).rgb, vec3(2.2));',
 
         /* Onde a peca esta alta e onde esta funda, lido do proprio canal da
-           altura. E o que faz o bronze ser bronze: o que se levanta rocou em
+           altura. E o que faz a pedra ser pedra: o que se levanta rocou em
            tudo durante dois mil e setecentos anos e esta polido; o que esta no
            fundo nunca foi tocado e tem la o oxido. Um mapa de aspereza igual em
            toda a peca le-se como plastico pintado de castanho. */
@@ -726,7 +728,7 @@
     '    }',
 
         /* O desgaste de uma peca velha nao e uniforme: ha zonas comidas e zonas
-           que se salvaram. Sem ele o bronze e todo igual, e um bronze todo igual
+           que se salvaram. Sem ele a pedra e toda igual, e uma pedra toda igual
            le-se como material de computador. */
     '    float comido = ruido(q * 2.7 + 4.0) * 0.6 + ruido(q * 6.1 + 17.0) * 0.4;',
     '    comido = smoothstep(0.26, 0.86, comido);',
@@ -760,7 +762,7 @@
        cor que sai do mapa ainda vem com mais tinta do que isso. */
     '    albedo = mix(albedo, vec3(dot(albedo, vec3(0.333))), 0.46) * 0.97;',
     /* As manchas de cima sao grandes -- tres, seis, dez voltas por peca.
-       No fim da viagem o ecra inteiro cobre um palmo de bronze, e la
+       No fim da viagem o ecra inteiro cobre um palmo de pedra, e la
        dentro nenhuma delas chega a mudar: a peca fica de uma cor so, e
        uma cor so le-se como superficie pintada. Estas duas vivem a
        setenta e a duzentas voltas, e so entram quando a camara chega
@@ -769,7 +771,7 @@
            peca; estas sao do tamanho de um palmo e de um dedo, e sao
            elas que, de perto, dizem que aquilo nao e uma chapa
            pintada de castanho. Tres oitavas em vez de duas, e quase
-           o dobro da forca: a 0,50 o bronze continuava liso ao pe do
+           o dobro da forca: a 0,50 a pedra continuava lisa ao pe da
            dele, que tem a superficie malhada de alto a baixo. */
     '    float fino = ruido(q * 41.0 + 3.1) * 0.40 + ruido(q * 97.0 + 13.0) * 0.34'
                   + ' + ruido(q * 231.0 + 51.0) * 0.26;',
@@ -820,7 +822,7 @@
     '    oclusao = mix(0.46, 1.08, h01);',
     '  } else {',
         /* O verso. Quase nunca se ve, e por isso nao leva trabalho nenhum: e o
-           bronze bruto do molde, baco e escuro. Deixa-lo a faltar e que nao
+           pedra bruta do corte, baca e escura. Deixa-lo a faltar e que nao
            dava -- ficava um buraco por onde se via o outro lado. */
     '    vec3 g = ruidoD(q * 26.0);',
     '    Nobj = normalize(vec3(g.yz * 0.05, -1.0));',
@@ -994,9 +996,11 @@
          com a peca. */
     '  vec3 F = F0 + (max(vec3(1.0 - aspereza), F0) - F0) * pow(1.0 - vdh, 5.0);',
       /* A chave era ambar -- 1,00 / 0,82 / 0,56 -- e isso punha verniz
-         dourado na peca toda, aqui e nas pedras do fundo. A luz de quem
+         dourado na peca toda. A luz de quem
          examina uma peca e branca; o ouro ha de vir do bronze, e nao da
-         lampada. */
+         lampada. A peca ja nao e bronze, e a regra ficou: a cor e do
+         material e nao da luz. Na pedra sente-se ainda mais -- uma
+         chave amarela pinta-a de bege e o cinzento desaparece. */
     '  vec3 CHAVE = vec3(1.0, 0.893, 0.772);',
     '  float luzQ = sombra * fendas;',
       /* A luz do rato leva a sombra do relevo, como a outra -- um

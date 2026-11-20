@@ -954,6 +954,106 @@ A página ficou mais clara, e é a troca que isto pede: um bronze que se vê ao
 microscópio não cabe numa página preta. O texto continua a ler-se — é branco
 sobre um fundo que, onde ele está, continua nos vinte.
 
+#### A peça passou a ser de pedra
+
+*"Apesar da ideia inicial numa liga metálica, ouro ou bronze, pedi-te para
+mudares para um artefacto de pedra igual ao PRIMAL. Gosto mais desse nível
+de realismo. Gosto da porosidade, da pele nas paredes."*
+
+**A cor não se inventou: mediu-se na peça dele.** Separando a imagem dele
+por faixas de luminância, a 1440×900:
+
+| | o dele | o nosso, depois |
+|---|---|---|
+| sombra | 4,9 / 4,6 / 3,8 | — |
+| meio-escuro | r/g **1,058** · b/g **0,868** | r/g 1,059 · b/g 0,915 |
+| meio | r/g **1,044** · b/g **0,898** | r/g 1,082 · b/g 0,883 |
+| claro | r/g **1,035** · b/g **0,920** | r/g 1,082 · b/g 0,878 |
+
+Ou seja: **um cinzento quente, quase neutro.** Nada de castanho, nada de
+bege. O vermelho anda 4 a 8% acima do verde e o azul 10 a 18% abaixo, e a
+diferença aperta nos tons claros. Não é pedra amarela — é pedra cinzenta
+vista a uma luz quente.
+
+**E o que distingue pedra de metal não é a forma nem a cor.** São três
+números e um deles é o que mais pesa:
+
+- A **aspereza** vive toda entre 0,62 e 0,99. Ia de 0,16 a 0,98, que é a
+  gama de um metal polido nos altos.
+- **Metal não há** — 0,012 a 0,07. Uma pedra é um dieléctrico.
+- O **F0** passou de 0,735 / 0,545 / 0,330, que *tinha cor*, para 0,042 sem
+  cor nenhuma. Era dali que vinha metade do ouro da peça, mesmo depois de
+  lhe tirarmos o ouro do albedo: o brilho de um metal é da cor do metal, e
+  o de uma pedra é da cor da luz.
+- E a **chave desceu a metade**, o que não é uma escolha de gosto: um metal
+  come o difuso (`1 − metal × 0,72` punha-o a 42%) e a pedra não come nada.
+  Com o mesmo número, a peça saía ao dobro da luz.
+
+O verde de patina virou **terra e líquen** — uma pedra não oxida; o ouro do
+que foi roçado virou **pedra limpa**; e os anéis do torno ficaram a um
+terço, que uma pedra não sai de um torno (ficam alguns: um disco de pedra
+foi mesmo desbastado à roda).
+
+##### Uma pedra tem caroços e tem vincos
+
+O que havia era ruído liso, e **ruído liso dá colinas** — colinas de
+qualquer tamanho lêem-se como sabão, que foi a palavra que apareceu em
+todas as voltas deste trabalho.
+
+Os caroços são ruído normal, em duas medidas. Os vincos são o mesmo ruído
+**dobrado sobre si próprio**: onde ele passa por meio, a superfície faz uma
+aresta em vez de um cume. É um truque de uma linha — o declive troca de
+sinal de um lado e do outro do meio — e é a diferença entre uma duna e uma
+rocha partida.
+
+##### O campo deixou de ser pedra nua
+
+Dentro da greca havia só rachas, e a câmara passa a viagem toda por cima
+dele: era uma laje o que se via. **Na peça dele não há um palmo sem nada.**
+
+O que se escreveu lá não é decoração: são **contas**. Grupos de traços, que
+é como se contam combates ganhos desde que há combates; letras soltas, que
+são dedicatórias; e picotado a ponteiro, que é o que fica quando alguém
+marca uma coisa sem ter ferramenta para a escrever. Tudo incisão — tirado,
+nunca posto — e por isso tudo o que a luz rasante sabe mostrar. Não
+atravessam os corpos: um traço por cima de um braço lê-se como erro.
+
+##### E a fundura tem de bater certo com a largura
+
+As rachas liam-se como **cordões salientes** — fios de solda colados por
+cima da peça. Mediu-se o perfil no próprio mapa, que é a única maneira de
+saber:
+
+```
+87 87 86 86 85 82 78 75 72 71 70 70 70 70 72 74 78 81 84 85 86
+```
+
+Vinte pixéis de largura para três de fundo. Isso não é uma racha — é um
+pires. E um pires raso iluminado de lado não diz ao olho se está para
+dentro ou para fora, e o olho escolhe para fora. Hoje são seis de largura
+para treze de fundo, e a essa proporção a oclusão faz o resto: o fundo não
+vê céu nenhum, o lábio apanha a rasante, e o que se vê é uma linha escura
+com um fio de luz de um lado só.
+
+**O mesmo erro estava nas picadas**, e havia um segundo por baixo: a mordida
+do bordo lascado somava e subtraía por igual, e metade dela *acrescentava*
+matéria. O bordo de uma picada é um anel de declive — ficava com um rebordo
+levantado a toda a volta, e a peça enchia-se de crateras de pasta de dentes.
+Lascar é tirar.
+
+##### O que se aprendeu a desenhar isto
+
+- **Desenhar o termo sozinho no ecrã é a única maneira de o ver.** Três
+  problemas seguidos — o torno a aparecer onde não devia, a oclusão, o
+  pormenor — só se viram depois de pôr aquele número no `gl_FragColor`, a
+  preto e branco. Dentro da imagem acabada não se percebia nenhum.
+- **E, quando a geometria é que está em causa, desenha-se a oclusão.** O que
+  parecia um cordão saliente era a parede do próprio relevo, e isso lê-se
+  num mapa de oclusão em dois segundos — não há discussão possível.
+- **Medir a cor da referência vale mais do que a escolher.** Três linhas de
+  `numpy` sobre a fotografia dele deram o cinzento quente ao primeiro; a
+  olho teria saído castanho, que é o que o olho espera de uma pedra antiga.
+
 #### O que custa
 
 Medido na máquina dele (AMD Radeon integrada, 1366×820 a 1,5 de densidade,
@@ -965,8 +1065,16 @@ que mais estiver a correr:
 | | antes | agora |
 |---|---|---|
 | mediana | 16,7 ms | 16,7 ms em todo o percurso |
-| média | 22,4 a 24,0 ms | 21,2 a 24,2 ms |
-| ficheiros dos mapas | 1,4 MB | 3,7 MB no ecrã largo, 1,6 MB no estreito |
+| média | 22,4 a 24,0 ms | 17 a 27 ms |
+| ficheiros dos mapas | 1,4 MB | 4,0 MB no ecrã largo, 1,6 MB no estreito |
+
+**A medição perdeu precisão, e vale a pena dizê-lo.** Nos pontos mais caros
+da viagem a página está mesmo no limiar do fotógrama: a mesma versão,
+medida duas vezes seguidas, dá 16,7 ms numa e 33,3 noutra -- e isso
+acontecia já antes destas mudanças. Com a máquina livre dá 16,7 em todo o
+percurso; com meia dúzia de Chromes abertos passa a metade do fotógrama.
+Para comparar duas versões é preciso medí-las alternadamente, na mesma
+sessão, e mesmo assim duas vezes cada uma.
 
 A poça foi-se embora e levou os dois `pow()` que tinha por pixel: a luz de
 agora é uma direcção, e uma direcção não se mede. A sujidade fina, a

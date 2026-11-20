@@ -876,7 +876,16 @@ body.pronto .capa__grande { opacity: 1; transform: none; }
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
   will-change: transform, opacity;
 }
-.carta img { width: 100%; height: 100%; object-fit: cover; background: var(--preto); }
+/* As fotografias da loja sao as do ginasio, tiradas em estudio sobre
+   fundos de cor -- ambar, verde, carmim. O ambar e quase o ouro da
+   marca e assenta; os outros dois chegavam a esta pagina, que e preta,
+   pedra e ouro, como se fossem de outro site. Tira-se-lhes um sexto da
+   cor e um bocadinho de luz: o artigo le-se igual e o fundo deixa de
+   gritar. Nao se mexe nos ficheiros -- sao do ginasio. */
+.carta img {
+  width: 100%; height: 100%; object-fit: cover; background: var(--preto);
+  filter: saturate(0.84) brightness(0.94);
+}
 .carta figcaption {
   position: absolute;
   inset: auto 0 0 0;
