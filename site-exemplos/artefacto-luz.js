@@ -163,6 +163,26 @@
     '              du.x * (k1 + k3 * u.y),',
     '              du.y * (k2 + k3 * u.x));',
     '}',
+    /* O mesmo ruido, pedido de vies. O reticulado do ruido e um xadrez
+       alinhado com os eixos, e a *derivada* dele -- que e o que aqui se usa --
+       alinha-se com ele tambem. Uma oitava sozinha nao se nota; treze
+       empilhadas todas no mesmo xadrez dao uma **estria** que atravessa a peca
+       de ponta a ponta. Foi assim que ela apareceu: a 1:1, ao lado da peca
+       dele, a nossa superficie tinha rumo e a dele nao tinha nenhum.
+
+       Procurou-se a culpa em tres sitios errados antes deste -- nos riscos,
+       nos aneis do torno e nas ondas direccionais --, e nenhum deles era. O
+       ruido era o unico que restava, e e o que menos parece: chama-se ruido
+       precisamente por nao se esperar rumo nenhum dele.
+
+       Com cada oitava no seu angulo, nenhum xadrez se soma ao outro. Custa
+       quatro contas por chamada: roda-se o ponto antes de pedir e roda-se a
+       inclinacao de volta depois -- se ela nao voltasse, o relevo saia torto
+       em relacao ao sitio onde esta. */
+    'vec3 ruidoR(vec2 p, float c, float s) {',
+    '  vec3 n = ruidoD(vec2(p.x * c - p.y * s, p.x * s + p.y * c));',
+    '  return vec3(n.x, n.y * c + n.z * s, -n.y * s + n.z * c);',
+    '}',
 
     /* ─── o feitio da peca ───
        Uma peca fundida nao e um plano. Esta esta empenada de leve, e e isso
@@ -276,38 +296,49 @@
        tem reticulado nenhum, e a inclinacao sai por conta. */
     'vec2 ondas(vec2 q, float porPixel) {',
     '  vec2 g = vec2(0.0);',
+      /* As tres ondas de cada fiada sairam, e com elas a ultima coisa
+         que a peca tinha de bronze.
+
+         Eram a pele ondulada de uma fundicao: metal que arrefeceu
+         dentro de um molde encolhe e enruga, e enruga em ondas. Uma
+         pedra nao tem nada disso -- tem grao, tem poros e tem
+         vincos, e nenhum deles tem direccao. Postas lado a lado, a
+         1:1, a superficie dele e um malhado sem rumo e a nossa tinha
+         uma **estria diagonal** a atravessa-la de ponta a ponta: tres
+         senos em angulos fixos tem sempre uma direccao em que a trama
+         bate certo, e a essa altura ja nao ha ruido que a tape.
+
+         A forca que elas levavam passou toda para o ruido, que e o
+         mesmo trabalho sem rumo nenhum. */
     '  float c1 = cabe(0.0480, porPixel);',
     '  if (c1 > 0.01) {',
-    '    g += onda(q, vec2( 0.9135,  0.4068), 131.0, 0.0077 * c1, 0.0);',
-    '    g += onda(q, vec2(-0.2756,  0.9613), 167.0, 0.0068 * c1, 1.7);',
-    '    g += onda(q, vec2( 0.6691, -0.7431), 211.0, 0.0059 * c1, 3.1);',
+    '    vec3 ng = ruidoR(q * 148.0 + 4.7, 0.9744, 0.2250);',
+    '    g += ng.yz * (0.058 * c1);',
     '  }',
     '  float c2 = cabe(0.0145, porPixel);',
     '  if (c2 > 0.01) {',
-    '    g += onda(q, vec2( 0.3090,  0.9511), 433.0, 0.0077 * c2, 0.6);',
-    '    g += onda(q, vec2(-0.8829,  0.4695), 541.0, 0.0068 * c2, 2.4);',
-    '    g += onda(q, vec2( 0.9816,  0.1908), 677.0, 0.0054 * c2, 4.2);',
+    '    vec3 nb = ruidoR(q * 486.0 + 22.9, 0.9205, 0.3907);',
+    '    g += nb.yz * (0.050 * c2);',
       /* Metade da forca desta fiada passou para aqui. Com os tres senos
          sozinhos, o campo lia-se como tecido: a esta luz via-se uma rede
          diagonal por cima da pedra, igual de um lado ao outro da peca,
          e nada no mundo e igual de um lado ao outro. O ruido nao tem
          direccao nenhuma -- e por isso nao tem trama. */
-    '    vec3 nm = ruidoD(q * 126.0 + 63.5);',
-    '    g += nm.yz * (0.042 * c2);',
+    '    vec3 nm = ruidoR(q * 126.0 + 63.5, 0.6820, 0.7314);',
+    '    g += nm.yz * (0.062 * c2);',
     '  }',
       /* E uma terceira fiada, de comprimento de onda de meio milimetro na
          peca. Sem ela o campo, de perto, era sabao: tinha ondulacao e nao
          tinha pele. */
     '  float c3 = cabe(0.0052, porPixel);',
     '  if (c3 > 0.01) {',
-    '    g += onda(q, vec2( 0.5878,  0.8090), 1213.0, 0.0068 * c3, 2.0);',
-    '    g += onda(q, vec2(-0.6947,  0.7193), 1511.0, 0.0059 * c3, 5.1);',
-    '    g += onda(q, vec2( 0.9945, -0.1045), 1759.0, 0.0050 * c3, 0.9);',
+    '    vec3 nc = ruidoR(q * 1430.0 + 9.3, 0.3256, 0.9455);',
+    '    g += nc.yz * (0.044 * c3);',
       /* Tres ondas da mesma medida leem-se como um tecido: ha sempre uma
          direccao em que a trama bate certo. Metade da forca vem daqui, que
          nao tem direccao nenhuma. */
-    '    vec3 nf = ruidoD(q * 302.0 + 17.1);',
-    '    g += nf.yz * (0.030 * c3);',
+    '    vec3 nf = ruidoR(q * 302.0 + 17.1, 0.7986, 0.6018);',
+    '    g += nf.yz * (0.048 * c3);',
     '  }',
       /* E uma quarta, de um decimo de milimetro, que so entra ao pe do
          fim da viagem. Ali o ecra inteiro cobre um palmo de pedra e a
@@ -318,8 +349,8 @@
          dizem que aquilo foi cortado e nao desenhado. */
     '  float c4 = cabe(0.0011, porPixel);',
     '  if (c4 > 0.01) {',
-    '    vec3 n1 = ruidoD(q * 940.0 + 7.3);',
-    '    vec3 n2 = ruidoD(q * 2130.0 + 29.7);',
+    '    vec3 n1 = ruidoR(q * 940.0 + 7.3, 0.5150, 0.8572);',
+    '    vec3 n2 = ruidoR(q * 2130.0 + 29.7, 0.1908, 0.9816);',
     '    g += n1.yz * (0.046 * c4) + n2.yz * (0.028 * c4);',
     '  }',
     '  return g;',
@@ -355,23 +386,23 @@
     '  vec2 g = vec2(0.0);',
     '  float c1 = cabe(0.0215, porPixel);',
     '  if (c1 > 0.01) {',
-    '    vec3 a = ruidoD(q * 84.0 + 2.3);',
+    '    vec3 a = ruidoR(q * 84.0 + 2.3, 0.9925, 0.1219);',
     '    g += a.yz * (0.235 * c1);',
-    '    vec3 b = ruidoD(q * 149.0 + 31.9);',
+    '    vec3 b = ruidoR(q * 149.0 + 31.9, 0.7547, 0.6561);',
     '    g -= b.yz * (sign(b.x - 0.5) * 0.185 * c1);',
     '  }',
     '  float c2 = cabe(0.0062, porPixel);',
     '  if (c2 > 0.01) {',
-    '    vec3 c = ruidoD(q * 296.0 + 11.7);',
+    '    vec3 c = ruidoR(q * 296.0 + 11.7, 0.3907, 0.9205);',
     '    g += c.yz * (0.168 * c2);',
-    '    vec3 d = ruidoD(q * 497.0 + 7.1);',
+    '    vec3 d = ruidoR(q * 497.0 + 7.1, 0.9563, 0.2924);',
     '    g -= d.yz * (sign(d.x - 0.5) * 0.140 * c2);',
     '  }',
     '  float c3 = cabe(0.0019, porPixel);',
     '  if (c3 > 0.01) {',
-    '    vec3 e = ruidoD(q * 1080.0 + 5.1);',
+    '    vec3 e = ruidoR(q * 1080.0 + 5.1, 0.6018, 0.7986);',
     '    g -= e.yz * (sign(e.x - 0.5) * 0.132 * c3);',
-    '    vec3 f = ruidoD(q * 2360.0 + 19.3);',
+    '    vec3 f = ruidoR(q * 2360.0 + 19.3, 0.8572, 0.5150);',
     '    g += f.yz * (0.098 * c3);',
     '  }',
     '  return g * forca;',

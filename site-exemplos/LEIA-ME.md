@@ -1041,6 +1041,30 @@ matéria. O bordo de uma picada é um anel de declive — ficava com um rebordo
 levantado a toda a volta, e a peça enchia-se de crateras de pasta de dentes.
 Lascar é tirar.
 
+##### A estria que não devia existir
+
+Postas lado a lado a 1:1, a superfície dele é um malhado **sem rumo** e a
+nossa tinha uma **estria diagonal** a atravessá-la de ponta a ponta. É a
+última coisa que separava as duas, e procurou-se a culpa em três sítios
+errados antes de a encontrar:
+
+- **os riscos** -- desligados, a estria ficou igual;
+- **os anéis do torno** -- postos a zero, igual;
+- **as ondas direccionais** -- três senos em ângulos fixos por oitava,
+  que *de facto* davam trama e saíram por isso (uma pedra não tem pele
+  ondulada: isso é metal que arrefeceu dentro de um molde). Mas a estria
+  ficou.
+
+Era **o próprio ruído**. O reticulado de um ruído de valor é um xadrez
+alinhado com os eixos, e a *derivada* dele -- que é o que o relevo usa --
+alinha-se com ele também. Uma oitava sozinha não se nota; treze
+empilhadas todas no mesmo xadrez dão rumo à peça inteira. É o que menos
+parece: chama-se ruído precisamente por não se esperar rumo nenhum dele.
+
+Hoje cada oitava tem o seu ângulo -- roda-se o ponto antes de pedir e a
+inclinação de volta depois -- e nenhum xadrez se soma ao outro. Custa
+quatro contas por chamada e não se mede no fotógrama.
+
 ##### E a lâmpada está no mundo, não no infinito
 
 Até aqui a chave era uma direcção pura: cada ponto da peça apanhava
